@@ -1,0 +1,52 @@
+---
+name:  mROC
+title: ROC classification
+jrs:   '1.1'
+
+items:
+    - name: text
+      title: Conditions
+      type:  Html
+      clearWith:
+          - groups
+
+    - name:  pre
+      title: ROC tables
+      type:  Preformatted
+
+    - name: plot
+      title: ROC by predictors
+      type: Image
+      #visible: (sepROC==FALSE)
+      width:  500
+      height: 500
+      renderFun: .plot
+      requiresData: true
+
+    - name: plots
+      title: ROC by groups
+      type: Array
+      visible: (sepROC)
+      items: (vars)
+      template:
+          title: $key
+          type: Image
+          width:  500
+          height: 500
+          renderFun: .plot
+          requiresData: true
+
+    - name: splots
+      title: Splitted ROC by predictors
+      type: Array
+      visible: (splitROC)
+      items: (vars)
+      template:
+          title: $key
+          type: Image
+          width:  500
+          height: 500
+          renderFun: .plot
+          requiresData: true
+
+...

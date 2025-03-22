@@ -1,0 +1,39 @@
+---
+title: jYS Extended Functions
+name: jYS
+version: 1.0.2
+jms: '1.0'
+authors:
+  - Yuri Smolyakov
+maintainer: Yuri Smolyakov <smolyakov@rambler.ru>
+date: '2024-11-06'
+type: R
+description: Jamovi useful functions
+datasets:
+  - name: Correlation clustering
+    path: COR_BLOOD.omv
+    description: Correlation Clustering demonstration
+  - name: BC ROC classification
+    path: ROC_BLOOD.omv
+    description: Blood cells multiple ROC Classification demonstration
+  - name: SDI ROC classification
+    path: ROC_SDI.omv
+    description: Sperm Deformity Index ROC Classification demonstration
+  - name: HI ROC classification
+    path: ROC_HI.omv
+    description: Healthy/Ill ROC Classification demonstration
+analyses:
+  - title: Correlation clustering
+    name: mCOR
+    ns: jYS
+    menuGroup: jYS
+    menuTitle: Correlation clustering
+  - title: ROC classification
+    name: mROC
+    ns: jYS
+    menuGroup: jYS
+    menuTitle: ROC classification
+usesNative: true
+minApp: 1.0.8
+
+...

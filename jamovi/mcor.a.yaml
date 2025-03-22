@@ -1,0 +1,265 @@
+---
+name:  mCOR
+title: Correlation clustering
+menuGroup: jYS
+version: '1.0.0'
+jas: '1.2'
+
+options:
+    - name: data
+      type: Data
+
+    - name: vars
+      title: Correlating Variables
+      type: Variables
+      required: true
+      suggested:
+        - continuous
+      permitted:
+        - numeric
+
+    - name: group
+      title: Grouping Variable
+      required: false
+      suggested:
+        - nominal
+        - ordinal
+      permitted:
+        - factor
+      type: Variable
+
+    - name: selgroup
+      title: Select group
+      type: Level
+      variable: (group)
+
+    - name: hyp
+      title: Hypothesis
+      type: List
+      options:
+        - title: Correlated
+          name:  corr
+        - title: Correlated positively
+          name:  pos
+        - title: Correlated negatively
+          name:  neg
+      default: corr
+
+    - name: method
+      title: Method
+      type: List
+      options:
+        - title: Pearson (r)
+          name:  pearson
+        - title: Spearman (ρ)
+          name:  spearman
+        - title: Kendall (τ)
+          name:  kendall
+      default: pearson
+
+    #https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/p.adjust
+    - name: adjust
+      title: Multiple comparision correction
+      type: List
+      options:
+        - title: None
+          name:  none
+        - title: Bonferroni (1961)
+          name:  bonferroni
+        - title: Holm (1979)
+          name:  holm
+        - title: Hochberg (1988)
+          name:  hochberg
+        - title: Hommel (1988)
+          name:  hommel
+        - title: Benjamini-Hochberg (1995)
+          name:  BH
+        - title: Benjamini-Yekutieli (2001)
+          name:  BY
+      default: none
+
+#    - name: adjtype
+#      title: Comparision by
+#      type: List
+#      options:
+#        #- title: Groups
+#        #  name:  bygrps
+#        - title: Vars
+#          name:  byvars
+#        - title: Matrix cells
+#          name:  all
+#      default: byvars
+
+    - name: tables
+      title: Correlation matrix
+      type: Bool
+      default: false
+
+    - name: pval
+      title: p-value
+      type: Bool
+      default: true
+
+    - name: n
+      title: N
+      type: Bool
+      default: false
+
+    - name: ci
+      title: Confidence interval
+      type: Bool
+      default: false
+
+    - name: ciWidth
+      title: Confidence interval width
+      type: Number
+      min: 50
+      max: 99.9
+      default: 95
+
+    - name: plots
+      title: Correlation matrix
+      type: Bool
+      default: false
+      description:
+          ui: >
+            provide a correlation matrix plot.
+          R: >
+            `TRUE` or `FALSE` (default), provide a correlation matrix plot
+
+    - name: signif
+      title: Significance
+      type: List
+      options:
+        - title: All
+          name:  all
+        - title: < 0.1
+          name:  "0.1"
+        - title: < 0.05
+          name:  "0.05"
+        - title: < 0.01
+          name:  "0.01"
+        - title: < 0.001
+          name:  "0.001"
+      default: all
+
+    - name: plotMetU
+      title: Upper part
+      type: List
+      options:
+        - title: Emtpy
+          name:  empty
+        - title: Circle
+          name:  circle
+        - title: Square
+          name:  square
+        - title: Ellipse
+          name:  ellipse
+        - title: Number
+          name:  number
+        - title: Shade
+          name:  shade
+        - title: Color
+          name:  color
+        - title: Pie
+          name:  pie
+      default: ellipse
+
+    - name: plotMetL
+      title: Lower part
+      type: List
+      options:
+        - title: Emtpy
+          name:  empty
+        - title: Circle
+          name:  circle
+        - title: Square
+          name:  square
+        - title: Ellipse
+          name:  ellipse
+        - title: Number
+          name:  number
+        - title: Shade
+          name:  shade
+        - title: Color
+          name:  color
+        - title: Pie
+          name:  pie
+      default: ellipse
+
+    - name: plotOrder
+      title: Reorder
+      type: List
+      options:
+        - title: Original
+          name:  original
+        - title: Alphabetical
+          name:  alphabet
+        - title: Angular order eigenvectors
+          name:  AOE
+        - title: First principal component 
+          name:  FPC
+      default: original
+
+    - name: hclust
+      title: Hierarchical clustering
+      type: Bool
+      default: false
+
+    - name: numClust
+      title: Clusters
+      type: Number
+      min: 2
+      #max: 8
+      default: 2
+
+    - name: clustMet
+      title: Agglomeration method
+      type: List
+      options:
+        - title: ward.D
+          name:  ward.D
+        - title: ward.D2
+          name:  ward.D2
+        - title: single
+          name:  single
+        - title: complete
+          name:  complete
+        - title: average
+          name:  average
+        - title: mcquitty
+          name:  mcquitty
+        - title: median
+          name:  median
+        - title: centroid
+          name:  centroid
+      default: ward.D2
+
+    - name: clPos
+      title: Scale position
+      type: List
+      options:
+        - title: None
+          name:  n
+        - title: Right
+          name:  r
+        - title: Bottom
+          name:  b
+      default: b
+
+    - name: clustCol
+      title: Colored Clusters
+      type: Bool
+      default: false
+
+    - name: clustMan
+      title: Manual Clusters
+      type: String
+      default: ""
+
+    - name: clustMat
+      title: Intercluster Matrices
+      type: Bool
+      default: false
+
+...

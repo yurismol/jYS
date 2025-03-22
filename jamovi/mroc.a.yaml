@@ -1,0 +1,170 @@
+---
+name:  mROC
+title: ROC classification
+menuGroup: jYS
+version: '1.0.1'
+jas: '1.2'
+
+options:
+    - name: data
+      type: Data
+
+    - name: vars
+      title: Predictors
+      type: Variables
+      required: true
+      suggested:
+        - continuous
+      permitted:
+        - numeric
+
+    - name: class
+      title: Classifying variable
+      required: true
+      suggested:
+        - nominal
+        - ordinal
+      permitted:
+        - factor
+      type: Variable
+
+    - name: groups
+      title: Grouping Variable
+      required: false
+      suggested:
+        - nominal
+        - ordinal
+      permitted:
+        - factor
+      type: Variable
+
+    - name: selgroup
+      title: Select group
+      type: Level
+      variable: (groups)
+
+    - name: theBest
+      title: The Best point on ROC
+      type: List
+      options:
+        - title: None
+          name:  none
+        - title: Youden Best
+          name:  bestY
+        - title: Youden Best (Sp, Se)
+          name:  bssY
+        - title: Closest Best
+          name:  bestC
+        - title: Closest Best (Sp, Se)
+          name:  bssC
+      default: none
+
+    - name: cmpDeLong
+      title: ROC comparision
+      type: List
+      #suffix: DeLong's
+      options:
+        - title: None
+          name:  none
+        - title: Successively
+          name:  succ
+        - title: With control
+          name:  wcontr
+      default: none
+
+    - name: mAst
+      title: Mark significance *<0.05, **<0.01, ***<0.001
+      type: Bool
+      default: false
+
+    - name: ciAUC
+      title: Confidence interval
+      type: Bool
+      default: false
+
+    - name: ciWidth
+      title: CI width
+      type: Number
+      min: 50
+      max: 99.9
+      default: 95
+
+    - name: perc
+      title: In percent
+      type: Bool
+      default: true
+
+    - name: ciMark
+      title: CI Mark
+      type: Bool
+      default: false
+
+    - name: direction
+      title: Direction
+      type: Bool
+      default: true
+
+    - name: lwd
+      title: Line width
+      type: Number
+      min: 1
+      max: 8
+      default: 3
+
+    - name: dotline
+      title: Dotted line
+      type: Bool
+      default: false
+
+    - name: BW
+      title: Black & White
+      type: Bool
+      default: false
+
+    - name: legacy
+      title: Legacy format of Specificity axis
+      type: Bool
+      default: false
+
+    - name: polygon
+      title: Polygon
+      type: Bool
+      default: false
+
+    - name: legBox
+      title: Legend Box
+      type: Bool
+      default: false
+
+    - name: sepROC
+      title: ROC by groups
+      type: Bool
+      default: false
+
+    - name: splitROC
+      title: Split curves
+      type: Bool
+      default: false
+
+    - name: palBrewer
+      title: Brewer qualitative palette
+      type: List
+      options:
+        - title: None
+          name:  none
+        - title: Accent
+          name:  Accent
+        - title: Dark2
+          name:  Dark2
+        - title: Paired
+          name:  Paired
+        - title: Pastel1
+          name:  Pastel1
+        - title: Set1
+          name:  Set1
+        - title: Set2
+          name:  Set2
+        - title: Set3
+          name:  Set3
+      default: Dark2
+...

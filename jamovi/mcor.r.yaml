@@ -1,0 +1,138 @@
+---
+name:  mCOR
+title: Correlation clustering
+jrs:   '1.1'
+
+items:
+    - name:  pre
+      title: ''
+      type:  Preformatted
+
+    - name: text
+      title: Correlations
+      type:  Html
+      clearWith:
+          - group
+
+    - name: matrix
+      visible: (tables)
+      title: Correlation Matrix
+      type: Table
+      description: a correlation matrix table
+      rows: (vars)
+      clearWith:
+          - ciWidth
+          - hyp
+      columns:
+          - name: .name[r]
+            title: ""
+            type: text
+            content: ($key)
+            combineBelow: true
+            visible: (method=="pearson")
+          - name: .stat[r]
+            title: Pearson's r
+            type: text
+            content: Pearson's r
+            visible: (method=="pearson")
+
+          - name: .name[rho]
+            title: ""
+            type: text
+            content: ($key)
+            combineBelow: true
+            visible: (method=="spearman")
+          - name: .stat[rho]
+            title: Spearman's Rho
+            type: text
+            content: Spearman's Rho
+            visible: (method=="spearman")
+
+          - name: .name[tau]
+            title: ""
+            type: text
+            content: ($key)
+            combineBelow: true
+            visible: (method=="kendall")
+          - name: .stat[tau]
+            title: Kendall Tau
+            type: text
+            content: Kendall Tau
+            visible: (method=="kendall")
+
+          - name: .name[cil]
+            title: ""
+            type: text
+            content: ($key)
+            combineBelow: true
+            visible: (method=="pearson" && ci)
+          - name: .stat[cil]
+            title: ""
+            type: text
+            content: CI Lower
+            visible: (method=="pearson" && ci)
+
+          - name: .name[ciu]
+            title: ""
+            type: text
+            content: ($key)
+            combineBelow: true
+            visible: (method=="pearson" && ci)
+          - name: .stat[ciu]
+            title: ""
+            type: text
+            content: CI Upper
+            visible: (method=="pearson" && ci)
+
+          - name: .name[p]
+            title: ""
+            type: text
+            content: ($key)
+            combineBelow: true
+            visible: (pval)
+          - name: .stat[p]
+            title: ""
+            type: text
+            content: p-value
+            visible: (pval)
+
+          - name: .name[n]
+            title: ""
+            type: text
+            content: ($key)
+            combineBelow: true
+            visible: (n)
+          - name: .stat[n]
+            title: ""
+            type: text
+            content: N
+            visible: (n)
+
+    - name: treeplot
+      title: Hierarchical clustering tree
+      type: Image
+      #visible: ({ return ui['vars'].value()?.length > 2; })
+      visible: (hclust)
+      #width:  500
+      #height: 500
+      renderFun: .treeplot
+      requiresData: true
+
+    - name: plot
+      title: Correlation Matrix
+      type: Image
+      visible: (plots)
+      width:  500
+      height: 500
+      renderFun: .plot
+      requiresData: true
+
+    - name: rplots
+      title: Intercluster Matrices
+      type: Array
+      visible: (plots && clustMat)
+      template:
+          type: Image
+          renderFun: .rplot
+          requiresData: true
+...

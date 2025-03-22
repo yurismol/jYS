@@ -1,0 +1,106 @@
+title: Correlation Matrix
+name: mCOR
+jus: '3.0'
+stage: 0
+compilerMode: tame
+children:
+  - type: VariableSupplier
+    persistentItems: false
+    stretchFactor: 1
+    children:
+      - type: TargetLayoutBox
+        label: Correlating Variables
+        children:
+          - type: VariablesListBox
+            name: vars
+            isTarget: true
+      - type: TargetLayoutBox
+        label: Grouping Variable
+        children:
+          - type: VariablesListBox
+            name: group
+            maxItemCount: 1
+            isTarget: true
+            fitToGrid: true
+          - type: LevelSelector
+            label: ''
+            name: selgroup
+            enable: ({return ui['group'].value()!==null;})
+  - type: ComboBox
+    name: hyp
+  - type: ComboBox
+    name: method
+  - type: ComboBox
+    name: adjust
+  - type: CollapseBox
+    label: Tables
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: LayoutBox
+        margin: large
+        children:
+          - type: CheckBox
+            name: tables
+          - type: CheckBox
+            name: pval
+            enable: (tables)
+          - type: CheckBox
+            name: 'n'
+            enable: (tables)
+          - type: CheckBox
+            enable: (tables && {return ui['method'].value()=="pearson";})
+            name: ci
+            label: Confidence interval
+            children:
+              - type: TextBox
+                name: ciWidth
+                label: Interval
+                suffix: '%'
+                format: number
+                enable: (ci && tables && {return ui['method'].value()=="pearson";})
+  - type: CollapseBox
+    label: Plots
+    collapsed: false
+    stretchFactor: 1
+    children:
+      - type: LayoutBox
+        margin: large
+        children:
+          - type: CheckBox
+            name: hclust
+          - type: ComboBox
+            name: clustMet
+            enable: (hclust)
+          - type: TextBox
+            name: numClust
+            format: number
+            enable: (hclust)
+          - type: CheckBox
+            name: clustCol
+            enable: (hclust)
+          - type: CheckBox
+            name: plots
+          - type: ComboBox
+            name: plotOrder
+            enable: (plots && !hclust)
+          - type: TextBox
+            name: clustMan
+            format: string
+            suffix: variable numbers by commas
+            enable: (plots && !hclust)
+          - type: CheckBox
+            name: clustMat
+            enable: (plots && (hclust || {return ui['clustMan'].value()>"";}))
+          - type: ComboBox
+            name: signif
+            enable: (plots)
+          - type: ComboBox
+            name: plotMetU
+            enable: (plots)
+          - type: ComboBox
+            name: plotMetL
+            enable: (plots)
+          - type: ComboBox
+            name: clPos
+            enable: (plots)
