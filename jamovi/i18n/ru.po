@@ -117,6 +117,10 @@ msgstr "Категориальная палитра Брюэр"
 msgid "centroid"
 msgstr "центроид"
 
+#: package/datasets/CHD Models ROC Estimation.name
+msgid "CHD Models ROC Estimation"
+msgstr "Оценка ROC моделей ИБС"
+
 #: mCOR/results/matrix.columns.content
 msgid "CI Lower"
 msgstr "ДИ нижний"
@@ -480,6 +484,10 @@ msgstr "ROC классификация"
 #: mROC/options/cmpDeLong.title
 msgid "ROC comparision"
 msgstr "Сравнение ROC"
+
+#: package/datasets/CHD Models ROC Estimation.description
+msgid "ROC estimation for binomial logistis models demonstration"
+msgstr "Оценка ROC в демонстрации биномиальных логистических моделей"
 
 #: mROC/ui[1].label
 msgid "ROC graphs"
