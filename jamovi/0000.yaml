@@ -22,6 +22,9 @@ datasets:
   - name: HI ROC classification
     path: ROC_HI.omv
     description: Healthy/Ill ROC Classification demonstration
+  - name: CHD Models ROC Estimation
+    path: CHD.omv
+    description: ROC estimation for binomial logistis models demonstration
 analyses:
   - title: Correlation clustering
     name: mCOR
