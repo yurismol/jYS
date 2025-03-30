@@ -134,8 +134,9 @@ mROCClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 	    main <- ifelse(self$options$direction,
 		ifelse(nVars<2, paste(main, " (", lev[1], roc$direction, lev[2], ")", sep=""),
 		paste(lev, collapse=' / ')), main)
-	    main <- ifelse(subs>"", paste(main, " (", subs, ")", sep=""), main)
-	    main <- ifelse(is.na(key)||split, main, paste(image$key, " {", main, "}", sep=""))
+	    main <- ifelse(subs>"", paste0(main, " (", subs, ")"), main)
+	    main <- ifelse(is.na(key)||split, main,
+			paste0(image$key, ifelse(main>"", paste0(" {", main, "}"),"")))
 
 	    bss  <- ifelse(self$options$theBest %in% c("bestY","bssY"), "youden", "closest.topleft")
 	    best <- pROC::coords(roc, "best", best.method=bss, transpose=TRUE)

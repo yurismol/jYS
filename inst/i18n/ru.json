@@ -88,6 +88,9 @@
             "centroid": [
                 "центроид"
             ],
+            "CHD Models ROC Estimation": [
+                "Оценка ROC моделей ИБС"
+            ],
             "CI Lower": [
                 "ДИ нижний"
             ],
@@ -330,6 +333,9 @@
             ],
             "ROC comparision": [
                 "Сравнение ROC"
+            ],
+            "ROC estimation for binomial logistis models demonstration": [
+                "Оценка ROC в демонстрации биномиальных логистических моделей"
             ],
             "ROC graphs": [
                 "ROC графики"
