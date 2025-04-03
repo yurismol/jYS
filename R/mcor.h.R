@@ -12,8 +12,9 @@ mCOROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             hyp = "corr",
             method = "pearson",
             adjust = "none",
-            tables = FALSE,
+            tables = TRUE,
             pval = TRUE,
+            flag = FALSE,
             n = FALSE,
             ci = FALSE,
             ciWidth = 95,
@@ -88,11 +89,15 @@ mCOROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             private$..tables <- jmvcore::OptionBool$new(
                 "tables",
                 tables,
-                default=FALSE)
+                default=TRUE)
             private$..pval <- jmvcore::OptionBool$new(
                 "pval",
                 pval,
                 default=TRUE)
+            private$..flag <- jmvcore::OptionBool$new(
+                "flag",
+                flag,
+                default=FALSE)
             private$..n <- jmvcore::OptionBool$new(
                 "n",
                 n,
@@ -207,6 +212,7 @@ mCOROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..adjust)
             self$.addOption(private$..tables)
             self$.addOption(private$..pval)
+            self$.addOption(private$..flag)
             self$.addOption(private$..n)
             self$.addOption(private$..ci)
             self$.addOption(private$..ciWidth)
@@ -232,6 +238,7 @@ mCOROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         adjust = function() private$..adjust$value,
         tables = function() private$..tables$value,
         pval = function() private$..pval$value,
+        flag = function() private$..flag$value,
         n = function() private$..n$value,
         ci = function() private$..ci$value,
         ciWidth = function() private$..ciWidth$value,
@@ -256,6 +263,7 @@ mCOROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..adjust = NA,
         ..tables = NA,
         ..pval = NA,
+        ..flag = NA,
         ..n = NA,
         ..ci = NA,
         ..ciWidth = NA,
@@ -277,7 +285,6 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "mCORResults",
     inherit = jmvcore::Group,
     active = list(
-        pre = function() private$.items[["pre"]],
         text = function() private$.items[["text"]],
         matrix = function() private$.items[["matrix"]],
         treeplot = function() private$.items[["treeplot"]],
@@ -290,10 +297,6 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 options=options,
                 name="",
                 title="Correlation clustering")
-            self$add(jmvcore::Preformatted$new(
-                options=options,
-                name="pre",
-                title=""))
             self$add(jmvcore::Html$new(
                 options=options,
                 name="text",
@@ -460,6 +463,7 @@ mCORBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param adjust .
 #' @param tables .
 #' @param pval .
+#' @param flag .
 #' @param n .
 #' @param ci .
 #' @param ciWidth .
@@ -478,7 +482,6 @@ mCORBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param clustMat .
 #' @return A results object containing:
 #' \tabular{llllll}{
-#'   \code{results$pre} \tab \tab \tab \tab \tab a preformatted \cr
 #'   \code{results$text} \tab \tab \tab \tab \tab a html \cr
 #'   \code{results$matrix} \tab \tab \tab \tab \tab a correlation matrix table \cr
 #'   \code{results$treeplot} \tab \tab \tab \tab \tab an image \cr
@@ -501,8 +504,9 @@ mCOR <- function(
     hyp = "corr",
     method = "pearson",
     adjust = "none",
-    tables = FALSE,
+    tables = TRUE,
     pval = TRUE,
+    flag = FALSE,
     n = FALSE,
     ci = FALSE,
     ciWidth = 95,
@@ -541,6 +545,7 @@ mCOR <- function(
         adjust = adjust,
         tables = tables,
         pval = pval,
+        flag = flag,
         n = n,
         ci = ci,
         ciWidth = ciWidth,

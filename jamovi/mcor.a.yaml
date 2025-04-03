@@ -93,12 +93,17 @@ options:
     - name: tables
       title: Correlation matrix
       type: Bool
-      default: false
+      default: true
 
     - name: pval
       title: p-value
       type: Bool
       default: true
+
+    - name: flag
+      title: Flag significant correlations
+      type: Bool
+      default: false
 
     - name: n
       title: N
@@ -106,7 +111,7 @@ options:
       default: false
 
     - name: ci
-      title: Confidence interval
+      title: Confidence interval (Pearson only)
       type: Bool
       default: false
 
@@ -217,21 +222,21 @@ options:
       title: Agglomeration method
       type: List
       options:
-        - title: ward.D
+        - title: Ward´s Linkage
           name:  ward.D
-        - title: ward.D2
+        - title: Ward´s D2 Linkage
           name:  ward.D2
-        - title: single
+        - title: Single Linkage
           name:  single
-        - title: complete
+        - title: Complete Linkage
           name:  complete
-        - title: average
+        - title: Average Linkage (UPGMA)
           name:  average
-        - title: mcquitty
+        - title: McQuitty Linkage (WPGMA)
           name:  mcquitty
-        - title: median
+        - title: Median Linkage
           name:  median
-        - title: centroid
+        - title: Centroid Linkage (UPGMC)
           name:  centroid
       default: ward.D2
 

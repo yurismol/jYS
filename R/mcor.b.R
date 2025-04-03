@@ -63,15 +63,22 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
   
         }
         hyp <- self$options$get('hyp')
+        flag <- self$options$get('flag')
         if (hyp=='pos') {
             matrix$setNote('hyp', .('H\u2090 is positive correlation'))
             hyp <- 'greater'
+            if (flag)
+                matrix$setNote('flag', .('* p < .05, ** p < .01, *** p < .001, one-tailed'))
         } else if (hyp=='neg') {
             matrix$setNote('hyp', .('H\u2090 is negative correlation'))
             hyp <- 'less'
+            if (flag)
+                matrix$setNote('flag', .('* p < .05, ** p < .01, *** p < .001, one-tailed'))
         } else {
             matrix$setNote('hyp', NULL)
             hyp <- 'two.sided'
+            if (flag)
+                matrix$setNote('flag', '* p < .05, ** p < .01, *** p < .001')
         }
         if (self$options$adjust!='none') {
             matrix$setNote("adjust", jmvcore::format(.("Simultaneous multiple correlation comparisons using {n} method"), n=self$options$adjust))
@@ -168,6 +175,17 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
                     if (mtord)
                         matrix$addFootnote(rowNo=i, paste0(colVarName, '[r]'), .('Pearson correlation cannot be calculated for non-numeric values'))
+                    flag <- self$options$get('flag')
+                    if (flag) {
+                        if (mtord)
+                            {}  # do nothing
+                        else if (result$p < .001)
+                            matrix$addSymbol(rowNo=i, paste0(colVarName, '[r]'), '***')
+                        else if (result$p < .01)
+                            matrix$addSymbol(rowNo=i, paste0(colVarName, '[r]'), '**')
+                        else if (result$p < .05)
+                            matrix$addSymbol(rowNo=i, paste0(colVarName, '[r]'), '*')
+                    }
                }
             }
             cor   <- NULL

@@ -1,14 +1,17 @@
 ---
 title: jYS Extended Functions
 name: jYS
-version: 1.0.2
+version: 1.0.3
 jms: '1.0'
 authors:
   - Yuri Smolyakov
 maintainer: Yuri Smolyakov <smolyakov@rambler.ru>
-date: '2024-11-06'
+date: '2025-04-02'
 type: R
-description: Jamovi useful functions
+description: >
+  Graphic extension of the functionality of popular data analysis methods:
+  cluster tree of correlating variables, multifactor adaptive correlation
+  matrix, multidimensional ROC classification curves, etc.
 datasets:
   - name: Correlation clustering
     path: COR_BLOOD.omv

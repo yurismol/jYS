@@ -5,25 +5,25 @@
             "": {
                 "domain": "messages",
                 "plural_forms": "nplurals=2; plural=(n != 1)",
-                "lang": "ru"
+                "lang": "en"
             },
             " [{prc}% CI]": [
-                " [{prc}% ДИ]"
+                ""
             ],
             "{ciWidth}% CI Lower": [
-                "{ciWidth}% нижняя граница ДИ"
+                ""
             ],
             "{ciWidth}% CI Upper": [
                 ""
             ],
             "* p < .05, ** p < .01, *** p < .001, one-tailed": [
-                "* p < .05, ** p < .01, *** p < .001, однохвостный"
+                ""
             ],
             "%": [
-                "%"
+                ""
             ],
             "`TRUE` or `FALSE` (default), provide a correlation matrix plot": [
-                "`TRUE` или `FALSE` (по умолчанию), предоставить график корреляционной матрицы"
+                ""
             ],
             "< 0.001": [
                 ""
@@ -38,408 +38,408 @@
                 ""
             ],
             "1 - Specificity": [
-                "1 - Специфичность"
+                ""
             ],
             "100 - Specificity (%)": [
-                "100 - Специфичность (%)"
+                ""
             ],
             "a correlation matrix table": [
-                "таблица корреляционной матрицы"
+                ""
             ],
             "Accent": [
-                "Акцент"
+                ""
             ],
             "Agglomeration method": [
-                "Метод агломерации"
+                ""
             ],
             "All": [
-                "Все"
+                ""
             ],
             "Alphabetical": [
-                "Алфавитное"
+                ""
             ],
             "Angular order eigenvectors": [
-                "Угловой порядок собственных векторов"
+                ""
             ],
             "Average Linkage (UPGMA)": [
-                "Средней связи"
+                ""
             ],
             "BC ROC classification": [
-                "ROC классификация клеток крови"
+                ""
             ],
             "Benjamini-Hochberg (1995)": [
-                "Бенджамини-Хохберг (1995)"
+                ""
             ],
             "Benjamini-Yekutieli (2001)": [
-                "Бенджамини-Иекутиели (2001)"
+                ""
             ],
             "Black & White": [
-                "Черно-Белый"
+                ""
             ],
             "Blood cells multiple ROC Classification demonstration": [
-                "Демонстрация множественной ROC классификации клеток крови"
+                ""
             ],
             "Bonferroni (1961)": [
-                "Бонферрони (1961)"
+                ""
             ],
             "Bottom": [
-                "Внизу"
+                ""
             ],
             "Brewer qualitative palette": [
-                "Категориальная палитра Брюэр"
+                ""
             ],
             "Centroid Linkage (UPGMC)": [
-                "Центроидной связи"
+                ""
             ],
             "CHD Models ROC Estimation": [
-                "Оценка ROC моделей ИБС"
+                ""
             ],
             "CI Lower": [
-                "ДИ нижний"
+                ""
             ],
             "CI Mark": [
-                "Маркер ДИ"
+                ""
             ],
             "CI Upper": [
-                "ДИ верхний"
+                ""
             ],
             "CI width": [
-                "ширина ДИ"
+                ""
             ],
             "Circle": [
-                "Круг"
+                ""
             ],
             "Classifying variable": [
-                "Классифицирующая переменная"
+                ""
             ],
             "Closest Best": [
-                "Близкая к углу"
+                ""
             ],
             "Closest Best (Sp, Se)": [
-                "Близкая к углу (Спец, Чувств)"
+                ""
             ],
             "Clusters": [
-                "Кластеров"
+                ""
             ],
             "Color": [
-                "Цвет"
+                ""
             ],
             "Colored Clusters": [
-                "Цветные кластеры"
+                ""
             ],
             "Complete Linkage": [
-                "Полной связи"
+                ""
             ],
             "Conditions": [
-                "Условия"
+                ""
             ],
             "Confidence interval": [
-                "Доверительный интервал"
+                ""
             ],
             "Confidence interval (Pearson only)": [
-                "Доверительный интервал (только Пирсон)"
+                ""
             ],
             "Confidence interval width": [
-                "Ширина доверительного интервала"
+                ""
             ],
             "Correlated": [
-                "Коррелирует"
+                ""
             ],
             "Correlated negatively": [
-                "Коррелирует отрицательно"
+                ""
             ],
             "Correlated positively": [
-                "Коррелирует положительно"
+                ""
             ],
             "Correlating Variables": [
-                "Коррелирующие переменные"
+                ""
             ],
             "Correlation clustering": [
-                "Кластерная корреляция"
+                ""
             ],
             "Correlation Clustering demonstration": [
-                "Демонстрация корреляционной кластеризации"
+                ""
             ],
             "Correlation Matrix": [
-                "Корреляционная матрица"
+                ""
             ],
             "Correlation matrix": [
-                "Корреляционная матрица"
+                ""
             ],
             "Correlations": [
-                "Корреляции"
+                ""
             ],
             "Dark2": [
-                "Темная 2"
+                ""
             ],
             "Direction": [
-                "Направление"
+                ""
             ],
             "Dotted line": [
-                "Пунктирная линия"
+                ""
             ],
             "Ellipse": [
-                "Эллипс"
+                ""
             ],
             "Emtpy": [
-                "Пусто"
+                ""
             ],
             "First principal component": [
-                "Первая главная компонента"
+                ""
             ],
             "Flag significant correlations": [
-                "Отметить значимые корреляции"
+                ""
             ],
             "Graphic extension of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, etc.": [
                 ""
             ],
             "Grouping Variable": [
-                "Группирующая переменная"
+                ""
             ],
             "Hₐ is negative correlation": [
-                "Гипотеза - отрицательная корреляция"
+                ""
             ],
             "Hₐ is positive correlation": [
-                "Гипотеза - положительная корреляция"
+                ""
             ],
             "Healthy/Ill ROC Classification demonstration": [
-                "Демонстрация ROC классификации Здоровые/Больные"
+                ""
             ],
             "HI ROC classification": [
-                "ROC классификация Здоровые/Больные"
+                ""
             ],
             "Hierarchical clustering": [
-                "Иерархическая кластеризация"
+                ""
             ],
             "Hierarchical clustering tree": [
-                "Дерево иерархической кластеризации"
+                ""
             ],
             "Hochberg (1988)": [
-                "Хохберг (1988)"
+                ""
             ],
             "Holm (1979)": [
-                "Холм (1979)"
+                ""
             ],
             "Hommel (1988)": [
-                "Хоммель (1988)"
+                ""
             ],
             "Hypothesis": [
-                "Гипотеза"
+                ""
             ],
             "In percent": [
-                "В процентах"
+                ""
             ],
             "Intercluster Matrices": [
-                "Межкластерные матрицы"
+                ""
             ],
             "Interval": [
-                "Интервал"
+                ""
             ],
             "jYS": [
-                "jЮС"
+                ""
             ],
             "jYS Extended Functions": [
-                "jЮС расширенные функции"
+                ""
             ],
             "Kendall (τ)": [
-                "Кендал (τ)"
+                ""
             ],
             "Kendall Tau": [
-                "Тау Кендалла"
+                ""
             ],
             "Legacy format of Specificity axis": [
-                "Устаревший формат оси специфичности"
+                ""
             ],
             "Legend Box": [
-                "Фон легенды"
+                ""
             ],
             "Line width": [
-                "Толщина линии"
+                ""
             ],
             "Lower part": [
-                "Нижняя часть"
+                ""
             ],
             "Manual Clusters": [
-                "Кластеры вручную"
+                ""
             ],
             "Mark significance *<0.05, **<0.01, ***<0.001": [
-                "Маркер значимости *<0.05, **<0.01, ***<0.001"
+                ""
             ],
             "Matrix #{i}": [
-                "Матрица №{i}"
+                ""
             ],
             "McQuitty Linkage (WPGMA)": [
-                "МакКитти связи"
+                ""
             ],
             "Median Linkage": [
-                "Медианной связи"
+                ""
             ],
             "Method": [
-                "Метод"
+                ""
             ],
             "Multiple comparision correction": [
-                "Коррекция множественного сравнения"
+                ""
             ],
             "N": [
-                "N"
+                ""
             ],
             "None": [
-                "Нет"
+                ""
             ],
             "Number": [
-                "Число"
+                ""
             ],
             "Original": [
-                "Оригинальное"
+                ""
             ],
             "p-value": [
-                "p-значение"
+                ""
             ],
             "Paired": [
-                "Парная"
+                ""
             ],
             "Pastel1": [
-                "Пастель"
+                ""
             ],
             "Pearson (r)": [
-                "Пирсон (r)"
+                ""
             ],
             "Pearson correlation cannot be calculated for non-numeric values": [
-                "Корреляция Пирсона не может быть рассчитана для нечисловых значений."
+                ""
             ],
             "Pearson's r": [
-                "r Пирсона"
+                ""
             ],
             "Pie": [
-                "Пицца"
+                ""
             ],
             "Plots": [
-                "Графики"
+                ""
             ],
             "Polygon": [
-                "Полигон"
+                ""
             ],
             "Predictors": [
-                "Предикторы"
+                ""
             ],
             "provide a correlation matrix plot.": [
-                "предоставить график корреляционной матрицы."
+                ""
             ],
             "Reorder": [
-                "Перестроение"
+                ""
             ],
             "Right": [
-                "Справа"
+                ""
             ],
             "ROC by groups": [
-                "ROC по группам"
+                ""
             ],
             "ROC by predictors": [
-                "ROC по предикторам"
+                ""
             ],
             "ROC classification": [
-                "ROC классификация"
+                ""
             ],
             "ROC comparision": [
-                "Сравнение ROC"
+                ""
             ],
             "ROC estimation for binomial logistis models demonstration": [
-                "Оценка ROC в демонстрации биномиальных логистических моделей"
+                ""
             ],
             "ROC graphs": [
-                "ROC графики"
+                ""
             ],
             "Scale position": [
-                "Позиция шкалы"
+                ""
             ],
             "SDI ROC classification": [
-                "ИТС ROC классификация"
+                ""
             ],
             "Select group": [
-                "Выберите группу"
+                ""
             ],
             "Sensitivity": [
-                "Чувствительность"
+                ""
             ],
             "Sensitivity (%)": [
-                "Чувствительность (%)"
+                ""
             ],
             "Set1": [
-                "Набор 1"
+                ""
             ],
             "Set2": [
-                "Набор 2"
+                ""
             ],
             "Set3": [
-                "Набор 3"
+                ""
             ],
             "Shade": [
-                "Тень"
+                ""
             ],
             "Significance": [
-                "Значимость"
+                ""
             ],
             "Simultaneous multiple correlation comparisons using {n} method": [
-                "Одновременные множественные корреляционные сравнения с использованием метода {n}"
+                ""
             ],
             "Single Linkage": [
-                "Одиночной связи"
+                ""
             ],
             "Spearman (ρ)": [
-                "Спирман (ρ)"
+                ""
             ],
             "Spearman's Rho": [
-                "Ро Спирмена"
+                ""
             ],
             "Specificity": [
-                "Специфичность"
+                ""
             ],
             "Specificity (%)": [
-                "Специфичность (%)"
+                ""
             ],
             "Sperm Deformity Index ROC Classification demonstration": [
-                "Демонстрация ROC классификации индекса деформации сперматозоидов"
+                ""
             ],
             "Split curves": [
-                "Разделить кривые"
+                ""
             ],
             "Splitted ROC by predictors": [
-                "Раздельный ROC по предикторам"
+                ""
             ],
             "Square": [
-                "Квадрат"
+                ""
             ],
             "Successively": [
-                "Последовательно"
+                ""
             ],
             "Tables": [
-                "Таблицы"
+                ""
             ],
             "The Best point on ROC": [
-                "Лучшая точка ROC"
+                ""
             ],
             "Upper part": [
-                "Верхняя часть"
+                ""
             ],
             "variable numbers by commas": [
-                "номера переменных через запятую"
+                ""
             ],
             "Ward´s D2 Linkage": [
-                "Уорд Д2 связи"
+                ""
             ],
             "Ward´s Linkage": [
-                "Уорд связи"
+                ""
             ],
             "With control": [
-                "С контролем"
+                ""
             ],
             "Youden Best": [
-                "По Юдену"
+                ""
             ],
             "Youden Best (Sp, Se)": [
-                "По Юдену (Спец, Чувств)"
+                ""
             ]
         }
     },
-    "code": "ru"
+    "code": "en"
 }

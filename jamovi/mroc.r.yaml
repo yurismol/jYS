@@ -10,9 +10,9 @@ items:
       clearWith:
           - groups
 
-    - name:  pre
-      title: ROC tables
-      type:  Preformatted
+#    - name:  pre
+#      title: ROC tables
+#      type:  Preformatted
 
     - name: plot
       title: ROC by predictors

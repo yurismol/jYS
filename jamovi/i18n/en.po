@@ -5,16 +5,16 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2021-07-26 12:08:06+01000\n"
 "PO-Revision-Date: 2021-07-29 16:59:59+01000\n"
-"Language: ru\n"
+"Language: en\n"
 "Plural-Forms: nplurals=2; plural=(n != 1)\n"
 
 #: R\mroc.b.R
 msgid " [{prc}% CI]"
-msgstr " [{prc}% ДИ]"
+msgstr ""
 
 #: R\mcor.b.R
 msgid "{ciWidth}% CI Lower"
-msgstr "{ciWidth}% нижняя граница ДИ"
+msgstr ""
 
 #: R\mcor.b.R
 msgid "{ciWidth}% CI Upper"
@@ -22,16 +22,16 @@ msgstr ""
 
 #: R\mcor.b.R
 msgid "* p < .05, ** p < .01, *** p < .001, one-tailed"
-msgstr "* p < .05, ** p < .01, *** p < .001, однохвостный"
+msgstr ""
 
 #: mCOR/ui[4][0]/tables/ci/ciWidth.suffix
 #: mROC/ui[1]/ciAUC/ciWidth.suffix
 msgid "%"
-msgstr "%"
+msgstr ""
 
 #: mCOR/options/plots.description.R
 msgid "`TRUE` or `FALSE` (default), provide a correlation matrix plot"
-msgstr "`TRUE` или `FALSE` (по умолчанию), предоставить график корреляционной матрицы"
+msgstr ""
 
 #: mCOR/options/signif/0.001.title
 msgid "< 0.001"
@@ -51,165 +51,165 @@ msgstr ""
 
 #: R\mroc.b.R
 msgid "1 - Specificity"
-msgstr "1 - Специфичность"
+msgstr ""
 
 #: R\mroc.b.R
 msgid "100 - Specificity (%)"
-msgstr "100 - Специфичность (%)"
+msgstr ""
 
 #: mCOR/results/matrix.description
 msgid "a correlation matrix table"
-msgstr "таблица корреляционной матрицы"
+msgstr ""
 
 #: mROC/options/palBrewer/Accent.title
 msgid "Accent"
-msgstr "Акцент"
+msgstr ""
 
 #: mCOR/options/clustMet.title
 msgid "Agglomeration method"
-msgstr "Метод агломерации"
+msgstr ""
 
 #: mCOR/options/signif/all.title
 msgid "All"
-msgstr "Все"
+msgstr ""
 
 #: mCOR/options/plotOrder/alphabet.title
 msgid "Alphabetical"
-msgstr "Алфавитное"
+msgstr ""
 
 #: mCOR/options/plotOrder/AOE.title
 msgid "Angular order eigenvectors"
-msgstr "Угловой порядок собственных векторов"
+msgstr ""
 
 #: mCOR/options/clustMet/average.title
 msgid "Average Linkage (UPGMA)"
-msgstr "Средней связи"
+msgstr ""
 
 #: package/datasets/BC ROC classification.name
 msgid "BC ROC classification"
-msgstr "ROC классификация клеток крови"
+msgstr ""
 
 #: mCOR/options/adjust/BH.title
 msgid "Benjamini-Hochberg (1995)"
-msgstr "Бенджамини-Хохберг (1995)"
+msgstr ""
 
 #: mCOR/options/adjust/BY.title
 msgid "Benjamini-Yekutieli (2001)"
-msgstr "Бенджамини-Иекутиели (2001)"
+msgstr ""
 
 #: mROC/options/BW.title
 msgid "Black & White"
-msgstr "Черно-Белый"
+msgstr ""
 
 #: package/datasets/BC ROC classification.description
 msgid "Blood cells multiple ROC Classification demonstration"
-msgstr "Демонстрация множественной ROC классификации клеток крови"
+msgstr ""
 
 #: mCOR/options/adjust/bonferroni.title
 msgid "Bonferroni (1961)"
-msgstr "Бонферрони (1961)"
+msgstr ""
 
 #: mCOR/options/clPos/b.title
 msgid "Bottom"
-msgstr "Внизу"
+msgstr ""
 
 #: mROC/options/palBrewer.title
 msgid "Brewer qualitative palette"
-msgstr "Категориальная палитра Брюэр"
+msgstr ""
 
 #: mCOR/options/clustMet/centroid.title
 msgid "Centroid Linkage (UPGMC)"
-msgstr "Центроидной связи"
+msgstr ""
 
 #: package/datasets/CHD Models ROC Estimation.name
 msgid "CHD Models ROC Estimation"
-msgstr "Оценка ROC моделей ИБС"
+msgstr ""
 
 #: mCOR/results/matrix.columns.content
 msgid "CI Lower"
-msgstr "ДИ нижний"
+msgstr ""
 
 #: mROC/options/ciMark.title
 msgid "CI Mark"
-msgstr "Маркер ДИ"
+msgstr ""
 
 #: mCOR/results/matrix.columns.content
 msgid "CI Upper"
-msgstr "ДИ верхний"
+msgstr ""
 
 #: mROC/options/ciWidth.title
 msgid "CI width"
-msgstr "ширина ДИ"
+msgstr ""
 
 #: mCOR/options/plotMetU/circle.title
 #: mCOR/options/plotMetL/circle.title
 msgid "Circle"
-msgstr "Круг"
+msgstr ""
 
 #: mROC/options/class.title
 #: mROC/ui[0][1].label
 msgid "Classifying variable"
-msgstr "Классифицирующая переменная"
+msgstr ""
 
 #: mROC/options/theBest/bestC.title
 msgid "Closest Best"
-msgstr "Близкая к углу"
+msgstr ""
 
 #: mROC/options/theBest/bssC.title
 msgid "Closest Best (Sp, Se)"
-msgstr "Близкая к углу (Спец, Чувств)"
+msgstr ""
 
 #: mCOR/options/numClust.title
 msgid "Clusters"
-msgstr "Кластеров"
+msgstr ""
 
 #: mCOR/options/plotMetU/color.title
 #: mCOR/options/plotMetL/color.title
 msgid "Color"
-msgstr "Цвет"
+msgstr ""
 
 #: mCOR/options/clustCol.title
 msgid "Colored Clusters"
-msgstr "Цветные кластеры"
+msgstr ""
 
 #: mCOR/options/clustMet/complete.title
 msgid "Complete Linkage"
-msgstr "Полной связи"
+msgstr ""
 
 #: mROC/results/text.title
 msgid "Conditions"
-msgstr "Условия"
+msgstr ""
 
 #: mROC/options/ciAUC.title
 #: mROC/ui[1]/ciAUC.label
 msgid "Confidence interval"
-msgstr "Доверительный интервал"
+msgstr ""
 
 #: mCOR/options/ci.title
 #: mCOR/ui[4][0]/tables/ci.label
 msgid "Confidence interval (Pearson only)"
-msgstr "Доверительный интервал (только Пирсон)"
+msgstr ""
 
 #: mCOR/options/ciWidth.title
 msgid "Confidence interval width"
-msgstr "Ширина доверительного интервала"
+msgstr ""
 
 #: mCOR/options/hyp/corr.title
 msgid "Correlated"
-msgstr "Коррелирует"
+msgstr ""
 
 #: mCOR/options/hyp/neg.title
 msgid "Correlated negatively"
-msgstr "Коррелирует отрицательно"
+msgstr ""
 
 #: mCOR/options/hyp/pos.title
 msgid "Correlated positively"
-msgstr "Коррелирует положительно"
+msgstr ""
 
 #: mCOR/options/vars.title
 #: mCOR/ui[0][0].label
 msgid "Correlating Variables"
-msgstr "Коррелирующие переменные"
+msgstr ""
 
 #: package/analyses/mCOR.title
 #: package/analyses/mCOR.menuTitle
@@ -217,56 +217,56 @@ msgstr "Коррелирующие переменные"
 #: mCOR/options.title
 #: mCOR/results.title
 msgid "Correlation clustering"
-msgstr "Кластерная корреляция"
+msgstr ""
 
 #: package/datasets/Correlation clustering.description
 msgid "Correlation Clustering demonstration"
-msgstr "Демонстрация корреляционной кластеризации"
+msgstr ""
 
 #: mCOR/ui.title
 #: mCOR/results/matrix.title
 #: mCOR/results/plot.title
 msgid "Correlation Matrix"
-msgstr "Корреляционная матрица"
+msgstr ""
 
 #: mCOR/options/tables.title
 #: mCOR/options/plots.title
 msgid "Correlation matrix"
-msgstr "Корреляционная матрица"
+msgstr ""
 
 #: mCOR/results/text.title
 msgid "Correlations"
-msgstr "Корреляции"
+msgstr ""
 
 #: mROC/options/palBrewer/Dark2.title
 msgid "Dark2"
-msgstr "Темная 2"
+msgstr ""
 
 #: mROC/options/direction.title
 msgid "Direction"
-msgstr "Направление"
+msgstr ""
 
 #: mROC/options/dotline.title
 msgid "Dotted line"
-msgstr "Пунктирная линия"
+msgstr ""
 
 #: mCOR/options/plotMetU/ellipse.title
 #: mCOR/options/plotMetL/ellipse.title
 msgid "Ellipse"
-msgstr "Эллипс"
+msgstr ""
 
 #: mCOR/options/plotMetU/empty.title
 #: mCOR/options/plotMetL/empty.title
 msgid "Emtpy"
-msgstr "Пусто"
+msgstr ""
 
 #: mCOR/options/plotOrder/FPC.title
 msgid "First principal component"
-msgstr "Первая главная компонента"
+msgstr ""
 
 #: mCOR/options/flag.title
 msgid "Flag significant correlations"
-msgstr "Отметить значимые корреляции"
+msgstr ""
 
 #: package.description
 msgid "Graphic extension of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, etc."
@@ -277,130 +277,130 @@ msgstr ""
 #: mROC/options/groups.title
 #: mROC/ui[0][2].label
 msgid "Grouping Variable"
-msgstr "Группирующая переменная"
+msgstr ""
 
 #: R\mcor.b.R
 msgid "Hₐ is negative correlation"
-msgstr "Гипотеза - отрицательная корреляция"
+msgstr ""
 
 #: R\mcor.b.R
 msgid "Hₐ is positive correlation"
-msgstr "Гипотеза - положительная корреляция"
+msgstr ""
 
 #: package/datasets/HI ROC classification.description
 msgid "Healthy/Ill ROC Classification demonstration"
-msgstr "Демонстрация ROC классификации Здоровые/Больные"
+msgstr ""
 
 #: package/datasets/HI ROC classification.name
 msgid "HI ROC classification"
-msgstr "ROC классификация Здоровые/Больные"
+msgstr ""
 
 #: mCOR/options/hclust.title
 msgid "Hierarchical clustering"
-msgstr "Иерархическая кластеризация"
+msgstr ""
 
 #: mCOR/results/treeplot.title
 msgid "Hierarchical clustering tree"
-msgstr "Дерево иерархической кластеризации"
+msgstr ""
 
 #: mCOR/options/adjust/hochberg.title
 msgid "Hochberg (1988)"
-msgstr "Хохберг (1988)"
+msgstr ""
 
 #: mCOR/options/adjust/holm.title
 msgid "Holm (1979)"
-msgstr "Холм (1979)"
+msgstr ""
 
 #: mCOR/options/adjust/hommel.title
 msgid "Hommel (1988)"
-msgstr "Хоммель (1988)"
+msgstr ""
 
 #: mCOR/options/hyp.title
 msgid "Hypothesis"
-msgstr "Гипотеза"
+msgstr ""
 
 #: mROC/options/perc.title
 msgid "In percent"
-msgstr "В процентах"
+msgstr ""
 
 #: mCOR/options/clustMat.title
 #: mCOR/results/rplots.title
 msgid "Intercluster Matrices"
-msgstr "Межкластерные матрицы"
+msgstr ""
 
 #: mCOR/ui[4][0]/tables/ci/ciWidth.label
 #: mROC/ui[1]/ciAUC/ciWidth.label
 msgid "Interval"
-msgstr "Интервал"
+msgstr ""
 
 #: package/analyses/mCOR.menuGroup
 #: package/analyses/mROC.menuGroup
 #: mCOR/options.menuGroup
 #: mROC/options.menuGroup
 msgid "jYS"
-msgstr "jЮС"
+msgstr ""
 
 #: package.title
 msgid "jYS Extended Functions"
-msgstr "jЮС расширенные функции"
+msgstr ""
 
 #: mCOR/options/method/kendall.title
 msgid "Kendall (τ)"
-msgstr "Кендал (τ)"
+msgstr ""
 
 #: mCOR/results/matrix.columns.title
 #: mCOR/results/matrix.columns.content
 msgid "Kendall Tau"
-msgstr "Тау Кендалла"
+msgstr ""
 
 #: mROC/options/legacy.title
 msgid "Legacy format of Specificity axis"
-msgstr "Устаревший формат оси специфичности"
+msgstr ""
 
 #: mROC/options/legBox.title
 msgid "Legend Box"
-msgstr "Фон легенды"
+msgstr ""
 
 #: mROC/options/lwd.title
 msgid "Line width"
-msgstr "Толщина линии"
+msgstr ""
 
 #: mCOR/options/plotMetL.title
 msgid "Lower part"
-msgstr "Нижняя часть"
+msgstr ""
 
 #: mCOR/options/clustMan.title
 msgid "Manual Clusters"
-msgstr "Кластеры вручную"
+msgstr ""
 
 #: mROC/options/mAst.title
 msgid "Mark significance *<0.05, **<0.01, ***<0.001"
-msgstr "Маркер значимости *<0.05, **<0.01, ***<0.001"
+msgstr ""
 
 #: R\mcor.b.R
 msgid "Matrix #{i}"
-msgstr "Матрица №{i}"
+msgstr ""
 
 #: mCOR/options/clustMet/mcquitty.title
 msgid "McQuitty Linkage (WPGMA)"
-msgstr "МакКитти связи"
+msgstr ""
 
 #: mCOR/options/clustMet/median.title
 msgid "Median Linkage"
-msgstr "Медианной связи"
+msgstr ""
 
 #: mCOR/options/method.title
 msgid "Method"
-msgstr "Метод"
+msgstr ""
 
 #: mCOR/options/adjust.title
 msgid "Multiple comparision correction"
-msgstr "Коррекция множественного сравнения"
+msgstr ""
 
 #: mCOR/options/n.title
 #: mCOR/results/matrix.columns.content
 msgid "N"
-msgstr "N"
+msgstr ""
 
 #: mCOR/options/adjust/none.title
 #: mCOR/options/clPos/n.title
@@ -408,81 +408,81 @@ msgstr "N"
 #: mROC/options/cmpDeLong/none.title
 #: mROC/options/palBrewer/none.title
 msgid "None"
-msgstr "Нет"
+msgstr ""
 
 #: mCOR/options/plotMetU/number.title
 #: mCOR/options/plotMetL/number.title
 msgid "Number"
-msgstr "Число"
+msgstr ""
 
 #: mCOR/options/plotOrder/original.title
 msgid "Original"
-msgstr "Оригинальное"
+msgstr ""
 
 #: mCOR/options/pval.title
 #: mCOR/results/matrix.columns.content
 msgid "p-value"
-msgstr "p-значение"
+msgstr ""
 
 #: mROC/options/palBrewer/Paired.title
 msgid "Paired"
-msgstr "Парная"
+msgstr ""
 
 #: mROC/options/palBrewer/Pastel1.title
 msgid "Pastel1"
-msgstr "Пастель"
+msgstr ""
 
 #: mCOR/options/method/pearson.title
 msgid "Pearson (r)"
-msgstr "Пирсон (r)"
+msgstr ""
 
 #: R\mcor.b.R
 msgid "Pearson correlation cannot be calculated for non-numeric values"
-msgstr "Корреляция Пирсона не может быть рассчитана для нечисловых значений."
+msgstr ""
 
 #: mCOR/results/matrix.columns.title
 #: mCOR/results/matrix.columns.content
 msgid "Pearson's r"
-msgstr "r Пирсона"
+msgstr ""
 
 #: mCOR/options/plotMetU/pie.title
 #: mCOR/options/plotMetL/pie.title
 msgid "Pie"
-msgstr "Пицца"
+msgstr ""
 
 #: mCOR/ui[5].label
 msgid "Plots"
-msgstr "Графики"
+msgstr ""
 
 #: mROC/options/polygon.title
 msgid "Polygon"
-msgstr "Полигон"
+msgstr ""
 
 #: mROC/options/vars.title
 #: mROC/ui[0][0].label
 msgid "Predictors"
-msgstr "Предикторы"
+msgstr ""
 
 #: mCOR/options/plots.description.ui
 msgid "provide a correlation matrix plot."
-msgstr "предоставить график корреляционной матрицы."
+msgstr ""
 
 #: mCOR/options/plotOrder.title
 msgid "Reorder"
-msgstr "Перестроение"
+msgstr ""
 
 #: mCOR/options/clPos/r.title
 msgid "Right"
-msgstr "Справа"
+msgstr ""
 
 #: mROC/options/sepROC.title
 #: mROC/results/plots.title
 msgid "ROC by groups"
-msgstr "ROC по группам"
+msgstr ""
 
 #: mROC/results/plot.title
 msgid "ROC by predictors"
-msgstr "ROC по предикторам"
+msgstr ""
 
 #: package/analyses/mROC.title
 #: package/analyses/mROC.menuTitle
@@ -490,140 +490,140 @@ msgstr "ROC по предикторам"
 #: mROC/ui.title
 #: mROC/results.title
 msgid "ROC classification"
-msgstr "ROC классификация"
+msgstr ""
 
 #: mROC/options/cmpDeLong.title
 msgid "ROC comparision"
-msgstr "Сравнение ROC"
+msgstr ""
 
 #: package/datasets/CHD Models ROC Estimation.description
 msgid "ROC estimation for binomial logistis models demonstration"
-msgstr "Оценка ROC в демонстрации биномиальных логистических моделей"
+msgstr ""
 
 #: mROC/ui[1].label
 msgid "ROC graphs"
-msgstr "ROC графики"
+msgstr ""
 
 #: mCOR/options/clPos.title
 msgid "Scale position"
-msgstr "Позиция шкалы"
+msgstr ""
 
 #: package/datasets/SDI ROC classification.name
 msgid "SDI ROC classification"
-msgstr "ИТС ROC классификация"
+msgstr ""
 
 #: mCOR/options/selgroup.title
 #: mROC/options/selgroup.title
 msgid "Select group"
-msgstr "Выберите группу"
+msgstr ""
 
 #: R\mroc.b.R
 msgid "Sensitivity"
-msgstr "Чувствительность"
+msgstr ""
 
 #: R\mroc.b.R
 msgid "Sensitivity (%)"
-msgstr "Чувствительность (%)"
+msgstr ""
 
 #: mROC/options/palBrewer/Set1.title
 msgid "Set1"
-msgstr "Набор 1"
+msgstr ""
 
 #: mROC/options/palBrewer/Set2.title
 msgid "Set2"
-msgstr "Набор 2"
+msgstr ""
 
 #: mROC/options/palBrewer/Set3.title
 msgid "Set3"
-msgstr "Набор 3"
+msgstr ""
 
 #: mCOR/options/plotMetU/shade.title
 #: mCOR/options/plotMetL/shade.title
 msgid "Shade"
-msgstr "Тень"
+msgstr ""
 
 #: mCOR/options/signif.title
 msgid "Significance"
-msgstr "Значимость"
+msgstr ""
 
 #: R\mcor.b.R
 msgid "Simultaneous multiple correlation comparisons using {n} method"
-msgstr "Одновременные множественные корреляционные сравнения с использованием метода {n}"
+msgstr ""
 
 #: mCOR/options/clustMet/single.title
 msgid "Single Linkage"
-msgstr "Одиночной связи"
+msgstr ""
 
 #: mCOR/options/method/spearman.title
 msgid "Spearman (ρ)"
-msgstr "Спирман (ρ)"
+msgstr ""
 
 #: mCOR/results/matrix.columns.title
 #: mCOR/results/matrix.columns.content
 msgid "Spearman's Rho"
-msgstr "Ро Спирмена"
+msgstr ""
 
 #: R\mroc.b.R
 msgid "Specificity"
-msgstr "Специфичность"
+msgstr ""
 
 #: R\mroc.b.R
 msgid "Specificity (%)"
-msgstr "Специфичность (%)"
+msgstr ""
 
 #: package/datasets/SDI ROC classification.description
 msgid "Sperm Deformity Index ROC Classification demonstration"
-msgstr "Демонстрация ROC классификации индекса деформации сперматозоидов"
+msgstr ""
 
 #: mROC/options/splitROC.title
 msgid "Split curves"
-msgstr "Разделить кривые"
+msgstr ""
 
 #: mROC/results/splots.title
 msgid "Splitted ROC by predictors"
-msgstr "Раздельный ROC по предикторам"
+msgstr ""
 
 #: mCOR/options/plotMetU/square.title
 #: mCOR/options/plotMetL/square.title
 msgid "Square"
-msgstr "Квадрат"
+msgstr ""
 
 #: mROC/options/cmpDeLong/succ.title
 msgid "Successively"
-msgstr "Последовательно"
+msgstr ""
 
 #: mCOR/ui[4].label
 msgid "Tables"
-msgstr "Таблицы"
+msgstr ""
 
 #: mROC/options/theBest.title
 msgid "The Best point on ROC"
-msgstr "Лучшая точка ROC"
+msgstr ""
 
 #: mCOR/options/plotMetU.title
 msgid "Upper part"
-msgstr "Верхняя часть"
+msgstr ""
 
 #: mCOR/ui[5][0]/plots/clustMan.suffix
 msgid "variable numbers by commas"
-msgstr "номера переменных через запятую"
+msgstr ""
 
 #: mCOR/options/clustMet/ward.D2.title
 msgid "Ward´s D2 Linkage"
-msgstr "Уорд Д2 связи"
+msgstr ""
 
 #: mCOR/options/clustMet/ward.D.title
 msgid "Ward´s Linkage"
-msgstr "Уорд связи"
+msgstr ""
 
 #: mROC/options/cmpDeLong/wcontr.title
 msgid "With control"
-msgstr "С контролем"
+msgstr ""
 
 #: mROC/options/theBest/bestY.title
 msgid "Youden Best"
-msgstr "По Юдену"
+msgstr ""
 
 #: mROC/options/theBest/bssY.title
 msgid "Youden Best (Sp, Se)"
-msgstr "По Юдену (Спец, Чувств)"
+msgstr ""

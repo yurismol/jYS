@@ -229,7 +229,6 @@ mROCResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     inherit = jmvcore::Group,
     active = list(
         text = function() private$.items[["text"]],
-        pre = function() private$.items[["pre"]],
         plot = function() private$.items[["plot"]],
         plots = function() private$.items[["plots"]],
         splots = function() private$.items[["splots"]]),
@@ -246,10 +245,6 @@ mROCResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 title="Conditions",
                 clearWith=list(
                     "groups")))
-            self$add(jmvcore::Preformatted$new(
-                options=options,
-                name="pre",
-                title="ROC tables"))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot",
@@ -334,7 +329,6 @@ mROCBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$text} \tab \tab \tab \tab \tab a html \cr
-#'   \code{results$pre} \tab \tab \tab \tab \tab a preformatted \cr
 #'   \code{results$plot} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$plots} \tab \tab \tab \tab \tab an array of images \cr
 #'   \code{results$splots} \tab \tab \tab \tab \tab an array of images \cr
