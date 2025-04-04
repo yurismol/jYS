@@ -19,6 +19,9 @@ datasets:
   - name: BC ROC classification
     path: ROC_BLOOD.omv
     description: Blood cells multiple ROC Classification demonstration
+  - name: Blood Cells Models ROC Estimation
+    path: LOG_BLOOD.omv
+    description: ROC estimation for binomial logistis models demonstration
   - name: SDI ROC classification
     path: ROC_SDI.omv
     description: Sperm Deformity Index ROC Classification demonstration
@@ -26,7 +29,7 @@ datasets:
     path: ROC_HI.omv
     description: Healthy/Ill ROC Classification demonstration
   - name: CHD Models ROC Estimation
-    path: CHD.omv
+    path: LOG_CHD.omv
     description: ROC estimation for binomial logistis models demonstration
 analyses:
   - title: Correlation clustering
