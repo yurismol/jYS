@@ -14,20 +14,20 @@ msgstr " [{prc}% ДИ]"
 
 #: R\mcor.b.R
 msgid "{ciWidth}% CI Lower"
-msgstr "{ciWidth}% нижняя граница ДИ"
+msgstr "{ciWidth}% ДИ низ"
 
 #: R\mcor.b.R
 msgid "{ciWidth}% CI Upper"
-msgstr ""
+msgstr "{ciWidth}% ДИ верх"
 
 #: R\mcor.b.R
 msgid "* p < .05, ** p < .01, *** p < .001, one-tailed"
-msgstr "* p < .05, ** p < .01, *** p < .001, однохвостный"
+msgstr "* p < .05, ** p < .01, *** p < .001, односторонний"
 
 #: mCOR/ui[4][0]/tables/ci/ciWidth.suffix
 #: mROC/ui[1]/ciAUC/ciWidth.suffix
 msgid "%"
-msgstr "%"
+msgstr ""
 
 #: mCOR/options/plots.description.R
 msgid "`TRUE` or `FALSE` (default), provide a correlation matrix plot"
@@ -85,6 +85,10 @@ msgstr "Угловой порядок собственных векторов"
 msgid "Average Linkage (UPGMA)"
 msgstr "Средней связи"
 
+#: package/datasets/BC Models ROC Estimation.name
+msgid "BC Models ROC Estimation"
+msgstr "ROC оценка моделей клеток крови"
+
 #: package/datasets/BC ROC classification.name
 msgid "BC ROC classification"
 msgstr "ROC классификация клеток крови"
@@ -123,7 +127,7 @@ msgstr "Центроидной связи"
 
 #: package/datasets/CHD Models ROC Estimation.name
 msgid "CHD Models ROC Estimation"
-msgstr "Оценка ROC моделей ИБС"
+msgstr "ROC оценка моделей ИБС"
 
 #: mCOR/results/matrix.columns.content
 msgid "CI Lower"
@@ -269,8 +273,8 @@ msgid "Flag significant correlations"
 msgstr "Отметить значимые корреляции"
 
 #: package.description
-msgid "Graphic extension of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, etc."
-msgstr "Графическое расширение функционала популярных методов анализа данных: кластерное дерево коррелирующих переменных, многофакторная адаптивная корреляционная матрица, многомерные кривые ROC-классификации и т. д."
+msgid "Graphic extensions of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, etc."
+msgstr "Графические расширения функционала популярных методов анализа данных: кластерное дерево коррелирующих переменных, многофакторная адаптивная корреляционная матрица, многомерные кривые ROC-классификации и т. д."
 
 #: mCOR/options/group.title
 #: mCOR/ui[0][1].label
@@ -496,6 +500,7 @@ msgstr "ROC классификация"
 msgid "ROC comparision"
 msgstr "Сравнение ROC"
 
+#: package/datasets/BC Models ROC Estimation.description
 #: package/datasets/CHD Models ROC Estimation.description
 msgid "ROC estimation for binomial logistis models demonstration"
 msgstr "Оценка ROC в демонстрации биномиальных логистических моделей"

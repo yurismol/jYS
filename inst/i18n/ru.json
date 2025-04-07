@@ -11,16 +11,16 @@
                 " [{prc}% ДИ]"
             ],
             "{ciWidth}% CI Lower": [
-                "{ciWidth}% нижняя граница ДИ"
+                "{ciWidth}% ДИ низ"
             ],
             "{ciWidth}% CI Upper": [
-                ""
+                "{ciWidth}% ДИ верх"
             ],
             "* p < .05, ** p < .01, *** p < .001, one-tailed": [
-                "* p < .05, ** p < .01, *** p < .001, однохвостный"
+                "* p < .05, ** p < .01, *** p < .001, односторонний"
             ],
             "%": [
-                "%"
+                ""
             ],
             "`TRUE` or `FALSE` (default), provide a correlation matrix plot": [
                 "`TRUE` или `FALSE` (по умолчанию), предоставить график корреляционной матрицы"
@@ -64,6 +64,9 @@
             "Average Linkage (UPGMA)": [
                 "Средней связи"
             ],
+            "BC Models ROC Estimation": [
+                "ROC оценка моделей клеток крови"
+            ],
             "BC ROC classification": [
                 "ROC классификация клеток крови"
             ],
@@ -92,7 +95,7 @@
                 "Центроидной связи"
             ],
             "CHD Models ROC Estimation": [
-                "Оценка ROC моделей ИБС"
+                "ROC оценка моделей ИБС"
             ],
             "CI Lower": [
                 "ДИ нижний"
@@ -190,8 +193,8 @@
             "Flag significant correlations": [
                 "Отметить значимые корреляции"
             ],
-            "Graphic extension of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, etc.": [
-                "Графическое расширение функционала популярных методов анализа данных: кластерное дерево коррелирующих переменных, многофакторная адаптивная корреляционная матрица, многомерные кривые ROC-классификации и т. д."
+            "Graphic extensions of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, etc.": [
+                "Графические расширения функционала популярных методов анализа данных: кластерное дерево коррелирующих переменных, многофакторная адаптивная корреляционная матрица, многомерные кривые ROC-классификации и т. д."
             ],
             "Grouping Variable": [
                 "Группирующая переменная"

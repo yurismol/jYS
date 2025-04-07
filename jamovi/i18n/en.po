@@ -85,6 +85,10 @@ msgstr ""
 msgid "Average Linkage (UPGMA)"
 msgstr ""
 
+#: package/datasets/BC Models ROC Estimation.name
+msgid "BC Models ROC Estimation"
+msgstr ""
+
 #: package/datasets/BC ROC classification.name
 msgid "BC ROC classification"
 msgstr ""
@@ -269,7 +273,7 @@ msgid "Flag significant correlations"
 msgstr ""
 
 #: package.description
-msgid "Graphic extension of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, etc."
+msgid "Graphic extensions of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, etc."
 msgstr ""
 
 #: mCOR/options/group.title
@@ -496,6 +500,7 @@ msgstr ""
 msgid "ROC comparision"
 msgstr ""
 
+#: package/datasets/BC Models ROC Estimation.description
 #: package/datasets/CHD Models ROC Estimation.description
 msgid "ROC estimation for binomial logistis models demonstration"
 msgstr ""

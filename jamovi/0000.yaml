@@ -9,25 +9,25 @@ maintainer: Yuri Smolyakov <smolyakov@rambler.ru>
 date: '2025-04-02'
 type: R
 description: >
-  Graphic extension of the functionality of popular data analysis methods:
+  Graphic extensions of the functionality of popular data analysis methods:
   cluster tree of correlating variables, multifactor adaptive correlation
   matrix, multidimensional ROC classification curves, etc.
 datasets:
   - name: Correlation clustering
     path: COR_BLOOD.omv
     description: Correlation Clustering demonstration
-  - name: BC ROC classification
-    path: ROC_BLOOD.omv
-    description: Blood cells multiple ROC Classification demonstration
-  - name: Blood Cells Models ROC Estimation
-    path: LOG_BLOOD.omv
-    description: ROC estimation for binomial logistis models demonstration
   - name: SDI ROC classification
     path: ROC_SDI.omv
     description: Sperm Deformity Index ROC Classification demonstration
   - name: HI ROC classification
     path: ROC_HI.omv
     description: Healthy/Ill ROC Classification demonstration
+  - name: BC ROC classification
+    path: ROC_BLOOD.omv
+    description: Blood cells multiple ROC Classification demonstration
+  - name: BC Models ROC Estimation
+    path: LOG_BLOOD.omv
+    description: ROC estimation for binomial logistis models demonstration
   - name: CHD Models ROC Estimation
     path: LOG_CHD.omv
     description: ROC estimation for binomial logistis models demonstration

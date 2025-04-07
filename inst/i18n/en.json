@@ -64,6 +64,9 @@
             "Average Linkage (UPGMA)": [
                 ""
             ],
+            "BC Models ROC Estimation": [
+                ""
+            ],
             "BC ROC classification": [
                 ""
             ],
@@ -190,7 +193,7 @@
             "Flag significant correlations": [
                 ""
             ],
-            "Graphic extension of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, etc.": [
+            "Graphic extensions of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, etc.": [
                 ""
             ],
             "Grouping Variable": [
