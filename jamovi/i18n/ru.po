@@ -274,7 +274,7 @@ msgstr "Отметить значимые корреляции"
 
 #: package.description
 msgid "Graphic extensions of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, etc."
-msgstr "Графические расширения функционала популярных методов анализа данных: кластерное дерево коррелирующих переменных, многофакторная адаптивная корреляционная матрица, многомерные кривые ROC-классификации и т. д."
+msgstr "Графические расширения функционала популярных методов анализа данных: кластерное дерево коррелирующих переменных, многофакторная адаптивная корреляционная матрица, многомерные кривые ROC-классификации и др."
 
 #: mCOR/options/group.title
 #: mCOR/ui[0][1].label
@@ -442,7 +442,7 @@ msgstr "Пирсон (r)"
 
 #: R\mcor.b.R
 msgid "Pearson correlation cannot be calculated for non-numeric values"
-msgstr "Корреляция Пирсона не может быть рассчитана для нечисловых значений."
+msgstr "Корреляция Пирсона не может быть рассчитана для нечисловых значений"
 
 #: mCOR/results/matrix.columns.title
 #: mCOR/results/matrix.columns.content
