@@ -4,7 +4,7 @@ Title: jYS Extended Functions
 Version: 1.0.4
 Author: Yuri Smolyakov
 Maintainer: Yuri Smolyakov <smolyakov@rambler.ru>
-Description:   Graphic extension of the functionality of popular data analysis methods:
+Description:   Graphic extensions of the functionality of popular data analysis methods:
   cluster tree of correlating variables, multifactor adaptive correlation
   matrix, multidimensional ROC classification curves, etc.
 License: GPL (>= 2+)

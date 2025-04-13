@@ -6,6 +6,7 @@ mROCClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
     inherit = mROCBase,
     private = list(
       .init=function() {
+          if (!is.null(self$options$class)) private$.errorCheck()
 	  if (grepl("Russian", Sys.getlocale(), fixed=TRUE)) options(OutDec=",")
       },
 
@@ -13,6 +14,7 @@ mROCClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 	  vars  <- self$options$vars
 	  nVars <- length(vars)
           dat   <- data.frame(self$data, check.names=FALSE)
+          private$.errorCheck()
           for (var in vars) {
             image <- self$results$plots$get(key=var)
             image$setState(list(data=dat))
@@ -99,8 +101,12 @@ mROCClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 	    rci <- pROC::ci(roc, conf.level=self$options$ciWidth/100)
 
 	    AUC <- rbind(AUC, c(rci))
+	    l1  <- substr(lev[1],1,1); l2  <- substr(lev[2],1,1)
+	    if (l1==l2) {
+	     l1  <- substr(lev[1],1,2); l2  <- substr(lev[2],1,2)
+	    }
 	    DIR <- rbind(DIR, ifelse(self$options$direction,
-		paste(", ", substr(lev[1],1,1), roc$direction, substr(lev[2],1,1), sep=""),""))
+		paste(", ", l1, roc$direction, l2, sep=""),""))
 
             if (dL!="none") {
               if (add) {
@@ -194,6 +200,21 @@ mROCClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
 	  print(p)
 	  return(TRUE)
+      },
+
+      .errorCheck = function() {
+          class  <- self$options$class
+          column <- self$data[[class]]
+
+          if (length(levels(column)) != 2) {
+            jmvcore::reject(
+              jmvcore::format(
+                .("The classifying variable '{}' does not have exactly two levels; ROC classification can only be performed on classifying variables with two levels."),
+                  class
+                 ),
+              code=''
+            )
+          }
       },
 
       .asterisk=function(pval) {

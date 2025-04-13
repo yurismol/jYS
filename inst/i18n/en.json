@@ -421,6 +421,9 @@
             "The Best point on ROC": [
                 ""
             ],
+            "The classifying variable '{}' does not have exactly two levels; ROC classification can only be performed on classifying variables with two levels.": [
+                ""
+            ],
             "Upper part": [
                 ""
             ],

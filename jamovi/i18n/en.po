@@ -605,6 +605,10 @@ msgstr ""
 msgid "The Best point on ROC"
 msgstr ""
 
+#: R\mroc.b.R
+msgid "The classifying variable '{}' does not have exactly two levels; ROC classification can only be performed on classifying variables with two levels."
+msgstr ""
+
 #: mCOR/options/plotMetU.title
 msgid "Upper part"
 msgstr ""

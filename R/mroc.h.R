@@ -10,7 +10,7 @@ mROCOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             class = NULL,
             groups = NULL,
             selgroup = NULL,
-            theBest = "none",
+            theBest = "bssY",
             cmpDeLong = "none",
             mAst = FALSE,
             ciAUC = FALSE,
@@ -73,7 +73,7 @@ mROCOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "bssY",
                     "bestC",
                     "bssC"),
-                default="none")
+                default="bssY")
             private$..cmpDeLong <- jmvcore::OptionList$new(
                 "cmpDeLong",
                 cmpDeLong,
@@ -341,7 +341,7 @@ mROC <- function(
     class,
     groups,
     selgroup,
-    theBest = "none",
+    theBest = "bssY",
     cmpDeLong = "none",
     mAst = FALSE,
     ciAUC = FALSE,

@@ -194,7 +194,7 @@
                 "Отметить значимые корреляции"
             ],
             "Graphic extensions of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, etc.": [
-                "Графические расширения функционала популярных методов анализа данных: кластерное дерево коррелирующих переменных, многофакторная адаптивная корреляционная матрица, многомерные кривые ROC-классификации и т. д."
+                "Графические расширения функционала популярных методов анализа данных: кластерное дерево коррелирующих переменных, многофакторная адаптивная корреляционная матрица, многомерные кривые ROC-классификации и др."
             ],
             "Grouping Variable": [
                 "Группирующая переменная"
@@ -308,7 +308,7 @@
                 "Пирсон (r)"
             ],
             "Pearson correlation cannot be calculated for non-numeric values": [
-                "Корреляция Пирсона не может быть рассчитана для нечисловых значений."
+                "Корреляция Пирсона не может быть рассчитана для нечисловых значений"
             ],
             "Pearson's r": [
                 "r Пирсона"
@@ -420,6 +420,9 @@
             ],
             "The Best point on ROC": [
                 "Лучшая точка ROC"
+            ],
+            "The classifying variable '{}' does not have exactly two levels; ROC classification can only be performed on classifying variables with two levels.": [
+                "Классифицирующая переменная '{}' не имеет двух уровней; ROC классификация может быть выполнена только для классифицирующих переменных с двумя уровнями."
             ],
             "Upper part": [
                 "Верхняя часть"

@@ -57,7 +57,7 @@ options:
           name:  bestC
         - title: Closest Best (Sp, Se)
           name:  bssC
-      default: none
+      default: bssY
 
     - name: cmpDeLong
       title: ROC comparision
