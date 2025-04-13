@@ -6,7 +6,7 @@ mROCClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
     inherit = mROCBase,
     private = list(
       .init=function() {
-          if (!is.null(self$options$class)) private$.errorCheck()
+          private$.errorCheck()
 	  if (grepl("Russian", Sys.getlocale(), fixed=TRUE)) options(OutDec=",")
       },
 
@@ -203,6 +203,7 @@ mROCClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
       },
 
       .errorCheck = function() {
+          if (is.null(self$options$class)) return(FALSE)
           class  <- self$options$class
           column <- self$data[[class]]
 
