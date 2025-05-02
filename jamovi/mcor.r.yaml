@@ -2,6 +2,7 @@
 name:  mCOR
 title: Correlation clustering
 jrs:   '1.1'
+refs: corr
 
 items:
 #    - name:  pre

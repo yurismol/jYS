@@ -16,6 +16,9 @@
             "{ciWidth}% CI Upper": [
                 "{ciWidth}% ДИ верх"
             ],
+            "{varType} with imputed values": [
+                "{varType} с заполненными пропусками"
+            ],
             "* p < .05, ** p < .01, *** p < .001, one-tailed": [
                 "* p < .05, ** p < .01, *** p < .001, односторонний"
             ],
@@ -36,6 +39,9 @@
             ],
             "< 0.1": [
                 ""
+            ],
+            "<h2>For computation select variables and check the \"Model the missing values\"</h2>": [
+                "<h2>Для вычисления выберите переменные и активируйте флажок \"Моделирование пропущенных значений\"</h2>"
             ],
             "1 - Specificity": [
                 "1 - Специфичность"
@@ -187,6 +193,9 @@
             "Emtpy": [
                 "Пусто"
             ],
+            "Estimated out-of-bag (OOB) imputation error": [
+                "Прогноз ошибки вне-мешка (out-of-bag, OOB)"
+            ],
             "First principal component": [
                 "Первая главная компонента"
             ],
@@ -228,6 +237,15 @@
             ],
             "Hypothesis": [
                 "Гипотеза"
+            ],
+            "imputed": [
+                "мод"
+            ],
+            "Imputed misses": [
+                "Заполненные пропуски"
+            ],
+            "Imputing Variables": [
+                "Моделируемые переменные"
             ],
             "In percent": [
                 "В процентах"
@@ -271,6 +289,9 @@
             "Matrix #{i}": [
                 "Матрица №{i}"
             ],
+            "Maximum number of iterations": [
+                "Максимальное число итераций"
+            ],
             "McQuitty Linkage (WPGMA)": [
                 "МакКитти связи"
             ],
@@ -280,17 +301,44 @@
             "Method": [
                 "Метод"
             ],
+            "Minimum 3 variables (Training + Imputing) are required": [
+                "Требуется минимум 3 переменные (обучающие + моделируемые)"
+            ],
+            "Missing Values Imputation": [
+                "Моделирование пропущенных значений"
+            ],
+            "Missing values imputation using the prediction power of Random Forests": [
+                "Ввод пропущенных значений с использованием предсказательной силы метода случайных лесов"
+            ],
+            "Model by Random Forest": [
+                "Моделирование методом случайного леса"
+            ],
+            "MSE": [
+                ""
+            ],
+            "MSE - mean squared error (for Continuous variables);": [
+                "MSE - средняя квадратическая ошибка (для непрерывных переменных);"
+            ],
             "Multiple comparision correction": [
                 "Коррекция множественного сравнения"
             ],
             "N": [
                 "N"
             ],
+            "N - number of imputted values;": [
+                "N - количество смоделированных значений;"
+            ],
             "None": [
                 "Нет"
             ],
             "Number": [
                 "Число"
+            ],
+            "Number of trees to grow in each forest": [
+                "Число растущих деревьев для каждого леса"
+            ],
+            "OOB errors table": [
+                "Таблица прогнозируемых ошибок"
             ],
             "Original": [
                 "Оригинальное"
@@ -312,6 +360,12 @@
             ],
             "Pearson's r": [
                 "r Пирсона"
+            ],
+            "PFC": [
+                ""
+            ],
+            "PFC - proportion of falsely classified (for Nominal and Ordinal variables)": [
+                "PFC - доля ложно классифицированных (для номинальных и порядковых переменных)"
             ],
             "Pie": [
                 "Пицца"
@@ -424,11 +478,20 @@
             "The classifying variable '{}' does not have exactly two levels; ROC classification can only be performed on classifying variables with two levels.": [
                 "Классифицирующая переменная '{}' не имеет двух уровней; ROC классификация может быть выполнена только для классифицирующих переменных с двумя уровнями."
             ],
+            "Training Variables": [
+                "Обучающие переменные"
+            ],
             "Upper part": [
                 "Верхняя часть"
             ],
+            "Variable": [
+                "Переменная"
+            ],
             "variable numbers by commas": [
                 "номера переменных через запятую"
+            ],
+            "Wait for calculation...": [
+                "Ждите окончания расчета..."
             ],
             "Ward´s D2 Linkage": [
                 "Уорд Д2 связи"

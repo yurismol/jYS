@@ -16,6 +16,9 @@
             "{ciWidth}% CI Upper": [
                 ""
             ],
+            "{varType} with imputed values": [
+                ""
+            ],
             "* p < .05, ** p < .01, *** p < .001, one-tailed": [
                 ""
             ],
@@ -35,6 +38,9 @@
                 ""
             ],
             "< 0.1": [
+                ""
+            ],
+            "<h2>For computation select variables and check the \"Model the missing values\"</h2>": [
                 ""
             ],
             "1 - Specificity": [
@@ -187,6 +193,9 @@
             "Emtpy": [
                 ""
             ],
+            "Estimated out-of-bag (OOB) imputation error": [
+                ""
+            ],
             "First principal component": [
                 ""
             ],
@@ -227,6 +236,15 @@
                 ""
             ],
             "Hypothesis": [
+                ""
+            ],
+            "imputed": [
+                ""
+            ],
+            "Imputed misses": [
+                ""
+            ],
+            "Imputing Variables": [
                 ""
             ],
             "In percent": [
@@ -271,6 +289,9 @@
             "Matrix #{i}": [
                 ""
             ],
+            "Maximum number of iterations": [
+                ""
+            ],
             "McQuitty Linkage (WPGMA)": [
                 ""
             ],
@@ -280,16 +301,43 @@
             "Method": [
                 ""
             ],
+            "Minimum 3 variables (Training + Imputing) are required": [
+                ""
+            ],
+            "Missing Values Imputation": [
+                ""
+            ],
+            "Missing values imputation using the prediction power of Random Forests": [
+                ""
+            ],
+            "Model by Random Forest": [
+                ""
+            ],
+            "MSE": [
+                ""
+            ],
+            "MSE - mean squared error (for Continuous variables);": [
+                ""
+            ],
             "Multiple comparision correction": [
                 ""
             ],
             "N": [
                 ""
             ],
+            "N - number of imputted values;": [
+                ""
+            ],
             "None": [
                 ""
             ],
             "Number": [
+                ""
+            ],
+            "Number of trees to grow in each forest": [
+                ""
+            ],
+            "OOB errors table": [
                 ""
             ],
             "Original": [
@@ -311,6 +359,12 @@
                 ""
             ],
             "Pearson's r": [
+                ""
+            ],
+            "PFC": [
+                ""
+            ],
+            "PFC - proportion of falsely classified (for Nominal and Ordinal variables)": [
                 ""
             ],
             "Pie": [
@@ -424,10 +478,19 @@
             "The classifying variable '{}' does not have exactly two levels; ROC classification can only be performed on classifying variables with two levels.": [
                 ""
             ],
+            "Training Variables": [
+                ""
+            ],
             "Upper part": [
                 ""
             ],
+            "Variable": [
+                ""
+            ],
             "variable numbers by commas": [
+                ""
+            ],
+            "Wait for calculation...": [
                 ""
             ],
             "Ward´s D2 Linkage": [

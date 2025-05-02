@@ -20,6 +20,10 @@ msgstr ""
 msgid "{ciWidth}% CI Upper"
 msgstr ""
 
+#: R\mmf.b.R
+msgid "{varType} with imputed values"
+msgstr ""
+
 #: R\mcor.b.R
 msgid "* p < .05, ** p < .01, *** p < .001, one-tailed"
 msgstr ""
@@ -47,6 +51,10 @@ msgstr ""
 
 #: mCOR/options/signif/0.1.title
 msgid "< 0.1"
+msgstr ""
+
+#: R\mmf.b.R
+msgid "<h2>For computation select variables and check the \"Model the missing values\"</h2>"
 msgstr ""
 
 #: R\mroc.b.R
@@ -264,6 +272,10 @@ msgstr ""
 msgid "Emtpy"
 msgstr ""
 
+#: mMF/results/errors.title
+msgid "Estimated out-of-bag (OOB) imputation error"
+msgstr ""
+
 #: mCOR/options/plotOrder/FPC.title
 msgid "First principal component"
 msgstr ""
@@ -323,6 +335,19 @@ msgstr ""
 msgid "Hypothesis"
 msgstr ""
 
+#: R\mmf.b.R
+msgid "imputed"
+msgstr ""
+
+#: mMF/results/imputeOV.title
+msgid "Imputed misses"
+msgstr ""
+
+#: mMF/options/imputevar.title
+#: mMF/ui[0][1].label
+msgid "Imputing Variables"
+msgstr ""
+
 #: mROC/options/perc.title
 msgid "In percent"
 msgstr ""
@@ -339,7 +364,9 @@ msgstr ""
 
 #: package/analyses/mCOR.menuGroup
 #: package/analyses/mROC.menuGroup
+#: package/analyses/mMF.menuGroup
 #: mCOR/options.menuGroup
+#: mMF/options.menuGroup
 #: mROC/options.menuGroup
 msgid "jYS"
 msgstr ""
@@ -385,6 +412,10 @@ msgstr ""
 msgid "Matrix #{i}"
 msgstr ""
 
+#: mMF/options/maxiter.title
+msgid "Maximum number of iterations"
+msgstr ""
+
 #: mCOR/options/clustMet/mcquitty.title
 msgid "McQuitty Linkage (WPGMA)"
 msgstr ""
@@ -397,13 +428,47 @@ msgstr ""
 msgid "Method"
 msgstr ""
 
+#: R\mmf.b.R
+msgid "Minimum 3 variables (Training + Imputing) are required"
+msgstr ""
+
+#: package/analyses/mMF.title
+#: package/analyses/mMF.menuTitle
+#: package/datasets/Missing Values Imputation.name
+#: mMF/options.title
+#: mMF/ui.title
+#: mMF/results.title
+msgid "Missing Values Imputation"
+msgstr ""
+
+#: package/datasets/Missing Values Imputation.description
+msgid "Missing values imputation using the prediction power of Random Forests"
+msgstr ""
+
+#: mMF/options/imputeOV.title
+msgid "Model by Random Forest"
+msgstr ""
+
+#: mMF/results/errors.columns.title
+msgid "MSE"
+msgstr ""
+
+#: R\mmf.b.R
+msgid "MSE - mean squared error (for Continuous variables);"
+msgstr ""
+
 #: mCOR/options/adjust.title
 msgid "Multiple comparision correction"
 msgstr ""
 
 #: mCOR/options/n.title
 #: mCOR/results/matrix.columns.content
+#: mMF/results/errors.columns.title
 msgid "N"
+msgstr ""
+
+#: R\mmf.b.R
+msgid "N - number of imputted values;"
 msgstr ""
 
 #: mCOR/options/adjust/none.title
@@ -417,6 +482,14 @@ msgstr ""
 #: mCOR/options/plotMetU/number.title
 #: mCOR/options/plotMetL/number.title
 msgid "Number"
+msgstr ""
+
+#: mMF/options/ntree.title
+msgid "Number of trees to grow in each forest"
+msgstr ""
+
+#: mMF/results/errors.description
+msgid "OOB errors table"
 msgstr ""
 
 #: mCOR/options/plotOrder/original.title
@@ -447,6 +520,14 @@ msgstr ""
 #: mCOR/results/matrix.columns.title
 #: mCOR/results/matrix.columns.content
 msgid "Pearson's r"
+msgstr ""
+
+#: mMF/results/errors.columns.title
+msgid "PFC"
+msgstr ""
+
+#: R\mmf.b.R
+msgid "PFC - proportion of falsely classified (for Nominal and Ordinal variables)"
 msgstr ""
 
 #: mCOR/options/plotMetU/pie.title
@@ -609,12 +690,25 @@ msgstr ""
 msgid "The classifying variable '{}' does not have exactly two levels; ROC classification can only be performed on classifying variables with two levels."
 msgstr ""
 
+#: mMF/options/learnvar.title
+#: mMF/ui[0][0].label
+msgid "Training Variables"
+msgstr ""
+
 #: mCOR/options/plotMetU.title
 msgid "Upper part"
 msgstr ""
 
+#: mMF/results/errors.columns.title
+msgid "Variable"
+msgstr ""
+
 #: mCOR/ui[5][0]/plots/clustMan.suffix
 msgid "variable numbers by commas"
+msgstr ""
+
+#: R\mmf.b.R
+msgid "Wait for calculation..."
 msgstr ""
 
 #: mCOR/options/clustMet/ward.D2.title

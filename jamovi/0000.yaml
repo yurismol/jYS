@@ -1,7 +1,7 @@
 ---
 title: jYS Extended Functions
 name: jYS
-version: 1.0.4
+version: 1.0.5
 jms: '1.0'
 authors:
   - Yuri Smolyakov
@@ -31,6 +31,9 @@ datasets:
   - name: CHD Models ROC Estimation
     path: LOG_CHD.omv
     description: ROC estimation for binomial logistis models demonstration
+  - name: Missing Values Imputation
+    path: MF_IRIS.omv
+    description: Missing values imputation using the prediction power of Random Forests
 analyses:
   - title: Correlation clustering
     name: mCOR
@@ -42,6 +45,11 @@ analyses:
     ns: jYS
     menuGroup: jYS
     menuTitle: ROC classification
+  - title: Missing Values Imputation
+    name: mMF
+    ns: jYS
+    menuGroup: jYS
+    menuTitle: Missing Values Imputation
 usesNative: true
 minApp: 1.0.8
 

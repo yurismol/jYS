@@ -1,0 +1,36 @@
+---
+name:  mMF
+title: Missing Values Imputation
+menuGroup: jYS
+version: '1.0.5'
+jas: '1.2'
+
+options:
+    - name: data
+      type: Data
+
+    - name: learnvar
+      title: Training Variables
+      type: Variables
+      required: false
+
+    - name: imputevar
+      title: Imputing Variables
+      type: Variables
+      takeFromDataIfMissing: true
+      required: true
+
+    - name: maxiter
+      title: Maximum number of iterations
+      type: Number
+      default: 10
+
+    - name: ntree
+      title: Number of trees to grow in each forest
+      type: Number
+      default: 100
+
+    - name: imputeOV
+      title: Model by Random Forest
+      type: Output
+...

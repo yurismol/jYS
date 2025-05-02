@@ -238,7 +238,8 @@ mROCResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             super$initialize(
                 options=options,
                 name="",
-                title="ROC classification")
+                title="ROC classification",
+                refs="roc")
             self$add(jmvcore::Html$new(
                 options=options,
                 name="text",

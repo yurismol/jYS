@@ -20,6 +20,10 @@ msgstr "{ciWidth}% ДИ низ"
 msgid "{ciWidth}% CI Upper"
 msgstr "{ciWidth}% ДИ верх"
 
+#: R\mmf.b.R
+msgid "{varType} with imputed values"
+msgstr "{varType} с заполненными пропусками"
+
 #: R\mcor.b.R
 msgid "* p < .05, ** p < .01, *** p < .001, one-tailed"
 msgstr "* p < .05, ** p < .01, *** p < .001, односторонний"
@@ -48,6 +52,10 @@ msgstr ""
 #: mCOR/options/signif/0.1.title
 msgid "< 0.1"
 msgstr ""
+
+#: R\mmf.b.R
+msgid "<h2>For computation select variables and check the \"Model the missing values\"</h2>"
+msgstr "<h2>Для вычисления выберите переменные и активируйте флажок \"Моделирование пропущенных значений\"</h2>"
 
 #: R\mroc.b.R
 msgid "1 - Specificity"
@@ -264,6 +272,10 @@ msgstr "Эллипс"
 msgid "Emtpy"
 msgstr "Пусто"
 
+#: mMF/results/errors.title
+msgid "Estimated out-of-bag (OOB) imputation error"
+msgstr "Прогноз ошибки вне-мешка (out-of-bag, OOB)"
+
 #: mCOR/options/plotOrder/FPC.title
 msgid "First principal component"
 msgstr "Первая главная компонента"
@@ -323,6 +335,19 @@ msgstr "Хоммель (1988)"
 msgid "Hypothesis"
 msgstr "Гипотеза"
 
+#: R\mmf.b.R
+msgid "imputed"
+msgstr "мод"
+
+#: mMF/results/imputeOV.title
+msgid "Imputed misses"
+msgstr "Заполненные пропуски"
+
+#: mMF/options/imputevar.title
+#: mMF/ui[0][1].label
+msgid "Imputing Variables"
+msgstr "Моделируемые переменные"
+
 #: mROC/options/perc.title
 msgid "In percent"
 msgstr "В процентах"
@@ -339,7 +364,9 @@ msgstr "Интервал"
 
 #: package/analyses/mCOR.menuGroup
 #: package/analyses/mROC.menuGroup
+#: package/analyses/mMF.menuGroup
 #: mCOR/options.menuGroup
+#: mMF/options.menuGroup
 #: mROC/options.menuGroup
 msgid "jYS"
 msgstr "jЮС"
@@ -385,6 +412,10 @@ msgstr "Маркер значимости *<0.05, **<0.01, ***<0.001"
 msgid "Matrix #{i}"
 msgstr "Матрица №{i}"
 
+#: mMF/options/maxiter.title
+msgid "Maximum number of iterations"
+msgstr "Максимальное число итераций"
+
 #: mCOR/options/clustMet/mcquitty.title
 msgid "McQuitty Linkage (WPGMA)"
 msgstr "МакКитти связи"
@@ -397,14 +428,48 @@ msgstr "Медианной связи"
 msgid "Method"
 msgstr "Метод"
 
+#: R\mmf.b.R
+msgid "Minimum 3 variables (Training + Imputing) are required"
+msgstr "Требуется минимум 3 переменные (обучающие + моделируемые)"
+
+#: package/analyses/mMF.title
+#: package/analyses/mMF.menuTitle
+#: package/datasets/Missing Values Imputation.name
+#: mMF/options.title
+#: mMF/ui.title
+#: mMF/results.title
+msgid "Missing Values Imputation"
+msgstr "Моделирование пропущенных значений"
+
+#: package/datasets/Missing Values Imputation.description
+msgid "Missing values imputation using the prediction power of Random Forests"
+msgstr "Ввод пропущенных значений с использованием предсказательной силы метода случайных лесов"
+
+#: mMF/options/imputeOV.title
+msgid "Model by Random Forest"
+msgstr "Моделирование методом случайного леса"
+
+#: mMF/results/errors.columns.title
+msgid "MSE"
+msgstr ""
+
+#: R\mmf.b.R
+msgid "MSE - mean squared error (for Continuous variables);"
+msgstr "MSE - средняя квадратическая ошибка (для непрерывных переменных);"
+
 #: mCOR/options/adjust.title
 msgid "Multiple comparision correction"
 msgstr "Коррекция множественного сравнения"
 
 #: mCOR/options/n.title
 #: mCOR/results/matrix.columns.content
+#: mMF/results/errors.columns.title
 msgid "N"
 msgstr "N"
+
+#: R\mmf.b.R
+msgid "N - number of imputted values;"
+msgstr "N - количество смоделированных значений;"
 
 #: mCOR/options/adjust/none.title
 #: mCOR/options/clPos/n.title
@@ -418,6 +483,14 @@ msgstr "Нет"
 #: mCOR/options/plotMetL/number.title
 msgid "Number"
 msgstr "Число"
+
+#: mMF/options/ntree.title
+msgid "Number of trees to grow in each forest"
+msgstr "Число растущих деревьев для каждого леса"
+
+#: mMF/results/errors.description
+msgid "OOB errors table"
+msgstr "Таблица прогнозируемых ошибок"
 
 #: mCOR/options/plotOrder/original.title
 msgid "Original"
@@ -448,6 +521,14 @@ msgstr "Корреляция Пирсона не может быть рассч�
 #: mCOR/results/matrix.columns.content
 msgid "Pearson's r"
 msgstr "r Пирсона"
+
+#: mMF/results/errors.columns.title
+msgid "PFC"
+msgstr ""
+
+#: R\mmf.b.R
+msgid "PFC - proportion of falsely classified (for Nominal and Ordinal variables)"
+msgstr "PFC - доля ложно классифицированных (для номинальных и порядковых переменных)"
 
 #: mCOR/options/plotMetU/pie.title
 #: mCOR/options/plotMetL/pie.title
@@ -609,13 +690,26 @@ msgstr "Лучшая точка ROC"
 msgid "The classifying variable '{}' does not have exactly two levels; ROC classification can only be performed on classifying variables with two levels."
 msgstr "Классифицирующая переменная '{}' не имеет двух уровней; ROC классификация может быть выполнена только для классифицирующих переменных с двумя уровнями."
 
+#: mMF/options/learnvar.title
+#: mMF/ui[0][0].label
+msgid "Training Variables"
+msgstr "Обучающие переменные"
+
 #: mCOR/options/plotMetU.title
 msgid "Upper part"
 msgstr "Верхняя часть"
 
+#: mMF/results/errors.columns.title
+msgid "Variable"
+msgstr "Переменная"
+
 #: mCOR/ui[5][0]/plots/clustMan.suffix
 msgid "variable numbers by commas"
 msgstr "номера переменных через запятую"
+
+#: R\mmf.b.R
+msgid "Wait for calculation..."
+msgstr "Ждите окончания расчета..."
 
 #: mCOR/options/clustMet/ward.D2.title
 msgid "Ward´s D2 Linkage"

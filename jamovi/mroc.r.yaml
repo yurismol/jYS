@@ -2,6 +2,7 @@
 name:  mROC
 title: ROC classification
 jrs:   '1.1'
+refs: roc
 
 items:
     - name: text
@@ -9,10 +10,6 @@ items:
       type:  Html
       clearWith:
           - groups
-
-#    - name:  pre
-#      title: ROC tables
-#      type:  Preformatted
 
     - name: plot
       title: ROC by predictors

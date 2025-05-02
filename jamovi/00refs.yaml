@@ -1,0 +1,43 @@
+refs:
+    mf:
+        type: 'article'
+        author: Stekhoven, D. J., Bühlmann, P.
+        year: 2012
+        title: "MissForest—non-parametric missing value imputation for mixed-type data"
+        publisher: Bioinformatics
+        volume: 28
+        issue: 1
+        pages: 112-118
+        url: https://doi.org/10.1093/bioinformatics/btr597
+
+    impr:
+        type: 'article'
+        author: Tripet, A., Eustache, E., & Tillé, Y.
+        year: 2024
+        title: "Improving Donor Imputation Using the Prediction Power of Random Forests: a Combination of SwissCheese and missForest"
+        publisher: Journal of Survey Statistics and Methodology
+        volume: 12
+        issue: 5
+        pages: 1389-1404
+        url:  https://doi.org/10.1093/jssam/smad040
+
+    roc:
+        type: 'article'
+        author: Robin, X., Turck, N., Hainard, A., Tiberti, N., Lisacek, F., Sanchez, J. C., & Müller, M.
+        year: 2011
+        title: "pROC: an open-source package for R and S+ to analyze and compare ROC curves"
+        publisher: BMC bioinformatics
+        volume: 12
+        pages: 1-8
+        url: https://doi.org/10.1186/1471-2105-12-77
+
+    corr:
+        type: 'article'
+        author: Wei, T., Simko, V., Levy, M., Xie, Y., Jin, Y., & Zemla, J. 
+        year: 2017
+        title: "Package ‘corrplot’"
+        publisher: Statistician
+        volume: 56
+        issue: 316
+        pages: e24
+        url: https://peerj.com/articles/9945/Supplemental_Data_S10.pdf

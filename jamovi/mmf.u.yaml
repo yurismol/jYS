@@ -1,0 +1,36 @@
+title: Missing Values Imputation
+name: mMF
+jus: '3.0'
+stage: 0
+compilerMode: tame
+children:
+  - type: VariableSupplier
+    persistentItems: false
+    stretchFactor: 1
+    children:
+      - type: TargetLayoutBox
+        label: Training Variables
+        children:
+          - type: VariablesListBox
+            name: learnvar
+            isTarget: true
+      - type: TargetLayoutBox
+        label: Imputing Variables
+        children:
+          - type: VariablesListBox
+            name: imputevar
+            isTarget: true
+  - type: LayoutBox
+    margin: large
+    children:
+      - type: Output
+        name: imputeOV
+        children:
+          - type: TextBox
+            name: maxiter
+            format: number
+            enable: (imputeOV)
+          - type: TextBox
+            name: ntree
+            format: number
+            enable: (imputeOV)
