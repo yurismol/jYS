@@ -52,4 +52,5 @@ analyses:
     menuTitle: Missing Values Imputation
 usesNative: true
 minApp: 1.0.8
+
 ...
