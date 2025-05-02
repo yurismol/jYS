@@ -1,6 +1,6 @@
 jYS
 =============
-Some usefull [Jamovi](https://www.jamovi.org/) modules for researchers
+Some usefull [Jamovi](https://www.jamovi.org/) procedures for researchers
 
 - Correlation Clastering
 
