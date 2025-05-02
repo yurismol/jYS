@@ -6,5 +6,6 @@ Some usefull [Jamovi](https://www.jamovi.org/) modules for researchers
 
 - Multi ROC Classification
 
+- Missing Values Imputation (using the prediction power of Random Forests)
 
 Author: Yuri Smolyakov
