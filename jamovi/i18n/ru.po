@@ -336,8 +336,8 @@ msgid "Hypothesis"
 msgstr "Гипотеза"
 
 #: R\mmf.b.R
-msgid "imputed"
-msgstr "мод"
+msgid "imp"
+msgstr ""
 
 #: mMF/results/imputeOV.title
 msgid "Imputed misses"
