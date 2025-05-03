@@ -64,6 +64,9 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 if (ncol(dat)<3) {
 		  jmvcore::reject(.("Minimum 3 variables (Training + Imputing) are required"), code='')
                 }
+                if (nrow(dat)<3) {
+		  jmvcore::reject(.("Empty data table"), code='')
+                }
                 mf <- missForest::missForest(dat, maxiter=self$options$maxiter,
 			 ntree=self$options$ntree, replace=TRUE,
 			 variablewise=TRUE)

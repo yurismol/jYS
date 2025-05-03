@@ -267,6 +267,10 @@ msgstr ""
 msgid "Ellipse"
 msgstr ""
 
+#: R\mmf.b.R
+msgid "Empty data table"
+msgstr ""
+
 #: mCOR/options/plotMetU/empty.title
 #: mCOR/options/plotMetL/empty.title
 msgid "Emtpy"

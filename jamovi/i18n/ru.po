@@ -267,6 +267,10 @@ msgstr "Пунктирная линия"
 msgid "Ellipse"
 msgstr "Эллипс"
 
+#: R\mmf.b.R
+msgid "Empty data table"
+msgstr "Пустая таблица данных"
+
 #: mCOR/options/plotMetU/empty.title
 #: mCOR/options/plotMetL/empty.title
 msgid "Emtpy"
