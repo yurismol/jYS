@@ -5,6 +5,7 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
     inherit = mMFBase,
     private = list(
         .init=function() {
+            #if (grepl("Russian", Sys.getlocale(), fixed=TRUE)) options(OutDec=",")
             private$.initOutputs()
             table <- self$results$errors
             table$setNote('obe', paste(
@@ -12,9 +13,6 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                           .('MSE - mean squared error (for Continuous variables);'),
                           .('PFC - proportion of falsely classified (for Nominal and Ordinal variables)')
             ))
-            #keys  <- self$options$imputevar
-            #for (i in seq_along(keys)) 
-            #  table$addRow(rowKey=keys[i], list(mse='', pfc=''))
         },
 
         .run = function() {

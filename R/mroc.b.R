@@ -7,7 +7,7 @@ mROCClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
     private = list(
       .init=function() {
           private$.errorCheck()
-	  if (grepl("Russian", Sys.getlocale(), fixed=TRUE)) options(OutDec=",")
+	  #if (grepl("Russian", Sys.getlocale(), fixed=TRUE)) options(OutDec=",")
       },
 
       .run = function() {
