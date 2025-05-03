@@ -341,7 +341,7 @@ msgstr "Гипотеза"
 
 #: R\mmf.b.R
 msgid "imp"
-msgstr ""
+msgstr "имп"
 
 #: mMF/results/imputeOV.title
 msgid "Imputed misses"
