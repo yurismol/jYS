@@ -1,0 +1,11 @@
+---
+name:  mXLS
+title: Export Data to Excel
+jrs:   '1.1'
+
+items:
+    - name:  text
+      title: Export Data to Excel
+      type:  Preformatted
+
+...

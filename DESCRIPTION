@@ -17,4 +17,6 @@ Imports:
 	corrplot,
 	pROC,
 	RColorBrewer,
-	missForest
+	missForest,
+        openxlsx,
+        tcltk

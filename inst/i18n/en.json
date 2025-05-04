@@ -10,6 +10,9 @@
             " [{prc}% CI]": [
                 ""
             ],
+            "{\"Excel files\" {.xls}}": [
+                ""
+            ],
             "{ciWidth}% CI Lower": [
                 ""
             ],
@@ -199,13 +202,19 @@
             "Estimated out-of-bag (OOB) imputation error": [
                 ""
             ],
+            "Export Data to Excel": [
+                ""
+            ],
+            "Exported Variables": [
+                ""
+            ],
             "First principal component": [
                 ""
             ],
             "Flag significant correlations": [
                 ""
             ],
-            "Graphic extensions of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, etc.": [
+            "Graphic extensions of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, missing data imputation by random forests etc.": [
                 ""
             ],
             "Grouping Variable": [
@@ -409,6 +418,9 @@
             "ROC graphs": [
                 ""
             ],
+            "Save file as": [
+                ""
+            ],
             "Scale position": [
                 ""
             ],
@@ -491,9 +503,6 @@
                 ""
             ],
             "variable numbers by commas": [
-                ""
-            ],
-            "Wait for calculation...": [
                 ""
             ],
             "Ward´s D2 Linkage": [
