@@ -12,10 +12,6 @@ msgstr ""
 msgid " [{prc}% CI]"
 msgstr " [{prc}% ДИ]"
 
-#: R\mxls.b.R
-msgid "{\"Excel files\" {.xls}}"
-msgstr "{\"Excel файлы\" {.xls}}"
-
 #: R\mcor.b.R
 msgid "{ciWidth}% CI Lower"
 msgstr "{ciWidth}% ДИ низ"
@@ -284,21 +280,6 @@ msgstr "Пусто"
 msgid "Estimated out-of-bag (OOB) imputation error"
 msgstr "Прогноз ошибки вне-мешка (out-of-bag, OOB)"
 
-#: package/analyses/mXLS.title
-#: package/analyses/mXLS.menuTitle
-#: mXLS/options.title
-#: mXLS/options/xlsexport.title
-#: mXLS/ui.title
-#: mXLS/results.title
-#: mXLS/results/text.title
-msgid "Export Data to Excel"
-msgstr "Экспорт данных в Excel"
-
-#: mXLS/options/vars.title
-#: mXLS/ui[0][0].label
-msgid "Exported Variables"
-msgstr "Экспортируемые переменные"
-
 #: mCOR/options/plotOrder/FPC.title
 msgid "First principal component"
 msgstr "Первая главная компонента"
@@ -308,8 +289,8 @@ msgid "Flag significant correlations"
 msgstr "Отметить значимые корреляции"
 
 #: package.description
-msgid "Graphic extensions of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, missing data imputation by random forests etc."
-msgstr "Графические расширения функциональности популярных методов анализа данных: кластерное дерево коррелирующих переменных, многофакторная адаптивная корреляционная матрица, многомерные кривые ROC-классификации, импутация пропущенных данных методом случайных лесов и т. д."
+msgid "Graphic extensions of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, etc."
+msgstr "Графические расширения функционала популярных методов анализа данных: кластерное дерево коррелирующих переменных, многофакторная адаптивная корреляционная матрица, многомерные кривые ROC-классификации и др."
 
 #: mCOR/options/group.title
 #: mCOR/ui[0][1].label
@@ -388,11 +369,9 @@ msgstr "Интервал"
 #: package/analyses/mCOR.menuGroup
 #: package/analyses/mROC.menuGroup
 #: package/analyses/mMF.menuGroup
-#: package/analyses/mXLS.menuGroup
 #: mCOR/options.menuGroup
 #: mMF/options.menuGroup
 #: mROC/options.menuGroup
-#: mXLS/options.menuGroup
 msgid "jYS"
 msgstr "jЮС"
 
@@ -615,10 +594,6 @@ msgstr "Оценка ROC в демонстрации биномиальных л
 msgid "ROC graphs"
 msgstr "ROC графики"
 
-#: R\mxls.b.R
-msgid "Save file as"
-msgstr "Сохранить файл как"
-
 #: mCOR/options/clPos.title
 msgid "Scale position"
 msgstr "Позиция шкалы"
@@ -735,6 +710,10 @@ msgstr "Переменная"
 #: mCOR/ui[5][0]/plots/clustMan.suffix
 msgid "variable numbers by commas"
 msgstr "номера переменных через запятую"
+
+#: R\mmf.b.R
+msgid "Wait for calculation..."
+msgstr "Ждите окончания расчета..."
 
 #: mCOR/options/clustMet/ward.D2.title
 msgid "Ward´s D2 Linkage"

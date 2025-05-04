@@ -10,9 +10,6 @@
             " [{prc}% CI]": [
                 " [{prc}% ДИ]"
             ],
-            "{\"Excel files\" {.xls}}": [
-                "{\"Excel файлы\" {.xls}}"
-            ],
             "{ciWidth}% CI Lower": [
                 "{ciWidth}% ДИ низ"
             ],
@@ -202,20 +199,14 @@
             "Estimated out-of-bag (OOB) imputation error": [
                 "Прогноз ошибки вне-мешка (out-of-bag, OOB)"
             ],
-            "Export Data to Excel": [
-                "Экспорт данных в Excel"
-            ],
-            "Exported Variables": [
-                "Экспортируемые переменные"
-            ],
             "First principal component": [
                 "Первая главная компонента"
             ],
             "Flag significant correlations": [
                 "Отметить значимые корреляции"
             ],
-            "Graphic extensions of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, missing data imputation by random forests etc.": [
-                "Графические расширения функциональности популярных методов анализа данных: кластерное дерево коррелирующих переменных, многофакторная адаптивная корреляционная матрица, многомерные кривые ROC-классификации, импутация пропущенных данных методом случайных лесов и т. д."
+            "Graphic extensions of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, etc.": [
+                "Графические расширения функционала популярных методов анализа данных: кластерное дерево коррелирующих переменных, многофакторная адаптивная корреляционная матрица, многомерные кривые ROC-классификации и др."
             ],
             "Grouping Variable": [
                 "Группирующая переменная"
@@ -418,9 +409,6 @@
             "ROC graphs": [
                 "ROC графики"
             ],
-            "Save file as": [
-                "Сохранить файл как"
-            ],
             "Scale position": [
                 "Позиция шкалы"
             ],
@@ -504,6 +492,9 @@
             ],
             "variable numbers by commas": [
                 "номера переменных через запятую"
+            ],
+            "Wait for calculation...": [
+                "Ждите окончания расчета..."
             ],
             "Ward´s D2 Linkage": [
                 "Уорд Д2 связи"

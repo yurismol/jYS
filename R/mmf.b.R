@@ -53,6 +53,7 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
         .populateOutputs=function() {
             if (self$options$imputeOV && self$results$imputeOV$isNotFilled()) {
+                #self$results$text$setContent(.("Wait for calculation..."))
                 table <- self$results$errors
                 learn <- self$options$learnvar
                 keys  <- self$options$imputevar

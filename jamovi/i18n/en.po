@@ -12,10 +12,6 @@ msgstr ""
 msgid " [{prc}% CI]"
 msgstr ""
 
-#: R\mxls.b.R
-msgid "{\"Excel files\" {.xls}}"
-msgstr ""
-
 #: R\mcor.b.R
 msgid "{ciWidth}% CI Lower"
 msgstr ""
@@ -284,21 +280,6 @@ msgstr ""
 msgid "Estimated out-of-bag (OOB) imputation error"
 msgstr ""
 
-#: package/analyses/mXLS.title
-#: package/analyses/mXLS.menuTitle
-#: mXLS/options.title
-#: mXLS/options/xlsexport.title
-#: mXLS/ui.title
-#: mXLS/results.title
-#: mXLS/results/text.title
-msgid "Export Data to Excel"
-msgstr ""
-
-#: mXLS/options/vars.title
-#: mXLS/ui[0][0].label
-msgid "Exported Variables"
-msgstr ""
-
 #: mCOR/options/plotOrder/FPC.title
 msgid "First principal component"
 msgstr ""
@@ -308,7 +289,7 @@ msgid "Flag significant correlations"
 msgstr ""
 
 #: package.description
-msgid "Graphic extensions of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, missing data imputation by random forests etc."
+msgid "Graphic extensions of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, etc."
 msgstr ""
 
 #: mCOR/options/group.title
@@ -388,11 +369,9 @@ msgstr ""
 #: package/analyses/mCOR.menuGroup
 #: package/analyses/mROC.menuGroup
 #: package/analyses/mMF.menuGroup
-#: package/analyses/mXLS.menuGroup
 #: mCOR/options.menuGroup
 #: mMF/options.menuGroup
 #: mROC/options.menuGroup
-#: mXLS/options.menuGroup
 msgid "jYS"
 msgstr ""
 
@@ -615,10 +594,6 @@ msgstr ""
 msgid "ROC graphs"
 msgstr ""
 
-#: R\mxls.b.R
-msgid "Save file as"
-msgstr ""
-
 #: mCOR/options/clPos.title
 msgid "Scale position"
 msgstr ""
@@ -734,6 +709,10 @@ msgstr ""
 
 #: mCOR/ui[5][0]/plots/clustMan.suffix
 msgid "variable numbers by commas"
+msgstr ""
+
+#: R\mmf.b.R
+msgid "Wait for calculation..."
 msgstr ""
 
 #: mCOR/options/clustMet/ward.D2.title

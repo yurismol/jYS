@@ -6,7 +6,7 @@ refs: [mf, impr]
 
 items:
     #- name:  text
-    #  title: Test
+    #  title: Estimated out-of-bag (OOB) imputation error
     #  type:  Preformatted
 
     - name: errors
