@@ -11,7 +11,8 @@ type: R
 description: >
   Graphic extensions of the functionality of popular data analysis methods:
   cluster tree of correlating variables, multifactor adaptive correlation
-  matrix, multidimensional ROC classification curves, etc.
+  matrix, multidimensional ROC classification curves, missing data imputation by
+  random forests etc.
 datasets:
   - name: Correlation clustering
     path: COR_BLOOD.omv

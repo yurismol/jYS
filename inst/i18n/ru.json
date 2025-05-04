@@ -205,8 +205,8 @@
             "Flag significant correlations": [
                 "Отметить значимые корреляции"
             ],
-            "Graphic extensions of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, etc.": [
-                "Графические расширения функционала популярных методов анализа данных: кластерное дерево коррелирующих переменных, многофакторная адаптивная корреляционная матрица, многомерные кривые ROC-классификации и др."
+            "Graphic extensions of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, missing data imputation by random forests etc.": [
+                "Графические расширения функциональности популярных методов анализа данных: кластерное дерево коррелирующих переменных, многофакторная адаптивная корреляционная матрица, многомерные кривые ROC-классификации, импутация пропущенных данных методом случайных лесов и т. д."
             ],
             "Grouping Variable": [
                 "Группирующая переменная"
