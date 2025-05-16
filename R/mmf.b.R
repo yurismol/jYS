@@ -52,6 +52,16 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
         },
 
         .populateOutputs=function() {
+            decimalplaces <- function(col) {
+              maxd = 0
+              for (x in col) {
+                if (!is.na(x) && (x%%1)!= 0) {
+                  maxd = max(maxd, nchar(strsplit(sub('0+$', '', as.character(x)), ".", fixed=TRUE)[[1]][2]))
+                }
+              }
+              return(maxd)
+            }
+
             if (self$options$imputeOV && self$results$imputeOV$isNotFilled()) {
                 #self$results$text$setContent(.("Wait for calculation..."))
                 table <- self$results$errors
@@ -84,9 +94,14 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     } else {
                       tableRow <- list(ninp=nr, mse='\u2014', pfc=err)
                     }
+                    #self$results$text$setContent(d)
                     table$setRow(rowKey=key, tableRow)
-                    self$results$imputeOV$setValues(index=i, mf$ximp[[key]])
-                    #self$results$text$setContent(keys)
+                    if (private$.columnType(d)=="continuous") {
+                      dec <- decimalplaces(d)
+                      self$results$imputeOV$setValues(index=i, round(mf$ximp[[key]], dec))
+                    } else {
+                      self$results$imputeOV$setValues(index=i, mf$ximp[[key]])
+                    }
                 }
             } else {
                 #self$results$text$setContent(.('<h2>For computation select variables and check the "Model the missing values"</h2>'))
