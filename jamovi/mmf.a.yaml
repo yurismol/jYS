@@ -2,7 +2,7 @@
 name:  mMF
 title: Missing Values Imputation
 menuGroup: jYS
-version: '1.0.5'
+version: '1.0.6'
 jas: '1.2'
 
 options:
@@ -10,12 +10,12 @@ options:
       type: Data
 
     - name: learnvar
-      title: Training Variables
+      title: Training only Variables
       type: Variables
       required: false
 
     - name: imputevar
-      title: Imputing Variables
+      title: Imputing & Training Variables
       type: Variables
       takeFromDataIfMissing: true
       required: true

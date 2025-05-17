@@ -289,7 +289,7 @@ mROCBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             super$initialize(
                 package = "jYS",
                 name = "mROC",
-                version = c(1,0,1),
+                version = c(1,0,6),
                 options = options,
                 results = mROCResults$new(options=options),
                 data = data,

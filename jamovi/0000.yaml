@@ -1,12 +1,12 @@
 ---
 title: jYS Extended Functions
 name: jYS
-version: 1.0.5
+version: 1.0.6
 jms: '1.0'
 authors:
   - Yuri Smolyakov
 maintainer: Yuri Smolyakov <smolyakov@rambler.ru>
-date: '2025-04-02'
+date: '2025-05-17'
 type: R
 description: >
   Graphic extensions of the functionality of popular data analysis methods:

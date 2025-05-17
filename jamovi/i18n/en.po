@@ -349,7 +349,7 @@ msgstr ""
 
 #: mMF/options/imputevar.title
 #: mMF/ui[0][1].label
-msgid "Imputing Variables"
+msgid "Imputing & Training Variables"
 msgstr ""
 
 #: mROC/options/perc.title
@@ -696,7 +696,7 @@ msgstr ""
 
 #: mMF/options/learnvar.title
 #: mMF/ui[0][0].label
-msgid "Training Variables"
+msgid "Training only Variables"
 msgstr ""
 
 #: mCOR/options/plotMetU.title

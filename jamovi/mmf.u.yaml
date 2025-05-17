@@ -9,13 +9,13 @@ children:
     stretchFactor: 1
     children:
       - type: TargetLayoutBox
-        label: Training Variables
+        label: Training only Variables
         children:
           - type: VariablesListBox
             name: learnvar
             isTarget: true
       - type: TargetLayoutBox
-        label: Imputing Variables
+        label: Imputing & Training Variables
         children:
           - type: VariablesListBox
             name: imputevar

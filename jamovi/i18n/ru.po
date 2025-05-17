@@ -349,8 +349,8 @@ msgstr "Заполненные пропуски"
 
 #: mMF/options/imputevar.title
 #: mMF/ui[0][1].label
-msgid "Imputing Variables"
-msgstr "Моделируемые переменные"
+msgid "Imputing & Training Variables"
+msgstr "Моделируемые и обучающие переменные"
 
 #: mROC/options/perc.title
 msgid "In percent"
@@ -696,8 +696,8 @@ msgstr "Классифицирующая переменная '{}' не имее
 
 #: mMF/options/learnvar.title
 #: mMF/ui[0][0].label
-msgid "Training Variables"
-msgstr "Обучающие переменные"
+msgid "Training only Variables"
+msgstr "Только обучающие переменные"
 
 #: mCOR/options/plotMetU.title
 msgid "Upper part"

@@ -145,10 +145,9 @@ mROCClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 			paste0(image$key, ifelse(main>"", paste0(" {", main, "}"),"")))
 
 	    bss  <- ifelse(self$options$theBest %in% c("bestY","bssY"), "youden", "closest.topleft")
-	    best <- pROC::coords(roc, "best", best.method=bss, transpose=TRUE)
+	    best <- pROC::coords(roc, "best", best.method=bss, transpose=TRUE)[1]
 
 	    p <- pROC::plot.roc(frm, data=dd, col=cols[d],
-		conf.level=self$options$ciWidth/100,
 		main=main, cex.main=1.3,
 		percent=self$options$perc,
 		lty=ifelse(self$options$dotline, d, 1),
@@ -164,20 +163,21 @@ mROCClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 		legacy.axes=self$options$legacy,
 		xlab=ifelse(roc$percent, ifelse(self$options$legacy, .("100 - Specificity (%)"), .("Specificity (%)")), ifelse(self$options$legacy, .("1 - Specificity"), .("Specificity"))),
 		ylab=ifelse(roc$percent, .("Sensitivity (%)"), .("Sensitivity")),
+		conf.level=self$options$ciWidth/100,
 		ci=(self$options$ciAUC && self$options$ciMark && self$options$theBest!="none"),
 		ci.col=cols[d],
-		of="thresholds", thresholds=best, #thresholds="best",
-		#ci.type=c("bars", "shape", "no")[2],
+		of="thresholds", thresholds=best,
+		ci.type=c("bars", "shape", "no")[2],
 		#ci.col=ifelse(ci.type=="bars", par("fg"), "gainsboro"),
 		grid=!add, add=add
 		)
 	    if (!add) add <- TRUE
 	  }
-	  if (self$options$ciAUC && split) {
+	  #if (self$options$ciAUC && split) {
 		#ciobj <- pROC::ci.se(p, specificities=seq(0, 100, 5))
 		#plot(ciobj, type="shape", col="#1c61b6AA")
 		#plot(pROC::ci(p, of="thresholds", thresholds = "best")) # add one threshold
-	  }
+	  #}
 	  if (nVars>1) {
 	      fmt <- ifelse(self$options$perc,'%#.1f','%#.3f')
 	      au <- sprintf(AUC[,2], fmt=fmt)

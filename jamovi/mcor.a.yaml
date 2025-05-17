@@ -2,7 +2,7 @@
 name:  mCOR
 title: Correlation clustering
 menuGroup: jYS
-version: '1.0.0'
+version: '1.0.6'
 jas: '1.2'
 
 options:

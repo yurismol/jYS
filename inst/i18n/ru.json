@@ -247,8 +247,8 @@
             "Imputed misses": [
                 "Заполненные пропуски"
             ],
-            "Imputing Variables": [
-                "Моделируемые переменные"
+            "Imputing & Training Variables": [
+                "Моделируемые и обучающие переменные"
             ],
             "In percent": [
                 "В процентах"
@@ -481,8 +481,8 @@
             "The classifying variable '{}' does not have exactly two levels; ROC classification can only be performed on classifying variables with two levels.": [
                 "Классифицирующая переменная '{}' не имеет двух уровней; ROC классификация может быть выполнена только для классифицирующих переменных с двумя уровнями."
             ],
-            "Training Variables": [
-                "Обучающие переменные"
+            "Training only Variables": [
+                "Только обучающие переменные"
             ],
             "Upper part": [
                 "Верхняя часть"

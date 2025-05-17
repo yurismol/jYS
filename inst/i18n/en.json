@@ -247,7 +247,7 @@
             "Imputed misses": [
                 ""
             ],
-            "Imputing Variables": [
+            "Imputing & Training Variables": [
                 ""
             ],
             "In percent": [
@@ -481,7 +481,7 @@
             "The classifying variable '{}' does not have exactly two levels; ROC classification can only be performed on classifying variables with two levels.": [
                 ""
             ],
-            "Training Variables": [
+            "Training only Variables": [
                 ""
             ],
             "Upper part": [

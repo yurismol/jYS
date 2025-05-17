@@ -2,7 +2,7 @@
 name:  mROC
 title: ROC classification
 menuGroup: jYS
-version: '1.0.1'
+version: '1.0.6'
 jas: '1.2'
 
 options:
