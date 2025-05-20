@@ -26,6 +26,9 @@ children:
       - type: Output
         name: imputeOV
         children:
+          - type: ComboBox
+            name: alg
+            enable: (imputeOV)
           - type: TextBox
             name: maxiter
             format: number
@@ -34,4 +37,12 @@ children:
             name: ntree
             format: number
             enable: (imputeOV)
-
+          - type: CheckBox
+            name: setseed
+            enable: ({return ui['imputeOV'].value()!==null;})
+            #enable: (imputeOV)
+            children:
+              - type: TextBox
+                name: seed
+                enable: (setseed)
+                format: number

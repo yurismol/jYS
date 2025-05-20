@@ -77,6 +77,10 @@ msgstr "Акцент"
 msgid "Agglomeration method"
 msgstr "Метод агломерации"
 
+#: mMF/options/alg.title
+msgid "Algoruthm"
+msgstr "Алгоритм"
+
 #: mCOR/options/signif/all.title
 msgid "All"
 msgstr "Все"
@@ -436,6 +440,10 @@ msgstr "Метод"
 msgid "Minimum 3 variables (Training + Imputing) are required"
 msgstr "Требуется минимум 3 переменные (обучающие + моделируемые)"
 
+#: mMF/options/alg/mF.title
+msgid "missForest (2012)"
+msgstr ""
+
 #: package/analyses/mMF.title
 #: package/analyses/mMF.menuTitle
 #: package/datasets/Missing Values Imputation.name
@@ -448,6 +456,10 @@ msgstr "Моделирование пропущенных значений"
 #: package/datasets/Missing Values Imputation.description
 msgid "Missing values imputation using the prediction power of Random Forests"
 msgstr "Ввод пропущенных значений с использованием предсказательной силы метода случайных лесов"
+
+#: mMF/options/alg/mR.title
+msgid "missRanger (2024)"
+msgstr ""
 
 #: mMF/options/imputeOV.title
 msgid "Model by Random Forest"
@@ -556,13 +568,25 @@ msgstr "Предикторы"
 msgid "provide a correlation matrix plot."
 msgstr "предоставить график корреляционной матрицы."
 
+#: R\mmf.b.R
+msgid "PVU - proportion of variance unexplained 1-R² (for Continuous variables);"
+msgstr "PVU — доля необъясненной дисперсии 1-R² (для непрерывных переменных);"
+
 #: mCOR/options/plotOrder.title
 msgid "Reorder"
 msgstr "Перестроение"
 
+#: mMF/options/setseed.title
+msgid "Reproductable Results"
+msgstr "Воспроизводимые результаты"
+
 #: mCOR/options/clPos/r.title
 msgid "Right"
 msgstr "Справа"
+
+#: mMF/options/seed.title
+msgid "RNG seed value"
+msgstr "Начальное значение ГСЧ"
 
 #: mROC/options/sepROC.title
 #: mROC/results/plots.title

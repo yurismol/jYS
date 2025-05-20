@@ -8,10 +8,17 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             #if (grepl("Russian", Sys.getlocale(), fixed=TRUE)) options(OutDec=",")
             private$.initOutputs()
             table <- self$results$errors
+            if (self$options$alg=="mF") {
+              table$addColumn(name="err", title="MSE", type='number')
+              contErr = .('MSE - mean squared error (for Continuous variables);')
+            } else {
+              table$addColumn(name="err", title="PVU", type='number')
+              contErr = .('PVU - proportion of variance unexplained 1-R\u00B2 (for Continuous variables);')
+            }
             table$setNote('obe', paste(
                           .('N - number of imputted values;'),
-                          .('MSE - mean squared error (for Continuous variables);'),
-                          .('PFC - proportion of falsely classified (for Nominal and Ordinal variables)')
+                          .('PFC - proportion of falsely classified (for Nominal and Ordinal variables)'),
+                          contErr
             ))
         },
 
@@ -75,32 +82,43 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 if (nrow(dat)<3) {
 		  jmvcore::reject(.("Empty data table"), code='')
                 }
-                mf <- missForest::missForest(dat, maxiter=self$options$maxiter,
-			 ntree=self$options$ntree, replace=TRUE,
-			 variablewise=TRUE)
-
                 # normalized root mean squared error (NRMSE)
                 # proportion of falsely classified (PFC)
+                if (self$options$setseed) {
+                   if (self$options$seed>0) set.seed(self$options$seed)
+                }
+                if (self$options$alg=="mF") {
+                  rf <- missForest::missForest(dat, maxiter=self$options$maxiter,
+			ntree=self$options$ntree, replace=TRUE,
+			variablewise=TRUE)
+                  oob <- rf$OOBerror
+                  names(oob) <- colnames(dat)
+                  out <- rf$ximp
+                } else {
+                  rf <- missRanger::missRanger(dat, data_only=FALSE, returnOOB=FALSE,
+			maxiter=self$options$maxiter, num.trees=self$options$ntree)	#, seed=self$options$seed
+                  oob <- rf$pred_errors[rf$best_iter,]
+                  out <- rf$data
+                }
                 self$results$imputeOV$setRowNums(rownames(self$data))
+                #self$results$text$setContent(rf$pred_errors)
 
                 keys <- table$rowKeys
                 for (i in seq_along(keys)) {
                     key <- keys[[i]]
                     d   <- dat[[key]]
-                    nr  <- length(mf$ximp[[key]]) - length(d[!is.na(d)])
-                    err <- mf$OOBerror[length(learn)+i]
-                    if (names(err) == "MSE") {
-                      tableRow <- list(ninp=nr, mse=err, pfc='\u2014')
+                    nr  <- length(out[[key]]) - length(d[!is.na(d)])
+                    if (private$.columnType(d)=="continuous") {
+                      tableRow <- list(ninp=nr, err=oob[key], pfc='\u2014')
                     } else {
-                      tableRow <- list(ninp=nr, mse='\u2014', pfc=err)
+                      tableRow <- list(ninp=nr, err='\u2014', pfc=oob[key])
                     }
-                    #self$results$text$setContent(d)
                     table$setRow(rowKey=key, tableRow)
                     if (private$.columnType(d)=="continuous") {
                       dec <- decimalplaces(d)
-                      self$results$imputeOV$setValues(index=i, round(mf$ximp[[key]], dec))
+                      self$results$imputeOV$setValues(index=i, round(out[[key]], dec))
                     } else {
-                      self$results$imputeOV$setValues(index=i, mf$ximp[[key]])
+                      self$results$imputeOV$setValues(index=i, out[[key]])
                     }
                 }
             } else {

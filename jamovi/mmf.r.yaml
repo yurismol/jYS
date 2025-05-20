@@ -24,9 +24,9 @@ items:
           - name: ninp
             title: N
             type: integer
-          - name: mse
-            title: MSE
-            type: number
+          #- name: mse
+          #  title: MSE
+          #  type: number
           - name: pfc
             title: PFC
             type: number
@@ -34,5 +34,6 @@ items:
     - name: imputeOV
       title: Imputed misses
       type: Output
+      #initInRun: true
 
 ...

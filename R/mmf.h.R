@@ -8,8 +8,11 @@ mMFOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         initialize = function(
             learnvar = NULL,
             imputevar = NULL,
+            alg = "mR",
             maxiter = 10,
-            ntree = 100, ...) {
+            ntree = 500,
+            setseed = FALSE,
+            seed = 123, ...) {
 
             super$initialize(
                 package="jYS",
@@ -26,6 +29,15 @@ mMFOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 imputevar,
                 takeFromDataIfMissing=TRUE,
                 required=TRUE)
+            private$..imputeOV <- jmvcore::OptionOutput$new(
+                "imputeOV")
+            private$..alg <- jmvcore::OptionList$new(
+                "alg",
+                alg,
+                options=list(
+                    "mF",
+                    "mR"),
+                default="mR")
             private$..maxiter <- jmvcore::OptionNumber$new(
                 "maxiter",
                 maxiter,
@@ -33,28 +45,43 @@ mMFOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             private$..ntree <- jmvcore::OptionNumber$new(
                 "ntree",
                 ntree,
-                default=100)
-            private$..imputeOV <- jmvcore::OptionOutput$new(
-                "imputeOV")
+                default=500)
+            private$..setseed <- jmvcore::OptionBool$new(
+                "setseed",
+                setseed,
+                default=FALSE)
+            private$..seed <- jmvcore::OptionNumber$new(
+                "seed",
+                seed,
+                default=123)
 
             self$.addOption(private$..learnvar)
             self$.addOption(private$..imputevar)
+            self$.addOption(private$..imputeOV)
+            self$.addOption(private$..alg)
             self$.addOption(private$..maxiter)
             self$.addOption(private$..ntree)
-            self$.addOption(private$..imputeOV)
+            self$.addOption(private$..setseed)
+            self$.addOption(private$..seed)
         }),
     active = list(
         learnvar = function() private$..learnvar$value,
         imputevar = function() private$..imputevar$value,
+        imputeOV = function() private$..imputeOV$value,
+        alg = function() private$..alg$value,
         maxiter = function() private$..maxiter$value,
         ntree = function() private$..ntree$value,
-        imputeOV = function() private$..imputeOV$value),
+        setseed = function() private$..setseed$value,
+        seed = function() private$..seed$value),
     private = list(
         ..learnvar = NA,
         ..imputevar = NA,
+        ..imputeOV = NA,
+        ..alg = NA,
         ..maxiter = NA,
         ..ntree = NA,
-        ..imputeOV = NA)
+        ..setseed = NA,
+        ..seed = NA)
 )
 
 mMFResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
@@ -90,10 +117,6 @@ mMFResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `title`="N", 
                         `type`="integer"),
                     list(
-                        `name`="mse", 
-                        `title`="MSE", 
-                        `type`="number"),
-                    list(
                         `name`="pfc", 
                         `title`="PFC", 
                         `type`="number"))))
@@ -110,7 +133,7 @@ mMFBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             super$initialize(
                 package = "jYS",
                 name = "mMF",
-                version = c(1,0,6),
+                version = c(1,0,7),
                 options = options,
                 results = mMFResults$new(options=options),
                 data = data,
@@ -129,8 +152,11 @@ mMFBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param data .
 #' @param learnvar .
 #' @param imputevar .
+#' @param alg .
 #' @param maxiter .
 #' @param ntree .
+#' @param setseed .
+#' @param seed .
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$errors} \tab \tab \tab \tab \tab OOB errors table \cr
@@ -148,8 +174,11 @@ mMF <- function(
     data,
     learnvar,
     imputevar,
+    alg = "mR",
     maxiter = 10,
-    ntree = 100) {
+    ntree = 500,
+    setseed = FALSE,
+    seed = 123) {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
         stop("mMF requires jmvcore to be installed (restart may be required)")
@@ -167,8 +196,11 @@ mMF <- function(
     options <- mMFOptions$new(
         learnvar = learnvar,
         imputevar = imputevar,
+        alg = alg,
         maxiter = maxiter,
-        ntree = ntree)
+        ntree = ntree,
+        setseed = setseed,
+        seed = seed)
 
     analysis <- mMFClass$new(
         options = options,

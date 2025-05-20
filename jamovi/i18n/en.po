@@ -77,6 +77,10 @@ msgstr ""
 msgid "Agglomeration method"
 msgstr ""
 
+#: mMF/options/alg.title
+msgid "Algoruthm"
+msgstr ""
+
 #: mCOR/options/signif/all.title
 msgid "All"
 msgstr ""
@@ -436,6 +440,10 @@ msgstr ""
 msgid "Minimum 3 variables (Training + Imputing) are required"
 msgstr ""
 
+#: mMF/options/alg/mF.title
+msgid "missForest (2012)"
+msgstr ""
+
 #: package/analyses/mMF.title
 #: package/analyses/mMF.menuTitle
 #: package/datasets/Missing Values Imputation.name
@@ -447,6 +455,10 @@ msgstr ""
 
 #: package/datasets/Missing Values Imputation.description
 msgid "Missing values imputation using the prediction power of Random Forests"
+msgstr ""
+
+#: mMF/options/alg/mR.title
+msgid "missRanger (2024)"
 msgstr ""
 
 #: mMF/options/imputeOV.title
@@ -556,12 +568,24 @@ msgstr ""
 msgid "provide a correlation matrix plot."
 msgstr ""
 
+#: R\mmf.b.R
+msgid "PVU - proportion of variance unexplained 1-R² (for Continuous variables);"
+msgstr ""
+
 #: mCOR/options/plotOrder.title
 msgid "Reorder"
 msgstr ""
 
+#: mMF/options/setseed.title
+msgid "Reproductable Results"
+msgstr ""
+
 #: mCOR/options/clPos/r.title
 msgid "Right"
+msgstr ""
+
+#: mMF/options/seed.title
+msgid "RNG seed value"
 msgstr ""
 
 #: mROC/options/sepROC.title

@@ -2,7 +2,7 @@
 name:  mMF
 title: Missing Values Imputation
 menuGroup: jYS
-version: '1.0.6'
+version: '1.0.7'
 jas: '1.2'
 
 options:
@@ -20,6 +20,20 @@ options:
       takeFromDataIfMissing: true
       required: true
 
+    - name: imputeOV
+      title: Model by Random Forest
+      type: Output
+
+    - name: alg
+      title: Algoruthm
+      type: List
+      options:
+        - title: missForest (2012)
+          name:  mF
+        - title: missRanger (2024)
+          name:  mR
+      default: mF
+
     - name: maxiter
       title: Maximum number of iterations
       type: Number
@@ -28,10 +42,16 @@ options:
     - name: ntree
       title: Number of trees to grow in each forest
       type: Number
-      default: 100
+      default: 500
 
-    - name: imputeOV
-      title: Model by Random Forest
-      type: Output
+    - name: setseed
+      title: Reproductable Results
+      type: Bool
+      default: false
+
+    - name: seed
+      title: RNG seed value
+      type: Number
+      default: 123
 
 ...

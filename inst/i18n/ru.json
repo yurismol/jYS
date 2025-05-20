@@ -58,6 +58,9 @@
             "Agglomeration method": [
                 "Метод агломерации"
             ],
+            "Algoruthm": [
+                "Алгоритм"
+            ],
             "All": [
                 "Все"
             ],
@@ -307,11 +310,17 @@
             "Minimum 3 variables (Training + Imputing) are required": [
                 "Требуется минимум 3 переменные (обучающие + моделируемые)"
             ],
+            "missForest (2012)": [
+                ""
+            ],
             "Missing Values Imputation": [
                 "Моделирование пропущенных значений"
             ],
             "Missing values imputation using the prediction power of Random Forests": [
                 "Ввод пропущенных значений с использованием предсказательной силы метода случайных лесов"
+            ],
+            "missRanger (2024)": [
+                ""
             ],
             "Model by Random Forest": [
                 "Моделирование методом случайного леса"
@@ -385,11 +394,20 @@
             "provide a correlation matrix plot.": [
                 "предоставить график корреляционной матрицы."
             ],
+            "PVU - proportion of variance unexplained 1-R² (for Continuous variables);": [
+                "PVU — доля необъясненной дисперсии 1-R² (для непрерывных переменных);"
+            ],
             "Reorder": [
                 "Перестроение"
             ],
+            "Reproductable Results": [
+                "Воспроизводимые результаты"
+            ],
             "Right": [
                 "Справа"
+            ],
+            "RNG seed value": [
+                "Начальное значение ГСЧ"
             ],
             "ROC by groups": [
                 "ROC по группам"

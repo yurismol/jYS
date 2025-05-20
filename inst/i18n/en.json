@@ -58,6 +58,9 @@
             "Agglomeration method": [
                 ""
             ],
+            "Algoruthm": [
+                ""
+            ],
             "All": [
                 ""
             ],
@@ -307,10 +310,16 @@
             "Minimum 3 variables (Training + Imputing) are required": [
                 ""
             ],
+            "missForest (2012)": [
+                ""
+            ],
             "Missing Values Imputation": [
                 ""
             ],
             "Missing values imputation using the prediction power of Random Forests": [
+                ""
+            ],
+            "missRanger (2024)": [
                 ""
             ],
             "Model by Random Forest": [
@@ -385,10 +394,19 @@
             "provide a correlation matrix plot.": [
                 ""
             ],
+            "PVU - proportion of variance unexplained 1-R² (for Continuous variables);": [
+                ""
+            ],
             "Reorder": [
                 ""
             ],
+            "Reproductable Results": [
+                ""
+            ],
             "Right": [
+                ""
+            ],
+            "RNG seed value": [
                 ""
             ],
             "ROC by groups": [
