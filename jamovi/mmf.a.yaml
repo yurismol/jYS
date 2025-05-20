@@ -30,7 +30,7 @@ options:
       options:
         - title: missForest (2012)
           name:  mF
-        - title: missRanger (2024)
+        - title: missRanger (2021)
           name:  mR
       default: mF
 
@@ -45,7 +45,7 @@ options:
       default: 500
 
     - name: setseed
-      title: Reproductable Results
+      title: Reproducible random number generation (RNG) results
       type: Bool
       default: false
 
@@ -54,4 +54,15 @@ options:
       type: Number
       default: 123
 
+    - name: pmmk
+      title: Predictive Mean Matching (PMM) steps
+      type: Number
+      default: 0
+      description:
+          ui: >
+            Number of candidate non-missing values to sample from in the
+            predictive mean matching steps. 0 to avoid this step
+          R: >
+            Number of candidate non-missing values to sample from in the
+            predictive mean matching steps. 0 to avoid this step
 ...

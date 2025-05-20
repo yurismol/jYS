@@ -319,14 +319,11 @@
             "Missing values imputation using the prediction power of Random Forests": [
                 "Ввод пропущенных значений с использованием предсказательной силы метода случайных лесов"
             ],
-            "missRanger (2024)": [
+            "missRanger (2021)": [
                 ""
             ],
             "Model by Random Forest": [
                 "Моделирование методом случайного леса"
-            ],
-            "MSE": [
-                ""
             ],
             "MSE - mean squared error (for Continuous variables);": [
                 "MSE - средняя квадратическая ошибка (для непрерывных переменных);"
@@ -346,8 +343,11 @@
             "Number": [
                 "Число"
             ],
+            "Number of candidate non-missing values to sample from in the predictive mean matching steps. 0 to avoid this step": [
+                "Количество возможных непропущенных значений для выборки на этапах сопоставления предиктивного среднего. 0, чтобы не использовать этот метод"
+            ],
             "Number of trees to grow in each forest": [
-                "Число растущих деревьев для каждого леса"
+                "Число деревьев для каждого случайного леса"
             ],
             "OOB errors table": [
                 "Таблица прогнозируемых ошибок"
@@ -388,6 +388,9 @@
             "Polygon": [
                 "Полигон"
             ],
+            "Predictive Mean Matching (PMM) steps": [
+                "Шаги предиктивного cреднего сопоставления (PMM)"
+            ],
             "Predictors": [
                 "Предикторы"
             ],
@@ -400,8 +403,8 @@
             "Reorder": [
                 "Перестроение"
             ],
-            "Reproductable Results": [
-                "Воспроизводимые результаты"
+            "Reproducible random number generation (RNG) results": [
+                "Воспроизводимые результаты генерации случайных чисел (ГСЧ)"
             ],
             "Right": [
                 "Справа"

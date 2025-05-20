@@ -2,7 +2,7 @@
 name:  mMF
 title: Missing Values Imputation
 jrs:   '1.1'
-refs: [mf, impr]
+refs: [mf, rg, mr]
 
 items:
     #- name:  text

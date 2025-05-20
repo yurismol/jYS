@@ -37,10 +37,13 @@ children:
             name: ntree
             format: number
             enable: (imputeOV)
+          - type: TextBox
+            name: pmmk
+            format: number
+            enable: (imputeOV && {return ui['alg'].value()=="mR";})
           - type: CheckBox
             name: setseed
-            enable: ({return ui['imputeOV'].value()!==null;})
-            #enable: (imputeOV)
+            enable: (imputeOV)
             children:
               - type: TextBox
                 name: seed

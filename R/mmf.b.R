@@ -96,7 +96,8 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                   out <- rf$ximp
                 } else {
                   rf <- missRanger::missRanger(dat, data_only=FALSE, returnOOB=FALSE,
-			maxiter=self$options$maxiter, num.trees=self$options$ntree)	#, seed=self$options$seed
+			maxiter=self$options$maxiter, num.trees=self$options$ntree,
+			pmm.k=self$options$pmmk)	#, seed=self$options$seed
                   oob <- rf$pred_errors[rf$best_iter,]
                   out <- rf$data
                 }
@@ -107,11 +108,13 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 for (i in seq_along(keys)) {
                     key <- keys[[i]]
                     d   <- dat[[key]]
+                    oo  <- oob[key]
                     nr  <- length(out[[key]]) - length(d[!is.na(d)])
+                    if (is.na(oo) || nr==0) oo <- '\u2014'
                     if (private$.columnType(d)=="continuous") {
-                      tableRow <- list(ninp=nr, err=oob[key], pfc='\u2014')
+                      tableRow <- list(ninp=nr, err=oo, pfc='\u2014')
                     } else {
-                      tableRow <- list(ninp=nr, err='\u2014', pfc=oob[key])
+                      tableRow <- list(ninp=nr, err='\u2014', pfc=oo)
                     }
                     table$setRow(rowKey=key, tableRow)
                     if (private$.columnType(d)=="continuous") {

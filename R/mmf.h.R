@@ -8,11 +8,12 @@ mMFOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         initialize = function(
             learnvar = NULL,
             imputevar = NULL,
-            alg = "mR",
+            alg = "mF",
             maxiter = 10,
             ntree = 500,
             setseed = FALSE,
-            seed = 123, ...) {
+            seed = 123,
+            pmmk = 0, ...) {
 
             super$initialize(
                 package="jYS",
@@ -37,7 +38,7 @@ mMFOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 options=list(
                     "mF",
                     "mR"),
-                default="mR")
+                default="mF")
             private$..maxiter <- jmvcore::OptionNumber$new(
                 "maxiter",
                 maxiter,
@@ -54,6 +55,10 @@ mMFOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "seed",
                 seed,
                 default=123)
+            private$..pmmk <- jmvcore::OptionNumber$new(
+                "pmmk",
+                pmmk,
+                default=0)
 
             self$.addOption(private$..learnvar)
             self$.addOption(private$..imputevar)
@@ -63,6 +68,7 @@ mMFOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..ntree)
             self$.addOption(private$..setseed)
             self$.addOption(private$..seed)
+            self$.addOption(private$..pmmk)
         }),
     active = list(
         learnvar = function() private$..learnvar$value,
@@ -72,7 +78,8 @@ mMFOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         maxiter = function() private$..maxiter$value,
         ntree = function() private$..ntree$value,
         setseed = function() private$..setseed$value,
-        seed = function() private$..seed$value),
+        seed = function() private$..seed$value,
+        pmmk = function() private$..pmmk$value),
     private = list(
         ..learnvar = NA,
         ..imputevar = NA,
@@ -81,7 +88,8 @@ mMFOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..maxiter = NA,
         ..ntree = NA,
         ..setseed = NA,
-        ..seed = NA)
+        ..seed = NA,
+        ..pmmk = NA)
 )
 
 mMFResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
@@ -99,7 +107,8 @@ mMFResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 title="Missing Values Imputation",
                 refs=list(
                     "mf",
-                    "impr"))
+                    "rg",
+                    "mr"))
             self$add(jmvcore::Table$new(
                 options=options,
                 name="errors",
@@ -157,6 +166,8 @@ mMFBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param ntree .
 #' @param setseed .
 #' @param seed .
+#' @param pmmk Number of candidate non-missing values to sample from in the
+#'   predictive mean matching steps. 0 to avoid this step
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$errors} \tab \tab \tab \tab \tab OOB errors table \cr
@@ -174,11 +185,12 @@ mMF <- function(
     data,
     learnvar,
     imputevar,
-    alg = "mR",
+    alg = "mF",
     maxiter = 10,
     ntree = 500,
     setseed = FALSE,
-    seed = 123) {
+    seed = 123,
+    pmmk = 0) {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
         stop("mMF requires jmvcore to be installed (restart may be required)")
@@ -200,7 +212,8 @@ mMF <- function(
         maxiter = maxiter,
         ntree = ntree,
         setseed = setseed,
-        seed = seed)
+        seed = seed,
+        pmmk = pmmk)
 
     analysis <- mMFClass$new(
         options = options,

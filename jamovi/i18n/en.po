@@ -458,15 +458,11 @@ msgid "Missing values imputation using the prediction power of Random Forests"
 msgstr ""
 
 #: mMF/options/alg/mR.title
-msgid "missRanger (2024)"
+msgid "missRanger (2021)"
 msgstr ""
 
 #: mMF/options/imputeOV.title
 msgid "Model by Random Forest"
-msgstr ""
-
-#: mMF/results/errors.columns.title
-msgid "MSE"
 msgstr ""
 
 #: R\mmf.b.R
@@ -498,6 +494,11 @@ msgstr ""
 #: mCOR/options/plotMetU/number.title
 #: mCOR/options/plotMetL/number.title
 msgid "Number"
+msgstr ""
+
+#: mMF/options/pmmk.description.ui
+#: mMF/options/pmmk.description.R
+msgid "Number of candidate non-missing values to sample from in the predictive mean matching steps. 0 to avoid this step"
 msgstr ""
 
 #: mMF/options/ntree.title
@@ -559,6 +560,10 @@ msgstr ""
 msgid "Polygon"
 msgstr ""
 
+#: mMF/options/pmmk.title
+msgid "Predictive Mean Matching (PMM) steps"
+msgstr ""
+
 #: mROC/options/vars.title
 #: mROC/ui[0][0].label
 msgid "Predictors"
@@ -577,7 +582,7 @@ msgid "Reorder"
 msgstr ""
 
 #: mMF/options/setseed.title
-msgid "Reproductable Results"
+msgid "Reproducible random number generation (RNG) results"
 msgstr ""
 
 #: mCOR/options/clPos/r.title

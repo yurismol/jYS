@@ -319,13 +319,10 @@
             "Missing values imputation using the prediction power of Random Forests": [
                 ""
             ],
-            "missRanger (2024)": [
+            "missRanger (2021)": [
                 ""
             ],
             "Model by Random Forest": [
-                ""
-            ],
-            "MSE": [
                 ""
             ],
             "MSE - mean squared error (for Continuous variables);": [
@@ -344,6 +341,9 @@
                 ""
             ],
             "Number": [
+                ""
+            ],
+            "Number of candidate non-missing values to sample from in the predictive mean matching steps. 0 to avoid this step": [
                 ""
             ],
             "Number of trees to grow in each forest": [
@@ -388,6 +388,9 @@
             "Polygon": [
                 ""
             ],
+            "Predictive Mean Matching (PMM) steps": [
+                ""
+            ],
             "Predictors": [
                 ""
             ],
@@ -400,7 +403,7 @@
             "Reorder": [
                 ""
             ],
-            "Reproductable Results": [
+            "Reproducible random number generation (RNG) results": [
                 ""
             ],
             "Right": [
