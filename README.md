@@ -7,5 +7,7 @@ Some usefull [Jamovi](https://www.jamovi.org/) procedures for researchers
 - Multi ROC Classification
 
 - Missing Values Imputation (using the prediction power of Random Forests)
+  - missForest
+  - missRanger
 
 Author: [Yuri Smolyakov](https://t.me/jYSmol)
