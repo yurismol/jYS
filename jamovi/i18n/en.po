@@ -437,7 +437,7 @@ msgid "Method"
 msgstr ""
 
 #: R\mmf.b.R
-msgid "Minimum 3 variables (Training + Imputing) are required"
+msgid "Minimum {minVar} variables (Training + Imputing) are required"
 msgstr ""
 
 #: mMF/options/alg/mF.title

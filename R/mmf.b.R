@@ -76,8 +76,12 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 keys  <- self$options$imputevar
                 dat   <- data.frame(self$data, check.names=FALSE)
                 dat   <- jmvcore::select(dat, c(learn, keys))
-                if (ncol(dat)<3) {
-		  jmvcore::reject(.("Minimum 3 variables (Training + Imputing) are required"), code='')
+                minVar <- 2
+                if (self$options$alg=="mF") minVar <- 3
+                if (ncol(dat)<minVar) {
+		  jmvcore::reject(jmvcore::format(
+                        .("Minimum {minVar} variables (Training + Imputing) are required"),
+                        minVar=minVar), code='')
                 }
                 if (nrow(dat)<3) {
 		  jmvcore::reject(.("Empty data table"), code='')

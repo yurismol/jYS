@@ -307,7 +307,7 @@
             "Method": [
                 ""
             ],
-            "Minimum 3 variables (Training + Imputing) are required": [
+            "Minimum {minVar} variables (Training + Imputing) are required": [
                 ""
             ],
             "missForest (2012)": [

@@ -307,8 +307,8 @@
             "Method": [
                 "Метод"
             ],
-            "Minimum 3 variables (Training + Imputing) are required": [
-                "Требуется минимум 3 переменные (обучающие + моделируемые)"
+            "Minimum {minVar} variables (Training + Imputing) are required": [
+                "Общее число переменных на менее {minVar}"
             ],
             "missForest (2012)": [
                 ""

@@ -437,8 +437,8 @@ msgid "Method"
 msgstr "Метод"
 
 #: R\mmf.b.R
-msgid "Minimum 3 variables (Training + Imputing) are required"
-msgstr "Требуется минимум 3 переменные (обучающие + моделируемые)"
+msgid "Minimum {minVar} variables (Training + Imputing) are required"
+msgstr "Общее число переменных на менее {minVar}"
 
 #: mMF/options/alg/mF.title
 msgid "missForest (2012)"
