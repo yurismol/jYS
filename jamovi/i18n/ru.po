@@ -33,10 +33,6 @@ msgstr "* p < .05, ** p < .01, *** p < .001, односторонний"
 msgid "%"
 msgstr ""
 
-#: mCOR/options/plots.description.R
-msgid "`TRUE` or `FALSE` (default), provide a correlation matrix plot"
-msgstr "`TRUE` или `FALSE` (по умолчанию), предоставить график корреляционной матрицы"
-
 #: mCOR/options/signif/0.001.title
 msgid "< 0.001"
 msgstr ""
@@ -52,10 +48,6 @@ msgstr ""
 #: mCOR/options/signif/0.1.title
 msgid "< 0.1"
 msgstr ""
-
-#: R\mmf.b.R
-msgid "<h2>For computation select variables and check the \"Model the missing values\"</h2>"
-msgstr "<h2>Для вычисления выберите переменные и активируйте флажок \"Моделирование пропущенных значений\"</h2>"
 
 #: R\mroc.b.R
 msgid "1 - Specificity"
@@ -78,7 +70,7 @@ msgid "Agglomeration method"
 msgstr "Метод агломерации"
 
 #: mMF/options/alg.title
-msgid "Algoruthm"
+msgid "Algorythm"
 msgstr "Алгоритм"
 
 #: mCOR/options/signif/all.title
@@ -88,6 +80,10 @@ msgstr "Все"
 #: mCOR/options/plotOrder/alphabet.title
 msgid "Alphabetical"
 msgstr "Алфавитное"
+
+#: mMF/results/estim/fMARtab.description
+msgid "an array of MARs"
+msgstr "массив MAR"
 
 #: mCOR/options/plotOrder/AOE.title
 msgid "Angular order eigenvectors"
@@ -161,6 +157,14 @@ msgstr "ширина ДИ"
 #: mCOR/options/plotMetL/circle.title
 msgid "Circle"
 msgstr "Круг"
+
+#: mMF/results/estim/mars.title
+msgid "Classify missing at random (MAR)"
+msgstr "Классификация случайных пропусков (MAR)"
+
+#: mMF/results/estim/mcar.title
+msgid "Classify missing completely at random (MCAR)"
+msgstr "Классификация полностью случайных пропусков (MCAR)"
 
 #: mROC/options/class.title
 #: mROC/ui[0][1].label
@@ -254,9 +258,17 @@ msgstr "Корреляционная матрица"
 msgid "Correlations"
 msgstr "Корреляции"
 
+#: mMF/results/estim/mcar.columns.title
+msgid "D²"
+msgstr ""
+
 #: mROC/options/palBrewer/Dark2.title
 msgid "Dark2"
 msgstr "Темная 2"
+
+#: mMF/results/estim/mcar.columns.title
+msgid "Degree of<br>Freedom (df)"
+msgstr "Степени<br>свободы (df)"
 
 #: mROC/options/direction.title
 msgid "Direction"
@@ -280,9 +292,23 @@ msgstr "Пустая таблица данных"
 msgid "Emtpy"
 msgstr "Пусто"
 
-#: mMF/results/errors.title
+#: mMF/results/imput/errors.title
 msgid "Estimated out-of-bag (OOB) imputation error"
 msgstr "Прогноз ошибки вне-мешка (out-of-bag, OOB)"
+
+#: mMF/options/fullmars.title
+#: mMF/results/estim/fMARtab.title
+msgid "Evaluation of MAR explanatories"
+msgstr "Оценка определителей MAR"
+
+#: mMF/results/estim/mars.columns.title
+#: mMF/results/estim/fMARtab.template.columns.title
+msgid "Explanatory"
+msgstr "Определитель"
+
+#: R\mmf.b.R
+msgid "Explanatory - variable corresponding to MAR with minimal p<sub>value</sub>."
+msgstr "Определитель - переменная, соответствующая MAR с минимальным p<sub>value</sub>."
 
 #: mCOR/options/plotOrder/FPC.title
 msgid "First principal component"
@@ -293,8 +319,8 @@ msgid "Flag significant correlations"
 msgstr "Отметить значимые корреляции"
 
 #: package.description
-msgid "Graphic extensions of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, missing data imputation by random forests etc."
-msgstr "Графические расширения функциональности популярных методов анализа данных: кластерное дерево коррелирующих переменных, многофакторная адаптивная корреляционная матрица, многомерные кривые ROC-классификации, импутация пропущенных данных методом случайных лесов и т. д."
+msgid "Graphic extensions of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, missing data estimation and imputation etc."
+msgstr "Графические расширения функциональности популярных методов анализа данных: кластерное дерево коррелирующих переменных, многофакторная адаптивная корреляционная матрица, многомерные кривые ROC-классификации, оценка случайности и восстановление пропущенных данных и т.д."
 
 #: mCOR/options/group.title
 #: mCOR/ui[0][1].label
@@ -354,7 +380,7 @@ msgstr "Заполненные пропуски"
 #: mMF/options/imputevar.title
 #: mMF/ui[0][1].label
 msgid "Imputing & Training Variables"
-msgstr "Моделируемые и обучающие переменные"
+msgstr "Восстанавливаемые и обучающие переменные"
 
 #: mROC/options/perc.title
 msgid "In percent"
@@ -412,6 +438,19 @@ msgstr "Нижняя часть"
 msgid "Manual Clusters"
 msgstr "Кластеры вручную"
 
+#: R\mmf.b.R
+msgid "MAR - missing at random (if each p<sub>value</sub> is significant, there is evidence the data is MAR);"
+msgstr "MAR — случайные пропуски (если каждое p<sub>value</sub> значимо, есть доказательства того, что пропуски случайны);"
+
+#: mMF/options/isMAR.title
+msgid "MAR (Missing at Random) and MCAR (Missing Completely at Random) estimation"
+msgstr "Оценка MAR (случайные пропуски) и MCAR (полностью случайные пропуски)"
+
+#: mMF/results/estim/mcar.description
+#: mMF/results/estim/mars.description
+msgid "MAR classification table"
+msgstr "Таблица классификации MAR"
+
 #: mROC/options/mAst.title
 msgid "Mark significance *<0.05, **<0.01, ***<0.001"
 msgstr "Маркер значимости *<0.05, **<0.01, ***<0.001"
@@ -423,6 +462,14 @@ msgstr "Матрица №{i}"
 #: mMF/options/maxiter.title
 msgid "Maximum number of iterations"
 msgstr "Максимальное число итераций"
+
+#: mMF/results/estim/mcar.columns.content
+msgid "MCAR"
+msgstr ""
+
+#: R\mmf.b.R
+msgid "MCAR - missing completely at random (if the p<sub>value</sub> is not significant, there is evidence the data is MCAR)."
+msgstr "MCAR — полностью случайные пропуски (если p<sub>value</sub> незначимо, есть доказательства того, что пропуски полностью случайны)."
 
 #: mCOR/options/clustMet/mcquitty.title
 msgid "McQuitty Linkage (WPGMA)"
@@ -444,26 +491,34 @@ msgstr "Общее число переменных на менее {minVar}"
 msgid "missForest (2012)"
 msgstr ""
 
+#: mMF/results/estim.title
+msgid "Missing Values Estimation"
+msgstr "Оценка пропущенных данных"
+
 #: package/analyses/mMF.title
 #: package/analyses/mMF.menuTitle
-#: package/datasets/Missing Values Imputation.name
 #: mMF/options.title
 #: mMF/ui.title
 #: mMF/results.title
+msgid "Missing Values Estimation and Imputation"
+msgstr "Оценка и восстановление пропусков данных"
+
+#: package/datasets/Missing Values Imputation.name
+#: mMF/results/imput.title
 msgid "Missing Values Imputation"
-msgstr "Моделирование пропущенных значений"
+msgstr "Восстановление пропущенных данных"
 
 #: package/datasets/Missing Values Imputation.description
 msgid "Missing values imputation using the prediction power of Random Forests"
-msgstr "Ввод пропущенных значений с использованием предсказательной силы метода случайных лесов"
+msgstr "Ввод пропущенных данных с использованием предсказательной силы метода случайных лесов"
+
+#: mMF/results/estim/mcar.columns.title
+msgid "Missing<br>Patterns"
+msgstr "Палитры<br>пропусков"
 
 #: mMF/options/alg/mR.title
 msgid "missRanger (2021)"
 msgstr ""
-
-#: mMF/options/imputeOV.title
-msgid "Model by Random Forest"
-msgstr "Моделирование методом случайного леса"
 
 #: R\mmf.b.R
 msgid "MSE - mean squared error (for Continuous variables);"
@@ -473,15 +528,19 @@ msgstr "MSE - средняя квадратическая ошибка (для �
 msgid "Multiple comparision correction"
 msgstr "Коррекция множественного сравнения"
 
+#: mMF/options/imputeOV.title
+msgid "Multiple imputation for missing data"
+msgstr "Множественное восстановление пропущенных данных"
+
 #: mCOR/options/n.title
 #: mCOR/results/matrix.columns.content
-#: mMF/results/errors.columns.title
+#: mMF/results/estim/mars.columns.title
 msgid "N"
 msgstr "N"
 
 #: R\mmf.b.R
-msgid "N - number of imputted values;"
-msgstr "N - количество смоделированных значений;"
+msgid "N - number of missing values;"
+msgstr "N - количество пропущенных значений;"
 
 #: mCOR/options/adjust/none.title
 #: mCOR/options/clPos/n.title
@@ -497,7 +556,6 @@ msgid "Number"
 msgstr "Число"
 
 #: mMF/options/pmmk.description.ui
-#: mMF/options/pmmk.description.R
 msgid "Number of candidate non-missing values to sample from in the predictive mean matching steps. 0 to avoid this step"
 msgstr "Количество возможных непропущенных значений для выборки на этапах сопоставления предиктивного среднего. 0, чтобы не использовать этот метод"
 
@@ -505,7 +563,7 @@ msgstr "Количество возможных непропущенных зн�
 msgid "Number of trees to grow in each forest"
 msgstr "Число деревьев для каждого случайного леса"
 
-#: mMF/results/errors.description
+#: mMF/results/imput/errors.description
 msgid "OOB errors table"
 msgstr "Таблица прогнозируемых ошибок"
 
@@ -517,6 +575,12 @@ msgstr "Оригинальное"
 #: mCOR/results/matrix.columns.content
 msgid "p-value"
 msgstr "p-значение"
+
+#: mMF/results/estim/mcar.columns.title
+#: mMF/results/estim/mars.columns.title
+#: mMF/results/estim/fMARtab.template.columns.title
+msgid "p<sub>value</sub>"
+msgstr ""
 
 #: mROC/options/palBrewer/Paired.title
 msgid "Paired"
@@ -539,13 +603,13 @@ msgstr "Корреляция Пирсона не может быть рассч�
 msgid "Pearson's r"
 msgstr "r Пирсона"
 
-#: mMF/results/errors.columns.title
+#: mMF/results/imput/errors.columns.title
 msgid "PFC"
 msgstr ""
 
 #: R\mmf.b.R
-msgid "PFC - proportion of falsely classified (for Nominal and Ordinal variables)"
-msgstr "PFC - доля ложно классифицированных (для номинальных и порядковых переменных)"
+msgid "PFC - proportion of falsely classified (for Nominal and Ordinal variables);"
+msgstr "PFC - доля ложно классифицированных (для номинальных и порядковых переменных);"
 
 #: mCOR/options/plotMetU/pie.title
 #: mCOR/options/plotMetL/pie.title
@@ -732,17 +796,18 @@ msgstr "Только обучающие переменные"
 msgid "Upper part"
 msgstr "Верхняя часть"
 
-#: mMF/results/errors.columns.title
+#: mMF/results/estim/mars.columns.title
+#: mMF/results/imput/errors.columns.title
 msgid "Variable"
 msgstr "Переменная"
+
+#: mMF/results/estim/fMARtab.template.title
+msgid "Variable - $key"
+msgstr "Переменная - $key"
 
 #: mCOR/ui[5][0]/plots/clustMan.suffix
 msgid "variable numbers by commas"
 msgstr "номера переменных через запятую"
-
-#: R\mmf.b.R
-msgid "Wait for calculation..."
-msgstr "Ждите окончания расчета..."
 
 #: mCOR/options/clustMet/ward.D2.title
 msgid "Ward´s D2 Linkage"

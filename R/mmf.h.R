@@ -8,6 +8,8 @@ mMFOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         initialize = function(
             learnvar = NULL,
             imputevar = NULL,
+            isMAR = TRUE,
+            fullmars = FALSE,
             alg = "mF",
             maxiter = 10,
             ntree = 500,
@@ -30,6 +32,14 @@ mMFOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 imputevar,
                 takeFromDataIfMissing=TRUE,
                 required=TRUE)
+            private$..isMAR <- jmvcore::OptionBool$new(
+                "isMAR",
+                isMAR,
+                default=TRUE)
+            private$..fullmars <- jmvcore::OptionBool$new(
+                "fullmars",
+                fullmars,
+                default=FALSE)
             private$..imputeOV <- jmvcore::OptionOutput$new(
                 "imputeOV")
             private$..alg <- jmvcore::OptionList$new(
@@ -62,6 +72,8 @@ mMFOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 
             self$.addOption(private$..learnvar)
             self$.addOption(private$..imputevar)
+            self$.addOption(private$..isMAR)
+            self$.addOption(private$..fullmars)
             self$.addOption(private$..imputeOV)
             self$.addOption(private$..alg)
             self$.addOption(private$..maxiter)
@@ -73,6 +85,8 @@ mMFOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     active = list(
         learnvar = function() private$..learnvar$value,
         imputevar = function() private$..imputevar$value,
+        isMAR = function() private$..isMAR$value,
+        fullmars = function() private$..fullmars$value,
         imputeOV = function() private$..imputeOV$value,
         alg = function() private$..alg$value,
         maxiter = function() private$..maxiter$value,
@@ -83,6 +97,8 @@ mMFOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     private = list(
         ..learnvar = NA,
         ..imputevar = NA,
+        ..isMAR = NA,
+        ..fullmars = NA,
         ..imputeOV = NA,
         ..alg = NA,
         ..maxiter = NA,
@@ -96,7 +112,8 @@ mMFResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "mMFResults",
     inherit = jmvcore::Group,
     active = list(
-        errors = function() private$.items[["errors"]],
+        estim = function() private$.items[["estim"]],
+        imput = function() private$.items[["imput"]],
         imputeOV = function() private$.items[["imputeOV"]]),
     private = list(),
     public=list(
@@ -104,31 +121,135 @@ mMFResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             super$initialize(
                 options=options,
                 name="",
-                title="Missing Values Imputation",
-                refs=list(
+                title="Missing Values Estimation and Imputation")
+            self$add(R6::R6Class(
+                inherit = jmvcore::Group,
+                active = list(
+                    mcar = function() private$.items[["mcar"]],
+                    mars = function() private$.items[["mars"]],
+                    fMARtab = function() private$.items[["fMARtab"]]),
+                private = list(),
+                public=list(
+                    initialize=function(options) {
+                        super$initialize(
+                            options=options,
+                            name="estim",
+                            title="Missing Values Estimation",
+                            refs=list(
+                    "mar",
+                    "missr"))
+                        self$add(jmvcore::Table$new(
+                            options=options,
+                            name="mcar",
+                            title="Classify missing completely at random (MCAR)",
+                            visible="(isMAR)",
+                            clearWith=list(
+                                "learnvar",
+                                "imputevar"),
+                            columns=list(
+                                list(
+                                    `name`="name", 
+                                    `title`="", 
+                                    `type`="text", 
+                                    `content`="MCAR"),
+                                list(
+                                    `name`="pval", 
+                                    `title`="p<sub>value</sub>", 
+                                    `type`="number"),
+                                list(
+                                    `name`="d2", 
+                                    `title`="D\u00B2", 
+                                    `type`="number"),
+                                list(
+                                    `name`="df", 
+                                    `title`="Degree of<br>Freedom (df)", 
+                                    `type`="integer"),
+                                list(
+                                    `name`="mpat", 
+                                    `title`="Missing<br>Patterns", 
+                                    `type`="integer"))))
+                        self$add(jmvcore::Table$new(
+                            options=options,
+                            name="mars",
+                            title="Classify missing at random (MAR)",
+                            visible="(isMAR)",
+                            clearWith=list(
+                                "learnvar",
+                                "imputevar"),
+                            rows="(imputevar)",
+                            columns=list(
+                                list(
+                                    `name`="name", 
+                                    `title`="Variable", 
+                                    `type`="text", 
+                                    `content`="($key)"),
+                                list(
+                                    `name`="ninp", 
+                                    `title`="N", 
+                                    `type`="integer"),
+                                list(
+                                    `name`="mar", 
+                                    `title`="p<sub>value</sub>", 
+                                    `type`="number"),
+                                list(
+                                    `name`="exp", 
+                                    `title`="Explanatory", 
+                                    `type`="number"))))
+                        self$add(jmvcore::Array$new(
+                            options=options,
+                            name="fMARtab",
+                            title="Evaluation of MAR explanatories",
+                            visible="(fullmars && isMAR)",
+                            items="(imputevar)",
+                            clearWith=list(
+                                "learnvar",
+                                "imputevar"),
+                            template=jmvcore::Table$new(
+                                options=options,
+                                title="Variable - $key",
+                                clearWith=list(
+                                    "learnvar",
+                                    "imputevar"),
+                                columns=list(
+                                    list(
+                                        `name`="exp", 
+                                        `title`="Explanatory", 
+                                        `type`="text"),
+                                    list(
+                                        `name`="pval", 
+                                        `title`="p<sub>value</sub>", 
+                                        `type`="number")))))}))$new(options=options))
+            self$add(R6::R6Class(
+                inherit = jmvcore::Group,
+                active = list(
+                    errors = function() private$.items[["errors"]]),
+                private = list(),
+                public=list(
+                    initialize=function(options) {
+                        super$initialize(
+                            options=options,
+                            name="imput",
+                            title="Missing Values Imputation",
+                            refs=list(
                     "mf",
                     "rg",
                     "mr"))
-            self$add(jmvcore::Table$new(
-                options=options,
-                name="errors",
-                visible="(imputeOV)",
-                title="Estimated out-of-bag (OOB) imputation error",
-                rows="(imputevar)",
-                columns=list(
-                    list(
-                        `name`="name", 
-                        `title`="Variable", 
-                        `type`="text", 
-                        `content`="($key)"),
-                    list(
-                        `name`="ninp", 
-                        `title`="N", 
-                        `type`="integer"),
-                    list(
-                        `name`="pfc", 
-                        `title`="PFC", 
-                        `type`="number"))))
+                        self$add(jmvcore::Table$new(
+                            options=options,
+                            name="errors",
+                            visible="(imputeOV)",
+                            title="Estimated out-of-bag (OOB) imputation error",
+                            rows="(imputevar)",
+                            columns=list(
+                                list(
+                                    `name`="name", 
+                                    `title`="Variable", 
+                                    `type`="text", 
+                                    `content`="($key)"),
+                                list(
+                                    `name`="pfc", 
+                                    `title`="PFC", 
+                                    `type`="number"))))}))$new(options=options))
             self$add(jmvcore::Output$new(
                 options=options,
                 name="imputeOV",
@@ -142,7 +263,7 @@ mMFBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             super$initialize(
                 package = "jYS",
                 name = "mMF",
-                version = c(1,0,7),
+                version = c(1,0,8),
                 options = options,
                 results = mMFResults$new(options=options),
                 data = data,
@@ -155,12 +276,14 @@ mMFBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 weightsSupport = 'none')
         }))
 
-#' Missing Values Imputation
+#' Missing Values Estimation and Imputation
 #'
 #' 
 #' @param data .
 #' @param learnvar .
 #' @param imputevar .
+#' @param isMAR .
+#' @param fullmars .
 #' @param alg .
 #' @param maxiter .
 #' @param ntree .
@@ -170,21 +293,20 @@ mMFBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   predictive mean matching steps. 0 to avoid this step
 #' @return A results object containing:
 #' \tabular{llllll}{
-#'   \code{results$errors} \tab \tab \tab \tab \tab OOB errors table \cr
+#'   \code{results$estim$mcar} \tab \tab \tab \tab \tab MAR classification table \cr
+#'   \code{results$estim$mars} \tab \tab \tab \tab \tab MAR classification table \cr
+#'   \code{results$estim$fMARtab} \tab \tab \tab \tab \tab an array of MARs \cr
+#'   \code{results$imput$errors} \tab \tab \tab \tab \tab OOB errors table \cr
 #'   \code{results$imputeOV} \tab \tab \tab \tab \tab an output \cr
 #' }
-#'
-#' Tables can be converted to data frames with \code{asDF} or \code{\link{as.data.frame}}. For example:
-#'
-#' \code{results$errors$asDF}
-#'
-#' \code{as.data.frame(results$errors)}
 #'
 #' @export
 mMF <- function(
     data,
     learnvar,
     imputevar,
+    isMAR = TRUE,
+    fullmars = FALSE,
     alg = "mF",
     maxiter = 10,
     ntree = 500,
@@ -208,6 +330,8 @@ mMF <- function(
     options <- mMFOptions$new(
         learnvar = learnvar,
         imputevar = imputevar,
+        isMAR = isMAR,
+        fullmars = fullmars,
         alg = alg,
         maxiter = maxiter,
         ntree = ntree,

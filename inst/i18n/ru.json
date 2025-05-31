@@ -25,9 +25,6 @@
             "%": [
                 ""
             ],
-            "`TRUE` or `FALSE` (default), provide a correlation matrix plot": [
-                "`TRUE` или `FALSE` (по умолчанию), предоставить график корреляционной матрицы"
-            ],
             "< 0.001": [
                 ""
             ],
@@ -39,9 +36,6 @@
             ],
             "< 0.1": [
                 ""
-            ],
-            "<h2>For computation select variables and check the \"Model the missing values\"</h2>": [
-                "<h2>Для вычисления выберите переменные и активируйте флажок \"Моделирование пропущенных значений\"</h2>"
             ],
             "1 - Specificity": [
                 "1 - Специфичность"
@@ -58,7 +52,7 @@
             "Agglomeration method": [
                 "Метод агломерации"
             ],
-            "Algoruthm": [
+            "Algorythm": [
                 "Алгоритм"
             ],
             "All": [
@@ -66,6 +60,9 @@
             ],
             "Alphabetical": [
                 "Алфавитное"
+            ],
+            "an array of MARs": [
+                "массив MAR"
             ],
             "Angular order eigenvectors": [
                 "Угловой порядок собственных векторов"
@@ -120,6 +117,12 @@
             ],
             "Circle": [
                 "Круг"
+            ],
+            "Classify missing at random (MAR)": [
+                "Классификация случайных пропусков (MAR)"
+            ],
+            "Classify missing completely at random (MCAR)": [
+                "Классификация полностью случайных пропусков (MCAR)"
             ],
             "Classifying variable": [
                 "Классифицирующая переменная"
@@ -181,8 +184,14 @@
             "Correlations": [
                 "Корреляции"
             ],
+            "D²": [
+                ""
+            ],
             "Dark2": [
                 "Темная 2"
+            ],
+            "Degree of<br>Freedom (df)": [
+                "Степени<br>свободы (df)"
             ],
             "Direction": [
                 "Направление"
@@ -202,14 +211,23 @@
             "Estimated out-of-bag (OOB) imputation error": [
                 "Прогноз ошибки вне-мешка (out-of-bag, OOB)"
             ],
+            "Evaluation of MAR explanatories": [
+                "Оценка определителей MAR"
+            ],
+            "Explanatory": [
+                "Определитель"
+            ],
+            "Explanatory - variable corresponding to MAR with minimal p<sub>value</sub>.": [
+                "Определитель - переменная, соответствующая MAR с минимальным p<sub>value</sub>."
+            ],
             "First principal component": [
                 "Первая главная компонента"
             ],
             "Flag significant correlations": [
                 "Отметить значимые корреляции"
             ],
-            "Graphic extensions of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, missing data imputation by random forests etc.": [
-                "Графические расширения функциональности популярных методов анализа данных: кластерное дерево коррелирующих переменных, многофакторная адаптивная корреляционная матрица, многомерные кривые ROC-классификации, импутация пропущенных данных методом случайных лесов и т. д."
+            "Graphic extensions of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, missing data estimation and imputation etc.": [
+                "Графические расширения функциональности популярных методов анализа данных: кластерное дерево коррелирующих переменных, многофакторная адаптивная корреляционная матрица, многомерные кривые ROC-классификации, оценка случайности и восстановление пропущенных данных и т.д."
             ],
             "Grouping Variable": [
                 "Группирующая переменная"
@@ -251,7 +269,7 @@
                 "Заполненные пропуски"
             ],
             "Imputing & Training Variables": [
-                "Моделируемые и обучающие переменные"
+                "Восстанавливаемые и обучающие переменные"
             ],
             "In percent": [
                 "В процентах"
@@ -289,6 +307,15 @@
             "Manual Clusters": [
                 "Кластеры вручную"
             ],
+            "MAR - missing at random (if each p<sub>value</sub> is significant, there is evidence the data is MAR);": [
+                "MAR — случайные пропуски (если каждое p<sub>value</sub> значимо, есть доказательства того, что пропуски случайны);"
+            ],
+            "MAR (Missing at Random) and MCAR (Missing Completely at Random) estimation": [
+                "Оценка MAR (случайные пропуски) и MCAR (полностью случайные пропуски)"
+            ],
+            "MAR classification table": [
+                "Таблица классификации MAR"
+            ],
             "Mark significance *<0.05, **<0.01, ***<0.001": [
                 "Маркер значимости *<0.05, **<0.01, ***<0.001"
             ],
@@ -297,6 +324,12 @@
             ],
             "Maximum number of iterations": [
                 "Максимальное число итераций"
+            ],
+            "MCAR": [
+                ""
+            ],
+            "MCAR - missing completely at random (if the p<sub>value</sub> is not significant, there is evidence the data is MCAR).": [
+                "MCAR — полностью случайные пропуски (если p<sub>value</sub> незначимо, есть доказательства того, что пропуски полностью случайны)."
             ],
             "McQuitty Linkage (WPGMA)": [
                 "МакКитти связи"
@@ -313,17 +346,23 @@
             "missForest (2012)": [
                 ""
             ],
+            "Missing Values Estimation": [
+                "Оценка пропущенных данных"
+            ],
+            "Missing Values Estimation and Imputation": [
+                "Оценка и восстановление пропусков данных"
+            ],
             "Missing Values Imputation": [
-                "Моделирование пропущенных значений"
+                "Восстановление пропущенных данных"
             ],
             "Missing values imputation using the prediction power of Random Forests": [
-                "Ввод пропущенных значений с использованием предсказательной силы метода случайных лесов"
+                "Ввод пропущенных данных с использованием предсказательной силы метода случайных лесов"
+            ],
+            "Missing<br>Patterns": [
+                "Палитры<br>пропусков"
             ],
             "missRanger (2021)": [
                 ""
-            ],
-            "Model by Random Forest": [
-                "Моделирование методом случайного леса"
             ],
             "MSE - mean squared error (for Continuous variables);": [
                 "MSE - средняя квадратическая ошибка (для непрерывных переменных);"
@@ -331,11 +370,14 @@
             "Multiple comparision correction": [
                 "Коррекция множественного сравнения"
             ],
+            "Multiple imputation for missing data": [
+                "Множественное восстановление пропущенных данных"
+            ],
             "N": [
                 "N"
             ],
-            "N - number of imputted values;": [
-                "N - количество смоделированных значений;"
+            "N - number of missing values;": [
+                "N - количество пропущенных значений;"
             ],
             "None": [
                 "Нет"
@@ -358,6 +400,9 @@
             "p-value": [
                 "p-значение"
             ],
+            "p<sub>value</sub>": [
+                ""
+            ],
             "Paired": [
                 "Парная"
             ],
@@ -376,8 +421,8 @@
             "PFC": [
                 ""
             ],
-            "PFC - proportion of falsely classified (for Nominal and Ordinal variables)": [
-                "PFC - доля ложно классифицированных (для номинальных и порядковых переменных)"
+            "PFC - proportion of falsely classified (for Nominal and Ordinal variables);": [
+                "PFC - доля ложно классифицированных (для номинальных и порядковых переменных);"
             ],
             "Pie": [
                 "Пицца"
@@ -511,11 +556,11 @@
             "Variable": [
                 "Переменная"
             ],
+            "Variable - $key": [
+                "Переменная - $key"
+            ],
             "variable numbers by commas": [
                 "номера переменных через запятую"
-            ],
-            "Wait for calculation...": [
-                "Ждите окончания расчета..."
             ],
             "Ward´s D2 Linkage": [
                 "Уорд Д2 связи"

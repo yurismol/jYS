@@ -7,18 +7,27 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
         .init=function() {
             #if (grepl("Russian", Sys.getlocale(), fixed=TRUE)) options(OutDec=",")
             private$.initOutputs()
-            table <- self$results$errors
+            mctable<- self$results$estim$mcar
+            mtable <- self$results$estim$mars
+            etable <- self$results$imput$errors
             if (self$options$alg=="mF") {
-              table$addColumn(name="err", title="MSE", type='number')
+              etable$addColumn(name="err", title="MSE", type='number')
               contErr = .('MSE - mean squared error (for Continuous variables);')
             } else {
-              table$addColumn(name="err", title="PVU", type='number')
+              etable$addColumn(name="err", title="PVU", type='number')
               contErr = .('PVU - proportion of variance unexplained 1-R\u00B2 (for Continuous variables);')
             }
-            table$setNote('obe', paste(
-                          .('N - number of imputted values;'),
-                          .('PFC - proportion of falsely classified (for Nominal and Ordinal variables)'),
+            etable$setNote('obe', paste(
+                          .('PFC - proportion of falsely classified (for Nominal and Ordinal variables);'),
                           contErr
+            ))
+            mtable$setNote('obe', paste(
+                          .('N - number of missing values;'),
+                          .('MAR - missing at random (if each p<sub>value</sub> is significant, there is evidence the data is MAR);'),
+                          .('Explanatory - variable corresponding to MAR with minimal p<sub>value</sub>.')
+            ))
+            mctable$setNote('obe', paste(
+                          .('MCAR - missing completely at random (if the p<sub>value</sub> is not significant, there is evidence the data is MCAR).')
             ))
         },
 
@@ -68,21 +77,57 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               }
               return(maxd)
             }
+            dat   <- data.frame(self$data, check.names=FALSE)
+            dat   <- jmvcore::select(dat, c(self$options$learnvar, self$options$imputevar))
 
-            if (self$options$imputeOV && self$results$imputeOV$isNotFilled()) {
-                #self$results$text$setContent(.("Wait for calculation..."))
-                table <- self$results$errors
-                learn <- self$options$learnvar
-                keys  <- self$options$imputevar
-                dat   <- data.frame(self$data, check.names=FALSE)
-                dat   <- jmvcore::select(dat, c(learn, keys))
-                minVar <- 2
-                if (self$options$alg=="mF") minVar <- 3
-                if (ncol(dat)<minVar) {
-		  jmvcore::reject(jmvcore::format(
-                        .("Minimum {minVar} variables (Training + Imputing) are required"),
+            minVar <- 3
+            if (ncol(dat)<minVar) {
+		jmvcore::reject(jmvcore::format(
+			.("Minimum {minVar} variables (Training + Imputing) are required"),
                         minVar=minVar), code='')
+            }
+            mar   <- missr::mar(dat)
+            mcar  <- missr::mcar(dat)
+            marp  <- mar$p_value;     names(marp) <- mar$missing
+            mare  <- mar$explanatory; names(mare) <- mar$missing
+            mctable<- self$results$estim$mcar
+            mctable$addRow(rowKey='MCAR',
+		list(pval=signif(mcar$p_val, 3),
+		     df=mcar$degrees_freedom,
+		     d2=round(mcar$statistic, 2),
+		     mpat=mcar$missing_patterns)
+            )
+
+            if (self$options$fullmars) {
+                tables <- self$results$estim$fMARtab
+		keys   <- self$options$imputevar
+		marc   <- mar$combined
+		for (tab in keys) {
+                  table <- tables$get(key=tab)
+                  m  <- marc[[tab]]
+		  m  <- m[order(unlist(m))]
+		  nm <- names(m)
+		  for (i in seq_along(m)) {
+		    table$addRow(rowKey=nm[i], list(exp=nm[i], pval=m[i]))
+		  }
+		}
+            }
+
+            mtable<- self$results$estim$mars
+            keys  <- mtable$rowKeys
+            for (i in seq_along(keys)) {
+                key <- keys[[i]]
+                d   <- dat[[key]]
+                nr  <- length(d[is.na(d)])
+                if (nr==0) {
+                  tableRow <- list(ninp=nr, exp='\u2014', mar='\u2014')
+                } else {
+                  tableRow <- list(ninp=nr, exp=mare[key], mar=marp[key])
                 }
+                mtable$setRow(rowKey=key, tableRow)
+            }
+            if (self$options$imputeOV && self$results$imputeOV$isNotFilled()) {
+                etable<- self$results$imput$errors
                 if (nrow(dat)<3) {
 		  jmvcore::reject(.("Empty data table"), code='')
                 }
@@ -106,30 +151,25 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                   out <- rf$data
                 }
                 self$results$imputeOV$setRowNums(rownames(self$data))
-                #self$results$text$setContent(rf$pred_errors)
+                #self$results$text$setContent(marp)
 
-                keys <- table$rowKeys
+                keys <- etable$rowKeys
                 for (i in seq_along(keys)) {
                     key <- keys[[i]]
                     d   <- dat[[key]]
                     oo  <- oob[key]
-                    nr  <- length(out[[key]]) - length(d[!is.na(d)])
                     if (is.na(oo) || nr==0) oo <- '\u2014'
                     if (private$.columnType(d)=="continuous") {
                       tableRow <- list(ninp=nr, err=oo, pfc='\u2014')
-                    } else {
-                      tableRow <- list(ninp=nr, err='\u2014', pfc=oo)
-                    }
-                    table$setRow(rowKey=key, tableRow)
-                    if (private$.columnType(d)=="continuous") {
                       dec <- decimalplaces(d)
                       self$results$imputeOV$setValues(index=i, round(out[[key]], dec))
                     } else {
+                      tableRow <- list(ninp=nr, err='\u2014', pfc=oo)
                       self$results$imputeOV$setValues(index=i, out[[key]])
                     }
+                    etable$setRow(rowKey=key, tableRow)
                 }
             } else {
-                #self$results$text$setContent(.('<h2>For computation select variables and check the "Model the missing values"</h2>'))
             }
         }
   )

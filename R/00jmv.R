@@ -17,6 +17,7 @@
         `title`="missranger: Fast imputation of missing values [Computer software manual]", 
         `author`="Mayer, M.", 
         `year`=2021, 
+        `publisher`="[R package]. Retrieved from https://CRAN.R-project.org/package=missRanger", 
         `url`="https://CRAN.R-project.org/package=missRanger"), 
     `rg`=list(
         `type`="article", 
@@ -45,4 +46,21 @@
         `volume`=56, 
         `issue`=316, 
         `pages`="e24", 
-        `url`="https://peerj.com/articles/9945/Supplemental_Data_S10.pdf"))
+        `url`="https://peerj.com/articles/9945/Supplemental_Data_S10.pdf"), 
+    `mar`=list(
+        `type`="article", 
+        `author`="Little, R. J.", 
+        `year`=1988, 
+        `title`="A test of missing completely at random for multivariate data with missing values", 
+        `publisher`="Journal of the American statistical Association", 
+        `volume`=83, 
+        `issue`=404, 
+        `pages`="1198-1202", 
+        `url`="https://doi.org/10.1080/01621459.1988.10478722"), 
+    `missr`=list(
+        `type`="software", 
+        `author`="Noah William Trelawny Hellen", 
+        `year`=2025, 
+        `title`="missr: Classify Missing Data as MCAR, MAR, or MNAR", 
+        `publisher`="[R package]. Retrieved from https://CRAN.R-project.org/package=missr", 
+        `url`="https://CRAN.R-project.org/package=missr"))

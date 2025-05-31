@@ -25,9 +25,6 @@
             "%": [
                 ""
             ],
-            "`TRUE` or `FALSE` (default), provide a correlation matrix plot": [
-                ""
-            ],
             "< 0.001": [
                 ""
             ],
@@ -38,9 +35,6 @@
                 ""
             ],
             "< 0.1": [
-                ""
-            ],
-            "<h2>For computation select variables and check the \"Model the missing values\"</h2>": [
                 ""
             ],
             "1 - Specificity": [
@@ -58,13 +52,16 @@
             "Agglomeration method": [
                 ""
             ],
-            "Algoruthm": [
+            "Algorythm": [
                 ""
             ],
             "All": [
                 ""
             ],
             "Alphabetical": [
+                ""
+            ],
+            "an array of MARs": [
                 ""
             ],
             "Angular order eigenvectors": [
@@ -119,6 +116,12 @@
                 ""
             ],
             "Circle": [
+                ""
+            ],
+            "Classify missing at random (MAR)": [
+                ""
+            ],
+            "Classify missing completely at random (MCAR)": [
                 ""
             ],
             "Classifying variable": [
@@ -181,7 +184,13 @@
             "Correlations": [
                 ""
             ],
+            "D²": [
+                ""
+            ],
             "Dark2": [
+                ""
+            ],
+            "Degree of<br>Freedom (df)": [
                 ""
             ],
             "Direction": [
@@ -202,13 +211,22 @@
             "Estimated out-of-bag (OOB) imputation error": [
                 ""
             ],
+            "Evaluation of MAR explanatories": [
+                ""
+            ],
+            "Explanatory": [
+                ""
+            ],
+            "Explanatory - variable corresponding to MAR with minimal p<sub>value</sub>.": [
+                ""
+            ],
             "First principal component": [
                 ""
             ],
             "Flag significant correlations": [
                 ""
             ],
-            "Graphic extensions of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, missing data imputation by random forests etc.": [
+            "Graphic extensions of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, missing data estimation and imputation etc.": [
                 ""
             ],
             "Grouping Variable": [
@@ -289,6 +307,15 @@
             "Manual Clusters": [
                 ""
             ],
+            "MAR - missing at random (if each p<sub>value</sub> is significant, there is evidence the data is MAR);": [
+                ""
+            ],
+            "MAR (Missing at Random) and MCAR (Missing Completely at Random) estimation": [
+                ""
+            ],
+            "MAR classification table": [
+                ""
+            ],
             "Mark significance *<0.05, **<0.01, ***<0.001": [
                 ""
             ],
@@ -296,6 +323,12 @@
                 ""
             ],
             "Maximum number of iterations": [
+                ""
+            ],
+            "MCAR": [
+                ""
+            ],
+            "MCAR - missing completely at random (if the p<sub>value</sub> is not significant, there is evidence the data is MCAR).": [
                 ""
             ],
             "McQuitty Linkage (WPGMA)": [
@@ -313,16 +346,22 @@
             "missForest (2012)": [
                 ""
             ],
+            "Missing Values Estimation": [
+                ""
+            ],
+            "Missing Values Estimation and Imputation": [
+                ""
+            ],
             "Missing Values Imputation": [
                 ""
             ],
             "Missing values imputation using the prediction power of Random Forests": [
                 ""
             ],
-            "missRanger (2021)": [
+            "Missing<br>Patterns": [
                 ""
             ],
-            "Model by Random Forest": [
+            "missRanger (2021)": [
                 ""
             ],
             "MSE - mean squared error (for Continuous variables);": [
@@ -331,10 +370,13 @@
             "Multiple comparision correction": [
                 ""
             ],
+            "Multiple imputation for missing data": [
+                ""
+            ],
             "N": [
                 ""
             ],
-            "N - number of imputted values;": [
+            "N - number of missing values;": [
                 ""
             ],
             "None": [
@@ -358,6 +400,9 @@
             "p-value": [
                 ""
             ],
+            "p<sub>value</sub>": [
+                ""
+            ],
             "Paired": [
                 ""
             ],
@@ -376,7 +421,7 @@
             "PFC": [
                 ""
             ],
-            "PFC - proportion of falsely classified (for Nominal and Ordinal variables)": [
+            "PFC - proportion of falsely classified (for Nominal and Ordinal variables);": [
                 ""
             ],
             "Pie": [
@@ -511,10 +556,10 @@
             "Variable": [
                 ""
             ],
-            "variable numbers by commas": [
+            "Variable - $key": [
                 ""
             ],
-            "Wait for calculation...": [
+            "variable numbers by commas": [
                 ""
             ],
             "Ward´s D2 Linkage": [

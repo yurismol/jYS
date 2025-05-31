@@ -1,36 +1,114 @@
 ---
 name:  mMF
-title: Missing Values Imputation
+title: Missing Values Estimation and Imputation
 jrs:   '1.1'
-refs: [mf, rg, mr]
+#refs: [mar, mf, rg, mr]
 
 items:
     #- name:  text
     #  title: Estimated out-of-bag (OOB) imputation error
     #  type:  Preformatted
 
-    - name: errors
-      visible: (imputeOV)
-      title: Estimated out-of-bag (OOB) imputation error
-      type: Table
-      description: OOB errors table
-      rows: (imputevar)
-      columns:
-          - name: name
-            title: Variable
-            type: text
-            content: ($key)
-            #combineBelow: true
-          - name: ninp
-            title: N
-            type: integer
-          #- name: mse
-          #  title: MSE
-          #  type: number
-          - name: pfc
-            title: PFC
-            type: number
+    - name: estim
+      title: Missing Values Estimation
+      type: Group
+      refs: [mar, missr]
+      items:
+        - name: mcar
+          title: Classify missing completely at random (MCAR)
+          type: Table
+          visible: (isMAR)
+          clearWith:
+              - learnvar
+              - imputevar
+          description: MAR classification table
+          columns:
+              - name: name
+                title: ""
+                type: text
+                content: MCAR
+              - name: pval
+                title: p<sub>value</sub>
+                type: number
+              - name: d2
+                title: "D\u00B2"
+                type: number
+              - name: df
+                title: Degree of<br>Freedom (df)
+                type: integer
+              - name: mpat
+                title: Missing<br>Patterns
+                type: integer
+    
+        - name: mars
+          title: Classify missing at random (MAR)
+          type: Table
+          visible: (isMAR)
+          clearWith:
+              - learnvar
+              - imputevar
+          description: MAR classification table
+          rows: (imputevar)
+          columns:
+              - name: name
+                title: Variable
+                type: text
+                content: ($key)
+                #combineBelow: true
+              - name: ninp
+                title: N
+                type: integer
+              - name: mar
+                title: p<sub>value</sub>
+                type: number
+              - name: exp
+                title: Explanatory
+                type: number
+    
+        - name: fMARtab
+          title: Evaluation of MAR explanatories
+          type: Array
+          description: an array of MARs
+          visible: (fullmars && isMAR)
+          items: (imputevar)
+          clearWith:
+            - learnvar
+            - imputevar
+          template:
+            title: Variable - $key
+            type: Table
+            clearWith:
+              - learnvar
+              - imputevar
+            columns:
+              - name: exp
+                title: Explanatory
+                type: text
+              - name: pval
+                title: p<sub>value</sub>
+                type: number
 
+    - name: imput
+      title: Missing Values Imputation
+      type: Group
+      refs: [mf, rg, mr]
+      items:
+        - name: errors
+          visible: (imputeOV)
+          title: Estimated out-of-bag (OOB) imputation error
+          type: Table
+          description: OOB errors table
+          rows: (imputevar)
+          columns:
+              - name: name
+                title: Variable
+                type: text
+                content: ($key)
+                #combineBelow: true
+              - name: pfc
+                title: PFC
+                type: number
+    
     - name: imputeOV
       title: Imputed misses
       type: Output

@@ -33,10 +33,6 @@ msgstr ""
 msgid "%"
 msgstr ""
 
-#: mCOR/options/plots.description.R
-msgid "`TRUE` or `FALSE` (default), provide a correlation matrix plot"
-msgstr ""
-
 #: mCOR/options/signif/0.001.title
 msgid "< 0.001"
 msgstr ""
@@ -51,10 +47,6 @@ msgstr ""
 
 #: mCOR/options/signif/0.1.title
 msgid "< 0.1"
-msgstr ""
-
-#: R\mmf.b.R
-msgid "<h2>For computation select variables and check the \"Model the missing values\"</h2>"
 msgstr ""
 
 #: R\mroc.b.R
@@ -78,7 +70,7 @@ msgid "Agglomeration method"
 msgstr ""
 
 #: mMF/options/alg.title
-msgid "Algoruthm"
+msgid "Algorythm"
 msgstr ""
 
 #: mCOR/options/signif/all.title
@@ -87,6 +79,10 @@ msgstr ""
 
 #: mCOR/options/plotOrder/alphabet.title
 msgid "Alphabetical"
+msgstr ""
+
+#: mMF/results/estim/fMARtab.description
+msgid "an array of MARs"
 msgstr ""
 
 #: mCOR/options/plotOrder/AOE.title
@@ -160,6 +156,14 @@ msgstr ""
 #: mCOR/options/plotMetU/circle.title
 #: mCOR/options/plotMetL/circle.title
 msgid "Circle"
+msgstr ""
+
+#: mMF/results/estim/mars.title
+msgid "Classify missing at random (MAR)"
+msgstr ""
+
+#: mMF/results/estim/mcar.title
+msgid "Classify missing completely at random (MCAR)"
 msgstr ""
 
 #: mROC/options/class.title
@@ -254,8 +258,16 @@ msgstr ""
 msgid "Correlations"
 msgstr ""
 
+#: mMF/results/estim/mcar.columns.title
+msgid "D²"
+msgstr ""
+
 #: mROC/options/palBrewer/Dark2.title
 msgid "Dark2"
+msgstr ""
+
+#: mMF/results/estim/mcar.columns.title
+msgid "Degree of<br>Freedom (df)"
 msgstr ""
 
 #: mROC/options/direction.title
@@ -280,8 +292,22 @@ msgstr ""
 msgid "Emtpy"
 msgstr ""
 
-#: mMF/results/errors.title
+#: mMF/results/imput/errors.title
 msgid "Estimated out-of-bag (OOB) imputation error"
+msgstr ""
+
+#: mMF/options/fullmars.title
+#: mMF/results/estim/fMARtab.title
+msgid "Evaluation of MAR explanatories"
+msgstr ""
+
+#: mMF/results/estim/mars.columns.title
+#: mMF/results/estim/fMARtab.template.columns.title
+msgid "Explanatory"
+msgstr ""
+
+#: R\mmf.b.R
+msgid "Explanatory - variable corresponding to MAR with minimal p<sub>value</sub>."
 msgstr ""
 
 #: mCOR/options/plotOrder/FPC.title
@@ -293,7 +319,7 @@ msgid "Flag significant correlations"
 msgstr ""
 
 #: package.description
-msgid "Graphic extensions of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, missing data imputation by random forests etc."
+msgid "Graphic extensions of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, missing data estimation and imputation etc."
 msgstr ""
 
 #: mCOR/options/group.title
@@ -412,6 +438,19 @@ msgstr ""
 msgid "Manual Clusters"
 msgstr ""
 
+#: R\mmf.b.R
+msgid "MAR - missing at random (if each p<sub>value</sub> is significant, there is evidence the data is MAR);"
+msgstr ""
+
+#: mMF/options/isMAR.title
+msgid "MAR (Missing at Random) and MCAR (Missing Completely at Random) estimation"
+msgstr ""
+
+#: mMF/results/estim/mcar.description
+#: mMF/results/estim/mars.description
+msgid "MAR classification table"
+msgstr ""
+
 #: mROC/options/mAst.title
 msgid "Mark significance *<0.05, **<0.01, ***<0.001"
 msgstr ""
@@ -422,6 +461,14 @@ msgstr ""
 
 #: mMF/options/maxiter.title
 msgid "Maximum number of iterations"
+msgstr ""
+
+#: mMF/results/estim/mcar.columns.content
+msgid "MCAR"
+msgstr ""
+
+#: R\mmf.b.R
+msgid "MCAR - missing completely at random (if the p<sub>value</sub> is not significant, there is evidence the data is MCAR)."
 msgstr ""
 
 #: mCOR/options/clustMet/mcquitty.title
@@ -444,12 +491,20 @@ msgstr ""
 msgid "missForest (2012)"
 msgstr ""
 
+#: mMF/results/estim.title
+msgid "Missing Values Estimation"
+msgstr ""
+
 #: package/analyses/mMF.title
 #: package/analyses/mMF.menuTitle
-#: package/datasets/Missing Values Imputation.name
 #: mMF/options.title
 #: mMF/ui.title
 #: mMF/results.title
+msgid "Missing Values Estimation and Imputation"
+msgstr ""
+
+#: package/datasets/Missing Values Imputation.name
+#: mMF/results/imput.title
 msgid "Missing Values Imputation"
 msgstr ""
 
@@ -457,12 +512,12 @@ msgstr ""
 msgid "Missing values imputation using the prediction power of Random Forests"
 msgstr ""
 
-#: mMF/options/alg/mR.title
-msgid "missRanger (2021)"
+#: mMF/results/estim/mcar.columns.title
+msgid "Missing<br>Patterns"
 msgstr ""
 
-#: mMF/options/imputeOV.title
-msgid "Model by Random Forest"
+#: mMF/options/alg/mR.title
+msgid "missRanger (2021)"
 msgstr ""
 
 #: R\mmf.b.R
@@ -473,14 +528,18 @@ msgstr ""
 msgid "Multiple comparision correction"
 msgstr ""
 
+#: mMF/options/imputeOV.title
+msgid "Multiple imputation for missing data"
+msgstr ""
+
 #: mCOR/options/n.title
 #: mCOR/results/matrix.columns.content
-#: mMF/results/errors.columns.title
+#: mMF/results/estim/mars.columns.title
 msgid "N"
 msgstr ""
 
 #: R\mmf.b.R
-msgid "N - number of imputted values;"
+msgid "N - number of missing values;"
 msgstr ""
 
 #: mCOR/options/adjust/none.title
@@ -497,7 +556,6 @@ msgid "Number"
 msgstr ""
 
 #: mMF/options/pmmk.description.ui
-#: mMF/options/pmmk.description.R
 msgid "Number of candidate non-missing values to sample from in the predictive mean matching steps. 0 to avoid this step"
 msgstr ""
 
@@ -505,7 +563,7 @@ msgstr ""
 msgid "Number of trees to grow in each forest"
 msgstr ""
 
-#: mMF/results/errors.description
+#: mMF/results/imput/errors.description
 msgid "OOB errors table"
 msgstr ""
 
@@ -516,6 +574,12 @@ msgstr ""
 #: mCOR/options/pval.title
 #: mCOR/results/matrix.columns.content
 msgid "p-value"
+msgstr ""
+
+#: mMF/results/estim/mcar.columns.title
+#: mMF/results/estim/mars.columns.title
+#: mMF/results/estim/fMARtab.template.columns.title
+msgid "p<sub>value</sub>"
 msgstr ""
 
 #: mROC/options/palBrewer/Paired.title
@@ -539,12 +603,12 @@ msgstr ""
 msgid "Pearson's r"
 msgstr ""
 
-#: mMF/results/errors.columns.title
+#: mMF/results/imput/errors.columns.title
 msgid "PFC"
 msgstr ""
 
 #: R\mmf.b.R
-msgid "PFC - proportion of falsely classified (for Nominal and Ordinal variables)"
+msgid "PFC - proportion of falsely classified (for Nominal and Ordinal variables);"
 msgstr ""
 
 #: mCOR/options/plotMetU/pie.title
@@ -732,16 +796,17 @@ msgstr ""
 msgid "Upper part"
 msgstr ""
 
-#: mMF/results/errors.columns.title
+#: mMF/results/estim/mars.columns.title
+#: mMF/results/imput/errors.columns.title
 msgid "Variable"
+msgstr ""
+
+#: mMF/results/estim/fMARtab.template.title
+msgid "Variable - $key"
 msgstr ""
 
 #: mCOR/ui[5][0]/plots/clustMan.suffix
 msgid "variable numbers by commas"
-msgstr ""
-
-#: R\mmf.b.R
-msgid "Wait for calculation..."
 msgstr ""
 
 #: mCOR/options/clustMet/ward.D2.title

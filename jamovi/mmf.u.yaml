@@ -1,4 +1,4 @@
-title: Missing Values Imputation
+title: Missing Values Estimation and Imputation
 name: mMF
 jus: '3.0'
 stage: 0
@@ -23,29 +23,35 @@ children:
   - type: LayoutBox
     margin: large
     children:
+      - type: CheckBox
+        name: isMAR
+        children:
+        - type: CheckBox
+          name: fullmars
+          enable: (isMAR)
       - type: Output
         name: imputeOV
         children:
           - type: ComboBox
             name: alg
-            enable: (imputeOV)
+            enable: ({return ui['imputeOV'].value()?.value;})
           - type: TextBox
             name: maxiter
             format: number
-            enable: (imputeOV)
+            enable: ({ return ui['imputeOV'].value()?.value; } )
           - type: TextBox
             name: ntree
             format: number
-            enable: (imputeOV)
+            enable: ({return ui['imputeOV'].value()?.value;})
           - type: TextBox
             name: pmmk
             format: number
-            enable: (imputeOV && {return ui['alg'].value()=="mR";})
+            enable: ({return ui['imputeOV'].value()?.value;})
           - type: CheckBox
             name: setseed
-            enable: (imputeOV)
+            enable: ({return ui['imputeOV'].value()?.value;})
             children:
               - type: TextBox
                 name: seed
-                enable: (setseed)
+                enable: (setseed && {return ui['imputeOV'].value()?.value;})
                 format: number

@@ -1,8 +1,8 @@
 ---
 name:  mMF
-title: Missing Values Imputation
+title: Missing Values Estimation and Imputation
 menuGroup: jYS
-version: '1.0.7'
+version: '1.0.8'
 jas: '1.2'
 
 options:
@@ -20,12 +20,22 @@ options:
       takeFromDataIfMissing: true
       required: true
 
+    - name: isMAR
+      title: MAR (Missing at Random) and MCAR (Missing Completely at Random) estimation
+      type: Bool
+      default: true
+
+    - name: fullmars
+      title: Evaluation of MAR explanatories
+      type: Bool
+      default: false
+
     - name: imputeOV
-      title: Model by Random Forest
+      title: Multiple imputation for missing data
       type: Output
 
     - name: alg
-      title: Algoruthm
+      title: Algorythm
       type: List
       options:
         - title: missForest (2012)
