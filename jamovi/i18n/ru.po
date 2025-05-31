@@ -493,7 +493,7 @@ msgstr ""
 
 #: mMF/results/estim.title
 msgid "Missing Values Estimation"
-msgstr "Оценка пропущенных данных"
+msgstr "Оценка пропусков данных"
 
 #: package/analyses/mMF.title
 #: package/analyses/mMF.menuTitle
@@ -506,7 +506,7 @@ msgstr "Оценка и восстановление пропусков данн
 #: package/datasets/Missing Values Imputation.name
 #: mMF/results/imput.title
 msgid "Missing Values Imputation"
-msgstr "Восстановление пропущенных данных"
+msgstr "Восстановление пропусков данных"
 
 #: package/datasets/Missing Values Imputation.description
 msgid "Missing values imputation using the prediction power of Random Forests"
@@ -530,7 +530,7 @@ msgstr "Коррекция множественного сравнения"
 
 #: mMF/options/imputeOV.title
 msgid "Multiple imputation for missing data"
-msgstr "Множественное восстановление пропущенных данных"
+msgstr "Множественное восстановление пропусков данных"
 
 #: mCOR/options/n.title
 #: mCOR/results/matrix.columns.content

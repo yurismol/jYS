@@ -20,15 +20,27 @@ children:
           - type: VariablesListBox
             name: imputevar
             isTarget: true
-  - type: LayoutBox
-    margin: large
+
+  - type: CollapseBox
+    label: Missing Values Estimation
+    collapsed: false
+    stretchFactor: 1
     children:
-      - type: CheckBox
-        name: isMAR
+      - type: LayoutBox
+        margin: large
         children:
-        - type: CheckBox
-          name: fullmars
-          enable: (isMAR)
+          - type: CheckBox
+            name: isMAR
+            children:
+            - type: CheckBox
+              name: fullmars
+              enable: (isMAR)
+
+  - type: CollapseBox
+    label: Missing Values Imputation
+    collapsed: false
+    stretchFactor: 1
+    children:
       - type: Output
         name: imputeOV
         children:
