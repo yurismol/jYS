@@ -298,7 +298,7 @@ msgstr "Прогноз ошибки вне-мешка (out-of-bag, OOB)"
 
 #: mMF/options/fullmars.title
 #: mMF/results/estim/fMARtab.title
-msgid "Evaluation of MAR explanatories"
+msgid "Evaluation of MAR explainers"
 msgstr "Оценка определителей MAR"
 
 #: mMF/results/estim/mars.columns.title
@@ -370,8 +370,12 @@ msgid "Hypothesis"
 msgstr "Гипотеза"
 
 #: R\mmf.b.R
+msgid "If at least one p<sub>value</sub> MAR is not significant, and the p<sub>value</sub> in MCAR is significant then the data is MNAR (Missing Not At Random)."
+msgstr "Если хотя бы одно p<sub>значение</sub> в MAR не является значимым, а p<sub>значение</sub> в MCAR является значимым, то данные являются MNAR (неслучайно пропущенными)."
+
+#: R\mmf.b.R
 msgid "imp"
-msgstr "имп"
+msgstr "восст"
 
 #: mMF/results/imputeOV.title
 msgid "Imputed misses"
@@ -440,7 +444,7 @@ msgstr "Кластеры вручную"
 
 #: R\mmf.b.R
 msgid "MAR - missing at random (if each p<sub>value</sub> is significant, there is evidence the data is MAR);"
-msgstr "MAR — случайные пропуски (если каждое p<sub>value</sub> значимо, есть доказательства того, что пропуски случайны);"
+msgstr "MAR — случайные пропуски (если каждое p<sub>значение</sub> значимо, есть доказательства того, что пропуски случайны);"
 
 #: mMF/results/estim/mcar.description
 #: mMF/results/estim/mars.description
@@ -465,7 +469,7 @@ msgstr ""
 
 #: R\mmf.b.R
 msgid "MCAR - missing completely at random (if the p<sub>value</sub> is not significant, there is evidence the data is MCAR)."
-msgstr "MCAR — полностью случайные пропуски (если p<sub>value</sub> незначимо, есть доказательства того, что пропуски полностью случайны)."
+msgstr "MCAR — полностью случайные пропуски (если p<sub>значение</sub> незначимо, есть доказательства того, что пропуски полностью случайны)."
 
 #: mMF/options/isMAR.title
 msgid "MCAR (Missing Completely at Random) and MAR (Missing at Random) estimation"
@@ -568,7 +572,7 @@ msgstr "Количество возможных непропущенных зн�
 
 #: mMF/options/ntree.title
 msgid "Number of trees to grow in each forest"
-msgstr "Число деревьев для каждого случайного леса"
+msgstr "Число деревьев,<br>выращиваемых в каждом случайном лесе"
 
 #: mMF/results/imput/errors.description
 msgid "OOB errors table"
@@ -587,7 +591,7 @@ msgstr "p-значение"
 #: mMF/results/estim/mars.columns.title
 #: mMF/results/estim/fMARtab.template.columns.title
 msgid "p<sub>value</sub>"
-msgstr ""
+msgstr "p<sub>значение</sub>"
 
 #: mROC/options/palBrewer/Paired.title
 msgid "Paired"
@@ -633,7 +637,7 @@ msgstr "Полигон"
 
 #: mMF/options/pmmk.title
 msgid "Predictive Mean Matching (PMM) steps"
-msgstr "Шаги предиктивного cреднего сопоставления (PMM)"
+msgstr "Шаги предиктивного<br>cреднего сопоставления (PMM)"
 
 #: mROC/options/vars.title
 #: mROC/ui[0][0].label

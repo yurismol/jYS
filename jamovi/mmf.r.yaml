@@ -65,7 +65,7 @@ items:
                 type: number
     
         - name: fMARtab
-          title: Evaluation of MAR explanatories
+          title: Evaluation of MAR explainers
           type: Array
           description: an array of MARs
           visible: (fullmars && isMAR)

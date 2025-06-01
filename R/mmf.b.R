@@ -10,6 +10,18 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             mctable<- self$results$estim$mcar
             mtable <- self$results$estim$mars
             etable <- self$results$imput$errors
+            mctable$setNote('mcar', paste("<br>",
+                          .('MCAR - missing completely at random (if the p<sub>value</sub> is not significant, there is evidence the data is MCAR).')
+            ))
+            mtable$setNote('mar', paste("<br>",
+                          .('N - number of missing values;'), "<br>",
+                          .('MAR - missing at random (if each p<sub>value</sub> is significant, there is evidence the data is MAR);'), "<br>",
+                          .('Explanatory - variable corresponding to MAR with minimal p<sub>value</sub>.')
+            ))
+            mtable$setNote('mcar_mar', paste("<br>",
+                          .('If at least one p<sub>value</sub> MAR is not significant, and the p<sub>value</sub> in MCAR is significant then the data is MNAR (Missing Not At Random).')
+            ))
+ 
             if (self$options$alg=="mF") {
               etable$addColumn(name="err", title="MSE", type='number')
               contErr = .('MSE - mean squared error (for Continuous variables);')
@@ -17,18 +29,10 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               etable$addColumn(name="err", title="PVU", type='number')
               contErr = .('PVU - proportion of variance unexplained 1-R\u00B2 (for Continuous variables);')
             }
-            etable$setNote('obe', paste(
-                          .('N - number of imputted values;'),
-                          .('PFC - proportion of falsely classified (for Nominal and Ordinal variables);'),
+            etable$setNote('obe', paste("<br>",
+                          .('N - number of imputted values;'), "<br>",
+                          .('PFC - proportion of falsely classified (for Nominal and Ordinal variables);'), "<br>",
                           contErr
-            ))
-            mtable$setNote('obe', paste(
-                          .('N - number of missing values;'),
-                          .('MAR - missing at random (if each p<sub>value</sub> is significant, there is evidence the data is MAR);'),
-                          .('Explanatory - variable corresponding to MAR with minimal p<sub>value</sub>.')
-            ))
-            mctable$setNote('obe', paste(
-                          .('MCAR - missing completely at random (if the p<sub>value</sub> is not significant, there is evidence the data is MCAR).')
             ))
         },
 

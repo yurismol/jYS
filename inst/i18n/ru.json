@@ -211,7 +211,7 @@
             "Estimated out-of-bag (OOB) imputation error": [
                 "Прогноз ошибки вне-мешка (out-of-bag, OOB)"
             ],
-            "Evaluation of MAR explanatories": [
+            "Evaluation of MAR explainers": [
                 "Оценка определителей MAR"
             ],
             "Explanatory": [
@@ -262,8 +262,11 @@
             "Hypothesis": [
                 "Гипотеза"
             ],
+            "If at least one p<sub>value</sub> MAR is not significant, and the p<sub>value</sub> in MCAR is significant then the data is MNAR (Missing Not At Random).": [
+                "Если хотя бы одно p<sub>значение</sub> в MAR не является значимым, а p<sub>значение</sub> в MCAR является значимым, то данные являются MNAR (неслучайно пропущенными)."
+            ],
             "imp": [
-                "имп"
+                "восст"
             ],
             "Imputed misses": [
                 "Заполненные пропуски"
@@ -308,7 +311,7 @@
                 "Кластеры вручную"
             ],
             "MAR - missing at random (if each p<sub>value</sub> is significant, there is evidence the data is MAR);": [
-                "MAR — случайные пропуски (если каждое p<sub>value</sub> значимо, есть доказательства того, что пропуски случайны);"
+                "MAR — случайные пропуски (если каждое p<sub>значение</sub> значимо, есть доказательства того, что пропуски случайны);"
             ],
             "MAR classification table": [
                 "Таблица классификации MAR"
@@ -326,7 +329,7 @@
                 ""
             ],
             "MCAR - missing completely at random (if the p<sub>value</sub> is not significant, there is evidence the data is MCAR).": [
-                "MCAR — полностью случайные пропуски (если p<sub>value</sub> незначимо, есть доказательства того, что пропуски полностью случайны)."
+                "MCAR — полностью случайные пропуски (если p<sub>значение</sub> незначимо, есть доказательства того, что пропуски полностью случайны)."
             ],
             "MCAR (Missing Completely at Random) and MAR (Missing at Random) estimation": [
                 "Оценка MCAR (полностью случайные пропуски) и MAR (случайные пропуски)"
@@ -392,7 +395,7 @@
                 "Количество возможных непропущенных значений для выборки на этапах сопоставления предиктивного среднего. 0, чтобы не использовать этот метод"
             ],
             "Number of trees to grow in each forest": [
-                "Число деревьев для каждого случайного леса"
+                "Число деревьев,<br>выращиваемых в каждом случайном лесе"
             ],
             "OOB errors table": [
                 "Таблица прогнозируемых ошибок"
@@ -404,7 +407,7 @@
                 "p-значение"
             ],
             "p<sub>value</sub>": [
-                ""
+                "p<sub>значение</sub>"
             ],
             "Paired": [
                 "Парная"
@@ -437,7 +440,7 @@
                 "Полигон"
             ],
             "Predictive Mean Matching (PMM) steps": [
-                "Шаги предиктивного cреднего сопоставления (PMM)"
+                "Шаги предиктивного<br>cреднего сопоставления (PMM)"
             ],
             "Predictors": [
                 "Предикторы"

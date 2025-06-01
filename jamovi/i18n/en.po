@@ -298,7 +298,7 @@ msgstr ""
 
 #: mMF/options/fullmars.title
 #: mMF/results/estim/fMARtab.title
-msgid "Evaluation of MAR explanatories"
+msgid "Evaluation of MAR explainers"
 msgstr ""
 
 #: mMF/results/estim/mars.columns.title
@@ -367,6 +367,10 @@ msgstr ""
 
 #: mCOR/options/hyp.title
 msgid "Hypothesis"
+msgstr ""
+
+#: R\mmf.b.R
+msgid "If at least one p<sub>value</sub> MAR is not significant, and the p<sub>value</sub> in MCAR is significant then the data is MNAR (Missing Not At Random)."
 msgstr ""
 
 #: R\mmf.b.R

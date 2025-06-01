@@ -211,7 +211,7 @@
             "Estimated out-of-bag (OOB) imputation error": [
                 ""
             ],
-            "Evaluation of MAR explanatories": [
+            "Evaluation of MAR explainers": [
                 ""
             ],
             "Explanatory": [
@@ -260,6 +260,9 @@
                 ""
             ],
             "Hypothesis": [
+                ""
+            ],
+            "If at least one p<sub>value</sub> MAR is not significant, and the p<sub>value</sub> in MCAR is significant then the data is MNAR (Missing Not At Random).": [
                 ""
             ],
             "imp": [

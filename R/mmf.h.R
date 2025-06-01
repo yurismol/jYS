@@ -198,7 +198,7 @@ mMFResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         self$add(jmvcore::Array$new(
                             options=options,
                             name="fMARtab",
-                            title="Evaluation of MAR explanatories",
+                            title="Evaluation of MAR explainers",
                             visible="(fullmars && isMAR)",
                             items="(imputevar)",
                             clearWith=list(
