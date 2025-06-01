@@ -247,6 +247,10 @@ mMFResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                     `type`="text", 
                                     `content`="($key)"),
                                 list(
+                                    `name`="ninp", 
+                                    `title`="N", 
+                                    `type`="integer"),
+                                list(
                                     `name`="pfc", 
                                     `title`="PFC", 
                                     `type`="number"))))}))$new(options=options))

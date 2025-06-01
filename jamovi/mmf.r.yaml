@@ -2,7 +2,6 @@
 name:  mMF
 title: Missing Values Estimation and Imputation
 jrs:   '1.1'
-#refs: [mar, mf, rg, mr]
 
 items:
     #- name:  text
@@ -105,6 +104,9 @@ items:
                 type: text
                 content: ($key)
                 #combineBelow: true
+              - name: ninp
+                title: N
+                type: integer
               - name: pfc
                 title: PFC
                 type: number

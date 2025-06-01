@@ -18,6 +18,7 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               contErr = .('PVU - proportion of variance unexplained 1-R\u00B2 (for Continuous variables);')
             }
             etable$setNote('obe', paste(
+                          .('N - number of imputted values;'),
                           .('PFC - proportion of falsely classified (for Nominal and Ordinal variables);'),
                           contErr
             ))
@@ -103,12 +104,16 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 		keys   <- self$options$imputevar
 		marc   <- mar$combined
 		for (tab in keys) {
-                  table <- tables$get(key=tab)
-                  m  <- marc[[tab]]
-		  m  <- m[order(unlist(m))]
-		  nm <- names(m)
-		  for (i in seq_along(m)) {
-		    table$addRow(rowKey=nm[i], list(exp=nm[i], pval=m[i]))
+		  d  <- dat[[tab]]
+		  nr <- length(d[is.na(d)])
+		  if (nr>0) {
+		    table <- tables$get(key=tab)
+		    m  <- marc[[tab]]
+    		    m  <- m[order(unlist(m))]
+		    nm <- names(m)
+		    for (i in seq_along(m)) {
+		      table$addRow(rowKey=nm[i], list(exp=nm[i], pval=m[i]))
+		    }
 		  }
 		}
             }
@@ -157,6 +162,7 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 for (i in seq_along(keys)) {
                     key <- keys[[i]]
                     d   <- dat[[key]]
+                    nr  <- length(out[[key]]) - length(d[!is.na(d)])
                     oo  <- oob[key]
                     if (is.na(oo) || nr==0) oo <- '\u2014'
                     if (private$.columnType(d)=="continuous") {

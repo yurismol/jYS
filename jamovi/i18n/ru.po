@@ -537,8 +537,13 @@ msgstr "Множественное восстановление пропуско
 #: mCOR/options/n.title
 #: mCOR/results/matrix.columns.content
 #: mMF/results/estim/mars.columns.title
+#: mMF/results/imput/errors.columns.title
 msgid "N"
 msgstr ""
+
+#: R\mmf.b.R
+msgid "N - number of imputted values;"
+msgstr "N - количество восстановленных значений;"
 
 #: R\mmf.b.R
 msgid "N - number of missing values;"
