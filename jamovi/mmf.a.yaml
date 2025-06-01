@@ -21,7 +21,7 @@ options:
       required: true
 
     - name: isMAR
-      title: MAR (Missing at Random) and MCAR (Missing Completely at Random) estimation
+      title: MCAR (Missing Completely at Random) and MAR (Missing at Random) estimation
       type: Bool
       default: true
 

@@ -310,9 +310,6 @@
             "MAR - missing at random (if each p<sub>value</sub> is significant, there is evidence the data is MAR);": [
                 "MAR — случайные пропуски (если каждое p<sub>value</sub> значимо, есть доказательства того, что пропуски случайны);"
             ],
-            "MAR (Missing at Random) and MCAR (Missing Completely at Random) estimation": [
-                "Оценка MAR (случайные пропуски) и MCAR (полностью случайные пропуски)"
-            ],
             "MAR classification table": [
                 "Таблица классификации MAR"
             ],
@@ -330,6 +327,9 @@
             ],
             "MCAR - missing completely at random (if the p<sub>value</sub> is not significant, there is evidence the data is MCAR).": [
                 "MCAR — полностью случайные пропуски (если p<sub>value</sub> незначимо, есть доказательства того, что пропуски полностью случайны)."
+            ],
+            "MCAR (Missing Completely at Random) and MAR (Missing at Random) estimation": [
+                "Оценка MCAR (полностью случайные пропуски) и MAR (случайные пропуски)"
             ],
             "McQuitty Linkage (WPGMA)": [
                 "МакКитти связи"
@@ -374,7 +374,7 @@
                 "Множественное восстановление пропусков данных"
             ],
             "N": [
-                "N"
+                ""
             ],
             "N - number of missing values;": [
                 "N - количество пропущенных значений;"

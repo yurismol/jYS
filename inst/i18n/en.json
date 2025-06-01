@@ -310,9 +310,6 @@
             "MAR - missing at random (if each p<sub>value</sub> is significant, there is evidence the data is MAR);": [
                 ""
             ],
-            "MAR (Missing at Random) and MCAR (Missing Completely at Random) estimation": [
-                ""
-            ],
             "MAR classification table": [
                 ""
             ],
@@ -329,6 +326,9 @@
                 ""
             ],
             "MCAR - missing completely at random (if the p<sub>value</sub> is not significant, there is evidence the data is MCAR).": [
+                ""
+            ],
+            "MCAR (Missing Completely at Random) and MAR (Missing at Random) estimation": [
                 ""
             ],
             "McQuitty Linkage (WPGMA)": [

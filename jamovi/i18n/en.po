@@ -442,10 +442,6 @@ msgstr ""
 msgid "MAR - missing at random (if each p<sub>value</sub> is significant, there is evidence the data is MAR);"
 msgstr ""
 
-#: mMF/options/isMAR.title
-msgid "MAR (Missing at Random) and MCAR (Missing Completely at Random) estimation"
-msgstr ""
-
 #: mMF/results/estim/mcar.description
 #: mMF/results/estim/mars.description
 msgid "MAR classification table"
@@ -471,6 +467,10 @@ msgstr ""
 msgid "MCAR - missing completely at random (if the p<sub>value</sub> is not significant, there is evidence the data is MCAR)."
 msgstr ""
 
+#: mMF/options/isMAR.title
+msgid "MCAR (Missing Completely at Random) and MAR (Missing at Random) estimation"
+msgstr ""
+
 #: mCOR/options/clustMet/mcquitty.title
 msgid "McQuitty Linkage (WPGMA)"
 msgstr ""
@@ -491,6 +491,7 @@ msgstr ""
 msgid "missForest (2012)"
 msgstr ""
 
+#: mMF/ui[1].label
 #: mMF/results/estim.title
 msgid "Missing Values Estimation"
 msgstr ""
@@ -504,6 +505,7 @@ msgid "Missing Values Estimation and Imputation"
 msgstr ""
 
 #: package/datasets/Missing Values Imputation.name
+#: mMF/ui[2].label
 #: mMF/results/imput.title
 msgid "Missing Values Imputation"
 msgstr ""
