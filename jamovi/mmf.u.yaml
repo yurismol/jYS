@@ -58,7 +58,7 @@ children:
           - type: TextBox
             name: pmmk
             format: number
-            enable: ({return ui['imputeOV'].value()?.value;})
+            enable: ({return ui['imputeOV'].value()?.value && ui['alg'].value()=="mR";})
           - type: CheckBox
             name: setseed
             enable: ({return ui['imputeOV'].value()?.value;})
