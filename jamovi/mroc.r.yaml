@@ -2,7 +2,7 @@
 name:  mROC
 title: ROC classification
 jrs:   '1.1'
-refs: roc
+refs: [jys, roc]
 
 items:
     - name: text

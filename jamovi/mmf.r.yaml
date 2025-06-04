@@ -2,6 +2,7 @@
 name:  mMF
 title: Missing Values Estimation and Imputation
 jrs:   '1.1'
+refs: jys
 
 items:
     #- name:  text
