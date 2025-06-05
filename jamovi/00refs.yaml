@@ -1,7 +1,7 @@
 refs:
     jys:
         type: 'software'
-        author: Smolyakov, Y.
+        author: Smolyakov, Y. N.
         year: 2025
         title: "jYS: Jamovi Extended Functions"
         publisher: '[jamovi module]. DOI: 10.5281/zenodo.15597090. Retrieved from https://github.com/yurismol/'
