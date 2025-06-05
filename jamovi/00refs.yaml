@@ -4,7 +4,7 @@ refs:
         author: Smolyakov, Y.
         year: 2025
         title: "jYS: Jamovi Extended Functions"
-        publisher: '[jamovi module]. Retrieved from https://github.com/yurismol/'
+        publisher: '[jamovi module]. DOI: 10.5281/zenodo.15597090. Retrieved from https://github.com/yurismol/'
         url: https://github.com/yurismol/
 
     mf:
@@ -70,7 +70,7 @@ refs:
 
     missr:
         type: 'software'
-        author: Noah William Trelawny Hellen
+        author: Noah Hellen
         year: 2025
         title: 'missr: Classify Missing Data as MCAR, MAR, or MNAR'
         publisher: '[R package]. Retrieved from https://CRAN.R-project.org/package=missr'
