@@ -14,6 +14,7 @@ mMFOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             patplot = FALSE,
             npat = 0,
             anghead = FALSE,
+            fluxplot = FALSE,
             alg = "mF",
             maxiter = 10,
             ntree = 500,
@@ -60,6 +61,10 @@ mMFOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "anghead",
                 anghead,
                 default=FALSE)
+            private$..fluxplot <- jmvcore::OptionBool$new(
+                "fluxplot",
+                fluxplot,
+                default=FALSE)
             private$..imputeOV <- jmvcore::OptionOutput$new(
                 "imputeOV")
             private$..alg <- jmvcore::OptionList$new(
@@ -98,6 +103,7 @@ mMFOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..patplot)
             self$.addOption(private$..npat)
             self$.addOption(private$..anghead)
+            self$.addOption(private$..fluxplot)
             self$.addOption(private$..imputeOV)
             self$.addOption(private$..alg)
             self$.addOption(private$..maxiter)
@@ -115,6 +121,7 @@ mMFOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         patplot = function() private$..patplot$value,
         npat = function() private$..npat$value,
         anghead = function() private$..anghead$value,
+        fluxplot = function() private$..fluxplot$value,
         imputeOV = function() private$..imputeOV$value,
         alg = function() private$..alg$value,
         maxiter = function() private$..maxiter$value,
@@ -131,6 +138,7 @@ mMFOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..patplot = NA,
         ..npat = NA,
         ..anghead = NA,
+        ..fluxplot = NA,
         ..imputeOV = NA,
         ..alg = NA,
         ..maxiter = NA,
@@ -162,7 +170,8 @@ mMFResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     mars = function() private$.items[["mars"]],
                     fMARtab = function() private$.items[["fMARtab"]],
                     cplot = function() private$.items[["cplot"]],
-                    plot = function() private$.items[["plot"]]),
+                    plot = function() private$.items[["plot"]],
+                    fplot = function() private$.items[["fplot"]]),
                 private = list(),
                 public=list(
                     initialize=function(options) {
@@ -267,11 +276,20 @@ mMFResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         self$add(jmvcore::Image$new(
                             options=options,
                             name="plot",
-                            title="Missing data pattern",
+                            title="Missing data patterns",
                             visible="(patplot)",
                             width=500,
                             height=500,
                             renderFun=".plot",
+                            requiresData=TRUE))
+                        self$add(jmvcore::Image$new(
+                            options=options,
+                            name="fplot",
+                            title="Influx-outflux plot",
+                            visible="(fluxplot)",
+                            width=500,
+                            height=550,
+                            renderFun=".fplot",
                             requiresData=TRUE))}))$new(options=options))
             self$add(R6::R6Class(
                 inherit = jmvcore::Group,
@@ -346,6 +364,7 @@ mMFBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param patplot .
 #' @param npat .
 #' @param anghead .
+#' @param fluxplot .
 #' @param alg .
 #' @param maxiter .
 #' @param ntree .
@@ -360,6 +379,7 @@ mMFBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$estim$fMARtab} \tab \tab \tab \tab \tab an array of MARs \cr
 #'   \code{results$estim$cplot} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$estim$plot} \tab \tab \tab \tab \tab an image \cr
+#'   \code{results$estim$fplot} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$imput$errors} \tab \tab \tab \tab \tab OOB errors table \cr
 #'   \code{results$imputeOV} \tab \tab \tab \tab \tab an output \cr
 #' }
@@ -375,6 +395,7 @@ mMF <- function(
     patplot = FALSE,
     npat = 0,
     anghead = FALSE,
+    fluxplot = FALSE,
     alg = "mF",
     maxiter = 10,
     ntree = 500,
@@ -404,6 +425,7 @@ mMF <- function(
         patplot = patplot,
         npat = npat,
         anghead = anghead,
+        fluxplot = fluxplot,
         alg = alg,
         maxiter = maxiter,
         ntree = ntree,

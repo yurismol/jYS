@@ -117,8 +117,31 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 	  return(TRUE)
         },
 
+        .fplot=function(image, ggtheme, theme, ...) {
+          if (length(self$options$learnvar)+length(self$options$imputevar)<2) {
+             jmvcore::reject(jmvcore::format(
+		.("Minimum 2 impute variables are required")), code='')
+             return(FALSE)
+          }
+          dat <- data.frame(self$data, check.names=FALSE)
+          dat <- jmvcore::select(dat, c(self$options$learnvar, self$options$imputevar))
+          p <- ggmice::plot_flux(data=dat, label=TRUE)
+          p <- p + 
+		   ggplot2::theme(text=ggplot2::element_text(size=ggtheme[[1]]$text$size))
+
+          p$labels$x <- .("Influx*")
+          p$labels$y <- .("OutFlux**")
+          p$labels$caption <- paste0(.("*connection of a variable's missingness indicator"), "\n", .("with observed data on other variables"),
+		"\n",
+		.("**connection of a variable's observed data"), "\n", .("with missing data on other variables")
+          )
+
+	  print(p)
+	  return(TRUE)
+        },
+
         .cplot=function(image, ggtheme, theme, ...) {
-          if (length(self$options$imputevar)<2) {
+          if (length(self$options$learnvar)+length(self$options$imputevar)<2) {
              jmvcore::reject(jmvcore::format(
 		.("Minimum 2 impute variables are required")), code='')
              return(FALSE)
@@ -155,7 +178,7 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             dat   <- jmvcore::select(dat, c(self$options$learnvar, self$options$imputevar))
 
             minVar <- 3
-            if (ncol(dat)<minVar) {
+            if (ncol(dat)<minVar && (self$options$isMAR || self$options$imputeOV)) {
 		jmvcore::reject(jmvcore::format(
 			.("Minimum {minVar} variables (Training + Imputing) are required"),
                         minVar=minVar), code='')

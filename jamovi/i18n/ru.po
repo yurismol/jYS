@@ -29,6 +29,14 @@ msgid "* p < .05, ** p < .01, *** p < .001, one-tailed"
 msgstr "* p < .05, ** p < .01, *** p < .001, односторонний"
 
 #: R\mmf.b.R
+msgid "**connection of a variable's observed data"
+msgstr "**связь наблюдаемых данных переменной"
+
+#: R\mmf.b.R
+msgid "*connection of a variable's missingness indicator"
+msgstr "*связь показателя пропусков переменной"
+
+#: R\mmf.b.R
 msgid "*pairwise complete observations"
 msgstr "*попарно в полных наблюдениях"
 
@@ -414,6 +422,18 @@ msgstr "В процентах"
 msgid "Incomplete Variables"
 msgstr "Неполные переменные"
 
+#: mMF/results/estim/fplot.title
+msgid "Influx-outflux plot"
+msgstr "Приток-отток"
+
+#: mMF/options/fluxplot.title
+msgid "Influx-outflux plot for missing data patterns"
+msgstr "График приток-отток для палитр пропущенных данных"
+
+#: R\mmf.b.R
+msgid "Influx*"
+msgstr "Приток*"
+
 #: mCOR/options/clustMat.title
 #: mCOR/results/rplots.title
 msgid "Intercluster Matrices"
@@ -485,7 +505,7 @@ msgstr "Матрица №{i}"
 
 #: mMF/options/maxiter.title
 msgid "Maximum number of iterations"
-msgstr "Максимальное количесвто итераций"
+msgstr "Максимальное количество итераций"
 
 #: mMF/results/estim/mcar.columns.content
 msgid "MCAR"
@@ -528,8 +548,8 @@ msgid "missing"
 msgstr "пропущено"
 
 #: mMF/results/estim/plot.title
-msgid "Missing data pattern"
-msgstr "Палитра пропущенных данных"
+msgid "Missing data patterns"
+msgstr "Палитры пропущенных данных"
 
 #: mMF/ui[1].label
 #: mMF/results/estim.title
@@ -634,6 +654,10 @@ msgstr "Таблица прогнозируемых ошибок"
 msgid "Original"
 msgstr "Оригинальное"
 
+#: R\mmf.b.R
+msgid "OutFlux**"
+msgstr "Отток**"
+
 #: mCOR/options/pval.title
 #: mCOR/results/matrix.columns.content
 msgid "p-value"
@@ -692,8 +716,8 @@ msgid "Plot correlations between variables"
 msgstr "График корреляций между переменными"
 
 #: mMF/options/patplot.title
-msgid "Plot the missing data pattern"
-msgstr "График палитры пропущенных данных"
+msgid "Plot the missing data patterns"
+msgstr "График палитр пропущенных данных"
 
 #: mCOR/ui[5].label
 msgid "Plots"
@@ -911,6 +935,14 @@ msgstr "Уорд связи"
 #: mROC/options/cmpDeLong/wcontr.title
 msgid "With control"
 msgstr "С контролем"
+
+#: R\mmf.b.R
+msgid "with missing data on other variables"
+msgstr "с отсутствующими данными по другим переменным"
+
+#: R\mmf.b.R
+msgid "with observed data on other variables"
+msgstr "с наблюдаемыми данными по другим переменным"
 
 #: mROC/options/theBest/bestY.title
 msgid "Youden Best"

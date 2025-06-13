@@ -36,7 +36,7 @@ options:
       default: false
 
     - name: patplot
-      title: Plot the missing data pattern
+      title: Plot the missing data patterns
       type: Bool
       default: false
 
@@ -47,6 +47,11 @@ options:
 
     - name: anghead
       title: Slanted Titles
+      type: Bool
+      default: false
+
+    - name: fluxplot
+      title: Influx-outflux plot for missing data patterns
       type: Bool
       default: false
 

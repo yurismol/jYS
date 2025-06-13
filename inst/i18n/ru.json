@@ -22,6 +22,12 @@
             "* p < .05, ** p < .01, *** p < .001, one-tailed": [
                 "* p < .05, ** p < .01, *** p < .001, односторонний"
             ],
+            "**connection of a variable's observed data": [
+                "**связь наблюдаемых данных переменной"
+            ],
+            "*connection of a variable's missingness indicator": [
+                "*связь показателя пропусков переменной"
+            ],
             "*pairwise complete observations": [
                 "*попарно в полных наблюдениях"
             ],
@@ -295,6 +301,15 @@
             "Incomplete Variables": [
                 "Неполные переменные"
             ],
+            "Influx-outflux plot": [
+                "Приток-отток"
+            ],
+            "Influx-outflux plot for missing data patterns": [
+                "График приток-отток для палитр пропущенных данных"
+            ],
+            "Influx*": [
+                "Приток*"
+            ],
             "Intercluster Matrices": [
                 "Межкластерные матрицы"
             ],
@@ -341,7 +356,7 @@
                 "Матрица №{i}"
             ],
             "Maximum number of iterations": [
-                "Максимальное количесвто итераций"
+                "Максимальное количество итераций"
             ],
             "MCAR": [
                 ""
@@ -373,8 +388,8 @@
             "missing": [
                 "пропущено"
             ],
-            "Missing data pattern": [
-                "Палитра пропущенных данных"
+            "Missing data patterns": [
+                "Палитры пропущенных данных"
             ],
             "Missing Values Estimation": [
                 "Оценка пропусков данных"
@@ -442,6 +457,9 @@
             "Original": [
                 "Оригинальное"
             ],
+            "OutFlux**": [
+                "Отток**"
+            ],
             "p-value": [
                 "p-значение"
             ],
@@ -481,8 +499,8 @@
             "Plot correlations between variables": [
                 "График корреляций между переменными"
             ],
-            "Plot the missing data pattern": [
-                "График палитры пропущенных данных"
+            "Plot the missing data patterns": [
+                "График палитр пропущенных данных"
             ],
             "Plots": [
                 "Графики"
@@ -636,6 +654,12 @@
             ],
             "With control": [
                 "С контролем"
+            ],
+            "with missing data on other variables": [
+                "с отсутствующими данными по другим переменным"
+            ],
+            "with observed data on other variables": [
+                "с наблюдаемыми данными по другим переменным"
             ],
             "Youden Best": [
                 "По Юдену"

@@ -100,12 +100,21 @@ items:
           requiresData: true
 
         - name: plot
-          title: Missing data pattern
+          title: Missing data patterns
           visible: (patplot)
           type: Image
           width:  500
           height: 500
           renderFun: .plot
+          requiresData: true
+
+        - name: fplot
+          title: Influx-outflux plot
+          visible: (fluxplot)
+          type: Image
+          width:  500
+          height: 550
+          renderFun: .fplot
           requiresData: true
 
     - name: imput

@@ -47,6 +47,8 @@ children:
               - type: CheckBox
                 name: anghead
                 enable: (patplot)
+          - type: CheckBox
+            name: fluxplot
   - type: CollapseBox
     label: Missing Values Imputation
     collapsed: false

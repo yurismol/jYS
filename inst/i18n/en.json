@@ -22,6 +22,12 @@
             "* p < .05, ** p < .01, *** p < .001, one-tailed": [
                 ""
             ],
+            "**connection of a variable's observed data": [
+                ""
+            ],
+            "*connection of a variable's missingness indicator": [
+                ""
+            ],
             "*pairwise complete observations": [
                 ""
             ],
@@ -295,6 +301,15 @@
             "Incomplete Variables": [
                 ""
             ],
+            "Influx-outflux plot": [
+                ""
+            ],
+            "Influx-outflux plot for missing data patterns": [
+                ""
+            ],
+            "Influx*": [
+                ""
+            ],
             "Intercluster Matrices": [
                 ""
             ],
@@ -373,7 +388,7 @@
             "missing": [
                 ""
             ],
-            "Missing data pattern": [
+            "Missing data patterns": [
                 ""
             ],
             "Missing Values Estimation": [
@@ -442,6 +457,9 @@
             "Original": [
                 ""
             ],
+            "OutFlux**": [
+                ""
+            ],
             "p-value": [
                 ""
             ],
@@ -481,7 +499,7 @@
             "Plot correlations between variables": [
                 ""
             ],
-            "Plot the missing data pattern": [
+            "Plot the missing data patterns": [
                 ""
             ],
             "Plots": [
@@ -635,6 +653,12 @@
                 ""
             ],
             "With control": [
+                ""
+            ],
+            "with missing data on other variables": [
+                ""
+            ],
+            "with observed data on other variables": [
                 ""
             ],
             "Youden Best": [

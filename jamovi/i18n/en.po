@@ -29,6 +29,14 @@ msgid "* p < .05, ** p < .01, *** p < .001, one-tailed"
 msgstr ""
 
 #: R\mmf.b.R
+msgid "**connection of a variable's observed data"
+msgstr ""
+
+#: R\mmf.b.R
+msgid "*connection of a variable's missingness indicator"
+msgstr ""
+
+#: R\mmf.b.R
 msgid "*pairwise complete observations"
 msgstr ""
 
@@ -414,6 +422,18 @@ msgstr ""
 msgid "Incomplete Variables"
 msgstr ""
 
+#: mMF/results/estim/fplot.title
+msgid "Influx-outflux plot"
+msgstr ""
+
+#: mMF/options/fluxplot.title
+msgid "Influx-outflux plot for missing data patterns"
+msgstr ""
+
+#: R\mmf.b.R
+msgid "Influx*"
+msgstr ""
+
 #: mCOR/options/clustMat.title
 #: mCOR/results/rplots.title
 msgid "Intercluster Matrices"
@@ -528,7 +548,7 @@ msgid "missing"
 msgstr ""
 
 #: mMF/results/estim/plot.title
-msgid "Missing data pattern"
+msgid "Missing data patterns"
 msgstr ""
 
 #: mMF/ui[1].label
@@ -634,6 +654,10 @@ msgstr ""
 msgid "Original"
 msgstr ""
 
+#: R\mmf.b.R
+msgid "OutFlux**"
+msgstr ""
+
 #: mCOR/options/pval.title
 #: mCOR/results/matrix.columns.content
 msgid "p-value"
@@ -692,7 +716,7 @@ msgid "Plot correlations between variables"
 msgstr ""
 
 #: mMF/options/patplot.title
-msgid "Plot the missing data pattern"
+msgid "Plot the missing data patterns"
 msgstr ""
 
 #: mCOR/ui[5].label
@@ -910,6 +934,14 @@ msgstr ""
 
 #: mROC/options/cmpDeLong/wcontr.title
 msgid "With control"
+msgstr ""
+
+#: R\mmf.b.R
+msgid "with missing data on other variables"
+msgstr ""
+
+#: R\mmf.b.R
+msgid "with observed data on other variables"
 msgstr ""
 
 #: mROC/options/theBest/bestY.title
