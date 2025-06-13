@@ -22,6 +22,9 @@
             "* p < .05, ** p < .01, *** p < .001, one-tailed": [
                 "* p < .05, ** p < .01, *** p < .001, односторонний"
             ],
+            "*pairwise complete observations": [
+                "*попарно в полных наблюдениях"
+            ],
             "%": [
                 ""
             ],
@@ -36,6 +39,9 @@
             ],
             "< 0.1": [
                 ""
+            ],
+            "0 - auto": [
+                "0 - авто"
             ],
             "1 - Specificity": [
                 "1 - Специфичность"
@@ -142,6 +148,9 @@
             "Colored Clusters": [
                 "Цветные кластеры"
             ],
+            "Column name": [
+                "Имя переменной"
+            ],
             "Complete Linkage": [
                 "Полной связи"
             ],
@@ -169,6 +178,9 @@
             "Correlating Variables": [
                 "Коррелирующие переменные"
             ],
+            "Correlation": [
+                "Корреляция"
+            ],
             "Correlation clustering": [
                 "Кластерная корреляция"
             ],
@@ -183,6 +195,9 @@
             ],
             "Correlations": [
                 "Корреляции"
+            ],
+            "Correlations between variables": [
+                "Корелляции между переменными"
             ],
             "D²": [
                 ""
@@ -263,19 +278,22 @@
                 "Гипотеза"
             ],
             "If at least one p<sub>value</sub> MAR is not significant, and the p<sub>value</sub> in MCAR is significant then the data is MNAR (Missing Not At Random).": [
-                "Если хотя бы одно p<sub>значение</sub> в MAR не является значимым, а p<sub>значение</sub> в MCAR является значимым, то данные являются MNAR (неслучайно пропущенными)."
+                "Если хотя бы одно p<sub>значение</sub> в MAR не является значимым, а p<sub>значение</sub> в MCAR является значимым, то данные являются неслучайно пропущенными (MNAR)."
             ],
             "imp": [
                 "восст"
             ],
+            "Imputation model predictor": [
+                "Предиктор модели восстановления"
+            ],
             "Imputed misses": [
                 "Заполненные пропуски"
             ],
-            "Imputing & Training Variables": [
-                "Восстанавливаемые и обучающие переменные"
-            ],
             "In percent": [
                 "В процентах"
+            ],
+            "Incomplete Variables": [
+                "Неполные переменные"
             ],
             "Intercluster Matrices": [
                 "Межкластерные матрицы"
@@ -323,7 +341,7 @@
                 "Матрица №{i}"
             ],
             "Maximum number of iterations": [
-                "Максимальное число итераций"
+                "Максимальное количесвто итераций"
             ],
             "MCAR": [
                 ""
@@ -344,10 +362,19 @@
                 "Метод"
             ],
             "Minimum {minVar} variables (Training + Imputing) are required": [
-                "Общее число переменных на менее {minVar}"
+                "Общее количество переменных на менее {minVar}"
+            ],
+            "Minimum 2 impute variables are required": [
+                "Необходимо минимум 2 восстанавливаемые переменные"
             ],
             "missForest (2012)": [
                 ""
+            ],
+            "missing": [
+                "пропущено"
+            ],
+            "Missing data pattern": [
+                "Палитра пропущенных данных"
             ],
             "Missing Values Estimation": [
                 "Оценка пропусков данных"
@@ -394,8 +421,20 @@
             "Number of candidate non-missing values to sample from in the predictive mean matching steps. 0 to avoid this step": [
                 "Количество возможных непропущенных значений для выборки на этапах сопоставления предиктивного среднего. 0, чтобы не использовать этот метод"
             ],
+            "Number of missing entries": [
+                "Количество пропусков"
+            ],
+            "Number of missing entries by variable": [
+                "Количество пропусков на переменную"
+            ],
+            "Number of palettes": [
+                "Количество палитр"
+            ],
             "Number of trees to grow in each forest": [
-                "Число деревьев,<br>выращиваемых в каждом случайном лесе"
+                "Количество деревьев,<br>выращиваемых в каждом случайном лесе"
+            ],
+            "observed": [
+                "заполнено"
             ],
             "OOB errors table": [
                 "Таблица прогнозируемых ошибок"
@@ -415,6 +454,9 @@
             "Pastel1": [
                 "Пастель"
             ],
+            "Pattern frequency": [
+                "Палитра частот"
+            ],
             "Pearson (r)": [
                 "Пирсон (r)"
             ],
@@ -424,6 +466,9 @@
             "Pearson's r": [
                 "r Пирсона"
             ],
+            "per pattern": [
+                "на палитру"
+            ],
             "PFC": [
                 ""
             ],
@@ -432,6 +477,12 @@
             ],
             "Pie": [
                 "Пицца"
+            ],
+            "Plot correlations between variables": [
+                "График корреляций между переменными"
+            ],
+            "Plot the missing data pattern": [
+                "График палитры пропущенных данных"
             ],
             "Plots": [
                 "Графики"
@@ -517,6 +568,9 @@
             "Single Linkage": [
                 "Одиночной связи"
             ],
+            "Slanted Titles": [
+                "Наклоненные надписи"
+            ],
             "Spearman (ρ)": [
                 "Спирман (ρ)"
             ],
@@ -553,8 +607,11 @@
             "The classifying variable '{}' does not have exactly two levels; ROC classification can only be performed on classifying variables with two levels.": [
                 "Классифицирующая переменная '{}' не имеет двух уровней; ROC классификация может быть выполнена только для классифицирующих переменных с двумя уровнями."
             ],
-            "Training only Variables": [
-                "Только обучающие переменные"
+            "Total number of missing entries {}": [
+                "Общее количество пропусков {}"
+            ],
+            "Training Variables": [
+                "Обучающие переменные"
             ],
             "Upper part": [
                 "Верхняя часть"
@@ -567,6 +624,9 @@
             ],
             "variable numbers by commas": [
                 "номера переменных через запятую"
+            ],
+            "Variable to impute": [
+                "Переменная для восстановления"
             ],
             "Ward´s D2 Linkage": [
                 "Уорд Д2 связи"

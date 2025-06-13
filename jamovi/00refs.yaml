@@ -70,8 +70,16 @@ refs:
 
     missr:
         type: 'software'
-        author: Noah Hellen
+        author: Hellen, N.
         year: 2025
         title: 'missr: Classify Missing Data as MCAR, MAR, or MNAR'
         publisher: '[R package]. Retrieved from https://CRAN.R-project.org/package=missr'
         url: https://CRAN.R-project.org/package=missr
+
+    ggmice:
+        type: 'article'
+        title: "ggmice: Visualizations for 'mice' with 'ggplot2'"
+        author: Oberman, H. I.
+        year: 2022
+        publisher: '[R package]. DOI: 10.5281/zenodo.6532702. Retrieved from https://CRAN.R-project.org/package=ggmice'
+        url: https://research-portal.uu.nl/en/publications/ggmice-visualizations-for-mice-with-ggplot2

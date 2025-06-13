@@ -6,13 +6,13 @@ refs: jys
 
 items:
     #- name:  text
-    #  title: Estimated out-of-bag (OOB) imputation error
+    #  title: Debug
     #  type:  Preformatted
 
     - name: estim
       title: Missing Values Estimation
       type: Group
-      refs: [mar, missr]
+      refs: [mar, missr, ggmice]
       items:
         - name: mcar
           title: Classify missing completely at random (MCAR)
@@ -61,9 +61,11 @@ items:
               - name: mar
                 title: p<sub>value</sub>
                 type: number
+                #superTitle: MAR
               - name: exp
                 title: Explanatory
                 type: number
+                #superTitle: MAR
     
         - name: fMARtab
           title: Evaluation of MAR explainers
@@ -87,6 +89,24 @@ items:
               - name: pval
                 title: p<sub>value</sub>
                 type: number
+
+        - name: cplot
+          title: Correlations between variables
+          visible: (corplot)
+          type: Image
+          width:  500
+          height: 500
+          renderFun: .cplot
+          requiresData: true
+
+        - name: plot
+          title: Missing data pattern
+          visible: (patplot)
+          type: Image
+          width:  500
+          height: 500
+          renderFun: .plot
+          requiresData: true
 
     - name: imput
       title: Missing Values Imputation

@@ -2,7 +2,7 @@
 name:  mMF
 title: Missing Values Estimation and Imputation
 menuGroup: jYS
-version: '1.0.8'
+version: '1.0.9'
 jas: '1.2'
 
 options:
@@ -10,12 +10,12 @@ options:
       type: Data
 
     - name: learnvar
-      title: Training only Variables
+      title: Training Variables
       type: Variables
       required: false
 
     - name: imputevar
-      title: Imputing & Training Variables
+      title: Incomplete Variables
       type: Variables
       takeFromDataIfMissing: true
       required: true
@@ -27,6 +27,26 @@ options:
 
     - name: fullmars
       title: Evaluation of MAR explainers
+      type: Bool
+      default: false
+
+    - name: corplot
+      title: Plot correlations between variables
+      type: Bool
+      default: false
+
+    - name: patplot
+      title: Plot the missing data pattern
+      type: Bool
+      default: false
+
+    - name: npat
+      title: Number of palettes
+      type: Number
+      default: 0
+
+    - name: anghead
+      title: Slanted Titles
       type: Bool
       default: false
 

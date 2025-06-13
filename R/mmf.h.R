@@ -10,6 +10,10 @@ mMFOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             imputevar = NULL,
             isMAR = TRUE,
             fullmars = FALSE,
+            corplot = FALSE,
+            patplot = FALSE,
+            npat = 0,
+            anghead = FALSE,
             alg = "mF",
             maxiter = 10,
             ntree = 500,
@@ -39,6 +43,22 @@ mMFOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             private$..fullmars <- jmvcore::OptionBool$new(
                 "fullmars",
                 fullmars,
+                default=FALSE)
+            private$..corplot <- jmvcore::OptionBool$new(
+                "corplot",
+                corplot,
+                default=FALSE)
+            private$..patplot <- jmvcore::OptionBool$new(
+                "patplot",
+                patplot,
+                default=FALSE)
+            private$..npat <- jmvcore::OptionNumber$new(
+                "npat",
+                npat,
+                default=0)
+            private$..anghead <- jmvcore::OptionBool$new(
+                "anghead",
+                anghead,
                 default=FALSE)
             private$..imputeOV <- jmvcore::OptionOutput$new(
                 "imputeOV")
@@ -74,6 +94,10 @@ mMFOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..imputevar)
             self$.addOption(private$..isMAR)
             self$.addOption(private$..fullmars)
+            self$.addOption(private$..corplot)
+            self$.addOption(private$..patplot)
+            self$.addOption(private$..npat)
+            self$.addOption(private$..anghead)
             self$.addOption(private$..imputeOV)
             self$.addOption(private$..alg)
             self$.addOption(private$..maxiter)
@@ -87,6 +111,10 @@ mMFOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         imputevar = function() private$..imputevar$value,
         isMAR = function() private$..isMAR$value,
         fullmars = function() private$..fullmars$value,
+        corplot = function() private$..corplot$value,
+        patplot = function() private$..patplot$value,
+        npat = function() private$..npat$value,
+        anghead = function() private$..anghead$value,
         imputeOV = function() private$..imputeOV$value,
         alg = function() private$..alg$value,
         maxiter = function() private$..maxiter$value,
@@ -99,6 +127,10 @@ mMFOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..imputevar = NA,
         ..isMAR = NA,
         ..fullmars = NA,
+        ..corplot = NA,
+        ..patplot = NA,
+        ..npat = NA,
+        ..anghead = NA,
         ..imputeOV = NA,
         ..alg = NA,
         ..maxiter = NA,
@@ -121,13 +153,16 @@ mMFResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             super$initialize(
                 options=options,
                 name="",
-                title="Missing Values Estimation and Imputation")
+                title="Missing Values Estimation and Imputation",
+                refs="jys")
             self$add(R6::R6Class(
                 inherit = jmvcore::Group,
                 active = list(
                     mcar = function() private$.items[["mcar"]],
                     mars = function() private$.items[["mars"]],
-                    fMARtab = function() private$.items[["fMARtab"]]),
+                    fMARtab = function() private$.items[["fMARtab"]],
+                    cplot = function() private$.items[["cplot"]],
+                    plot = function() private$.items[["plot"]]),
                 private = list(),
                 public=list(
                     initialize=function(options) {
@@ -137,7 +172,8 @@ mMFResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             title="Missing Values Estimation",
                             refs=list(
                     "mar",
-                    "missr"))
+                    "missr",
+                    "ggmice"))
                         self$add(jmvcore::Table$new(
                             options=options,
                             name="mcar",
@@ -218,7 +254,25 @@ mMFResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                     list(
                                         `name`="pval", 
                                         `title`="p<sub>value</sub>", 
-                                        `type`="number")))))}))$new(options=options))
+                                        `type`="number")))))
+                        self$add(jmvcore::Image$new(
+                            options=options,
+                            name="cplot",
+                            title="Correlations between variables",
+                            visible="(corplot)",
+                            width=500,
+                            height=500,
+                            renderFun=".cplot",
+                            requiresData=TRUE))
+                        self$add(jmvcore::Image$new(
+                            options=options,
+                            name="plot",
+                            title="Missing data pattern",
+                            visible="(patplot)",
+                            width=500,
+                            height=500,
+                            renderFun=".plot",
+                            requiresData=TRUE))}))$new(options=options))
             self$add(R6::R6Class(
                 inherit = jmvcore::Group,
                 active = list(
@@ -267,7 +321,7 @@ mMFBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             super$initialize(
                 package = "jYS",
                 name = "mMF",
-                version = c(1,0,8),
+                version = c(1,0,9),
                 options = options,
                 results = mMFResults$new(options=options),
                 data = data,
@@ -288,6 +342,10 @@ mMFBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param imputevar .
 #' @param isMAR .
 #' @param fullmars .
+#' @param corplot .
+#' @param patplot .
+#' @param npat .
+#' @param anghead .
 #' @param alg .
 #' @param maxiter .
 #' @param ntree .
@@ -300,6 +358,8 @@ mMFBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$estim$mcar} \tab \tab \tab \tab \tab MAR classification table \cr
 #'   \code{results$estim$mars} \tab \tab \tab \tab \tab MAR classification table \cr
 #'   \code{results$estim$fMARtab} \tab \tab \tab \tab \tab an array of MARs \cr
+#'   \code{results$estim$cplot} \tab \tab \tab \tab \tab an image \cr
+#'   \code{results$estim$plot} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$imput$errors} \tab \tab \tab \tab \tab OOB errors table \cr
 #'   \code{results$imputeOV} \tab \tab \tab \tab \tab an output \cr
 #' }
@@ -311,6 +371,10 @@ mMF <- function(
     imputevar,
     isMAR = TRUE,
     fullmars = FALSE,
+    corplot = FALSE,
+    patplot = FALSE,
+    npat = 0,
+    anghead = FALSE,
     alg = "mF",
     maxiter = 10,
     ntree = 500,
@@ -336,6 +400,10 @@ mMF <- function(
         imputevar = imputevar,
         isMAR = isMAR,
         fullmars = fullmars,
+        corplot = corplot,
+        patplot = patplot,
+        npat = npat,
+        anghead = anghead,
         alg = alg,
         maxiter = maxiter,
         ntree = ntree,

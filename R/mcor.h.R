@@ -297,7 +297,9 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 options=options,
                 name="",
                 title="Correlation clustering",
-                refs="corr")
+                refs=list(
+                    "jys",
+                    "corr"))
             self$add(jmvcore::Html$new(
                 options=options,
                 name="text",

@@ -28,6 +28,10 @@ msgstr "{varType} с заполненными пропусками"
 msgid "* p < .05, ** p < .01, *** p < .001, one-tailed"
 msgstr "* p < .05, ** p < .01, *** p < .001, односторонний"
 
+#: R\mmf.b.R
+msgid "*pairwise complete observations"
+msgstr "*попарно в полных наблюдениях"
+
 #: mCOR/ui[4][0]/tables/ci/ciWidth.suffix
 #: mROC/ui[1]/ciAUC/ciWidth.suffix
 msgid "%"
@@ -48,6 +52,10 @@ msgstr ""
 #: mCOR/options/signif/0.1.title
 msgid "< 0.1"
 msgstr ""
+
+#: mMF/ui[1][0]/patplot/npat.suffix
+msgid "0 - auto"
+msgstr "0 - авто"
 
 #: R\mroc.b.R
 msgid "1 - Specificity"
@@ -192,6 +200,10 @@ msgstr "Цвет"
 msgid "Colored Clusters"
 msgstr "Цветные кластеры"
 
+#: R\mmf.b.R
+msgid "Column name"
+msgstr "Имя переменной"
+
 #: mCOR/options/clustMet/complete.title
 msgid "Complete Linkage"
 msgstr "Полной связи"
@@ -231,6 +243,10 @@ msgstr "Коррелирует положительно"
 msgid "Correlating Variables"
 msgstr "Коррелирующие переменные"
 
+#: R\mmf.b.R
+msgid "Correlation"
+msgstr "Корреляция"
+
 #: package/analyses/mCOR.title
 #: package/analyses/mCOR.menuTitle
 #: package/datasets/Correlation clustering.name
@@ -257,6 +273,10 @@ msgstr "Корреляционная матрица"
 #: mCOR/results/text.title
 msgid "Correlations"
 msgstr "Корреляции"
+
+#: mMF/results/estim/cplot.title
+msgid "Correlations between variables"
+msgstr "Корелляции между переменными"
 
 #: mMF/results/estim/mcar.columns.title
 msgid "D²"
@@ -371,24 +391,28 @@ msgstr "Гипотеза"
 
 #: R\mmf.b.R
 msgid "If at least one p<sub>value</sub> MAR is not significant, and the p<sub>value</sub> in MCAR is significant then the data is MNAR (Missing Not At Random)."
-msgstr "Если хотя бы одно p<sub>значение</sub> в MAR не является значимым, а p<sub>значение</sub> в MCAR является значимым, то данные являются MNAR (неслучайно пропущенными)."
+msgstr "Если хотя бы одно p<sub>значение</sub> в MAR не является значимым, а p<sub>значение</sub> в MCAR является значимым, то данные являются неслучайно пропущенными (MNAR)."
 
 #: R\mmf.b.R
 msgid "imp"
 msgstr "восст"
 
+#: R\mmf.b.R
+msgid "Imputation model predictor"
+msgstr "Предиктор модели восстановления"
+
 #: mMF/results/imputeOV.title
 msgid "Imputed misses"
 msgstr "Заполненные пропуски"
 
-#: mMF/options/imputevar.title
-#: mMF/ui[0][1].label
-msgid "Imputing & Training Variables"
-msgstr "Восстанавливаемые и обучающие переменные"
-
 #: mROC/options/perc.title
 msgid "In percent"
 msgstr "В процентах"
+
+#: mMF/options/imputevar.title
+#: mMF/ui[0][1].label
+msgid "Incomplete Variables"
+msgstr "Неполные переменные"
 
 #: mCOR/options/clustMat.title
 #: mCOR/results/rplots.title
@@ -461,7 +485,7 @@ msgstr "Матрица №{i}"
 
 #: mMF/options/maxiter.title
 msgid "Maximum number of iterations"
-msgstr "Максимальное число итераций"
+msgstr "Максимальное количесвто итераций"
 
 #: mMF/results/estim/mcar.columns.content
 msgid "MCAR"
@@ -489,11 +513,23 @@ msgstr "Метод"
 
 #: R\mmf.b.R
 msgid "Minimum {minVar} variables (Training + Imputing) are required"
-msgstr "Общее число переменных на менее {minVar}"
+msgstr "Общее количество переменных на менее {minVar}"
+
+#: R\mmf.b.R
+msgid "Minimum 2 impute variables are required"
+msgstr "Необходимо минимум 2 восстанавливаемые переменные"
 
 #: mMF/options/alg/mF.title
 msgid "missForest (2012)"
 msgstr ""
+
+#: R\mmf.b.R
+msgid "missing"
+msgstr "пропущено"
+
+#: mMF/results/estim/plot.title
+msgid "Missing data pattern"
+msgstr "Палитра пропущенных данных"
 
 #: mMF/ui[1].label
 #: mMF/results/estim.title
@@ -570,9 +606,25 @@ msgstr "Число"
 msgid "Number of candidate non-missing values to sample from in the predictive mean matching steps. 0 to avoid this step"
 msgstr "Количество возможных непропущенных значений для выборки на этапах сопоставления предиктивного среднего. 0, чтобы не использовать этот метод"
 
+#: R\mmf.b.R
+msgid "Number of missing entries"
+msgstr "Количество пропусков"
+
+#: R\mmf.b.R
+msgid "Number of missing entries by variable"
+msgstr "Количество пропусков на переменную"
+
+#: mMF/options/npat.title
+msgid "Number of palettes"
+msgstr "Количество палитр"
+
 #: mMF/options/ntree.title
 msgid "Number of trees to grow in each forest"
-msgstr "Число деревьев,<br>выращиваемых в каждом случайном лесе"
+msgstr "Количество деревьев,<br>выращиваемых в каждом случайном лесе"
+
+#: R\mmf.b.R
+msgid "observed"
+msgstr "заполнено"
 
 #: mMF/results/imput/errors.description
 msgid "OOB errors table"
@@ -601,6 +653,10 @@ msgstr "Парная"
 msgid "Pastel1"
 msgstr "Пастель"
 
+#: R\mmf.b.R
+msgid "Pattern frequency"
+msgstr "Палитра частот"
+
 #: mCOR/options/method/pearson.title
 msgid "Pearson (r)"
 msgstr "Пирсон (r)"
@@ -614,6 +670,10 @@ msgstr "Корреляция Пирсона не может быть рассч�
 msgid "Pearson's r"
 msgstr "r Пирсона"
 
+#: R\mmf.b.R
+msgid "per pattern"
+msgstr "на палитру"
+
 #: mMF/results/imput/errors.columns.title
 msgid "PFC"
 msgstr ""
@@ -626,6 +686,14 @@ msgstr "PFC - доля ложно классифицированных (для �
 #: mCOR/options/plotMetL/pie.title
 msgid "Pie"
 msgstr "Пицца"
+
+#: mMF/options/corplot.title
+msgid "Plot correlations between variables"
+msgstr "График корреляций между переменными"
+
+#: mMF/options/patplot.title
+msgid "Plot the missing data pattern"
+msgstr "График палитры пропущенных данных"
 
 #: mCOR/ui[5].label
 msgid "Plots"
@@ -748,6 +816,10 @@ msgstr "Одновременные множественные корреляци
 msgid "Single Linkage"
 msgstr "Одиночной связи"
 
+#: mMF/options/anghead.title
+msgid "Slanted Titles"
+msgstr "Наклоненные надписи"
+
 #: mCOR/options/method/spearman.title
 msgid "Spearman (ρ)"
 msgstr "Спирман (ρ)"
@@ -798,10 +870,14 @@ msgstr "Лучшая точка ROC"
 msgid "The classifying variable '{}' does not have exactly two levels; ROC classification can only be performed on classifying variables with two levels."
 msgstr "Классифицирующая переменная '{}' не имеет двух уровней; ROC классификация может быть выполнена только для классифицирующих переменных с двумя уровнями."
 
+#: R\mmf.b.R
+msgid "Total number of missing entries {}"
+msgstr "Общее количество пропусков {}"
+
 #: mMF/options/learnvar.title
 #: mMF/ui[0][0].label
-msgid "Training only Variables"
-msgstr "Только обучающие переменные"
+msgid "Training Variables"
+msgstr "Обучающие переменные"
 
 #: mCOR/options/plotMetU.title
 msgid "Upper part"
@@ -819,6 +895,10 @@ msgstr "Переменная - $key"
 #: mCOR/ui[5][0]/plots/clustMan.suffix
 msgid "variable numbers by commas"
 msgstr "номера переменных через запятую"
+
+#: R\mmf.b.R
+msgid "Variable to impute"
+msgstr "Переменная для восстановления"
 
 #: mCOR/options/clustMet/ward.D2.title
 msgid "Ward´s D2 Linkage"

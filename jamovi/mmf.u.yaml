@@ -9,18 +9,17 @@ children:
     stretchFactor: 1
     children:
       - type: TargetLayoutBox
-        label: Training only Variables
+        label: Training Variables
         children:
           - type: VariablesListBox
             name: learnvar
             isTarget: true
       - type: TargetLayoutBox
-        label: Imputing & Training Variables
+        label: Incomplete Variables
         children:
           - type: VariablesListBox
             name: imputevar
             isTarget: true
-
   - type: CollapseBox
     label: Missing Values Estimation
     collapsed: false
@@ -32,10 +31,22 @@ children:
           - type: CheckBox
             name: isMAR
             children:
-            - type: CheckBox
-              name: fullmars
-              enable: (isMAR)
-
+              - type: CheckBox
+                name: fullmars
+                enable: (isMAR)
+          - type: CheckBox
+            name: corplot
+          - type: CheckBox
+            name: patplot
+            children:
+              - type: TextBox
+                name: npat
+                format: number
+                suffix: 0 - auto
+                enable: (patplot)
+              - type: CheckBox
+                name: anghead
+                enable: (patplot)
   - type: CollapseBox
     label: Missing Values Imputation
     collapsed: false
@@ -58,7 +69,9 @@ children:
           - type: TextBox
             name: pmmk
             format: number
-            enable: ({return ui['imputeOV'].value()?.value && ui['alg'].value()=="mR";})
+            enable: >-
+              ({return ui['imputeOV'].value()?.value &&
+              ui['alg'].value()=="mR";})
           - type: CheckBox
             name: setseed
             enable: ({return ui['imputeOV'].value()?.value;})

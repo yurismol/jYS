@@ -28,6 +28,10 @@ msgstr ""
 msgid "* p < .05, ** p < .01, *** p < .001, one-tailed"
 msgstr ""
 
+#: R\mmf.b.R
+msgid "*pairwise complete observations"
+msgstr ""
+
 #: mCOR/ui[4][0]/tables/ci/ciWidth.suffix
 #: mROC/ui[1]/ciAUC/ciWidth.suffix
 msgid "%"
@@ -47,6 +51,10 @@ msgstr ""
 
 #: mCOR/options/signif/0.1.title
 msgid "< 0.1"
+msgstr ""
+
+#: mMF/ui[1][0]/patplot/npat.suffix
+msgid "0 - auto"
 msgstr ""
 
 #: R\mroc.b.R
@@ -192,6 +200,10 @@ msgstr ""
 msgid "Colored Clusters"
 msgstr ""
 
+#: R\mmf.b.R
+msgid "Column name"
+msgstr ""
+
 #: mCOR/options/clustMet/complete.title
 msgid "Complete Linkage"
 msgstr ""
@@ -231,6 +243,10 @@ msgstr ""
 msgid "Correlating Variables"
 msgstr ""
 
+#: R\mmf.b.R
+msgid "Correlation"
+msgstr ""
+
 #: package/analyses/mCOR.title
 #: package/analyses/mCOR.menuTitle
 #: package/datasets/Correlation clustering.name
@@ -256,6 +272,10 @@ msgstr ""
 
 #: mCOR/results/text.title
 msgid "Correlations"
+msgstr ""
+
+#: mMF/results/estim/cplot.title
+msgid "Correlations between variables"
 msgstr ""
 
 #: mMF/results/estim/mcar.columns.title
@@ -377,17 +397,21 @@ msgstr ""
 msgid "imp"
 msgstr ""
 
+#: R\mmf.b.R
+msgid "Imputation model predictor"
+msgstr ""
+
 #: mMF/results/imputeOV.title
 msgid "Imputed misses"
 msgstr ""
 
-#: mMF/options/imputevar.title
-#: mMF/ui[0][1].label
-msgid "Imputing & Training Variables"
-msgstr ""
-
 #: mROC/options/perc.title
 msgid "In percent"
+msgstr ""
+
+#: mMF/options/imputevar.title
+#: mMF/ui[0][1].label
+msgid "Incomplete Variables"
 msgstr ""
 
 #: mCOR/options/clustMat.title
@@ -491,8 +515,20 @@ msgstr ""
 msgid "Minimum {minVar} variables (Training + Imputing) are required"
 msgstr ""
 
+#: R\mmf.b.R
+msgid "Minimum 2 impute variables are required"
+msgstr ""
+
 #: mMF/options/alg/mF.title
 msgid "missForest (2012)"
+msgstr ""
+
+#: R\mmf.b.R
+msgid "missing"
+msgstr ""
+
+#: mMF/results/estim/plot.title
+msgid "Missing data pattern"
 msgstr ""
 
 #: mMF/ui[1].label
@@ -570,8 +606,24 @@ msgstr ""
 msgid "Number of candidate non-missing values to sample from in the predictive mean matching steps. 0 to avoid this step"
 msgstr ""
 
+#: R\mmf.b.R
+msgid "Number of missing entries"
+msgstr ""
+
+#: R\mmf.b.R
+msgid "Number of missing entries by variable"
+msgstr ""
+
+#: mMF/options/npat.title
+msgid "Number of palettes"
+msgstr ""
+
 #: mMF/options/ntree.title
 msgid "Number of trees to grow in each forest"
+msgstr ""
+
+#: R\mmf.b.R
+msgid "observed"
 msgstr ""
 
 #: mMF/results/imput/errors.description
@@ -601,6 +653,10 @@ msgstr ""
 msgid "Pastel1"
 msgstr ""
 
+#: R\mmf.b.R
+msgid "Pattern frequency"
+msgstr ""
+
 #: mCOR/options/method/pearson.title
 msgid "Pearson (r)"
 msgstr ""
@@ -614,6 +670,10 @@ msgstr ""
 msgid "Pearson's r"
 msgstr ""
 
+#: R\mmf.b.R
+msgid "per pattern"
+msgstr ""
+
 #: mMF/results/imput/errors.columns.title
 msgid "PFC"
 msgstr ""
@@ -625,6 +685,14 @@ msgstr ""
 #: mCOR/options/plotMetU/pie.title
 #: mCOR/options/plotMetL/pie.title
 msgid "Pie"
+msgstr ""
+
+#: mMF/options/corplot.title
+msgid "Plot correlations between variables"
+msgstr ""
+
+#: mMF/options/patplot.title
+msgid "Plot the missing data pattern"
 msgstr ""
 
 #: mCOR/ui[5].label
@@ -748,6 +816,10 @@ msgstr ""
 msgid "Single Linkage"
 msgstr ""
 
+#: mMF/options/anghead.title
+msgid "Slanted Titles"
+msgstr ""
+
 #: mCOR/options/method/spearman.title
 msgid "Spearman (ρ)"
 msgstr ""
@@ -798,9 +870,13 @@ msgstr ""
 msgid "The classifying variable '{}' does not have exactly two levels; ROC classification can only be performed on classifying variables with two levels."
 msgstr ""
 
+#: R\mmf.b.R
+msgid "Total number of missing entries {}"
+msgstr ""
+
 #: mMF/options/learnvar.title
 #: mMF/ui[0][0].label
-msgid "Training only Variables"
+msgid "Training Variables"
 msgstr ""
 
 #: mCOR/options/plotMetU.title
@@ -818,6 +894,10 @@ msgstr ""
 
 #: mCOR/ui[5][0]/plots/clustMan.suffix
 msgid "variable numbers by commas"
+msgstr ""
+
+#: R\mmf.b.R
+msgid "Variable to impute"
 msgstr ""
 
 #: mCOR/options/clustMet/ward.D2.title

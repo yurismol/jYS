@@ -22,6 +22,9 @@
             "* p < .05, ** p < .01, *** p < .001, one-tailed": [
                 ""
             ],
+            "*pairwise complete observations": [
+                ""
+            ],
             "%": [
                 ""
             ],
@@ -35,6 +38,9 @@
                 ""
             ],
             "< 0.1": [
+                ""
+            ],
+            "0 - auto": [
                 ""
             ],
             "1 - Specificity": [
@@ -142,6 +148,9 @@
             "Colored Clusters": [
                 ""
             ],
+            "Column name": [
+                ""
+            ],
             "Complete Linkage": [
                 ""
             ],
@@ -169,6 +178,9 @@
             "Correlating Variables": [
                 ""
             ],
+            "Correlation": [
+                ""
+            ],
             "Correlation clustering": [
                 ""
             ],
@@ -182,6 +194,9 @@
                 ""
             ],
             "Correlations": [
+                ""
+            ],
+            "Correlations between variables": [
                 ""
             ],
             "D²": [
@@ -268,13 +283,16 @@
             "imp": [
                 ""
             ],
+            "Imputation model predictor": [
+                ""
+            ],
             "Imputed misses": [
                 ""
             ],
-            "Imputing & Training Variables": [
+            "In percent": [
                 ""
             ],
-            "In percent": [
+            "Incomplete Variables": [
                 ""
             ],
             "Intercluster Matrices": [
@@ -346,7 +364,16 @@
             "Minimum {minVar} variables (Training + Imputing) are required": [
                 ""
             ],
+            "Minimum 2 impute variables are required": [
+                ""
+            ],
             "missForest (2012)": [
+                ""
+            ],
+            "missing": [
+                ""
+            ],
+            "Missing data pattern": [
                 ""
             ],
             "Missing Values Estimation": [
@@ -394,7 +421,19 @@
             "Number of candidate non-missing values to sample from in the predictive mean matching steps. 0 to avoid this step": [
                 ""
             ],
+            "Number of missing entries": [
+                ""
+            ],
+            "Number of missing entries by variable": [
+                ""
+            ],
+            "Number of palettes": [
+                ""
+            ],
             "Number of trees to grow in each forest": [
+                ""
+            ],
+            "observed": [
                 ""
             ],
             "OOB errors table": [
@@ -415,6 +454,9 @@
             "Pastel1": [
                 ""
             ],
+            "Pattern frequency": [
+                ""
+            ],
             "Pearson (r)": [
                 ""
             ],
@@ -424,6 +466,9 @@
             "Pearson's r": [
                 ""
             ],
+            "per pattern": [
+                ""
+            ],
             "PFC": [
                 ""
             ],
@@ -431,6 +476,12 @@
                 ""
             ],
             "Pie": [
+                ""
+            ],
+            "Plot correlations between variables": [
+                ""
+            ],
+            "Plot the missing data pattern": [
                 ""
             ],
             "Plots": [
@@ -517,6 +568,9 @@
             "Single Linkage": [
                 ""
             ],
+            "Slanted Titles": [
+                ""
+            ],
             "Spearman (ρ)": [
                 ""
             ],
@@ -553,7 +607,10 @@
             "The classifying variable '{}' does not have exactly two levels; ROC classification can only be performed on classifying variables with two levels.": [
                 ""
             ],
-            "Training only Variables": [
+            "Total number of missing entries {}": [
+                ""
+            ],
+            "Training Variables": [
                 ""
             ],
             "Upper part": [
@@ -566,6 +623,9 @@
                 ""
             ],
             "variable numbers by commas": [
+                ""
+            ],
+            "Variable to impute": [
                 ""
             ],
             "Ward´s D2 Linkage": [

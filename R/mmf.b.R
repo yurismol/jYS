@@ -72,6 +72,75 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             }
         },
 
+        .plot=function(image, ggtheme, theme, ...) {
+          if (length(self$options$imputevar)<2) {
+             jmvcore::reject(jmvcore::format(
+		.("Minimum 2 impute variables are required")), code='')
+             return(FALSE)
+          }
+          dat <- data.frame(self$data, check.names=FALSE)
+          dat <- jmvcore::select(dat, self$options$imputevar)
+          #fill <- jmvcore::colorPalette(n=2, theme$palette, type="fill")
+          fill <- jmvcore::colorPalette(n=2, "Set1", type="fill")
+          if (self$options$npat>0) {
+            p <- ggmice::plot_pattern(data=dat, square=TRUE, rotate=TRUE,
+		npat=self$options$npat)
+          } else {
+            p <- ggmice::plot_pattern(data=dat, square=TRUE, rotate=TRUE)
+          }
+          #self$results$text$setContent(sum(is.na(dat)))
+          p$labels$caption <- jmvcore::format(
+			.("Total number of missing entries {}"),
+			sum(is.na(dat))
+			)
+          p$labels$x <- .("Number of missing entries by variable")
+          p$labels$y <- .("Pattern frequency")
+          p <- p +
+		ggplot2::scale_fill_manual(values=fill, labels=c(.("missing"), .("observed"))) +
+		ggplot2::theme(text=ggplot2::element_text(size=ggtheme[[1]]$text$size))
+	  if (self$options$anghead) {
+		p <- p + ggplot2::theme(axis.text.x = ggplot2::element_text(angle=0, hjust=0))
+		p <- p + ggplot2::theme(axis.text.x.top = ggplot2::element_text(angle=45, hjust=0))
+          } else {
+		p <- p + ggplot2::theme(axis.text.x = ggplot2::element_text(angle=0, hjust=0))
+		p <- p + ggplot2::theme(axis.text.x.top = ggplot2::element_text(angle=90, hjust=0))
+          }
+
+          pb <- ggplot2::ggplot_build(p)
+          xscale <- pb$layout$panel_scales_x[[1]]
+          xscale$secondary.axis$name <- .("Column name")
+          yscale <- pb$layout$panel_scales_y[[1]]
+          yscale$secondary.axis$name <- paste0(.("Number of missing entries"),
+					"\n", .("per pattern"))
+
+	  print(p)
+	  return(TRUE)
+        },
+
+        .cplot=function(image, ggtheme, theme, ...) {
+          if (length(self$options$imputevar)<2) {
+             jmvcore::reject(jmvcore::format(
+		.("Minimum 2 impute variables are required")), code='')
+             return(FALSE)
+          }
+
+          dat <- data.frame(self$data, check.names=FALSE)
+          dat <- jmvcore::select(dat, c(self$options$learnvar, self$options$imputevar))
+
+          p <- ggmice::plot_corr(data=dat, square=TRUE, rotate=TRUE, label=TRUE)
+          #self$results$text$setContent(c(p))
+          p <- p + 
+		   ggplot2::theme(text=ggplot2::element_text(size=ggtheme[[1]]$text$size))
+
+          p$labels$x <- .("Imputation model predictor")
+          p$labels$y <- .("Variable to impute")
+          p$labels$caption <- .("*pairwise complete observations")
+          p$labels$fill <- paste0(.("Correlation"), "*\n      ")
+
+	  print(p)
+	  return(TRUE)
+        },
+
         .populateOutputs=function() {
             decimalplaces <- function(col) {
               maxd = 0
@@ -103,7 +172,7 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 		     mpat=mcar$missing_patterns)
             )
 
-            if (self$options$fullmars) {
+            if (self$options$fullmars && self$options$isMAR) {
                 tables <- self$results$estim$fMARtab
 		keys   <- self$options$imputevar
 		marc   <- mar$combined
@@ -112,7 +181,8 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 		  nr <- length(d[is.na(d)])
 		  if (nr>0) {
 		    table <- tables$get(key=tab)
-		    m  <- marc[[tab]]
+		    tt <- gsub(" ", ".", tab)
+		    m  <- marc[[tt]]
     		    m  <- m[order(unlist(m))]
 		    nm <- names(m)
 		    for (i in seq_along(m)) {
