@@ -153,7 +153,7 @@ mROCClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 		lty=ifelse(self$options$dotline, d, 1),
 		cex.lab=1.5, cex.axis=1.3, lwd=self$options$lwd,
 		auc.polygon=self$options$polygon, auc.polygon.col=cols[d], auc.polygon.density=15,
-		print.auc=nVars<2, print.auc.cex=1.5,
+		print.auc=nVars<2, print.auc.cex=1.3,
 		print.auc.pattern=fauc,
 		print.thres=ifelse(self$options$theBest=="none", FALSE, TRUE),
 		print.thres.col=cols[d],

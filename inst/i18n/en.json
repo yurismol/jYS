@@ -154,9 +154,6 @@
             "Colored Clusters": [
                 ""
             ],
-            "Column name": [
-                ""
-            ],
             "Complete Linkage": [
                 ""
             ],
@@ -439,10 +436,10 @@
             "Number of missing entries": [
                 ""
             ],
-            "Number of missing entries by variable": [
+            "Number of missing entries per variable": [
                 ""
             ],
-            "Number of palettes": [
+            "Number of patterns": [
                 ""
             ],
             "Number of trees to grow in each forest": [
@@ -638,6 +635,9 @@
                 ""
             ],
             "Variable - $key": [
+                ""
+            ],
+            "Variable name": [
                 ""
             ],
             "variable numbers by commas": [

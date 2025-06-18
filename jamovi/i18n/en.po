@@ -208,10 +208,6 @@ msgstr ""
 msgid "Colored Clusters"
 msgstr ""
 
-#: R\mmf.b.R
-msgid "Column name"
-msgstr ""
-
 #: mCOR/options/clustMet/complete.title
 msgid "Complete Linkage"
 msgstr ""
@@ -631,11 +627,11 @@ msgid "Number of missing entries"
 msgstr ""
 
 #: R\mmf.b.R
-msgid "Number of missing entries by variable"
+msgid "Number of missing entries per variable"
 msgstr ""
 
 #: mMF/options/npat.title
-msgid "Number of palettes"
+msgid "Number of patterns"
 msgstr ""
 
 #: mMF/options/ntree.title
@@ -914,6 +910,10 @@ msgstr ""
 
 #: mMF/results/estim/fMARtab.template.title
 msgid "Variable - $key"
+msgstr ""
+
+#: R\mmf.b.R
+msgid "Variable name"
 msgstr ""
 
 #: mCOR/ui[5][0]/plots/clustMan.suffix

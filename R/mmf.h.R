@@ -162,7 +162,9 @@ mMFResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 options=options,
                 name="",
                 title="Missing Values Estimation and Imputation",
-                refs="jys")
+                refs=list(
+                    "fimd",
+                    "jys"))
             self$add(R6::R6Class(
                 inherit = jmvcore::Group,
                 active = list(

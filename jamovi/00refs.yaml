@@ -83,3 +83,12 @@ refs:
         year: 2022
         publisher: '[R package]. DOI: 10.5281/zenodo.6532702. Retrieved from https://CRAN.R-project.org/package=ggmice'
         url: https://research-portal.uu.nl/en/publications/ggmice-visualizations-for-mice-with-ggplot2
+
+    fimd:
+        type: 'article'
+        title: "Flexible Imputation of Missing Data"
+        author: Van Buuren, S.
+        year: 2018
+        publisher: 'CRC Press, Taylor & Francis Group'
+        pages: '415 pp'
+        url: https://stefvanbuuren.name/fimd

@@ -41,7 +41,7 @@ options:
       default: false
 
     - name: npat
-      title: Number of palettes
+      title: Number of patterns
       type: Number
       default: 0
 

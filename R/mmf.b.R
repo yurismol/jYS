@@ -93,7 +93,7 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 			.("Total number of missing entries {}"),
 			sum(is.na(dat))
 			)
-          p$labels$x <- .("Number of missing entries by variable")
+          p$labels$x <- .("Number of missing entries per variable")
           p$labels$y <- .("Pattern frequency")
           p <- p +
 		ggplot2::scale_fill_manual(values=fill, labels=c(.("missing"), .("observed"))) +
@@ -108,7 +108,7 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
           pb <- ggplot2::ggplot_build(p)
           xscale <- pb$layout$panel_scales_x[[1]]
-          xscale$secondary.axis$name <- .("Column name")
+          xscale$secondary.axis$name <- .("Variable name")
           yscale <- pb$layout$panel_scales_y[[1]]
           yscale$secondary.axis$name <- paste0(.("Number of missing entries"),
 					"\n", .("per pattern"))
