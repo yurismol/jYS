@@ -189,11 +189,11 @@ msgstr "Классифицирующая переменная"
 
 #: mROC/options/theBest/bestC.title
 msgid "Closest Best"
-msgstr "Близкая к углу"
+msgstr "Ближняя к углу"
 
 #: mROC/options/theBest/bssC.title
 msgid "Closest Best (Sp, Se)"
-msgstr "Близкая к углу (Спец, Чувств)"
+msgstr "Ближняя к углу (Спец, Чувств)"
 
 #: mCOR/options/numClust.title
 msgid "Clusters"
@@ -257,7 +257,7 @@ msgstr "Корреляция"
 #: mCOR/options.title
 #: mCOR/results.title
 msgid "Correlation clustering"
-msgstr "Кластерная корреляция"
+msgstr "Корреляционная кластеризация"
 
 #: package/datasets/Correlation clustering.description
 msgid "Correlation Clustering demonstration"
@@ -280,7 +280,7 @@ msgstr "Корреляции"
 
 #: mMF/results/estim/cplot.title
 msgid "Correlations between variables"
-msgstr "Корелляции между переменными"
+msgstr "Корреляции между переменными"
 
 #: mMF/results/estim/mcar.columns.title
 msgid "D²"
