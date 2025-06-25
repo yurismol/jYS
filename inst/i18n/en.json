@@ -106,7 +106,7 @@
             "Bottom": [
                 ""
             ],
-            "Brewer qualitative palette": [
+            "Brewer's qualitative palette": [
                 ""
             ],
             "Centroid Linkage (UPGMC)": [
@@ -155,6 +155,9 @@
                 ""
             ],
             "Complete Linkage": [
+                ""
+            ],
+            "Complete Variables": [
                 ""
             ],
             "Conditions": [
@@ -623,9 +626,6 @@
                 ""
             ],
             "Total number of missing entries {}": [
-                ""
-            ],
-            "Training Variables": [
                 ""
             ],
             "Upper part": [

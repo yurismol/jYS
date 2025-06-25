@@ -142,7 +142,7 @@ msgid "Bottom"
 msgstr ""
 
 #: mROC/options/palBrewer.title
-msgid "Brewer qualitative palette"
+msgid "Brewer's qualitative palette"
 msgstr ""
 
 #: mCOR/options/clustMet/centroid.title
@@ -210,6 +210,11 @@ msgstr ""
 
 #: mCOR/options/clustMet/complete.title
 msgid "Complete Linkage"
+msgstr ""
+
+#: mMF/options/learnvar.title
+#: mMF/ui[0][0].label
+msgid "Complete Variables"
 msgstr ""
 
 #: mROC/results/text.title
@@ -892,11 +897,6 @@ msgstr ""
 
 #: R\mmf.b.R
 msgid "Total number of missing entries {}"
-msgstr ""
-
-#: mMF/options/learnvar.title
-#: mMF/ui[0][0].label
-msgid "Training Variables"
 msgstr ""
 
 #: mCOR/options/plotMetU.title

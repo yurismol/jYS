@@ -9,7 +9,7 @@ children:
     stretchFactor: 1
     children:
       - type: TargetLayoutBox
-        label: Training Variables
+        label: Complete Variables
         children:
           - type: VariablesListBox
             name: learnvar

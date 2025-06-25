@@ -147,7 +147,7 @@ options:
       default: false
 
     - name: palBrewer
-      title: Brewer qualitative palette
+      title: Brewer's qualitative palette
       type: List
       options:
         - title: None

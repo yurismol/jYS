@@ -268,6 +268,7 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                       self$results$imputeOV$setValues(index=i, round(out[[key]], dec))
                     } else {
                       tableRow <- list(ninp=nr, err='\u2014', pfc=oo)
+                      # !!! check for not missing
                       self$results$imputeOV$setValues(index=i, out[[key]])
                     }
                     etable$setRow(rowKey=key, tableRow)
