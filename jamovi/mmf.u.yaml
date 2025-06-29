@@ -49,6 +49,8 @@ children:
                 enable: (patplot)
           - type: CheckBox
             name: fluxplot
+          - type: CheckBox
+            name: compinres
   - type: CollapseBox
     label: Missing Values Imputation
     collapsed: false

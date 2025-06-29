@@ -160,6 +160,9 @@
             "Complete Variables": [
                 ""
             ],
+            "Complete variables in plots": [
+                ""
+            ],
             "Conditions": [
                 ""
             ],
@@ -376,7 +379,7 @@
             "Method": [
                 ""
             ],
-            "Minimum {minVar} variables (Training + Imputing) are required": [
+            "Minimum {minVar} variables (Complete + Incomplete) are required": [
                 ""
             ],
             "Minimum 2 impute variables are required": [

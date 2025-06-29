@@ -217,6 +217,10 @@ msgstr "Полной связи"
 msgid "Complete Variables"
 msgstr "Полные переменные"
 
+#: mMF/options/compinres.title
+msgid "Complete variables in plots"
+msgstr "Полные переменные в графиках"
+
 #: mROC/results/text.title
 msgid "Conditions"
 msgstr "Условия"
@@ -533,8 +537,8 @@ msgid "Method"
 msgstr "Метод"
 
 #: R\mmf.b.R
-msgid "Minimum {minVar} variables (Training + Imputing) are required"
-msgstr "Общее количество переменных на менее {minVar}"
+msgid "Minimum {minVar} variables (Complete + Incomplete) are required"
+msgstr "Требуется минимум {minVar} переменных (полных + неполных)"
 
 #: R\mmf.b.R
 msgid "Minimum 2 impute variables are required"

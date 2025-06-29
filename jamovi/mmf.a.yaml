@@ -55,6 +55,11 @@ options:
       type: Bool
       default: false
 
+    - name: compinres
+      title: Complete variables in plots
+      type: Bool
+      default: false
+
     - name: imputeOV
       title: Multiple imputation for missing data
       type: Output

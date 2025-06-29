@@ -160,6 +160,9 @@
             "Complete Variables": [
                 "Полные переменные"
             ],
+            "Complete variables in plots": [
+                "Полные переменные в графиках"
+            ],
             "Conditions": [
                 "Условия"
             ],
@@ -376,8 +379,8 @@
             "Method": [
                 "Метод"
             ],
-            "Minimum {minVar} variables (Training + Imputing) are required": [
-                "Общее количество переменных на менее {minVar}"
+            "Minimum {minVar} variables (Complete + Incomplete) are required": [
+                ""
             ],
             "Minimum 2 impute variables are required": [
                 "Необходимо минимум 2 восстанавливаемые переменные"

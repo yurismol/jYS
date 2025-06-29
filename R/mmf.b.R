@@ -78,8 +78,11 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 		.("Minimum 2 impute variables are required")), code='')
              return(FALSE)
           }
+
           dat <- data.frame(self$data, check.names=FALSE)
-          dat <- jmvcore::select(dat, self$options$imputevar)
+          if (self$options$compinres) dat <- jmvcore::select(dat, c(self$options$learnvar, self$options$imputevar))
+          else dat <- jmvcore::select(dat, self$options$imputevar)
+
           #fill <- jmvcore::colorPalette(n=2, theme$palette, type="fill")
           fill <- jmvcore::colorPalette(n=2, "Set1", type="fill")
           if (self$options$npat>0) {
@@ -123,8 +126,11 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 		.("Minimum 2 impute variables are required")), code='')
              return(FALSE)
           }
+
           dat <- data.frame(self$data, check.names=FALSE)
-          dat <- jmvcore::select(dat, c(self$options$learnvar, self$options$imputevar))
+          if (self$options$compinres) dat <- jmvcore::select(dat, c(self$options$learnvar, self$options$imputevar))
+          else dat <- jmvcore::select(dat, self$options$imputevar)
+
           p <- ggmice::plot_flux(data=dat, label=TRUE)
           p <- p + 
 		   ggplot2::theme(text=ggplot2::element_text(size=ggtheme[[1]]$text$size))
@@ -148,7 +154,8 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
           }
 
           dat <- data.frame(self$data, check.names=FALSE)
-          dat <- jmvcore::select(dat, c(self$options$learnvar, self$options$imputevar))
+          if (self$options$compinres) dat <- jmvcore::select(dat, c(self$options$learnvar, self$options$imputevar))
+          else dat <- jmvcore::select(dat, self$options$imputevar)
 
           p <- ggmice::plot_corr(data=dat, square=TRUE, rotate=TRUE, label=TRUE)
           #self$results$text$setContent(c(p))
@@ -180,7 +187,7 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             minVar <- 3
             if (ncol(dat)<minVar && (self$options$isMAR || self$options$imputeOV)) {
 		jmvcore::reject(jmvcore::format(
-			.("Minimum {minVar} variables (Training + Imputing) are required"),
+			.("Minimum {minVar} variables (Complete + Incomplete) are required"),
                         minVar=minVar), code='')
             }
             mar   <- missr::mar(dat)
@@ -268,7 +275,6 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                       self$results$imputeOV$setValues(index=i, round(out[[key]], dec))
                     } else {
                       tableRow <- list(ninp=nr, err='\u2014', pfc=oo)
-                      # !!! check for not missing
                       self$results$imputeOV$setValues(index=i, out[[key]])
                     }
                     etable$setRow(rowKey=key, tableRow)

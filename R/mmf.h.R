@@ -15,6 +15,7 @@ mMFOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             npat = 0,
             anghead = FALSE,
             fluxplot = FALSE,
+            compinres = FALSE,
             alg = "mF",
             maxiter = 10,
             ntree = 500,
@@ -65,6 +66,10 @@ mMFOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "fluxplot",
                 fluxplot,
                 default=FALSE)
+            private$..compinres <- jmvcore::OptionBool$new(
+                "compinres",
+                compinres,
+                default=FALSE)
             private$..imputeOV <- jmvcore::OptionOutput$new(
                 "imputeOV")
             private$..alg <- jmvcore::OptionList$new(
@@ -104,6 +109,7 @@ mMFOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..npat)
             self$.addOption(private$..anghead)
             self$.addOption(private$..fluxplot)
+            self$.addOption(private$..compinres)
             self$.addOption(private$..imputeOV)
             self$.addOption(private$..alg)
             self$.addOption(private$..maxiter)
@@ -122,6 +128,7 @@ mMFOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         npat = function() private$..npat$value,
         anghead = function() private$..anghead$value,
         fluxplot = function() private$..fluxplot$value,
+        compinres = function() private$..compinres$value,
         imputeOV = function() private$..imputeOV$value,
         alg = function() private$..alg$value,
         maxiter = function() private$..maxiter$value,
@@ -139,6 +146,7 @@ mMFOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..npat = NA,
         ..anghead = NA,
         ..fluxplot = NA,
+        ..compinres = NA,
         ..imputeOV = NA,
         ..alg = NA,
         ..maxiter = NA,
@@ -367,6 +375,7 @@ mMFBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param npat .
 #' @param anghead .
 #' @param fluxplot .
+#' @param compinres .
 #' @param alg .
 #' @param maxiter .
 #' @param ntree .
@@ -398,6 +407,7 @@ mMF <- function(
     npat = 0,
     anghead = FALSE,
     fluxplot = FALSE,
+    compinres = FALSE,
     alg = "mF",
     maxiter = 10,
     ntree = 500,
@@ -428,6 +438,7 @@ mMF <- function(
         npat = npat,
         anghead = anghead,
         fluxplot = fluxplot,
+        compinres = compinres,
         alg = alg,
         maxiter = maxiter,
         ntree = ntree,

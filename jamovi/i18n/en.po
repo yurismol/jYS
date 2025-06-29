@@ -217,6 +217,10 @@ msgstr ""
 msgid "Complete Variables"
 msgstr ""
 
+#: mMF/options/compinres.title
+msgid "Complete variables in plots"
+msgstr ""
+
 #: mROC/results/text.title
 msgid "Conditions"
 msgstr ""
@@ -533,7 +537,7 @@ msgid "Method"
 msgstr ""
 
 #: R\mmf.b.R
-msgid "Minimum {minVar} variables (Training + Imputing) are required"
+msgid "Minimum {minVar} variables (Complete + Incomplete) are required"
 msgstr ""
 
 #: R\mmf.b.R
