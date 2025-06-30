@@ -47,13 +47,18 @@ children:
                   format: number
                   suffix: 0 - auto
                   enable: (patplot)
-                - type: CheckBox
-                  name: anghead
-                  enable: (patplot)
             - type: CheckBox
               name: fluxplot
+
+          - type: Label
+            label: Plot options
+            children:
             - type: CheckBox
               name: compinres
+              enable: (patplot || corplot || fluxplot)
+            - type: CheckBox
+              name: anghead
+              enable: (patplot || corplot)
   - type: CollapseBox
     label: Missing Values Imputation
     collapsed: false

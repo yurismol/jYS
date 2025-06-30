@@ -720,6 +720,10 @@ msgstr "Пицца"
 msgid "Plot correlations between variables"
 msgstr "График корреляций между переменными"
 
+#: mMF/ui[1][0][2].label
+msgid "Plot options"
+msgstr "Опции графиков"
+
 #: mMF/options/patplot.title
 msgid "Plot the missing data patterns"
 msgstr "График паттернов пропущенных данных"

@@ -162,6 +162,15 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
           p <- p + 
 		   ggplot2::theme(text=ggplot2::element_text(size=ggtheme[[1]]$text$size))
 
+	  if (self$options$anghead) {
+		p <- p + ggplot2::theme(axis.text.x = ggplot2::element_text(angle=0, hjust=0))
+		p <- p + ggplot2::theme(axis.text.x.top = ggplot2::element_text(angle=45, hjust=0))
+          } else {
+		p <- p + ggplot2::theme(axis.text.x = ggplot2::element_text(angle=0, hjust=0))
+		p <- p + ggplot2::theme(axis.text.x.top = ggplot2::element_text(angle=90, hjust=0))
+          }
+
+
           p$labels$x <- .("Imputation model predictor")
           p$labels$y <- .("Variable to impute")
           p$labels$caption <- .("*pairwise complete observations")

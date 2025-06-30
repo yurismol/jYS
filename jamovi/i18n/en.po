@@ -720,6 +720,10 @@ msgstr ""
 msgid "Plot correlations between variables"
 msgstr ""
 
+#: mMF/ui[1][0][2].label
+msgid "Plot options"
+msgstr ""
+
 #: mMF/options/patplot.title
 msgid "Plot the missing data patterns"
 msgstr ""

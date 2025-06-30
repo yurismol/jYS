@@ -502,6 +502,9 @@
             "Plot correlations between variables": [
                 "График корреляций между переменными"
             ],
+            "Plot options": [
+                "Опции графиков"
+            ],
             "Plot the missing data patterns": [
                 "График паттернов пропущенных данных"
             ],
