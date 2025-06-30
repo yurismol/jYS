@@ -60,7 +60,7 @@ options:
       default: bssY
 
     - name: cmpDeLong
-      title: ROC comparision
+      title: ROC comparison
       type: List
       #suffix: DeLong's
       options:

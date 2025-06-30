@@ -59,7 +59,7 @@ options:
 
     #https://www.rdocumentation.org/packages/stats/versions/3.6.2/topics/p.adjust
     - name: adjust
-      title: Multiple comparision correction
+      title: Multiple comparison correction
       type: List
       options:
         - title: None

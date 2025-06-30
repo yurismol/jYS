@@ -592,7 +592,7 @@ msgid "MSE - mean squared error (for Continuous variables);"
 msgstr ""
 
 #: mCOR/options/adjust.title
-msgid "Multiple comparision correction"
+msgid "Multiple comparison correction"
 msgstr ""
 
 #: mMF/options/imputeOV.title
@@ -788,7 +788,7 @@ msgid "ROC classification"
 msgstr ""
 
 #: mROC/options/cmpDeLong.title
-msgid "ROC comparision"
+msgid "ROC comparison"
 msgstr ""
 
 #: package/datasets/BC Models ROC Estimation.description
