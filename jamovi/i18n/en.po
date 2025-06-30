@@ -61,7 +61,7 @@ msgstr ""
 msgid "< 0.1"
 msgstr ""
 
-#: mMF/ui[1][0]/patplot/npat.suffix
+#: mMF/ui[1][0][1]/patplot/npat.suffix
 msgid "0 - auto"
 msgstr ""
 
@@ -725,6 +725,7 @@ msgid "Plot the missing data patterns"
 msgstr ""
 
 #: mCOR/ui[5].label
+#: mMF/ui[1][0][1].label
 msgid "Plots"
 msgstr ""
 

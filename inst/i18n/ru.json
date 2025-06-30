@@ -380,7 +380,7 @@
                 "Метод"
             ],
             "Minimum {minVar} variables (Complete + Incomplete) are required": [
-                ""
+                "Требуется минимум {minVar} переменных (полных + неполных)"
             ],
             "Minimum 2 impute variables are required": [
                 "Необходимо минимум 2 восстанавливаемые переменные"

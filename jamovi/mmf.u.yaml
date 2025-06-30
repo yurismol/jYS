@@ -34,23 +34,26 @@ children:
               - type: CheckBox
                 name: fullmars
                 enable: (isMAR)
-          - type: CheckBox
-            name: corplot
-          - type: CheckBox
-            name: patplot
+          - type: Label
+            label: Plots
             children:
-              - type: TextBox
-                name: npat
-                format: number
-                suffix: 0 - auto
-                enable: (patplot)
-              - type: CheckBox
-                name: anghead
-                enable: (patplot)
-          - type: CheckBox
-            name: fluxplot
-          - type: CheckBox
-            name: compinres
+            - type: CheckBox
+              name: corplot
+            - type: CheckBox
+              name: patplot
+              children:
+                - type: TextBox
+                  name: npat
+                  format: number
+                  suffix: 0 - auto
+                  enable: (patplot)
+                - type: CheckBox
+                  name: anghead
+                  enable: (patplot)
+            - type: CheckBox
+              name: fluxplot
+            - type: CheckBox
+              name: compinres
   - type: CollapseBox
     label: Missing Values Imputation
     collapsed: false
