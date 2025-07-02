@@ -7,6 +7,15 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
         .init=function() {
             #if (grepl("Russian", Sys.getlocale(), fixed=TRUE)) options(OutDec=",")
             private$.initOutputs()
+
+            if (length(self$options$learnvar)+length(self$options$imputevar)==0) {
+              msg <- .("<h2>Help</h2><div>Please select complete and incomplete variables</div>")
+              self$results$help$setVisible(TRUE)
+              self$results$help$setContent(msg)
+            } else {
+              self$results$help$setVisible(FALSE)
+            }
+
             mctable<- self$results$estim$mcar
             mtable <- self$results$estim$mars
             etable <- self$results$imput$errors
@@ -194,7 +203,8 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             dat   <- jmvcore::select(dat, c(self$options$learnvar, self$options$imputevar))
 
             minVar <- 3
-            if (ncol(dat)<minVar && (self$options$isMAR || self$options$imputeOV)) {
+            #if (ncol(dat)<minVar && (self$options$isMAR || self$options$imputeOV)) {
+            if (ncol(dat)<minVar) {
 		jmvcore::reject(jmvcore::format(
 			.("Minimum {minVar} variables (Complete + Incomplete) are required"),
                         minVar=minVar), code='')

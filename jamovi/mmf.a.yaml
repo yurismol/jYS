@@ -17,7 +17,7 @@ options:
     - name: imputevar
       title: Incomplete Variables
       type: Variables
-      takeFromDataIfMissing: true
+      #takeFromDataIfMissing: true
       required: true
 
     - name: isMAR

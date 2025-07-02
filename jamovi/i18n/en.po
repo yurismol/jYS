@@ -61,6 +61,10 @@ msgstr ""
 msgid "< 0.1"
 msgstr ""
 
+#: R\mmf.b.R
+msgid "<h2>Help</h2><div>Please select complete and incomplete variables</div>"
+msgstr ""
+
 #: mMF/ui[1][0][1]/patplot/npat.suffix
 msgid "0 - auto"
 msgstr ""

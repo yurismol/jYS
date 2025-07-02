@@ -46,6 +46,9 @@
             "< 0.1": [
                 ""
             ],
+            "<h2>Help</h2><div>Please select complete and incomplete variables</div>": [
+                "<h2>Подсказка</h2><div>Пожадуйста выберите переменные с пропусками и без</div>"
+            ],
             "0 - auto": [
                 "0 - авто"
             ],
@@ -415,7 +418,7 @@
             "MSE - mean squared error (for Continuous variables);": [
                 "MSE - средняя квадратическая ошибка (для непрерывных переменных);"
             ],
-            "Multiple comparision correction": [
+            "Multiple comparison correction": [
                 "Коррекция множественного сравнения"
             ],
             "Multiple imputation for missing data": [
@@ -547,8 +550,8 @@
             "ROC classification": [
                 "ROC классификация"
             ],
-            "ROC comparision": [
-                "Сравнение ROC"
+            "ROC comparison": [
+                "Сравнение ROC кривых"
             ],
             "ROC estimation for binomial logistis models demonstration": [
                 "Оценка ROC в демонстрации биномиальных логистических моделей"

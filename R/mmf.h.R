@@ -36,7 +36,6 @@ mMFOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             private$..imputevar <- jmvcore::OptionVariables$new(
                 "imputevar",
                 imputevar,
-                takeFromDataIfMissing=TRUE,
                 required=TRUE)
             private$..isMAR <- jmvcore::OptionBool$new(
                 "isMAR",
@@ -160,6 +159,7 @@ mMFResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "mMFResults",
     inherit = jmvcore::Group,
     active = list(
+        help = function() private$.items[["help"]],
         estim = function() private$.items[["estim"]],
         imput = function() private$.items[["imput"]],
         imputeOV = function() private$.items[["imputeOV"]]),
@@ -173,6 +173,10 @@ mMFResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 refs=list(
                     "fimd",
                     "jys"))
+            self$add(jmvcore::Html$new(
+                options=options,
+                name="help",
+                visible=FALSE))
             self$add(R6::R6Class(
                 inherit = jmvcore::Group,
                 active = list(
@@ -385,6 +389,7 @@ mMFBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   predictive mean matching steps. 0 to avoid this step
 #' @return A results object containing:
 #' \tabular{llllll}{
+#'   \code{results$help} \tab \tab \tab \tab \tab a html \cr
 #'   \code{results$estim$mcar} \tab \tab \tab \tab \tab MAR classification table \cr
 #'   \code{results$estim$mars} \tab \tab \tab \tab \tab MAR classification table \cr
 #'   \code{results$estim$fMARtab} \tab \tab \tab \tab \tab an array of MARs \cr
@@ -426,7 +431,6 @@ mMF <- function(
             `if`( ! missing(learnvar), learnvar, NULL),
             `if`( ! missing(imputevar), imputevar, NULL))
 
-    imputevar <- `if`( ! missing(imputevar), imputevar, colnames(data))
 
     options <- mMFOptions$new(
         learnvar = learnvar,
