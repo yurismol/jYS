@@ -9,9 +9,9 @@ items:
     #  title: Debug
     #  type:  Preformatted
 
-    - name: help
-      type: Html
-      visible: false
+    #- name: help
+    #  type: Html
+    #  visible: false
 
     - name: estim
       title: Missing Values Estimation
