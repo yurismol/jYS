@@ -19,6 +19,9 @@
             "{varType} with imputed values": [
                 "{varType} с заполненными пропусками"
             ],
+            "{varType} without outliers": [
+                "{varType} без выбросов"
+            ],
             "* p < .05, ** p < .01, *** p < .001, one-tailed": [
                 "* p < .05, ** p < .01, *** p < .001, односторонний"
             ],
@@ -55,8 +58,38 @@
             "1 - Specificity": [
                 "1 - Специфичность"
             ],
+            "1.5": [
+                ""
+            ],
             "100 - Specificity (%)": [
                 "100 - Специфичность (%)"
+            ],
+            "2.2": [
+                ""
+            ],
+            "2.5": [
+                ""
+            ],
+            "3.0": [
+                ""
+            ],
+            "3.0 (standard)": [
+                "3.0 (стандарт)"
+            ],
+            "3.5": [
+                ""
+            ],
+            "3.5 (standard)": [
+                "3.5 (стандарт)"
+            ],
+            "4.0": [
+                ""
+            ],
+            "4.5": [
+                ""
+            ],
+            "5.0": [
+                ""
             ],
             "a correlation matrix table": [
                 "таблица корреляционной матрицы"
@@ -109,8 +142,14 @@
             "Bottom": [
                 "Внизу"
             ],
+            "Boxplots with outliers": [
+                "Боксплоты с выбросами"
+            ],
             "Brewer's qualitative palette": [
                 "Категориальная цветовая палитра Синтии Брюэр"
+            ],
+            "Calculated fences for outliers": [
+                "Расчитанные границы для выбросов"
             ],
             "Centroid Linkage (UPGMC)": [
                 "Центроидной связи"
@@ -199,9 +238,6 @@
             "Correlation Clustering demonstration": [
                 "Демонстрация корреляционной кластеризации"
             ],
-            "Correlation Matrix": [
-                "Корреляционная матрица"
-            ],
             "Correlation matrix": [
                 "Корреляционная матрица"
             ],
@@ -256,6 +292,9 @@
             "Graphic extensions of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, missing data estimation and imputation etc.": [
                 "Графические расширения функциональности популярных методов анализа данных: кластерное дерево коррелирующих переменных, многофакторная адаптивная корреляционная матрица, многомерные кривые ROC-классификации, оценка случайности и восстановление пропущенных данных и т.д."
             ],
+            "Group": [
+                "Группа"
+            ],
             "Grouping Variable": [
                 "Группирующая переменная"
             ],
@@ -288,6 +327,9 @@
             ],
             "Hypothesis": [
                 "Гипотеза"
+            ],
+            "Identification, analysis and removal of data outliers by groups": [
+                "Идентификация, анализ и удаление выбросов данных по группам"
             ],
             "If at least one p<sub>value</sub> MAR is not significant, and the p<sub>value</sub> in MCAR is significant then the data is MNAR (Missing Not At Random).": [
                 "Если хотя бы одно p<sub>значение</sub> в MAR не является значимым, а p<sub>значение</sub> в MCAR является значимым, то данные являются неслучайно пропущенными (MNAR)."
@@ -322,6 +364,12 @@
             "Interval": [
                 "Интервал"
             ],
+            "IQR fence height": [
+                "Высота забора"
+            ],
+            "IQR Tukey's fences": [
+                "Межквартильные заборы"
+            ],
             "jYS": [
                 "jЮС"
             ],
@@ -342,6 +390,9 @@
             ],
             "Line width": [
                 "Толщина линии"
+            ],
+            "Lower fence": [
+                "Нижний забор"
             ],
             "Lower part": [
                 "Нижняя часть"
@@ -375,6 +426,12 @@
             ],
             "McQuitty Linkage (WPGMA)": [
                 "МакКитти связи"
+            ],
+            "Mean": [
+                "Среднее"
+            ],
+            "Median": [
+                "Медиана"
             ],
             "Median Linkage": [
                 "Медианной связи"
@@ -415,6 +472,9 @@
             "missRanger (2021)": [
                 ""
             ],
+            "Modified Z-score": [
+                "Модифицированная Z-оценка"
+            ],
             "MSE - mean squared error (for Continuous variables);": [
                 "MSE - средняя квадратическая ошибка (для непрерывных переменных);"
             ],
@@ -432,6 +492,9 @@
             ],
             "N - number of missing values;": [
                 "N - количество пропущенных значений;"
+            ],
+            "N of outliers": [
+                "Кол-во выбросов"
             ],
             "None": [
                 "Нет"
@@ -465,6 +528,24 @@
             ],
             "OutFlux**": [
                 "Отток**"
+            ],
+            "outl": [
+                "выбр"
+            ],
+            "Outliers fences": [
+                "Границы для выбросов"
+            ],
+            "Outliers identification": [
+                "Выявление выбросов"
+            ],
+            "Outliers identification and removal": [
+                "Выявление и удаление выбросов"
+            ],
+            "Outliers identifying method": [
+                "Метод идентификации выбросов"
+            ],
+            "Outliers removal": [
+                "Удаление выбросов"
             ],
             "p-value": [
                 "p-значение"
@@ -528,6 +609,9 @@
             ],
             "PVU - proportion of variance unexplained 1-R² (for Continuous variables);": [
                 "PVU — доля необъясненной дисперсии 1-R² (для непрерывных переменных);"
+            ],
+            "Remove outliers": [
+                "Удалить выбросы"
             ],
             "Reorder": [
                 "Перестроение"
@@ -634,8 +718,14 @@
             "The classifying variable '{}' does not have exactly two levels; ROC classification can only be performed on classifying variables with two levels.": [
                 "Классифицирующая переменная '{}' не имеет двух уровней; ROC классификация может быть выполнена только для классифицирующих переменных с двумя уровнями."
             ],
+            "Threshold for Z-score": [
+                "Порог для Z-оценки"
+            ],
             "Total number of missing entries {}": [
                 "Общее количество пропусков {}"
+            ],
+            "Upper fence": [
+                "Верхний забор"
             ],
             "Upper part": [
                 "Верхняя часть"
@@ -654,6 +744,9 @@
             ],
             "Variable to impute": [
                 "Переменная для восстановления"
+            ],
+            "Variables with outliers": [
+                "Переменные с выбросами"
             ],
             "Ward´s D2 Linkage": [
                 "Уорд Д2 связи"
@@ -675,6 +768,9 @@
             ],
             "Youden Best (Sp, Se)": [
                 "По Юдену (Спец, Чувств)"
+            ],
+            "Z-score": [
+                "Z-оценка"
             ]
         }
     },

@@ -1,7 +1,7 @@
 ---
 title: jYS Extended Functions
 name: jYS
-version: 1.0.9
+version: 1.0.10
 jms: '1.0'
 authors:
   - Yuri Smolyakov
@@ -35,6 +35,9 @@ datasets:
   - name: Missing Values Imputation
     path: MF_IRIS.omv
     description: Missing values imputation using the prediction power of Random Forests
+  - name: Outliers identification and removal
+    path: OUTL_IRIS.omv
+    description: Identification, analysis and removal of data outliers by groups
 analyses:
   - title: Correlation clustering
     name: mCOR
@@ -57,6 +60,12 @@ analyses:
     menuTitle: Missing Values Estimation and Imputation
     ribbon: analyses
     category: analyses
+  - title: Outliers identification and removal
+    name: mOUT
+    ns: jYS
+    category: analyses
+    menuGroup: jYS
+    menuTitle: Outliers identification and removal
 usesNative: true
 minApp: 1.0.8
 

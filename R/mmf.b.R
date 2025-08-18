@@ -255,7 +255,7 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 mtable$setRow(rowKey=key, tableRow)
             }
             if (self$options$imputeOV && self$results$imputeOV$isNotFilled()) {
-                etable<- self$results$imput$errors
+                etable <- self$results$imput$errors
                 if (nrow(dat)<3) {
 		  jmvcore::reject(.("Empty data table"), code='')
                 }

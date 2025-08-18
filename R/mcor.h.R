@@ -310,7 +310,7 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 options=options,
                 name="matrix",
                 visible="(tables)",
-                title="Correlation Matrix",
+                title="Correlation matrix",
                 rows="(vars)",
                 clearWith=list(
                     "ciWidth",
@@ -417,7 +417,7 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot",
-                title="Correlation Matrix",
+                title="Correlation matrix",
                 visible="(plots)",
                 width=500,
                 height=500,

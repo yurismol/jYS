@@ -1,0 +1,50 @@
+---
+name:  mOUT
+title: Outliers identification and removal
+jrs:   '1.1'
+refs: [jys]
+
+items:
+    #- name:  text
+    #  title: Debug
+    #  type:  Preformatted
+
+    - name: remOut
+      title: Remove outliers
+      type: Output
+
+    - name: stat
+      title: Outliers identification
+      type: Group
+      #refs: [mf, rg, mr]
+      items:
+        - name: outstat
+          title: Outliers fences
+          type: Table
+          #visible: (isMAR)
+          clearWith:
+              - vars
+              - group
+          description: Calculated fences for outliers
+          #rows: (vars)
+          columns:
+              - name: var
+                title: Variable
+                type: text
+                #content: ($key)
+
+    - name: plots
+      title: Boxplots with outliers
+      type: Array
+      #visible: (boxpl && {return ui['fence'].value().int()>0;})
+      visible: (boxpl)
+      items: (vars)
+      template:
+          title: $key
+          type: Image
+          width:  500
+          height: 500
+          renderFun: .plot
+          requiresData: true
+
+...

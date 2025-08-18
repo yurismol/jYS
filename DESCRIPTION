@@ -1,7 +1,7 @@
 Package: jYS
 Type: Package
 Title: jYS Extended Functions
-Version: 1.0.9
+Version: 1.0.10
 Author: Yuri Smolyakov
 Maintainer: Yuri Smolyakov <smolyakov@rambler.ru>
 Description:   Graphic extensions of the functionality of popular data analysis methods:
@@ -10,6 +10,8 @@ Description:   Graphic extensions of the functionality of popular data analysis 
 License: GPL (>= 2+)
 Encoding: UTF-8
 LazyData: true
-Imports: jmvcore (>= 0.8.5), R6, dendextend, corrplot, pROC, RColorBrewer, missForest, missRanger, norm, ggmice
+Imports: jmvcore (>= 0.8.5), R6, dendextend, corrplot, pROC,
+         RColorBrewer, missForest, missRanger, norm, ggmice,
+         car
 Remotes: NoahHellen/missr
 Suggests: ggplot2

@@ -19,6 +19,9 @@
             "{varType} with imputed values": [
                 ""
             ],
+            "{varType} without outliers": [
+                ""
+            ],
             "* p < .05, ** p < .01, *** p < .001, one-tailed": [
                 ""
             ],
@@ -55,7 +58,37 @@
             "1 - Specificity": [
                 ""
             ],
+            "1.5": [
+                ""
+            ],
             "100 - Specificity (%)": [
+                ""
+            ],
+            "2.2": [
+                ""
+            ],
+            "2.5": [
+                ""
+            ],
+            "3.0": [
+                ""
+            ],
+            "3.0 (standard)": [
+                ""
+            ],
+            "3.5": [
+                ""
+            ],
+            "3.5 (standard)": [
+                ""
+            ],
+            "4.0": [
+                ""
+            ],
+            "4.5": [
+                ""
+            ],
+            "5.0": [
                 ""
             ],
             "a correlation matrix table": [
@@ -109,7 +142,13 @@
             "Bottom": [
                 ""
             ],
+            "Boxplots with outliers": [
+                ""
+            ],
             "Brewer's qualitative palette": [
+                ""
+            ],
+            "Calculated fences for outliers": [
                 ""
             ],
             "Centroid Linkage (UPGMC)": [
@@ -199,9 +238,6 @@
             "Correlation Clustering demonstration": [
                 ""
             ],
-            "Correlation Matrix": [
-                ""
-            ],
             "Correlation matrix": [
                 ""
             ],
@@ -256,6 +292,9 @@
             "Graphic extensions of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, missing data estimation and imputation etc.": [
                 ""
             ],
+            "Group": [
+                ""
+            ],
             "Grouping Variable": [
                 ""
             ],
@@ -287,6 +326,9 @@
                 ""
             ],
             "Hypothesis": [
+                ""
+            ],
+            "Identification, analysis and removal of data outliers by groups": [
                 ""
             ],
             "If at least one p<sub>value</sub> MAR is not significant, and the p<sub>value</sub> in MCAR is significant then the data is MNAR (Missing Not At Random).": [
@@ -322,6 +364,12 @@
             "Interval": [
                 ""
             ],
+            "IQR fence height": [
+                ""
+            ],
+            "IQR Tukey's fences": [
+                ""
+            ],
             "jYS": [
                 ""
             ],
@@ -341,6 +389,9 @@
                 ""
             ],
             "Line width": [
+                ""
+            ],
+            "Lower fence": [
                 ""
             ],
             "Lower part": [
@@ -374,6 +425,12 @@
                 ""
             ],
             "McQuitty Linkage (WPGMA)": [
+                ""
+            ],
+            "Mean": [
+                ""
+            ],
+            "Median": [
                 ""
             ],
             "Median Linkage": [
@@ -415,6 +472,9 @@
             "missRanger (2021)": [
                 ""
             ],
+            "Modified Z-score": [
+                ""
+            ],
             "MSE - mean squared error (for Continuous variables);": [
                 ""
             ],
@@ -431,6 +491,9 @@
                 ""
             ],
             "N - number of missing values;": [
+                ""
+            ],
+            "N of outliers": [
                 ""
             ],
             "None": [
@@ -464,6 +527,24 @@
                 ""
             ],
             "OutFlux**": [
+                ""
+            ],
+            "outl": [
+                ""
+            ],
+            "Outliers fences": [
+                ""
+            ],
+            "Outliers identification": [
+                ""
+            ],
+            "Outliers identification and removal": [
+                ""
+            ],
+            "Outliers identifying method": [
+                ""
+            ],
+            "Outliers removal": [
                 ""
             ],
             "p-value": [
@@ -527,6 +608,9 @@
                 ""
             ],
             "PVU - proportion of variance unexplained 1-R² (for Continuous variables);": [
+                ""
+            ],
+            "Remove outliers": [
                 ""
             ],
             "Reorder": [
@@ -634,7 +718,13 @@
             "The classifying variable '{}' does not have exactly two levels; ROC classification can only be performed on classifying variables with two levels.": [
                 ""
             ],
+            "Threshold for Z-score": [
+                ""
+            ],
             "Total number of missing entries {}": [
+                ""
+            ],
+            "Upper fence": [
                 ""
             ],
             "Upper part": [
@@ -653,6 +743,9 @@
                 ""
             ],
             "Variable to impute": [
+                ""
+            ],
+            "Variables with outliers": [
                 ""
             ],
             "Ward´s D2 Linkage": [
@@ -674,6 +767,9 @@
                 ""
             ],
             "Youden Best (Sp, Se)": [
+                ""
+            ],
+            "Z-score": [
                 ""
             ]
         }

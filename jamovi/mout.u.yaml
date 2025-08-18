@@ -1,0 +1,62 @@
+title: Outliers identification and removal
+name: mOUT
+jus: '3.0'
+stage: 0
+compilerMode: tame
+children:
+  - type: VariableSupplier
+    persistentItems: false
+    stretchFactor: 1
+    children:
+      - type: TargetLayoutBox
+        label: Variables with outliers
+        children:
+          - type: VariablesListBox
+            name: vars
+            isTarget: true
+      - type: TargetLayoutBox
+        label: Grouping Variable
+        children:
+          - type: VariablesListBox
+            name: group
+            maxItemCount: 1
+            isTarget: true
+  - type: CollapseBox
+    label: Outliers identification
+    collapsed: false
+    stretchFactor: 1
+    children:
+      - type: RadioButton
+        name: IQR
+        optionName: outlcheck
+        optionPart: IQR
+        children:
+          - type: ComboBox
+            name: fence
+            enable: ({return ui['outlcheck'].value()=="IQR";})
+          - type: CheckBox
+            name: boxpl
+            enable: ({return ui['outlcheck'].value()=="IQR";})
+      - type: RadioButton
+        name: ZS
+        optionName: outlcheck
+        optionPart: ZS
+        children:
+          - type: ComboBox
+            name: tholdZS
+            enable: ({return ui['outlcheck'].value()=="ZS";})
+      - type: RadioButton
+        name: mZS
+        optionName: outlcheck
+        optionPart: mZS
+        children:
+          - type: ComboBox
+            name: tholdmZS
+            enable: ({return ui['outlcheck'].value()=="mZS";})
+  - type: CollapseBox
+    label: Outliers removal
+    collapsed: false
+    stretchFactor: 1
+    children:
+      - type: Output
+        name: remOut

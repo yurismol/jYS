@@ -17,7 +17,7 @@ items:
 
     - name: matrix
       visible: (tables)
-      title: Correlation Matrix
+      title: Correlation matrix
       type: Table
       description: a correlation matrix table
       rows: (vars)
@@ -120,7 +120,7 @@ items:
       requiresData: true
 
     - name: plot
-      title: Correlation Matrix
+      title: Correlation matrix
       type: Image
       visible: (plots)
       width:  500

@@ -1,0 +1,114 @@
+---
+name:  mOUT
+title: Outliers identification and removal
+menuGroup: jYS
+version: '1.0.0'
+jas: '1.2'
+
+options:
+    - name: data
+      type: Data
+
+    - name: vars
+      title: Variables with outliers
+      type: Variables
+      required: true
+      suggested:
+        - continuous
+      permitted:
+        - numeric
+
+    - name: group
+      title: Grouping Variable
+      required: false
+      suggested:
+        - nominal
+        - ordinal
+      permitted:
+        - factor
+      type: Variable
+
+    - name: remOut
+      title: Remove outliers
+      type: Output
+
+    - name: boxpl
+      title: Boxplots with outliers
+      type: Bool
+      default: false
+
+    - name: outlcheck
+      title: Outliers identifying method
+      type: List
+      options:
+        - title: IQR Tukey's fences
+          name:  IQR
+        - title: Z-score
+          name:  ZS
+        - title: Modified Z-score
+          name:  mZS
+        #- title: Mahalanobis distance
+        #  name:  MAH
+      default: IQR
+
+    - name: fence
+      title: IQR fence height
+      type: List
+      options:
+        - title: "1.5"
+          name:  "1.5"
+        - title: "2.2"
+          name:  "2.2"
+        - title: "3.0"
+          name:  "3.0"
+      default: "1.5"
+
+    - name: tholdZS
+      title: Threshold for Z-score
+      type: List
+      options:
+        - title: "2.5"
+          name:  "2.5"
+        - title: "3.0 (standard)"
+          name:  "3.0"
+        - title: "3.5"
+          name:  "3.5"
+        - title: "4.0"
+          name:  "4.0"
+        - title: "4.5"
+          name:  "4.5"
+        - title: "5.0"
+          name:  "5.0"
+      default: "3.0"
+
+    - name: tholdmZS
+      title: Threshold for Z-score
+      type: List
+      options:
+        - title: "2.5"
+          name:  "2.5"
+        - title: "3.0"
+          name:  "3.0"
+        - title: "3.5 (standard)"
+          name:  "3.5"
+        - title: "4.0"
+          name:  "4.0"
+        - title: "4.5"
+          name:  "4.5"
+        - title: "5.0"
+          name:  "5.0"
+      default: "3.5"
+
+    #- name: tholdMAH
+    #  title: Threshold p-value for Mahalanobis distance
+    #  type: List
+    #  options:
+    #    - title: "0.05"
+    #      name:  "0.05"
+    #    - title: "0.01"
+    #      name:  "0.01"
+    #    - title: "0.001"
+    #      name:  "0.001"
+    #  default: "0.01"
+
+...
