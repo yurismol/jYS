@@ -200,6 +200,10 @@ mOUTResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             `title`="Group", 
                             `type`="text"),
                         list(
+                            `name`="onum", 
+                            `title`="Outliers found", 
+                            `type`="integer"),
+                        list(
                             `name`="indx", 
                             `title`="Indices (Rows)", 
                             `type`="text")))))}))

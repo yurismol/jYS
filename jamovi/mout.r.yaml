@@ -59,6 +59,9 @@ items:
               - name: grp
                 title: Group
                 type: text
+              - name: onum
+                title: Outliers found
+                type: integer
               - name: indx
                 title: Indices (Rows)
                 type: text

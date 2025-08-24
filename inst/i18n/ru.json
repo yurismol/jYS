@@ -289,8 +289,8 @@
             "Flag significant correlations": [
                 "Отметить значимые корреляции"
             ],
-            "Graphic extensions of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, missing data estimation and imputation etc.": [
-                "Графические расширения функциональности популярных методов анализа данных: кластерное дерево коррелирующих переменных, многофакторная адаптивная корреляционная матрица, многомерные кривые ROC-классификации, оценка случайности и восстановление пропущенных данных и т.д."
+            "Graphic extensions of the functionality of popular data analysis methods: cluster tree of correlating variables, multifactor adaptive correlation matrix, multidimensional ROC classification curves, missing data estimation and imputation, outliers identificatioon and removal etc.": [
+                "Графические расширения функциональности популярных методов анализа данных: кластерное дерево коррелирующих переменных, многофакторная адаптивная корреляционная матрица, многомерные кривые ROC-классификации, оценка случайности и восстановление пропущенных данных, выявление и удаление выбросов и т.д."
             ],
             "Group": [
                 "Группа"
@@ -536,7 +536,7 @@
                 "Границы для выбросов"
             ],
             "Outliers found": [
-                "Найдено выбросов"
+                "Найдено<br>выбросов"
             ],
             "Outliers identification": [
                 "Выявление выбросов"
@@ -740,7 +740,7 @@
                 "Общее количество пропусков {}"
             ],
             "Univariate outliers identification and removal": [
-                "Выявление и удаление одномерных выбросов"
+                "Одномерное выявление и удаление выбросов"
             ],
             "Upper fence": [
                 "Верхний забор"

@@ -221,6 +221,11 @@ mOUTClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
           #outable$addColumn(name="var", title="Variable", type='text')
 	  grp   <- self$options$group
 	  if (!is.null(grp)) outable$addColumn(name="grp", title=.("Group"), type='text')
+          if (self$options$remOut) {
+            outable$addColumn(name="noutl", title=.("Outliers removed"), type='integer')
+          } else {
+            outable$addColumn(name="noutl", title=.("Outliers found"), type='integer')
+          }
           outlcheck <- self$options$outlcheck
           fence <- as.double(self$options$fence)
           if (outlcheck %in% c("ZS", "MAH")) {
@@ -230,11 +235,6 @@ mOUTClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
           }
           outable$addColumn(name="lf",  title=.("Lower fence"), type='number')
           outable$addColumn(name="uf",  title=.("Upper fence"), type='number')
-          if (self$options$remOut) {
-            outable$addColumn(name="noutl", title=.("Outliers removed"), type='integer')
-          } else {
-            outable$addColumn(name="noutl", title=.("Outliers found"), type='integer')
-          }
 
           keys  <- self$options$vars
           dat   <- data.frame(self$data, check.names=FALSE)
@@ -264,7 +264,7 @@ mOUTClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               tab  <- oind$get(key=key)
               indx <- toString(unlist(outl[[j]][5]))
               indx <- private$.splitstr(indx)
-              tab$addRow(rowKey=paste(key, gr), list(grp=gr, indx=indx))
+              tab$addRow(rowKey=paste(key, gr), list(grp=gr, onum=lst[3], indx=indx))
             }
           }
         },
