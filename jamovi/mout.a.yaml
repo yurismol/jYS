@@ -1,6 +1,6 @@
 ---
 name:  mOUT
-title: Outliers identification and removal
+title: Univariate outliers identification and removal
 menuGroup: jYS
 version: '1.0.0'
 jas: '1.2'
@@ -47,8 +47,6 @@ options:
           name:  ZS
         - title: Modified Z-score
           name:  mZS
-        #- title: Mahalanobis distance
-        #  name:  MAH
       default: IQR
 
     - name: fence
@@ -99,16 +97,14 @@ options:
           name:  "5.0"
       default: "3.5"
 
-    #- name: tholdMAH
-    #  title: Threshold p-value for Mahalanobis distance
-    #  type: List
-    #  options:
-    #    - title: "0.05"
-    #      name:  "0.05"
-    #    - title: "0.01"
-    #      name:  "0.01"
-    #    - title: "0.001"
-    #      name:  "0.001"
-    #  default: "0.01"
+    - name: outfence
+      title: Outliers fences
+      type: Bool
+      default: true
+
+    - name: outind
+      title: Outliers indices
+      type: Bool
+      default: false
 
 ...

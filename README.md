@@ -18,6 +18,6 @@ Some usefull [Jamovi](https://www.jamovi.org/) procedures for researchers
 - Visualizations for incomplete data
   - ggmice (Hanne Oberman et al)
 
-- Outliers identification and removal
+- Univariate outliers identification and removal
 
 Author: [Yuri Smolyakov](https://t.me/jYSmol)

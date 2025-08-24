@@ -349,6 +349,9 @@
             "Incomplete Variables": [
                 ""
             ],
+            "Indices (Rows)": [
+                ""
+            ],
             "Influx-outflux plot": [
                 ""
             ],
@@ -493,9 +496,6 @@
             "N - number of missing values;": [
                 ""
             ],
-            "N of outliers": [
-                ""
-            ],
             "None": [
                 ""
             ],
@@ -535,16 +535,31 @@
             "Outliers fences": [
                 ""
             ],
+            "Outliers found": [
+                ""
+            ],
             "Outliers identification": [
                 ""
             ],
             "Outliers identification and removal": [
                 ""
             ],
+            "Outliers identification method": [
+                ""
+            ],
             "Outliers identifying method": [
                 ""
             ],
+            "Outliers indices": [
+                ""
+            ],
             "Outliers removal": [
+                ""
+            ],
+            "Outliers removed": [
+                ""
+            ],
+            "Output information": [
                 ""
             ],
             "p-value": [
@@ -722,6 +737,9 @@
                 ""
             ],
             "Total number of missing entries {}": [
+                ""
+            ],
+            "Univariate outliers identification and removal": [
                 ""
             ],
             "Upper fence": [

@@ -1,4 +1,4 @@
-title: Outliers identification and removal
+title: Univariate outliers identification and removal
 name: mOUT
 jus: '3.0'
 stage: 0
@@ -26,36 +26,48 @@ children:
     collapsed: false
     stretchFactor: 1
     children:
-      - type: RadioButton
-        name: IQR
-        optionName: outlcheck
-        optionPart: IQR
+      - type: Label
+        label: Outliers identification method
         children:
-          - type: ComboBox
-            name: fence
-            enable: ({return ui['outlcheck'].value()=="IQR";})
+          - type: RadioButton
+            name: IQR
+            optionName: outlcheck
+            optionPart: IQR
+            children:
+              - type: ComboBox
+                name: fence
+                enable: ({return ui['outlcheck'].value()=="IQR";})
+              - type: CheckBox
+                name: boxpl
+                enable: ({return ui['outlcheck'].value()=="IQR";})
+          - type: RadioButton
+            name: ZS
+            optionName: outlcheck
+            optionPart: ZS
+            children:
+              - type: ComboBox
+                name: tholdZS
+                enable: ({return ui['outlcheck'].value()=="ZS";})
+          - type: RadioButton
+            name: mZS
+            optionName: outlcheck
+            optionPart: mZS
+            children:
+              - type: ComboBox
+                name: tholdmZS
+                enable: ({return ui['outlcheck'].value()=="mZS";})
+
+      - type: Label
+        label: Output information
+        children:
           - type: CheckBox
-            name: boxpl
-            enable: ({return ui['outlcheck'].value()=="IQR";})
-      - type: RadioButton
-        name: ZS
-        optionName: outlcheck
-        optionPart: ZS
-        children:
-          - type: ComboBox
-            name: tholdZS
-            enable: ({return ui['outlcheck'].value()=="ZS";})
-      - type: RadioButton
-        name: mZS
-        optionName: outlcheck
-        optionPart: mZS
-        children:
-          - type: ComboBox
-            name: tholdmZS
-            enable: ({return ui['outlcheck'].value()=="mZS";})
+            name: outfence
+          - type: CheckBox
+            name: outind
+
   - type: CollapseBox
     label: Outliers removal
-    collapsed: false
+    collapsed: true
     stretchFactor: 1
     children:
       - type: Output

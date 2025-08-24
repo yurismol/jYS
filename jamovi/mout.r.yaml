@@ -1,6 +1,6 @@
 ---
 name:  mOUT
-title: Outliers identification and removal
+title: Univariate outliers identification and removal
 jrs:   '1.1'
 refs: [jys]
 
@@ -21,7 +21,7 @@ items:
         - name: outstat
           title: Outliers fences
           type: Table
-          #visible: (isMAR)
+          visible: (outfence)
           clearWith:
               - vars
               - group
@@ -46,5 +46,22 @@ items:
           height: 500
           renderFun: .plot
           requiresData: true
+
+    - name: oind
+      title: Outliers indices
+      type: Array
+      visible: (outind)
+      items: (vars)
+      template:
+          title: $key
+          type: Table
+          columns:
+              - name: grp
+                title: Group
+                type: text
+              - name: indx
+                title: Indices (Rows)
+                type: text
+
 
 ...

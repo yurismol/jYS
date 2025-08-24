@@ -349,6 +349,9 @@
             "Incomplete Variables": [
                 "Неполные переменные"
             ],
+            "Indices (Rows)": [
+                "Индексы (Строки)"
+            ],
             "Influx-outflux plot": [
                 "Приток-отток"
             ],
@@ -368,7 +371,7 @@
                 "Высота забора"
             ],
             "IQR Tukey's fences": [
-                "Межквартильные заборы"
+                "Межквартильные заборы Тьюки"
             ],
             "jYS": [
                 "jЮС"
@@ -493,9 +496,6 @@
             "N - number of missing values;": [
                 "N - количество пропущенных значений;"
             ],
-            "N of outliers": [
-                "Кол-во выбросов"
-            ],
             "None": [
                 "Нет"
             ],
@@ -535,17 +535,32 @@
             "Outliers fences": [
                 "Границы для выбросов"
             ],
+            "Outliers found": [
+                "Найдено выбросов"
+            ],
             "Outliers identification": [
                 "Выявление выбросов"
             ],
             "Outliers identification and removal": [
                 "Выявление и удаление выбросов"
             ],
+            "Outliers identification method": [
+                "Метод идентификации выбросов"
+            ],
             "Outliers identifying method": [
                 "Метод идентификации выбросов"
             ],
+            "Outliers indices": [
+                "Индексы выбросов"
+            ],
             "Outliers removal": [
                 "Удаление выбросов"
+            ],
+            "Outliers removed": [
+                "Удалено выбросов"
+            ],
+            "Output information": [
+                "Выходная информация"
             ],
             "p-value": [
                 "p-значение"
@@ -723,6 +738,9 @@
             ],
             "Total number of missing entries {}": [
                 "Общее количество пропусков {}"
+            ],
+            "Univariate outliers identification and removal": [
+                "Выявление и удаление одномерных выбросов"
             ],
             "Upper fence": [
                 "Верхний забор"

@@ -12,7 +12,7 @@ description: >
   Graphic extensions of the functionality of popular data analysis methods:
   cluster tree of correlating variables, multifactor adaptive correlation
   matrix, multidimensional ROC classification curves, missing data estimation
-  and imputation etc.
+  and imputation, outliers identificatioon and removal etc.
 datasets:
   - name: Correlation clustering
     path: COR_BLOOD.omv
@@ -60,12 +60,12 @@ analyses:
     menuTitle: Missing Values Estimation and Imputation
     ribbon: analyses
     category: analyses
-  - title: Outliers identification and removal
+  - title: Univariate outliers identification and removal
     name: mOUT
     ns: jYS
     category: analyses
     menuGroup: jYS
-    menuTitle: Outliers identification and removal
+    menuTitle: Univariate outliers identification and removal
 usesNative: true
 minApp: 1.0.8
 
