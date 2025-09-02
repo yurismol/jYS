@@ -31,6 +31,9 @@
             "*connection of a variable's missingness indicator": [
                 "*связь показателя пропусков переменной"
             ],
+            "*p<0.05 - The hypothesis of normal distribution was rejected by the Shapiro-Wilk test": [
+                "*p<0.05 - Гипотеза о нормальности распределения отвергнута тестом Шапиро-Уилка"
+            ],
             "*pairwise complete observations": [
                 "*попарно в полных наблюдениях"
             ],
@@ -499,6 +502,9 @@
             "None": [
                 "Нет"
             ],
+            "Normality<br>p-value": [
+                "Нормальность<br>p-значение"
+            ],
             "Number": [
                 "Число"
             ],
@@ -544,9 +550,6 @@
             "Outliers identification and removal": [
                 "Выявление и удаление выбросов"
             ],
-            "Outliers identification method": [
-                "Метод идентификации выбросов"
-            ],
             "Outliers identifying method": [
                 "Метод идентификации выбросов"
             ],
@@ -556,8 +559,11 @@
             "Outliers removal": [
                 "Удаление выбросов"
             ],
-            "Outliers removed": [
-                "Удалено выбросов"
+            "Outliers<br>found": [
+                "Найдено<br>выбросов"
+            ],
+            "Outliers<br>removed": [
+                "Удалено<br>выбросов"
             ],
             "Output information": [
                 "Выходная информация"
@@ -727,6 +733,9 @@
             "Tables": [
                 "Таблицы"
             ],
+            "Test for normality": [
+                "Оценка нормальности"
+            ],
             "The Best point on ROC": [
                 "Лучшая точка ROC"
             ],
@@ -738,6 +747,9 @@
             ],
             "Total number of missing entries {}": [
                 "Общее количество пропусков {}"
+            ],
+            "Univariate methods": [
+                "Однофакторные методы"
             ],
             "Univariate outliers identification and removal": [
                 "Одномерное выявление и удаление выбросов"
@@ -763,8 +775,8 @@
             "Variable to impute": [
                 "Переменная для восстановления"
             ],
-            "Variables with outliers": [
-                "Переменные с выбросами"
+            "Variables": [
+                "Переменные"
             ],
             "Ward´s D2 Linkage": [
                 "Уорд Д2 связи"

@@ -31,6 +31,9 @@
             "*connection of a variable's missingness indicator": [
                 ""
             ],
+            "*p<0.05 - The hypothesis of normal distribution was rejected by the Shapiro-Wilk test": [
+                ""
+            ],
             "*pairwise complete observations": [
                 ""
             ],
@@ -499,6 +502,9 @@
             "None": [
                 ""
             ],
+            "Normality<br>p-value": [
+                ""
+            ],
             "Number": [
                 ""
             ],
@@ -544,9 +550,6 @@
             "Outliers identification and removal": [
                 ""
             ],
-            "Outliers identification method": [
-                ""
-            ],
             "Outliers identifying method": [
                 ""
             ],
@@ -556,7 +559,10 @@
             "Outliers removal": [
                 ""
             ],
-            "Outliers removed": [
+            "Outliers<br>found": [
+                ""
+            ],
+            "Outliers<br>removed": [
                 ""
             ],
             "Output information": [
@@ -727,6 +733,9 @@
             "Tables": [
                 ""
             ],
+            "Test for normality": [
+                ""
+            ],
             "The Best point on ROC": [
                 ""
             ],
@@ -737,6 +746,9 @@
                 ""
             ],
             "Total number of missing entries {}": [
+                ""
+            ],
+            "Univariate methods": [
                 ""
             ],
             "Univariate outliers identification and removal": [
@@ -763,7 +775,7 @@
             "Variable to impute": [
                 ""
             ],
-            "Variables with outliers": [
+            "Variables": [
                 ""
             ],
             "Ward´s D2 Linkage": [

@@ -14,6 +14,7 @@ mOUTOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             tholdZS = "3.0",
             tholdmZS = "3.5",
             outfence = TRUE,
+            norm = FALSE,
             outind = FALSE, ...) {
 
             super$initialize(
@@ -87,6 +88,10 @@ mOUTOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "outfence",
                 outfence,
                 default=TRUE)
+            private$..norm <- jmvcore::OptionBool$new(
+                "norm",
+                norm,
+                default=FALSE)
             private$..outind <- jmvcore::OptionBool$new(
                 "outind",
                 outind,
@@ -101,6 +106,7 @@ mOUTOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..tholdZS)
             self$.addOption(private$..tholdmZS)
             self$.addOption(private$..outfence)
+            self$.addOption(private$..norm)
             self$.addOption(private$..outind)
         }),
     active = list(
@@ -113,6 +119,7 @@ mOUTOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         tholdZS = function() private$..tholdZS$value,
         tholdmZS = function() private$..tholdmZS$value,
         outfence = function() private$..outfence$value,
+        norm = function() private$..norm$value,
         outind = function() private$..outind$value),
     private = list(
         ..vars = NA,
@@ -124,6 +131,7 @@ mOUTOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..tholdZS = NA,
         ..tholdmZS = NA,
         ..outfence = NA,
+        ..norm = NA,
         ..outind = NA)
 )
 
@@ -133,8 +141,8 @@ mOUTResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     active = list(
         remOut = function() private$.items[["remOut"]],
         stat = function() private$.items[["stat"]],
-        plots = function() private$.items[["plots"]],
-        oind = function() private$.items[["oind"]]),
+        oind = function() private$.items[["oind"]],
+        plots = function() private$.items[["plots"]]),
     private = list(),
     public=list(
         initialize=function(options) {
@@ -143,7 +151,8 @@ mOUTResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 name="",
                 title="Univariate outliers identification and removal",
                 refs=list(
-                    "jys"))
+                    "jys",
+                    "filz"))
             self$add(jmvcore::Output$new(
                 options=options,
                 name="remOut",
@@ -174,6 +183,16 @@ mOUTResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                     `type`="text"))))}))$new(options=options))
             self$add(jmvcore::Array$new(
                 options=options,
+                name="oind",
+                title="Outliers indices",
+                visible="(outind)",
+                items="(vars)",
+                template=jmvcore::Table$new(
+                    options=options,
+                    title="$key",
+                    columns=list())))
+            self$add(jmvcore::Array$new(
+                options=options,
                 name="plots",
                 title="Boxplots with outliers",
                 visible="(boxpl)",
@@ -184,29 +203,7 @@ mOUTResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     width=500,
                     height=500,
                     renderFun=".plot",
-                    requiresData=TRUE)))
-            self$add(jmvcore::Array$new(
-                options=options,
-                name="oind",
-                title="Outliers indices",
-                visible="(outind)",
-                items="(vars)",
-                template=jmvcore::Table$new(
-                    options=options,
-                    title="$key",
-                    columns=list(
-                        list(
-                            `name`="grp", 
-                            `title`="Group", 
-                            `type`="text"),
-                        list(
-                            `name`="onum", 
-                            `title`="Outliers found", 
-                            `type`="integer"),
-                        list(
-                            `name`="indx", 
-                            `title`="Indices (Rows)", 
-                            `type`="text")))))}))
+                    requiresData=TRUE)))}))
 
 mOUTBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "mOUTBase",
@@ -241,13 +238,14 @@ mOUTBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param tholdZS .
 #' @param tholdmZS .
 #' @param outfence .
+#' @param norm .
 #' @param outind .
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$remOut} \tab \tab \tab \tab \tab an output \cr
 #'   \code{results$stat$outstat} \tab \tab \tab \tab \tab Calculated fences for outliers \cr
-#'   \code{results$plots} \tab \tab \tab \tab \tab an array of images \cr
 #'   \code{results$oind} \tab \tab \tab \tab \tab an array of tables \cr
+#'   \code{results$plots} \tab \tab \tab \tab \tab an array of images \cr
 #' }
 #'
 #' @export
@@ -261,6 +259,7 @@ mOUT <- function(
     tholdZS = "3.0",
     tholdmZS = "3.5",
     outfence = TRUE,
+    norm = FALSE,
     outind = FALSE) {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
@@ -285,6 +284,7 @@ mOUT <- function(
         tholdZS = tholdZS,
         tholdmZS = tholdmZS,
         outfence = outfence,
+        norm = norm,
         outind = outind)
 
     analysis <- mOUTClass$new(

@@ -2,7 +2,7 @@
 name:  mOUT
 title: Univariate outliers identification and removal
 jrs:   '1.1'
-refs: [jys]
+refs: [jys, filz]
 
 items:
     #- name:  text
@@ -33,6 +33,25 @@ items:
                 type: text
                 #content: ($key)
 
+    - name: oind
+      title: Outliers indices
+      type: Array
+      visible: (outind)
+      items: (vars)
+      template:
+          title: $key
+          type: Table
+          columns: []
+              #- name: grp
+              #  title: Group
+              #  type: text
+              #- name: onum
+              #  title: Outliers found
+              #  type: integer
+              #- name: indx
+              #  title: Indices (Rows)
+              #  type: text
+
     - name: plots
       title: Boxplots with outliers
       type: Array
@@ -46,25 +65,5 @@ items:
           height: 500
           renderFun: .plot
           requiresData: true
-
-    - name: oind
-      title: Outliers indices
-      type: Array
-      visible: (outind)
-      items: (vars)
-      template:
-          title: $key
-          type: Table
-          columns:
-              - name: grp
-                title: Group
-                type: text
-              - name: onum
-                title: Outliers found
-                type: integer
-              - name: indx
-                title: Indices (Rows)
-                type: text
-
 
 ...

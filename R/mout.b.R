@@ -47,7 +47,7 @@ mOUTClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             }
         },
 
-        .calcIQRange=function(x, grp="", fence=1.5, na.rm=TRUE, ...) {
+        .calcIQR=function(x, grp="", fence=1.5, na.rm=TRUE, ...) {
            df <- data.frame(x, grp)
            split_data  <- split(df, df$grp)
            find_ranges <- function(df) {
@@ -58,10 +58,15 @@ mOUTClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
              lr   <- Q1 - fence*IQR
              ur   <- Q3 + fence*IQR
              outlier_condition <- (df$x < lr | df$x > ur) & !is.na(df$x)
-             ind <- as.integer(rownames(df)[outlier_condition])
-             no  <- length(ind)
-             #return(unlist(list(lr, ur, no, median, ind), use.names=FALSE))
-             return(list(lr, ur, no, median, ind))
+             ind  <- as.integer(rownames(df)[outlier_condition])
+             no   <- length(ind)
+             test <- try(shapiro.test(df$x))
+             if (jmvcore::isError(test)) {
+               norm <- ""
+             } else {
+               norm <- test$p.value
+             }
+             return(list(lr, ur, no, median, norm, ind))
            }
            return(lapply(split_data, find_ranges))
         },
@@ -80,7 +85,7 @@ mOUTClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
            return(indices)
         },
 
-        .calcZRange=function(x, grp="", thr=3, na.rm=TRUE, ...) {
+        .calcZ=function(x, grp="", thr=3, na.rm=TRUE, ...) {
            df <- data.frame(x, grp)
            split_data <- split(df, df$grp)
            find_ranges <- function(df) {
@@ -93,7 +98,13 @@ mOUTClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
              ur <- mean + thr * sd
              lr <- mean - thr * sd
              #return(unlist(list(lr, ur, no, mean), use.names=FALSE))
-             return(list(lr, ur, no, mean, ind))
+             test <- try(shapiro.test(df$x))
+             if (jmvcore::isError(test)) {
+               norm <- ""
+             } else {
+               norm <- test$p.value
+             }
+             return(list(lr, ur, no, mean, norm, ind))
            }
            return(lapply(split_data, find_ranges))
         },
@@ -110,7 +121,11 @@ mOUTClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
            return(indices)
         },
 
-        .calcMZRange=function(x, grp="", thr=3.5, na.rm=TRUE, ...) {
+        .calcMAH=function(x, grp="", na.rm=TRUE, ...) {
+
+        },
+
+        .calcMZ=function(x, grp="", thr=3.5, na.rm=TRUE, ...) {
            df <- data.frame(x, grp)
            split_data <- split(df, df$grp)
            find_ranges <- function(df) {
@@ -125,10 +140,16 @@ mOUTClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
              lr <- median - thr*mad/denom
              ur <- median + thr*mad/denom
              z_scores <- denom * (df$x-median) / mad
-             outlier_condition <- (abs(z_scores) > thr) & !is.na(df$x) 
+             outlier_condition <- (abs(z_scores) > thr) & !is.na(df$x)
              ind <- as.integer(rownames(df)[outlier_condition])
              no  <- length(ind)
-             return(list(lr, ur, no, median, ind))
+             test <- try(shapiro.test(df$x))
+             if (jmvcore::isError(test)) {
+               norm <- ""
+             } else {
+               norm <- test$p.value
+             }
+             return(list(lr, ur, no, median, norm, ind))
            }
            return(lapply(split_data, find_ranges))
         },
@@ -222,12 +243,13 @@ mOUTClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 	  grp   <- self$options$group
 	  if (!is.null(grp)) outable$addColumn(name="grp", title=.("Group"), type='text')
           if (self$options$remOut) {
-            outable$addColumn(name="noutl", title=.("Outliers removed"), type='integer')
+            outable$addColumn(name="noutl", title=.("Outliers<br>removed"), type='integer')
           } else {
-            outable$addColumn(name="noutl", title=.("Outliers found"), type='integer')
+            outable$addColumn(name="noutl", title=.("Outliers<br>found"), type='integer')
           }
           outlcheck <- self$options$outlcheck
           fence <- as.double(self$options$fence)
+          if (self$options$norm) outable$addColumn(name="psh", title=.("Normality<br>p-value"), type='number')
           if (outlcheck %in% c("ZS", "MAH")) {
             outable$addColumn(name="m", title=.("Mean"), type='number')
           } else {
@@ -235,6 +257,7 @@ mOUTClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
           }
           outable$addColumn(name="lf",  title=.("Lower fence"), type='number')
           outable$addColumn(name="uf",  title=.("Upper fence"), type='number')
+          if (self$options$norm) outable$setNote('flag', .('*p<0.05 - The hypothesis of normal distribution was rejected by the Shapiro-Wilk test'))
 
           keys  <- self$options$vars
           dat   <- data.frame(self$data, check.names=FALSE)
@@ -246,23 +269,32 @@ mOUTClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             d   <- dat[[key]]
             dec <- private$.decimalplaces(d)
             if (outlcheck=="IQR") {
-              outl <- private$.calcIQRange(d, g, fence)
+              outl  <- private$.calcIQR(d, g, fence)
             } else if (outlcheck=="ZS") {
 	      thold <- as.double(self$options$tholdZS)
-              outl  <- private$.calcZRange(d, g, thold)
+              outl  <- private$.calcZ(d, g, thold)
             } else if (outlcheck=="mZS") {
 	      thold <- as.double(self$options$tholdmZS)
-              outl  <- private$.calcMZRange(d, g, thold)
+              outl  <- private$.calcMZ(d, g, thold)
+            } else if (outlcheck=="MAH") {
+            } else {
+              outl  <- ""
             }
             nm <- names(outl)
+            tab  <- oind$get(key=key)
+            if (!is.null(grp)) tab$addColumn(name="grp",  title=.("Group"), type='text')
+            tab$addColumn(name="onum", title=.("Outliers<br>found"), type='integer')
+            tab$addColumn(name="indx", title=.("Indices (Rows)"), type='text')
             for (j in seq_along(outl)) {
-              lst <- unlist(outl[[j]])
-              gr  <- nm[[j]]
+              lst  <- unlist(outl[[j]])
+              gr   <- nm[[j]]
+              norm <- ifelse(lst[5]<0.001,"<0.001",lst[5])
               outable$addRow(rowKey=paste(key, gr),
-		list(var=key, grp=gr, m=lst[4], lf=lst[1], uf=lst[2], noutl=lst[3])
+		list(var=key, grp=gr, m=lst[4], lf=lst[1], uf=lst[2], noutl=lst[3],
+		psh=norm)
                 )
-              tab  <- oind$get(key=key)
-              indx <- toString(unlist(outl[[j]][5]))
+              if (self$options$norm && lst[5]<0.05) outable$addSymbol(rowKey=paste(key, gr), "psh", '*')
+              indx <- toString(unlist(outl[[j]][6]))
               indx <- private$.splitstr(indx)
               tab$addRow(rowKey=paste(key, gr), list(grp=gr, onum=lst[3], indx=indx))
             }
@@ -286,16 +318,14 @@ mOUTClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                   dec <- private$.decimalplaces(d)
                   if (outlcheck=="IQR") {
                     outl <- private$.outliers(d, g, fence)
-                    d[outl] <- NA
                   } else if (outlcheck=="ZS") {
 		    thold <- as.double(self$options$tholdZS)
                     outl  <- private$.z_score(d, g, thold)
-                    d[outl] <- NA
                   } else if (outlcheck=="mZS") {
 		    thold <- as.double(self$options$tholdmZS)
                     outl  <- private$.mz_score(d, g, thold)
-                    d[outl] <- NA
                   }
+                  d[outl] <- NA
                   self$results$remOut$setValues(index=i, round(d, dec))
                 }
             }

@@ -85,4 +85,13 @@
         `year`=2018, 
         `publisher`="CRC Press, Taylor & Francis Group", 
         `pages`="415 pp", 
-        `url`="https://stefvanbuuren.name/fimd"))
+        `url`="https://stefvanbuuren.name/fimd"), 
+    `filz`=list(
+        `type`="article", 
+        `title`="Multivariate outlier detection in exploration geochemistry", 
+        `author`="Filzmoser, P., Garrett, R.G., Reimann, C.", 
+        `year`=2005, 
+        `publisher`="Computers & Geosciences", 
+        `volume`=31, 
+        `pages`="579-587", 
+        `url`="https://doi.org/10.1016/j.cageo.2004.11.013"))

@@ -9,7 +9,7 @@ children:
     stretchFactor: 1
     children:
       - type: TargetLayoutBox
-        label: Variables with outliers
+        label: Variables
         children:
           - type: VariablesListBox
             name: vars
@@ -27,7 +27,7 @@ children:
     stretchFactor: 1
     children:
       - type: Label
-        label: Outliers identification method
+        label: Method
         children:
           - type: RadioButton
             name: IQR
@@ -56,18 +56,21 @@ children:
               - type: ComboBox
                 name: tholdmZS
                 enable: ({return ui['outlcheck'].value()=="mZS";})
-
       - type: Label
         label: Output information
         children:
           - type: CheckBox
             name: outfence
+            children:
+              - type: CheckBox
+                name: norm
+                enable: (outfence)
           - type: CheckBox
             name: outind
 
   - type: CollapseBox
     label: Outliers removal
-    collapsed: true
+    collapsed: false
     stretchFactor: 1
     children:
       - type: Output

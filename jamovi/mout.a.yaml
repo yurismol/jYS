@@ -10,7 +10,7 @@ options:
       type: Data
 
     - name: vars
-      title: Variables with outliers
+      title: Variables
       type: Variables
       required: true
       suggested:
@@ -101,6 +101,11 @@ options:
       title: Outliers fences
       type: Bool
       default: true
+
+    - name: norm
+      title: Test for normality
+      type: Bool
+      default: false
 
     - name: outind
       title: Outliers indices
