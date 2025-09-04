@@ -2,7 +2,7 @@
 name:  mOUT
 title: Univariate outliers identification and removal
 menuGroup: jYS
-version: '1.0.0'
+version: '1.0.10'
 jas: '1.2'
 
 options:
@@ -45,7 +45,7 @@ options:
           name:  IQR
         - title: Z-score
           name:  ZS
-        - title: Modified Z-score
+        - title: Modified Z-score (Hampel filter)
           name:  mZS
       default: IQR
 

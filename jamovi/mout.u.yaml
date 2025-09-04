@@ -3,6 +3,8 @@ name: mOUT
 jus: '3.0'
 stage: 0
 compilerMode: tame
+events:
+  update: './mout.events::update'
 children:
   - type: VariableSupplier
     persistentItems: false
@@ -33,6 +35,8 @@ children:
             name: IQR
             optionName: outlcheck
             optionPart: IQR
+            events:
+              change: './mout.events::onChange_iqr'
             children:
               - type: ComboBox
                 name: fence
@@ -44,6 +48,8 @@ children:
             name: ZS
             optionName: outlcheck
             optionPart: ZS
+            events:
+              change: './mout.events::onChange_iqr'
             children:
               - type: ComboBox
                 name: tholdZS

@@ -151,8 +151,7 @@ mOUTResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 name="",
                 title="Univariate outliers identification and removal",
                 refs=list(
-                    "jys",
-                    "filz"))
+                    "jys"))
             self$add(jmvcore::Output$new(
                 options=options,
                 name="remOut",
@@ -213,7 +212,7 @@ mOUTBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             super$initialize(
                 package = "jYS",
                 name = "mOUT",
-                version = c(1,0,0),
+                version = c(1,0,10),
                 options = options,
                 results = mOUTResults$new(options=options),
                 data = data,

@@ -174,7 +174,7 @@ mOUTClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
            return(indices)
         },
 
-        .z_var=function(x, grp="", fence=3.0, na.rm=TRUE, ...) {
+        .mz_var=function(x, grp="", fence=3.0, na.rm=TRUE, ...) {
            df <- data.frame(x, grp)
            split_data <- split(df, df$grp)
            z_calc <- function(df) {
@@ -200,19 +200,7 @@ mOUTClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 	    } else {
 	      frm <- stats::as.formula(jmvcore:::composeFormula(key, grp))
 	    }
-            if (range==0) {
-	      thold <- as.double(self$options$tholdmZS)
-              d <- dat[[key]]
-	      g <- ""
-	      if (!is.null(self$options$group)) g <- dat[[self$options$group]]
-	      z <- private$.z_var(d, g, thold)
-	      self$results$text$setContent(z)
-	      frm <- stats::as.formula(jmvcore:::composeFormula("z", grp))
-	      p <- car::Boxplot(frm, data=dat, range=thold)
-	    } else {
-	      p <- car::Boxplot(frm, data=dat, range=range)
-	    }
-
+            p <- car::Boxplot(frm, data=dat, range=range)
 	    print(p)
 	    return(TRUE)
         },

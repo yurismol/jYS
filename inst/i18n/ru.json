@@ -478,8 +478,8 @@
             "missRanger (2021)": [
                 ""
             ],
-            "Modified Z-score": [
-                "Модифицированная Z-оценка"
+            "Modified Z-score (Hampel filter)": [
+                "Модифицированная Z-оценка (Фильтр Хампеля)"
             ],
             "MSE - mean squared error (for Continuous variables);": [
                 "MSE - средняя квадратическая ошибка (для непрерывных переменных);"
@@ -540,9 +540,6 @@
             ],
             "Outliers fences": [
                 "Границы для выбросов"
-            ],
-            "Outliers found": [
-                "Найдено<br>выбросов"
             ],
             "Outliers identification": [
                 "Выявление выбросов"
@@ -747,9 +744,6 @@
             ],
             "Total number of missing entries {}": [
                 "Общее количество пропусков {}"
-            ],
-            "Univariate methods": [
-                "Однофакторные методы"
             ],
             "Univariate outliers identification and removal": [
                 "Одномерное выявление и удаление выбросов"
