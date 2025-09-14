@@ -9,16 +9,16 @@ children:
     stretchFactor: 1
     children:
       - type: TargetLayoutBox
-        label: Complete Variables
-        children:
-          - type: VariablesListBox
-            name: learnvar
-            isTarget: true
-      - type: TargetLayoutBox
         label: Incomplete Variables
         children:
           - type: VariablesListBox
             name: imputevar
+            isTarget: true
+      - type: TargetLayoutBox
+        label: Complete Variables
+        children:
+          - type: VariablesListBox
+            name: learnvar
             isTarget: true
   - type: CollapseBox
     label: Missing Values Estimation

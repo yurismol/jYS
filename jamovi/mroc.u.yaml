@@ -29,6 +29,8 @@ children:
             maxItemCount: 1
             isTarget: true
             enable: ({return !ui['sepROC'].value();})
+            events:
+              change: './mroc.events::onChange_grp'
           - type: LevelSelector
             label: ''
             name: selgroup
