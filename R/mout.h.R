@@ -66,6 +66,7 @@ mOUTOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "tholdZS",
                 tholdZS,
                 options=list(
+                    "2.0",
                     "2.5",
                     "3.0",
                     "3.5",
@@ -77,6 +78,7 @@ mOUTOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "tholdmZS",
                 tholdmZS,
                 options=list(
+                    "2.0",
                     "2.5",
                     "3.0",
                     "3.5",
@@ -212,7 +214,7 @@ mOUTBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             super$initialize(
                 package = "jYS",
                 name = "mOUT",
-                version = c(1,0,10),
+                version = c(1,0,11),
                 options = options,
                 results = mOUTResults$new(options=options),
                 data = data,

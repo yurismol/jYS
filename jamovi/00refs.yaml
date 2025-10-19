@@ -102,3 +102,32 @@ refs:
         volume: 31
         pages: 579-587
         url: https://doi.org/10.1016/j.cageo.2004.11.013
+
+    lsh:
+        type: 'article'
+        title: "Interval of uncertainty: an alternative approach for the determination of decision thresholds, with an illustrative application for the prediction of prostate cancer"
+        author: Landsheer, J.A.
+        year: 2016
+        volume: 11
+        issue: 11
+        publisher: PloS one
+        pages: e0166007
+        url: https://doi.org/10.1371/journal.pone.0166007
+
+    lshd:
+        type: 'article'
+        title: "The clinical relevance of methods for handling inconclusive medical test results: quantification of uncertainty in medical decision-making and screening"
+        author: Landsheer, J.A.
+        year: 2018
+        volume: 8
+        issue: 2
+        pages: 32-32
+        url: https://doi.org/10.3390/diagnostics8020032
+
+    uir:
+        type: 'software'
+        author: Landsheer, H
+        year: 2020
+        title: "R package for three-way threshold determination of medical tests"
+        url: https://github.com/HansLandsheer/UncertainInterval
+

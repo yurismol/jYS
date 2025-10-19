@@ -1,0 +1,116 @@
+---
+name:  mUI
+title: Uncertain Interval (UI)
+menuGroup: jYS
+version: '1.0.11'
+jas: '1.2'
+
+options:
+    - name: data
+      type: Data
+
+    - name: test
+      title: Predictors
+      type: Variables
+      suggested:
+        - continuous
+        #- ordinal
+      permitted:
+        - numeric
+        #- factor
+
+    - name: ref
+      title: Classifying variable
+      type: Variable
+      required: true
+      suggested:
+        - nominal
+        - ordinal
+      permitted:
+        - factor
+
+    - name: refval
+      title: Reference level
+      type: Level
+      variable: (ref)
+
+    - name: UImethod
+      title: Interval determination method
+      type: List
+      options:
+        - title: Two-graph ROC curves
+          name:  TGR
+        - title: Uncertain Interval
+          name:  UI 
+        - title: Dichotomization (no uncertainty)
+          name:  noUI
+      default: TGR
+
+    - name: minSe
+      title: Sensitivity outside UI >
+      type: Number
+      min: 0.75
+      max: 0.99
+      default: 0.9
+
+    - name: minSp
+      title: Specificity outside UI >
+      type: Number
+      min: 0.75
+      max: 0.99
+      default: 0.9
+
+    - name: uiSe
+      title: Sensitivity inside UI <
+      type: Number
+      min: 0.51
+      max: 0.8
+      default: 0.55
+
+    - name: uiSp
+      title: Specificity inside UI <
+      type: Number
+      min: 0.51
+      max: 0.8
+      default: 0.55
+
+    - name: isROC
+      title: ROC curves
+      type: Bool
+      default: false
+
+    - name: isTGR
+      title: Plot
+      type: Bool
+      default: true
+
+    - name: isMD
+      title: Mixed Densities
+      type: Bool
+      default: true
+
+    - name: youden
+      title: Threshold on Youden
+      type: Bool
+      default: false
+
+    - name: polygon
+      title: Uncertainty interval polygon
+      type: Bool
+      default: true
+
+    - name: decision
+      title: Proposed decision
+      type: Output
+
+    - name: model
+      title: Distribution model
+      type: List
+      options:
+        - title: Non-parametric
+          name:  none
+        - title: Binormal
+          name:  binormal
+      default: none
+
+...

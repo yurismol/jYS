@@ -441,7 +441,7 @@ mCORBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             super$initialize(
                 package = "jYS",
                 name = "mCOR",
-                version = c(1,0,6),
+                version = c(1,0,11),
                 options = options,
                 results = mCORResults$new(options=options),
                 data = data,

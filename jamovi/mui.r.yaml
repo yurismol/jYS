@@ -1,0 +1,94 @@
+---
+name:  mUI
+title: Uncertain Interval (UI)
+jrs:   '1.1'
+refs: [jys, uir, lsh, lshd]
+
+items:
+    #- name:  text
+    #  title: Uncertain Interval
+    #  type:  Preformatted
+
+    - name: stat
+      title: Interval estimation
+      type: Group
+      #refs: [mf, rg, mr]
+      items:
+        - name: uistat
+          title: Uncertain Interval
+          type: Table
+          clearWith:
+              - ref
+              - test
+          rows: (test)
+          columns:
+              - name: var
+                title: Predictor
+                type: text
+                content: ($key)
+              - name: dir
+                title: Direction
+                type: text
+              - name: int
+                title: Intersection
+                type: number
+    
+        - name: mcistat
+          title: More Certain Interval
+          type: Table
+          clearWith:
+              - ref
+              - test
+          rows: (test)
+          columns:
+              - name: var
+                title: Predictor
+                type: text
+                content: ($key)
+
+    - name: plotsTGR
+      title: Two-graph ROC curves
+      type: Array
+      visible: (isTGR)
+      items: (test)
+      #refs: []
+      template:
+          title: $key
+          type: Image
+          width:  500
+          height: 500
+          renderFun: .plotTGR
+          requiresData: true
+
+    - name: plotsMD
+      title: Mixed Densities
+      type: Array
+      visible: (isMD)
+      items: (test)
+      template:
+          title: $key
+          type: Image
+          width:  500
+          height: 500
+          renderFun: .plotMD
+          requiresData: true
+
+    - name: plotsROC
+      title: ROC curves
+      type: Array
+      visible: (isROC)
+      items: (test)
+      template:
+          title: $key
+          type: Image
+          width:  500
+          height: 500
+          renderFun: .plotROC
+          requiresData: true
+
+    - name: decision
+      title: Proposed decision
+      type: Output
+      #initInRun: true
+
+...

@@ -1,7 +1,7 @@
 ---
 title: jYS Extended Functions
 name: jYS
-version: 1.0.10
+version: 1.0.11
 jms: '1.0'
 authors:
   - Yuri Smolyakov
@@ -38,6 +38,9 @@ datasets:
   - name: Outliers identification and removal
     path: OUTL_IRIS.omv
     description: Identification, analysis and removal of data outliers by groups
+  - name: Uncertain Interval
+    path: UI_HI.omv
+    description: Three-way threshold determination of medical tests
 analyses:
   - title: Correlation clustering
     name: mCOR
@@ -66,6 +69,12 @@ analyses:
     category: analyses
     menuGroup: jYS
     menuTitle: Univariate outliers identification and removal
+  - title: Uncertain Interval (UI)
+    name: mUI
+    ns: jYS
+    category: analyses
+    menuGroup: jYS
+    menuTitle: Uncertain Interval (UI)
 usesNative: true
 minApp: 1.0.8
 

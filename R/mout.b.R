@@ -230,11 +230,7 @@ mOUTClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
           #outable$addColumn(name="var", title="Variable", type='text')
 	  grp   <- self$options$group
 	  if (!is.null(grp)) outable$addColumn(name="grp", title=.("Group"), type='text')
-          if (self$options$remOut) {
-            outable$addColumn(name="noutl", title=.("Outliers<br>removed"), type='integer')
-          } else {
-            outable$addColumn(name="noutl", title=.("Outliers<br>found"), type='integer')
-          }
+          outable$addColumn(name="noutl", title=.("Outliers<br>found"), type='integer')
           outlcheck <- self$options$outlcheck
           fence <- as.double(self$options$fence)
           if (self$options$norm) outable$addColumn(name="psh", title=.("Normality<br>p-value"), type='number')

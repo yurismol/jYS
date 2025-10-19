@@ -1,0 +1,106 @@
+title: Uncertain Interval (UI)
+name: mUI
+jus: '3.0'
+stage: 0
+compilerMode: tame
+events:
+  update: ./mui.events::update
+children:
+  - type: VariableSupplier
+    persistentItems: false
+    stretchFactor: 1
+    children:
+      - type: TargetLayoutBox
+        label: Continuous predictors
+        children:
+          - type: VariablesListBox
+            name: test
+            isTarget: true
+      - type: TargetLayoutBox
+        label: Classifying variable
+        children:
+          - type: VariablesListBox
+            name: ref
+            maxItemCount: 1
+            isTarget: true
+          - type: LevelSelector
+            name: refval
+            label: '0 = '
+            enable: ({return ui['ref'].value()!==null;})
+  - type: CollapseBox
+    label: Interval Analysis
+    collapsed: false
+    stretchFactor: 1
+    children:
+      - type: ComboBox
+        name: model
+      - type: Label
+        label: Method
+        children:
+          - type: RadioButton
+            name: Two-graph ROC curves
+            optionName: UImethod
+            optionPart: TGR
+            events:
+              change: ./mui.events::onChange_met
+            children:
+              - type: CheckBox
+                name: isTGR
+                enable: ({return ui['UImethod'].value()=="TGR";})
+              - type: TextBox
+                name: minSe
+                format: number
+                enable: ({return ui['UImethod'].value()=="TGR";})
+                events:
+                  change: ./mui.events::onChange_met
+              - type: TextBox
+                name: minSp
+                format: number
+                enable: ({return ui['UImethod'].value()=="TGR";})
+                events:
+                  change: ./mui.events::onChange_met
+          - type: RadioButton
+            name: Uncertain Interval
+            optionName: UImethod
+            optionPart: UI
+            events:
+              change: ./mui.events::onChange_met
+            children:
+              - type: TextBox
+                name: uiSe
+                format: number
+                enable: ({return ui['UImethod'].value()=="UI";})
+                events:
+                  change: ./mui.events::onChange_met
+              - type: TextBox
+                name: uiSp
+                format: number
+                enable: ({return ui['UImethod'].value()=="UI";})
+                events:
+                  change: ./mui.events::onChange_met
+          - type: RadioButton
+            name: Dichotomization (no uncertainty)
+            optionName: UImethod
+            optionPart: noUI
+            events:
+              change: ./mui.events::onChange_met
+            children:
+              - type: CheckBox
+                name: youden
+                enable: ({return ui['UImethod'].value()=="noUI";})
+      - type: Label
+        label: Plots
+        children:
+          - type: CheckBox
+            name: isMD
+          - type: CheckBox
+            name: polygon
+          - type: CheckBox
+            name: isROC
+  - type: CollapseBox
+    label: Save
+    collapsed: false
+    stretchFactor: 1
+    children:
+      - type: Output
+        name: decision
