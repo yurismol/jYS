@@ -21,6 +21,6 @@ Some usefull [Jamovi](https://www.jamovi.org/) procedures for researchers
 - Outliers identification and removal
 
 - Three-way threshold determination of medical tests
-  UncertainInterval (Hans Landsheer)
+  - UncertainInterval (Hans Landsheer)
 
 Author: [Yuri Smolyakov](https://t.me/jYSmol)
