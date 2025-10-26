@@ -11,7 +11,7 @@ children:
     stretchFactor: 1
     children:
       - type: TargetLayoutBox
-        label: Continuous predictors
+        label: Predictors
         children:
           - type: VariablesListBox
             name: test
@@ -28,10 +28,14 @@ children:
             label: '0 = '
             enable: ({return ui['ref'].value()!==null;})
   - type: CollapseBox
-    label: Interval Analysis
+    label: Intervals Estimation
     collapsed: false
     stretchFactor: 1
     children:
+      - type: CheckBox
+        name: isMCI
+      - type: CheckBox
+        name: isProp
       - type: ComboBox
         name: model
       - type: Label

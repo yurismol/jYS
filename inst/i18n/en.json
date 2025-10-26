@@ -16,6 +16,9 @@
             "{ciWidth}% CI Upper": [
                 ""
             ],
+            "{varType} proposed decision": [
+                ""
+            ],
             "{varType} with imputed values": [
                 ""
             ],
@@ -58,6 +61,9 @@
             "0 - auto": [
                 ""
             ],
+            "0 =": [
+                ""
+            ],
             "1 - Specificity": [
                 ""
             ],
@@ -65,6 +71,9 @@
                 ""
             ],
             "100 - Specificity (%)": [
+                ""
+            ],
+            "2.0": [
                 ""
             ],
             "2.2": [
@@ -121,6 +130,12 @@
             "Average Linkage (UPGMA)": [
                 ""
             ],
+            "Balance": [
+                ""
+            ],
+            "Balance - balance between correct and incorrect classified (TP+TN)/(FP+FN)": [
+                ""
+            ],
             "BC Models ROC Estimation": [
                 ""
             ],
@@ -131,6 +146,9 @@
                 ""
             ],
             "Benjamini-Yekutieli (2001)": [
+                ""
+            ],
+            "Binormal": [
                 ""
             ],
             "Black & White": [
@@ -152,6 +170,9 @@
                 ""
             ],
             "Calculated fences for outliers": [
+                ""
+            ],
+            "CCR - Correct Classification Rate or accuracy of the positive and negative classifications (TP+TN)/(TN+FP+FN+TP)": [
                 ""
             ],
             "Centroid Linkage (UPGMC)": [
@@ -208,6 +229,12 @@
             "Complete variables in plots": [
                 ""
             ],
+            "Concordance": [
+                ""
+            ],
+            "Concordance - C-Statistic or AUC. The probability that a random chosen patient with the condition is correctly ranked higher than a randomly chosen patient without the condition": [
+                ""
+            ],
             "Conditions": [
                 ""
             ],
@@ -256,10 +283,19 @@
             "Dark2": [
                 ""
             ],
+            "decision": [
+                ""
+            ],
             "Degree of<br>Freedom (df)": [
                 ""
             ],
+            "Dichotomization (no uncertainty)": [
+                ""
+            ],
             "Direction": [
+                ""
+            ],
+            "Distribution model": [
                 ""
             ],
             "Dotted line": [
@@ -367,7 +403,16 @@
             "Intercluster Matrices": [
                 ""
             ],
+            "Intersection": [
+                ""
+            ],
             "Interval": [
+                ""
+            ],
+            "Interval determination method": [
+                ""
+            ],
+            "Intervals Estimation": [
                 ""
             ],
             "IQR fence height": [
@@ -394,6 +439,9 @@
             "Legend Box": [
                 ""
             ],
+            "Level": [
+                ""
+            ],
             "Line width": [
                 ""
             ],
@@ -401,6 +449,9 @@
                 ""
             ],
             "Lower part": [
+                ""
+            ],
+            "Lower threshold": [
                 ""
             ],
             "Manual Clusters": [
@@ -428,6 +479,12 @@
                 ""
             ],
             "MCAR (Missing Completely at Random) and MAR (Missing at Random) estimation": [
+                ""
+            ],
+            "MCI=0": [
+                ""
+            ],
+            "MCI=1": [
                 ""
             ],
             "McQuitty Linkage (WPGMA)": [
@@ -478,7 +535,16 @@
             "missRanger (2021)": [
                 ""
             ],
+            "Mixed Densities": [
+                ""
+            ],
             "Modified Z-score (Hampel filter)": [
+                ""
+            ],
+            "More Certain Interval (MCI)": [
+                ""
+            ],
+            "More Certain Interval (MCI) is interval outside the Uncertain Interval and divide into low and high parts.": [
                 ""
             ],
             "MSE - mean squared error (for Continuous variables);": [
@@ -499,10 +565,16 @@
             "N - number of missing values;": [
                 ""
             ],
+            "Non-parametric": [
+                ""
+            ],
             "None": [
                 ""
             ],
             "Normality<br>p-value": [
+                ""
+            ],
+            "NPV - Negative Predictive Value of the negative class TN/(TN+FN)": [
                 ""
             ],
             "Number": [
@@ -559,9 +631,6 @@
             "Outliers<br>found": [
                 ""
             ],
-            "Outliers<br>removed": [
-                ""
-            ],
             "Output information": [
                 ""
             ],
@@ -601,6 +670,9 @@
             "Pie": [
                 ""
             ],
+            "Plot": [
+                ""
+            ],
             "Plot correlations between variables": [
                 ""
             ],
@@ -616,16 +688,34 @@
             "Polygon": [
                 ""
             ],
+            "PPV - Positive Predictive Value of the positive class TP/(TN+FN)": [
+                ""
+            ],
             "Predictive Mean Matching (PMM) steps": [
                 ""
             ],
+            "Predictor": [
+                ""
+            ],
             "Predictors": [
+                ""
+            ],
+            "Prevalence": [
+                ""
+            ],
+            "Proportions of Intervals": [
+                ""
+            ],
+            "Proposed decision": [
                 ""
             ],
             "provide a correlation matrix plot.": [
                 ""
             ],
             "PVU - proportion of variance unexplained 1-R² (for Continuous variables);": [
+                ""
+            ],
+            "Reference level": [
                 ""
             ],
             "Remove outliers": [
@@ -655,16 +745,25 @@
             "ROC comparison": [
                 ""
             ],
+            "ROC curves": [
+                ""
+            ],
             "ROC estimation for binomial logistis models demonstration": [
                 ""
             ],
             "ROC graphs": [
                 ""
             ],
+            "Save": [
+                ""
+            ],
             "Scale position": [
                 ""
             ],
             "SDI ROC classification": [
+                ""
+            ],
+            "Se - sensitivity of the positive and negative classifications TP/(TP+FN)": [
                 ""
             ],
             "Select group": [
@@ -674,6 +773,12 @@
                 ""
             ],
             "Sensitivity (%)": [
+                ""
+            ],
+            "Sensitivity inside UI <": [
+                ""
+            ],
+            "Sensitivity outside UI >": [
                 ""
             ],
             "Set1": [
@@ -700,6 +805,12 @@
             "Slanted Titles": [
                 ""
             ],
+            "SNPV - standardized negative predictive value of the negative class": [
+                ""
+            ],
+            "Sp - specificity of the positive and negative classifications TN/(TN+FN)": [
+                ""
+            ],
             "Spearman (ρ)": [
                 ""
             ],
@@ -712,6 +823,12 @@
             "Specificity (%)": [
                 ""
             ],
+            "Specificity inside UI <": [
+                ""
+            ],
+            "Specificity outside UI >": [
+                ""
+            ],
             "Sperm Deformity Index ROC Classification demonstration": [
                 ""
             ],
@@ -721,10 +838,16 @@
             "Splitted ROC by predictors": [
                 ""
             ],
+            "SPPV - standardized positive predictive value of the positive class": [
+                ""
+            ],
             "Square": [
                 ""
             ],
             "Successively": [
+                ""
+            ],
+            "Sum": [
                 ""
             ],
             "Tables": [
@@ -739,10 +862,37 @@
             "The classifying variable '{}' does not have exactly two levels; ROC classification can only be performed on classifying variables with two levels.": [
                 ""
             ],
+            "Three-Way threshold determination in test results": [
+                ""
+            ],
             "Threshold for Z-score": [
                 ""
             ],
+            "Threshold on Youden": [
+                ""
+            ],
             "Total number of missing entries {}": [
+                ""
+            ],
+            "Two-graph ROC curves": [
+                ""
+            ],
+            "UI": [
+                ""
+            ],
+            "Uncertain Interval": [
+                ""
+            ],
+            "Uncertain Interval (UI)": [
+                ""
+            ],
+            "Uncertain Interval (UI) is placed around the point of intersection between the two distributions with and without the targeted state.": [
+                ""
+            ],
+            "Uncertain Interval is considered to be a range of test scores that is inconclusive and does not warrant a right decision.": [
+                ""
+            ],
+            "Uncertainty interval polygon": [
                 ""
             ],
             "Univariate outliers identification and removal": [
@@ -752,6 +902,9 @@
                 ""
             ],
             "Upper part": [
+                ""
+            ],
+            "Upper threshold": [
                 ""
             ],
             "Variable": [

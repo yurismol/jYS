@@ -40,7 +40,7 @@ datasets:
     description: Identification, analysis and removal of data outliers by groups
   - name: Uncertain Interval
     path: UI_HI.omv
-    description: Three-way threshold determination of medical tests
+    description: Three-Way threshold determination in test results
 analyses:
   - title: Correlation clustering
     name: mCOR

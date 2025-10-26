@@ -34,13 +34,23 @@ options:
       type: Level
       variable: (ref)
 
+    - name: isMCI
+      title: More Certain Interval (MCI)
+      type: Bool
+      default: false
+
+    - name: isProp
+      title: Proportions of Intervals
+      type: Bool
+      default: false
+
     - name: UImethod
       title: Interval determination method
       type: List
       options:
         - title: Two-graph ROC curves
           name:  TGR
-        - title: Uncertain Interval
+        - title: Uncertain Interval (UI)
           name:  UI 
         - title: Dichotomization (no uncertainty)
           name:  noUI

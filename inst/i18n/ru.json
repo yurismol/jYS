@@ -16,6 +16,9 @@
             "{ciWidth}% CI Upper": [
                 "{ciWidth}% ДИ верх"
             ],
+            "{varType} proposed decision": [
+                "{varType} рекомендуемое решение"
+            ],
             "{varType} with imputed values": [
                 "{varType} с заполненными пропусками"
             ],
@@ -58,6 +61,9 @@
             "0 - auto": [
                 "0 - авто"
             ],
+            "0 =": [
+                ""
+            ],
             "1 - Specificity": [
                 "1 - Специфичность"
             ],
@@ -66,6 +72,9 @@
             ],
             "100 - Specificity (%)": [
                 "100 - Специфичность (%)"
+            ],
+            "2.0": [
+                ""
             ],
             "2.2": [
                 ""
@@ -121,6 +130,12 @@
             "Average Linkage (UPGMA)": [
                 "Средней связи"
             ],
+            "Balance": [
+                "Баланс"
+            ],
+            "Balance - balance between correct and incorrect classified (TP+TN)/(FP+FN)": [
+                "Баланс - баланс между правильной и неправильной классификацией - (TP+TN)/(FP+FN)"
+            ],
             "BC Models ROC Estimation": [
                 "ROC оценка моделей клеток крови"
             ],
@@ -132,6 +147,9 @@
             ],
             "Benjamini-Yekutieli (2001)": [
                 "Бенджамини-Иекутиели (2001)"
+            ],
+            "Binormal": [
+                "Бинормальная"
             ],
             "Black & White": [
                 "Черно-Белый"
@@ -153,6 +171,9 @@
             ],
             "Calculated fences for outliers": [
                 "Расчитанные границы для выбросов"
+            ],
+            "CCR - Correct Classification Rate or accuracy of the positive and negative classifications (TP+TN)/(TN+FP+FN+TP)": [
+                "CCR - Правильная классификация или точность положительных и отрицательных классификаций (TP+TN)/(TN+FP+FN+TP)"
             ],
             "Centroid Linkage (UPGMC)": [
                 "Центроидной связи"
@@ -208,6 +229,12 @@
             "Complete variables in plots": [
                 "Полные переменные в графиках"
             ],
+            "Concordance": [
+                "Конкордантность"
+            ],
+            "Concordance - C-Statistic or AUC. The probability that a random chosen patient with the condition is correctly ranked higher than a randomly chosen patient without the condition": [
+                "Конкордантность - C-статистика или AUC. Вероятность того, что случайно выбранный пациент с данным заболеванием будет правильно ранжирован выше, чем случайно выбранный пациент без данного заболевания"
+            ],
             "Conditions": [
                 "Условия"
             ],
@@ -256,11 +283,20 @@
             "Dark2": [
                 "Темная 2"
             ],
+            "decision": [
+                "решение"
+            ],
             "Degree of<br>Freedom (df)": [
                 "Степени<br>свободы (df)"
             ],
+            "Dichotomization (no uncertainty)": [
+                "Дихотомизация (без неопределенности)"
+            ],
             "Direction": [
                 "Направление"
+            ],
+            "Distribution model": [
+                "Модель распределения"
             ],
             "Dotted line": [
                 "Пунктирная линия"
@@ -367,8 +403,17 @@
             "Intercluster Matrices": [
                 "Межкластерные матрицы"
             ],
+            "Intersection": [
+                "Пересечение"
+            ],
             "Interval": [
                 "Интервал"
+            ],
+            "Interval determination method": [
+                "Метод определения интервалов"
+            ],
+            "Intervals Estimation": [
+                "Оценка интервалов"
             ],
             "IQR fence height": [
                 "Высота забора"
@@ -394,6 +439,9 @@
             "Legend Box": [
                 "Фон легенды"
             ],
+            "Level": [
+                "Уровень"
+            ],
             "Line width": [
                 "Толщина линии"
             ],
@@ -403,11 +451,14 @@
             "Lower part": [
                 "Нижняя часть"
             ],
+            "Lower threshold": [
+                "Нижний порог"
+            ],
             "Manual Clusters": [
                 "Кластеры вручную"
             ],
             "MAR - missing at random (if each p<sub>value</sub> is significant, there is evidence the data is MAR);": [
-                "MAR — случайные пропуски (если каждое p<sub>значение</sub> значимо, есть доказательства того, что пропуски случайны);"
+                "MAR - случайные пропуски (если каждое p<sub>значение</sub> значимо, есть доказательства того, что пропуски случайны);"
             ],
             "MAR classification table": [
                 "Таблица классификации MAR"
@@ -425,10 +476,16 @@
                 ""
             ],
             "MCAR - missing completely at random (if the p<sub>value</sub> is not significant, there is evidence the data is MCAR).": [
-                "MCAR — полностью случайные пропуски (если p<sub>значение</sub> незначимо, есть доказательства того, что пропуски полностью случайны)."
+                "MCAR - полностью случайные пропуски (если p<sub>значение</sub> незначимо, есть доказательства того, что пропуски полностью случайны)."
             ],
             "MCAR (Missing Completely at Random) and MAR (Missing at Random) estimation": [
                 "Оценка MCAR (полностью случайные пропуски) и MAR (случайные пропуски)"
+            ],
+            "MCI=0": [
+                "ИБО=0"
+            ],
+            "MCI=1": [
+                "ИБО=1"
             ],
             "McQuitty Linkage (WPGMA)": [
                 "МакКитти связи"
@@ -478,8 +535,17 @@
             "missRanger (2021)": [
                 ""
             ],
+            "Mixed Densities": [
+                "Смешанные плотности распределения"
+            ],
             "Modified Z-score (Hampel filter)": [
                 "Модифицированная Z-оценка (Фильтр Хампеля)"
+            ],
+            "More Certain Interval (MCI)": [
+                "Интервал большей определенности (ИБО)"
+            ],
+            "More Certain Interval (MCI) is interval outside the Uncertain Interval and divide into low and high parts.": [
+                "Интервал большей определенности (ИБО) - это интервал за пределами интервала неопределенности, разделенный на нижнюю и верхнюю части."
             ],
             "MSE - mean squared error (for Continuous variables);": [
                 "MSE - средняя квадратическая ошибка (для непрерывных переменных);"
@@ -499,11 +565,17 @@
             "N - number of missing values;": [
                 "N - количество пропущенных значений;"
             ],
+            "Non-parametric": [
+                "Непараметрическая"
+            ],
             "None": [
                 "Нет"
             ],
             "Normality<br>p-value": [
                 "Нормальность<br>p-значение"
+            ],
+            "NPV - Negative Predictive Value of the negative class TN/(TN+FN)": [
+                "NPV - отрицательное прогностическое значение отрицательного класса TN/(TN+FN)"
             ],
             "Number": [
                 "Число"
@@ -559,9 +631,6 @@
             "Outliers<br>found": [
                 "Найдено<br>выбросов"
             ],
-            "Outliers<br>removed": [
-                "Удалено<br>выбросов"
-            ],
             "Output information": [
                 "Выходная информация"
             ],
@@ -601,6 +670,9 @@
             "Pie": [
                 "Пицца"
             ],
+            "Plot": [
+                "График"
+            ],
             "Plot correlations between variables": [
                 "График корреляций между переменными"
             ],
@@ -616,17 +688,35 @@
             "Polygon": [
                 "Полигон"
             ],
+            "PPV - Positive Predictive Value of the positive class TP/(TN+FN)": [
+                "PPV - положительная прогностическая ценность положительного класса TP/(TN+FN)"
+            ],
             "Predictive Mean Matching (PMM) steps": [
                 "Шаги предиктивного<br>cреднего сопоставления (PMM)"
             ],
+            "Predictor": [
+                "Предиктор"
+            ],
             "Predictors": [
                 "Предикторы"
+            ],
+            "Prevalence": [
+                "Распростра-<br>ненность"
+            ],
+            "Proportions of Intervals": [
+                "Пропорции в интервалах"
+            ],
+            "Proposed decision": [
+                "Рекомендуемое решение"
             ],
             "provide a correlation matrix plot.": [
                 "предоставить график корреляционной матрицы."
             ],
             "PVU - proportion of variance unexplained 1-R² (for Continuous variables);": [
-                "PVU — доля необъясненной дисперсии 1-R² (для непрерывных переменных);"
+                "PVU - доля необъясненной дисперсии 1-R² (для непрерывных переменных);"
+            ],
+            "Reference level": [
+                "Эталонный уровень"
             ],
             "Remove outliers": [
                 "Удалить выбросы"
@@ -655,17 +745,26 @@
             "ROC comparison": [
                 "Сравнение ROC кривых"
             ],
+            "ROC curves": [
+                "ROC кривые"
+            ],
             "ROC estimation for binomial logistis models demonstration": [
                 "Оценка ROC в демонстрации биномиальных логистических моделей"
             ],
             "ROC graphs": [
                 "ROC графики"
             ],
+            "Save": [
+                "Сохранить"
+            ],
             "Scale position": [
                 "Позиция шкалы"
             ],
             "SDI ROC classification": [
                 "ИТС ROC классификация"
+            ],
+            "Se - sensitivity of the positive and negative classifications TP/(TP+FN)": [
+                "Se - чувствительность положительной и отрицательной классификаций TP/(TP+FN)"
             ],
             "Select group": [
                 "Выберите группу"
@@ -675,6 +774,12 @@
             ],
             "Sensitivity (%)": [
                 "Чувствительность (%)"
+            ],
+            "Sensitivity inside UI <": [
+                "Чувствительность внутри ИН <"
+            ],
+            "Sensitivity outside UI >": [
+                "Чувствительность вне ИН >"
             ],
             "Set1": [
                 "Набор 1"
@@ -700,6 +805,12 @@
             "Slanted Titles": [
                 "Наклоненные надписи"
             ],
+            "SNPV - standardized negative predictive value of the negative class": [
+                "SNPV - стандартизированная отрицательная прогностическая ценность отрицательного класса"
+            ],
+            "Sp - specificity of the positive and negative classifications TN/(TN+FN)": [
+                "Sp - специфичность положительной и отрицательной классификаций TN/(TN+FN)"
+            ],
             "Spearman (ρ)": [
                 "Спирман (ρ)"
             ],
@@ -712,6 +823,12 @@
             "Specificity (%)": [
                 "Специфичность (%)"
             ],
+            "Specificity inside UI <": [
+                "Специфичность внутри ИН <"
+            ],
+            "Specificity outside UI >": [
+                "Специфичность вне ИН >"
+            ],
             "Sperm Deformity Index ROC Classification demonstration": [
                 "Демонстрация ROC классификации индекса деформации сперматозоидов"
             ],
@@ -721,11 +838,17 @@
             "Splitted ROC by predictors": [
                 "Раздельный ROC по предикторам"
             ],
+            "SPPV - standardized positive predictive value of the positive class": [
+                "SPPV - стандартизированная положительная прогностическая ценность положительного класса"
+            ],
             "Square": [
                 "Квадрат"
             ],
             "Successively": [
                 "Последовательно"
+            ],
+            "Sum": [
+                "Сумма"
             ],
             "Tables": [
                 "Таблицы"
@@ -739,11 +862,38 @@
             "The classifying variable '{}' does not have exactly two levels; ROC classification can only be performed on classifying variables with two levels.": [
                 "Классифицирующая переменная '{}' не имеет двух уровней; ROC классификация может быть выполнена только для классифицирующих переменных с двумя уровнями."
             ],
+            "Three-Way threshold determination in test results": [
+                "Трихотомическое определение порогов в результатах теста"
+            ],
             "Threshold for Z-score": [
                 "Порог для Z-оценки"
             ],
+            "Threshold on Youden": [
+                "Порог по Юдену"
+            ],
             "Total number of missing entries {}": [
                 "Общее количество пропусков {}"
+            ],
+            "Two-graph ROC curves": [
+                "Двойные ROC кривые"
+            ],
+            "UI": [
+                "ИН"
+            ],
+            "Uncertain Interval": [
+                "Интервал неопределенности"
+            ],
+            "Uncertain Interval (UI)": [
+                "Интервал неопределенности (ИН)"
+            ],
+            "Uncertain Interval (UI) is placed around the point of intersection between the two distributions with and without the targeted state.": [
+                "Интервал неопределенности (ИН) размещается вокруг точки пересечения двух распределений с целевым состоянием и без него."
+            ],
+            "Uncertain Interval is considered to be a range of test scores that is inconclusive and does not warrant a right decision.": [
+                "Интервал неопределенности — это диапазон результатов теста, который не гарантирует принятия правильного решения."
+            ],
+            "Uncertainty interval polygon": [
+                "Полигон интервала неопределенности"
             ],
             "Univariate outliers identification and removal": [
                 "Одномерное выявление и удаление выбросов"
@@ -753,6 +903,9 @@
             ],
             "Upper part": [
                 "Верхняя часть"
+            ],
+            "Upper threshold": [
+                "Верхний порог"
             ],
             "Variable": [
                 "Переменная"

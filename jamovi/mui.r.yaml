@@ -6,16 +6,16 @@ refs: [jys, uir, lsh, lshd]
 
 items:
     #- name:  text
-    #  title: Uncertain Interval
+    #  title: Uncertain Interval (UI)
     #  type:  Preformatted
 
     - name: stat
-      title: Interval estimation
+      title: Intervals Estimation
       type: Group
       #refs: [mf, rg, mr]
       items:
         - name: uistat
-          title: Uncertain Interval
+          title: Uncertain Interval (UI)
           type: Table
           clearWith:
               - ref
@@ -34,17 +34,35 @@ items:
                 type: number
     
         - name: mcistat
-          title: More Certain Interval
+          title: More Certain Interval (MCI)
           type: Table
           clearWith:
               - ref
               - test
           rows: (test)
+          visible: (isMCI)
           columns:
               - name: var
                 title: Predictor
                 type: text
                 content: ($key)
+
+        - name: intstat
+          title: Proportions of Intervals
+          type: Table
+          clearWith:
+              - ref
+              - test
+          #rows: (test)
+          visible: (isProp)
+          columns:
+              - name: var
+                title: Predictor
+                type: text
+                content: ($key)
+              - name: lev
+                title: Level
+                type: text
 
     - name: plotsTGR
       title: Two-graph ROC curves

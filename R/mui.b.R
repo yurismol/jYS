@@ -13,17 +13,21 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             #if (grepl("Russian", Sys.getlocale(), fixed=TRUE)) options(OutDec=",")
             private$.initOutputs()
             uitable  <- self$results$stat$uistat
+            uitable$setNote('ui', paste(
+                          .('Uncertain Interval (UI) is placed around the point of intersection between the two distributions with and without the targeted state.'), "<br>",
+                          .('Uncertain Interval is considered to be a range of test scores that is inconclusive and does not warrant a right decision.')))
             mcitable <- self$results$stat$mcistat
             mcitable$setNote('mci', paste(
+                          .('More Certain Interval (MCI) is interval outside the Uncertain Interval and divide into low and high parts.'), "<br>",
+                          .('Concordance - C-Statistic or AUC. The probability that a random chosen patient with the condition is correctly ranked higher than a randomly chosen patient without the condition'), "<br>",
+                          .('Se - sensitivity of the positive and negative classifications TP/(TP+FN)'), "<br>",
+                          .('Sp - specificity of the positive and negative classifications TN/(TN+FN)'), "<br>",
                           .('CCR - Correct Classification Rate or accuracy of the positive and negative classifications (TP+TN)/(TN+FP+FN+TP)'), "<br>",
                           .('Balance - balance between correct and incorrect classified (TP+TN)/(FP+FN)'), "<br>",
-                          .('Sp - specificity of the positive and negative classifications TN/(TN+FN)'), "<br>",
-                          .('Se - sensitivity of the positive and negative classifications TP/(TP+FN)'), "<br>",
                           .('NPV - Negative Predictive Value of the negative class TN/(TN+FN)'), "<br>",
                           .('PPV - Positive Predictive Value of the positive class TP/(TN+FN)'), "<br>",
                           .('SNPV - standardized negative predictive value of the negative class'), "<br>",
-                          .('SPPV - standardized positive predictive value of the positive class'), "<br>",
-                          .('Concordance - C-Statistic or AUC. The probability that a random chosen patient with the condition is correctly ranked higher than a randomly chosen patient without the condition. Equal to AUC, with for the more certain interval a higher outcome than the overall concordance')
+                          .('SPPV - standardized positive predictive value of the positive class')
             ))
         },
 
@@ -60,54 +64,70 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
         .run = function() {
             ref  <- self$options$ref
-            refv <- self$options$refval
+            ref0 <- self$options$refval
             test <- self$options$test
             dat  <- data.frame(self$data, check.names=FALSE)
             dat  <- jmvcore::select(dat, c(ref, test))
             fct  <- dat[,1]
             lvl  <- levels(fct)
-            fct  <- ifelse(fct==refv, 0, 1)
+            ref1 <- toString(lvl[lvl!=ref0])
+            fct  <- ifelse(fct==ref0, 0, 1)
             dat[,1] <- factor(fct)
-            #self$results$text$setContent(dat)
             private$shared_data <- dat
 
-            ref  <- self$options$ref
-            test <- self$options$test
-            uitable  <- self$results$stat$uistat
+            intable <- self$results$stat$intstat
+            intable$addColumn(name="mciL", title=.("MCI=0"), type="integer")
+            intable$addColumn(name="ui",   title=.("UI"), type="integer")
+            intable$addColumn(name="mciU", title=.("MCI=1"), type="integer")
+            intable$addColumn(name="sum",  title=.("Sum"), type="integer")
+
+            uitable <- self$results$stat$uistat
+            if (self$options$youden) {
+              uitable$addColumn(name="int", title=.("Threshold on Youden"), type="number")
+            } else {
+              uitable$addColumn(name="int", title=.("Intersection"), type="number")
+            }
+
             mcitable <- self$results$stat$mcistat
-            mcitable$addColumn(name="MCI.CCR", title="CCR", type="number")
-            mcitable$addColumn(name="MCI.bal", title=.("Balance"), type="number")
-            mcitable$addColumn(name="MCI.Se",  title="Se",  type="number")
-            mcitable$addColumn(name="MCI.Sp",  title="Sp",  type="number")
-            mcitable$addColumn(name="MCI.NPV", title="NPV", type="number")
-            mcitable$addColumn(name="MCI.PPV", title="PPV", type="number")
-            mcitable$addColumn(name="MCI.SNPV", title="SNPV", type="number")
-            mcitable$addColumn(name="MCI.SPPV", title="SPPV", type="number")
+            mcitable$addColumn(name="C",    title=.("Concordance"), type="number")
+            mcitable$addColumn(name="Se",   title="Se",  type="number")
+            mcitable$addColumn(name="Sp",   title="Sp",  type="number")
+            mcitable$addColumn(name="CCR",  title="CCR", type="number")
+            mcitable$addColumn(name="bal",  title=.("Balance"), type="number")
+            mcitable$addColumn(name="NPV",  title="NPV", type="number")
+            mcitable$addColumn(name="PPV",  title="PPV", type="number")
+            mcitable$addColumn(name="SNPV", title="SNPV", type="number")
+            mcitable$addColumn(name="SPPV", title="SPPV", type="number")
             mcitable$addColumn(name="Prevalence", title=.("Prevalence"), type="number")
-            mcitable$addColumn(name="MCI.C", title=.("Concordance"), type="number")
             if (self$options$UImethod!="noUI") {
               uitable$addColumn(name="lth", title=.("Lower threshold"), type="number")
               uitable$addColumn(name="uth", title=.("Upper threshold"), type="number")
             }
+
             for (i in seq_along(test)) {
-              var <- test[[i]]
+              var   <- test[[i]]
+              Vref  <- dat[[ref]]; Vtest <- dat[[var]]
+              Vref  <- Vref[!is.na(Vtest)]
+              Vtest <- Vtest[!is.na(Vtest)]
+              #self$results$text$setContent(Vref)
+              
               model=ifelse(self$options$model=="none","kernel","binormal")
               if (self$options$UImethod=="TGR") {
-                p   <- UncertainInterval::TG.ROC(dat[[ref]], dat[[var]], plot=FALSE,
+                p   <- UncertainInterval::TG.ROC(Vref, Vtest, plot=FALSE,
                        model=self$options$model,
                        Se.criterion=self$options$minSe, Sp.criterion=self$options$minSp)
                 lth <- p["L"]; uth = p["U"]
               } else if (self$options$UImethod=="UI") {
                 if (private$.columnType(dat[[var]])=="ordinal2") {
-                  ui  <- UncertainInterval::ui.ordinal(dat[[ref]], dat[[var]])
+                  ui  <- UncertainInterval::ui.ordinal(Vref, Vtest)
                   lth <- ui[1]; uth = ui[2]
                 } else {
                   if (self$options$model=="binormal") {
-                    ui  <- UncertainInterval::ui.binormal(dat[[ref]], dat[[var]],
+                    ui  <- UncertainInterval::ui.binormal(Vref, Vtest,
                            UI.Se=self$options$uiSe, UI.Sp=self$options$uiSp)
                     lth <- ui$solution["L"]; uth = ui$solution["U"]
                   } else {
-                    ui  <- UncertainInterval::ui.nonpar(dat[[ref]], dat[[var]],
+                    ui  <- UncertainInterval::ui.nonpar(Vref, Vtest,
                            UI.Se=self$options$uiSe, UI.Sp=self$options$uiSp)
                     lth <- ui[1]; uth = ui[2]
                   }
@@ -118,47 +138,56 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                   best <- pROC::coords(roc, "best", ret=c("threshold", "specificity", "1-npv")[1])
                   lth <- best[1,]; uth = best[1,]
                 } else {
-                  ui <- UncertainInterval::get.intersection(dat[[ref]], dat[[var]], model=model)
+                  ui <- UncertainInterval::get.intersection(Vref, Vtest, model=model)
                   lth <- ui[length(ui)]; uth = ui[length(ui)]
                 }
                 int <- lth
               }
-              statMCI <- UncertainInterval::quality.threshold(dat[[ref]], dat[[var]], threshold=lth, threshold.upper=uth, model=model)
+              if (lth==uth) {
+                statMCI <- UncertainInterval::quality.threshold(Vref, Vtest, threshold=lth, model=model)
+              } else {
+                statMCI <- UncertainInterval::quality.threshold(Vref, Vtest, threshold=lth, threshold.upper=uth, model=model)
+              }
               #self$results$text$setContent(statMCI)
+              t <- t(statMCI$table)
+              intable$addRow(rowKey=var, list(lev=ref0,     mciL=t[1,1], ui=t[1,2], mciU=t[1,3], sum=t[1,1]+t[1,2]+t[1,3]))
+              intable$addRow(rowKey="" , list(lev=ref1,     mciL=t[2,1], ui=t[2,2], mciU=t[2,3], sum=t[2,1]+t[2,2]+t[2,3]))
+              intable$addRow(rowKey="" , list(lev=.("Sum"), mciL=t[3,1], ui=t[3,2], mciU=t[3,3], sum=t[3,1]+t[3,2]+t[3,3]))
 
               if (lth!=uth) {
-                statUI  <- UncertainInterval::quality.threshold.uncertain(dat[[ref]], dat[[var]], lth, uth, model=model)
+                statUI  <- UncertainInterval::quality.threshold.uncertain(Vref, Vtest, lth, uth, model=model)
                 int     <- statUI$intersection
               }
 
-              uitable$setRow(rowKey=var, list(dir=statMCI$direction, int=int, lth=lth, uth=uth))
+              uitable$setRow(rowKey=var, list(dir=paste(ref0, statMCI$direction, ref1),
+                             int=int, lth=lth, uth=uth))
 
+              ind <- statMCI$indices
+              names(ind) <- gsub("^MCI\\.", "", names(ind))
               mcitable$setRow(rowKey=var, list(
-                Prevalence=statMCI$indices["Prevalence"],
-                MCI.CCR=statMCI$indices["MCI.CCR"],
-                MCI.bal=statMCI$indices["MCI.balance"],
-                MCI.Se =statMCI$indices["MCI.Se"],
-                MCI.Sp =statMCI$indices["MCI.Sp"],
-                MCI.NPV=statMCI$indices["MCI.NPV"],
-                MCI.PPV=statMCI$indices["MCI.PPV"],
-                MCI.SNPV=statMCI$indices["MCI.SNPV"],
-                MCI.SPPV=statMCI$indices["MCI.SPPV"],
-                MCI.C   =statMCI$indices["MCI.C"]
+                Prevalence=ind["Prevalence"],
+                CCR  =ind["CCR"],
+                bal  =ind["balance"],
+                Se   =ind["Se"],
+                Sp   =ind["Sp"],
+                NPV  =ind["NPV"],
+                PPV  =ind["PPV"],
+                SNPV =ind["SNPV"],
+                SPPV =ind["SPPV"],
+                C    =ind["C"]
                 ))
 
               image <- self$results$plotsMD$get(key=var)
               image$setState(list(lth=lth, uth=uth))
 
               if (self$options$decision && self$results$decision$isNotFilled()) {
-                uc  <- UncertainInterval::quality.threshold.uncertain(dat[[ref]], dat[[var]], lth, uth)
                 dt  <- rep(NA, times=length(dat[[var]]))
-                lvl <- lvl[lvl != refv]
-                if (uc$direction=="<") {
-                  dt[dat[[var]]<=lth] <- refv
-                  dt[dat[[var]]>=uth] <- toString(lvl)
+                if (statMCI$direction=="<") {
+                  dt[dat[[var]]<=lth] <- ref0
+                  dt[dat[[var]]>=uth] <- ref1
                 } else {
-                  dt[dat[[var]]<=lth] <- toString(lvl)
-                  dt[dat[[var]]>=uth] <- refv
+                  dt[dat[[var]]<=lth] <- ref1
+                  dt[dat[[var]]>=uth] <- ref0
                 }
                 self$results$decision$setValues(index=i, dt)
               }
@@ -224,7 +253,6 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             test <- self$options$test
             key  <- image$key
             dat  <- private$shared_data
-            #self$results$text$setContent(dat[[ref]])
 	    p <- UncertainInterval::plotMD(dat[[ref]], dat[[key]], plot=TRUE,
                 intersection='Youden',
 		model=ifelse(self$options$model=="none","kernel","binormal"))

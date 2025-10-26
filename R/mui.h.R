@@ -9,6 +9,8 @@ mUIOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             test = NULL,
             ref = NULL,
             refval = NULL,
+            isMCI = FALSE,
+            isProp = FALSE,
             UImethod = "TGR",
             minSe = 0.9,
             minSp = 0.9,
@@ -47,6 +49,14 @@ mUIOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "refval",
                 refval,
                 variable="(ref)")
+            private$..isMCI <- jmvcore::OptionBool$new(
+                "isMCI",
+                isMCI,
+                default=FALSE)
+            private$..isProp <- jmvcore::OptionBool$new(
+                "isProp",
+                isProp,
+                default=FALSE)
             private$..UImethod <- jmvcore::OptionList$new(
                 "UImethod",
                 UImethod,
@@ -112,6 +122,8 @@ mUIOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..test)
             self$.addOption(private$..ref)
             self$.addOption(private$..refval)
+            self$.addOption(private$..isMCI)
+            self$.addOption(private$..isProp)
             self$.addOption(private$..UImethod)
             self$.addOption(private$..minSe)
             self$.addOption(private$..minSp)
@@ -129,6 +141,8 @@ mUIOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         test = function() private$..test$value,
         ref = function() private$..ref$value,
         refval = function() private$..refval$value,
+        isMCI = function() private$..isMCI$value,
+        isProp = function() private$..isProp$value,
         UImethod = function() private$..UImethod$value,
         minSe = function() private$..minSe$value,
         minSp = function() private$..minSp$value,
@@ -145,6 +159,8 @@ mUIOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..test = NA,
         ..ref = NA,
         ..refval = NA,
+        ..isMCI = NA,
+        ..isProp = NA,
         ..UImethod = NA,
         ..minSe = NA,
         ..minSp = NA,
@@ -184,18 +200,19 @@ mUIResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 inherit = jmvcore::Group,
                 active = list(
                     uistat = function() private$.items[["uistat"]],
-                    mcistat = function() private$.items[["mcistat"]]),
+                    mcistat = function() private$.items[["mcistat"]],
+                    intstat = function() private$.items[["intstat"]]),
                 private = list(),
                 public=list(
                     initialize=function(options) {
                         super$initialize(
                             options=options,
                             name="stat",
-                            title="Interval estimation")
+                            title="Intervals Estimation")
                         self$add(jmvcore::Table$new(
                             options=options,
                             name="uistat",
-                            title="Uncertain Interval",
+                            title="Uncertain Interval (UI)",
                             clearWith=list(
                                 "ref",
                                 "test"),
@@ -217,17 +234,36 @@ mUIResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         self$add(jmvcore::Table$new(
                             options=options,
                             name="mcistat",
-                            title="More Certain Interval",
+                            title="More Certain Interval (MCI)",
                             clearWith=list(
                                 "ref",
                                 "test"),
                             rows="(test)",
+                            visible="(isMCI)",
                             columns=list(
                                 list(
                                     `name`="var", 
                                     `title`="Predictor", 
                                     `type`="text", 
-                                    `content`="($key)"))))}))$new(options=options))
+                                    `content`="($key)"))))
+                        self$add(jmvcore::Table$new(
+                            options=options,
+                            name="intstat",
+                            title="Proportions of Intervals",
+                            clearWith=list(
+                                "ref",
+                                "test"),
+                            visible="(isProp)",
+                            columns=list(
+                                list(
+                                    `name`="var", 
+                                    `title`="Predictor", 
+                                    `type`="text", 
+                                    `content`="($key)"),
+                                list(
+                                    `name`="lev", 
+                                    `title`="Level", 
+                                    `type`="text"))))}))$new(options=options))
             self$add(jmvcore::Array$new(
                 options=options,
                 name="plotsTGR",
@@ -300,6 +336,8 @@ mUIBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param test .
 #' @param ref .
 #' @param refval .
+#' @param isMCI .
+#' @param isProp .
 #' @param UImethod .
 #' @param minSe .
 #' @param minSp .
@@ -315,6 +353,7 @@ mUIBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' \tabular{llllll}{
 #'   \code{results$stat$uistat} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$stat$mcistat} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$stat$intstat} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$plotsTGR} \tab \tab \tab \tab \tab an array of images \cr
 #'   \code{results$plotsMD} \tab \tab \tab \tab \tab an array of images \cr
 #'   \code{results$plotsROC} \tab \tab \tab \tab \tab an array of images \cr
@@ -327,6 +366,8 @@ mUI <- function(
     test,
     ref,
     refval,
+    isMCI = FALSE,
+    isProp = FALSE,
     UImethod = "TGR",
     minSe = 0.9,
     minSp = 0.9,
@@ -356,6 +397,8 @@ mUI <- function(
         test = test,
         ref = ref,
         refval = refval,
+        isMCI = isMCI,
+        isProp = isProp,
         UImethod = UImethod,
         minSe = minSe,
         minSp = minSp,
