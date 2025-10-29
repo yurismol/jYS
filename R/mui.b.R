@@ -143,11 +143,11 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 }
                 int <- lth
               }
-              if (lth==uth) {
-                statMCI <- UncertainInterval::quality.threshold(Vref, Vtest, threshold=lth, model=model)
-              } else {
+              #if (lth==uth) {
+              #  statMCI <- UncertainInterval::quality.threshold(Vref, Vtest, threshold=lth, model=model)
+              #} else {
                 statMCI <- UncertainInterval::quality.threshold(Vref, Vtest, threshold=lth, threshold.upper=uth, model=model)
-              }
+              #}
               #self$results$text$setContent(statMCI)
               t <- t(statMCI$table)
               intable$addRow(rowKey=var, list(lev=ref0,     mciL=t[1,1], ui=t[1,2], mciU=t[1,3], sum=t[1,1]+t[1,2]+t[1,3]))
