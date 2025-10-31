@@ -38,9 +38,12 @@ datasets:
   - name: Outliers identification and removal
     path: OUTL_IRIS.omv
     description: Identification, analysis and removal of data outliers by groups
-  - name: Uncertain Interval
+  - name: Uncertain Interval (UI)
     path: UI_HI.omv
     description: Three-Way threshold determination in test results
+  - name: UI for binomial logistis models
+    path: UI_LOG.omv
+    description: Uncertain Interval estimation for binomial logistis models
 analyses:
   - title: Correlation clustering
     name: mCOR

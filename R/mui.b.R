@@ -106,10 +106,11 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
             for (i in seq_along(test)) {
               var   <- test[[i]]
-              Vref  <- dat[[ref]]; Vtest <- dat[[var]]
-              Vref  <- Vref[!is.na(Vtest)]
-              Vtest <- Vtest[!is.na(Vtest)]
-              #self$results$text$setContent(Vref)
+              Vref  <- dat[[ref]]
+              Vtest <- dat[[var]]
+              notna <- !(is.na(Vtest) | is.na(Vref))
+              Vref  <- Vref[notna]
+              Vtest <- Vtest[notna]
               
               model=ifelse(self$options$model=="none","kernel","binormal")
               if (self$options$UImethod=="TGR") {
@@ -261,7 +262,7 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               abline(v=state$uth, col="red", lty=2, lwd=2)
               if (self$options$polygon) {
                 x <- c(state$lth, state$uth, state$uth, state$lth)
-                y <- c(-0.1, -0.1, 1, 1)
+                y <- c(-0.1, -0.1, 100, 100)
                 polygon(x, y, angle=45, density=5, border=NA, col="red")
               }
             } else if (self$options$youden) {
