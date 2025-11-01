@@ -202,12 +202,17 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             dat  <- private$shared_data
             fct  <- dat[,1]
             lvl  <- levels(fct)
+            Vref  <- dat[[ref]]
+            Vtest <- dat[[key]]
+            notna <- !(is.na(Vtest) | is.na(Vref))
+            Vref  <- Vref[notna]
+            Vtest <- Vtest[notna]
             
             #self$results$text$setContent(dat[[ref]])
-            ua   <- UncertainInterval::ui.nonpar(dat[[ref]], dat[[key]])
-            par  <- UncertainInterval::quality.threshold.uncertain(dat[[ref]], dat[[key]], ua[1], ua[2])
+            ua   <- UncertainInterval::ui.nonpar(Vref, Vtest)
+            par  <- UncertainInterval::quality.threshold.uncertain(Vref, Vtest, ua[1], ua[2])
             if (par$direction=="<") cols <- c("red", "blue") else cols <- c("blue", "red")
-	    p    <- UncertainInterval::TG.ROC(dat[[ref]], dat[[key]], plot=TRUE,
+	    p    <- UncertainInterval::TG.ROC(Vref, Vtest, plot=TRUE,
                     model=self$options$model,
                     Se.criterion=self$options$minSe, Sp.criterion=self$options$minSp)
 	    lth  <- p["L"]; uth = p["U"]
