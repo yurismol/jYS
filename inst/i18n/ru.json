@@ -454,6 +454,12 @@
             "Lower threshold": [
                 "Нижний порог"
             ],
+            "LR- - Negative Likelihood Ratio P(-|D+))/(P(-|D-)). The probability of a person with the condition receiving a negative classification / probability of a person without the condition receiving a negative classification": [
+                "LR- - отрицательное отношение правдоподобия P(-|D+))/(P(-|D-)). Вероятность того, что человек с заболеванием получит отрицательную классификацию / вероятность того, что человек без заболевания получит отрицательную классификацию"
+            ],
+            "LR+ - Positive Likelihood Ratio (P(+|D+))/(P(+|D-)) The probability of a person with the condition receiving a positive classification / probability of a person without the condition receiving a positive classification": [
+                "LR+ - Положительное отношение правдоподобия (P(+|D+))/(P(+|D-)). Вероятность того, что человек с заболеванием получит положительную классификацию / вероятность того, что человек без заболевания получит положительную классификацию"
+            ],
             "Manual Clusters": [
                 "Кластеры вручную"
             ],
@@ -570,6 +576,9 @@
             ],
             "None": [
                 "Нет"
+            ],
+            "Normality in Intervals": [
+                "Нормальность в интервалах"
             ],
             "Normality<br>p-value": [
                 "Нормальность<br>p-значение"
@@ -880,14 +889,17 @@
             "UI": [
                 "ИН"
             ],
-            "Uncertain Interval": [
-                "Интервал неопределенности"
+            "UI for binomial logistis models": [
+                "ИН для биномиальных логистических моделей"
             ],
             "Uncertain Interval (UI)": [
                 "Интервал неопределенности (ИН)"
             ],
             "Uncertain Interval (UI) is placed around the point of intersection between the two distributions with and without the targeted state.": [
                 "Интервал неопределенности (ИН) размещается вокруг точки пересечения двух распределений с целевым состоянием и без него."
+            ],
+            "Uncertain Interval estimation for binomial logistis models": [
+                "Оценка интервала неопределенности для биномиальных логистических моделей"
             ],
             "Uncertain Interval is considered to be a range of test scores that is inconclusive and does not warrant a right decision.": [
                 "Интервал неопределенности — это диапазон результатов теста, который не гарантирует принятия правильного решения."

@@ -454,6 +454,12 @@
             "Lower threshold": [
                 ""
             ],
+            "LR- - Negative Likelihood Ratio P(-|D+))/(P(-|D-)). The probability of a person with the condition receiving a negative classification / probability of a person without the condition receiving a negative classification": [
+                ""
+            ],
+            "LR+ - Positive Likelihood Ratio (P(+|D+))/(P(+|D-)) The probability of a person with the condition receiving a positive classification / probability of a person without the condition receiving a positive classification": [
+                ""
+            ],
             "Manual Clusters": [
                 ""
             ],
@@ -569,6 +575,9 @@
                 ""
             ],
             "None": [
+                ""
+            ],
+            "Normality in Intervals": [
                 ""
             ],
             "Normality<br>p-value": [
@@ -880,13 +889,16 @@
             "UI": [
                 ""
             ],
-            "Uncertain Interval": [
+            "UI for binomial logistis models": [
                 ""
             ],
             "Uncertain Interval (UI)": [
                 ""
             ],
             "Uncertain Interval (UI) is placed around the point of intersection between the two distributions with and without the targeted state.": [
+                ""
+            ],
+            "Uncertain Interval estimation for binomial logistis models": [
                 ""
             ],
             "Uncertain Interval is considered to be a range of test scores that is inconclusive and does not warrant a right decision.": [

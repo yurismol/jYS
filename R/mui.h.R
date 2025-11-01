@@ -258,8 +258,7 @@ mUIResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 list(
                                     `name`="var", 
                                     `title`="Predictor", 
-                                    `type`="text", 
-                                    `content`="($key)"),
+                                    `type`="text"),
                                 list(
                                     `name`="lev", 
                                     `title`="Level", 

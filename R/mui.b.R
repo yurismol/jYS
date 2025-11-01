@@ -27,7 +27,9 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                           .('NPV - Negative Predictive Value of the negative class TN/(TN+FN)'), "<br>",
                           .('PPV - Positive Predictive Value of the positive class TP/(TN+FN)'), "<br>",
                           .('SNPV - standardized negative predictive value of the negative class'), "<br>",
-                          .('SPPV - standardized positive predictive value of the positive class')
+                          .('SPPV - standardized positive predictive value of the positive class'), "<br>",
+                          .('LR- - Negative Likelihood Ratio P(-|D+))/(P(-|D-)). The probability of a person with the condition receiving a negative classification / probability of a person without the condition receiving a negative classification'), "<br>",
+                          .('LR+ - Positive Likelihood Ratio (P(+|D+))/(P(+|D-)) The probability of a person with the condition receiving a positive classification / probability of a person without the condition receiving a positive classification')
             ))
         },
 
@@ -75,11 +77,15 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             dat[,1] <- factor(fct)
             private$shared_data <- dat
 
-            intable <- self$results$stat$intstat
-            intable$addColumn(name="mciL", title=.("MCI=0"), type="integer")
-            intable$addColumn(name="ui",   title=.("UI"), type="integer")
-            intable$addColumn(name="mciU", title=.("MCI=1"), type="integer")
-            intable$addColumn(name="sum",  title=.("Sum"), type="integer")
+            if (self$options$isProp) {
+              intable <- self$results$stat$intstat
+              intable$addColumn(name="norm", title="Normality<br>p-value", type="number")
+              intable$addColumn(name="mciL", title=paste0(.("MCI=0"),"<BR>",ref0), type="integer")
+              intable$addColumn(name="ui",   title=.("UI"),    type="integer")
+              intable$addColumn(name="mciU", title=paste0(.("MCI=1"),"<BR>",ref1), type="integer")
+              intable$addColumn(name="sum",  title=.("Sum"),   type="integer")
+              intable$setNote('flag', .('*p<0.05 - The hypothesis of normal distribution was rejected by the Shapiro-Wilk test'))
+            }
 
             uitable <- self$results$stat$uistat
             if (self$options$youden) {
@@ -98,6 +104,8 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             mcitable$addColumn(name="PPV",  title="PPV", type="number")
             mcitable$addColumn(name="SNPV", title="SNPV", type="number")
             mcitable$addColumn(name="SPPV", title="SPPV", type="number")
+            mcitable$addColumn(name="LRm",  title="LR-",  type="number")
+            mcitable$addColumn(name="LRp",  title="LR+",  type="number")
             mcitable$addColumn(name="Prevalence", title=.("Prevalence"), type="number")
             if (self$options$UImethod!="noUI") {
               uitable$addColumn(name="lth", title=.("Lower threshold"), type="number")
@@ -149,11 +157,29 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               #} else {
                 statMCI <- UncertainInterval::quality.threshold(Vref, Vtest, threshold=lth, threshold.upper=uth, model=model)
               #}
-              #self$results$text$setContent(statMCI)
-              t <- t(statMCI$table)
-              intable$addRow(rowKey=var, list(lev=ref0,     mciL=t[1,1], ui=t[1,2], mciU=t[1,3], sum=t[1,1]+t[1,2]+t[1,3]))
-              intable$addRow(rowKey="" , list(lev=ref1,     mciL=t[2,1], ui=t[2,2], mciU=t[2,3], sum=t[2,1]+t[2,2]+t[2,3]))
-              intable$addRow(rowKey="" , list(lev=.("Sum"), mciL=t[3,1], ui=t[3,2], mciU=t[3,3], sum=t[3,1]+t[3,2]+t[3,3]))
+
+              if (self$options$isProp) {
+                t  <- t(statMCI$table)
+                Vr <- dat[[ref]]
+                Vt <- dat[[var]]
+                sw <- try(shapiro.test(Vt))
+                if (jmvcore::isError(sw)) norm0 <- ""
+                else norm <- sw$p.value
+                df <- subset(Vt, Vr==0)
+                sw <- try(shapiro.test(df))
+                if (jmvcore::isError(sw)) norm0 <- ""
+                else norm0 <- sw$p.value
+                df <- subset(Vt, Vr==1)
+                sw <- try(shapiro.test(df))
+                if (jmvcore::isError(sw)) norm1 <- ""
+                else norm1 <- sw$p.value
+                intable$addRow(rowKey=norm0, list(var=var, norm=ifelse(norm0<0.001, "<0.001", norm0), lev=ref0,     mciL=t[1,1], ui=t[1,2], mciU=t[1,3], sum=t[1,1]+t[1,2]+t[1,3]))
+                if (norm0<0.05) intable$addSymbol(rowKey=norm0, "norm", '*')
+                intable$addRow(rowKey=norm1, list(var="", norm=ifelse(norm1<0.001, "<0.001", norm1), lev=ref1,     mciL=t[2,1], ui=t[2,2], mciU=t[2,3], sum=t[2,1]+t[2,2]+t[2,3]))
+                if (norm1<0.05) intable$addSymbol(rowKey=norm1, "norm", '*')
+                intable$addRow(rowKey=norm,  list(var="", norm=ifelse(norm <0.001, "<0.001", norm),  lev=.("Sum"), mciL=t[3,1], ui=t[3,2], mciU=t[3,3], sum=t[3,1]+t[3,2]+t[3,3]))
+                if (norm<0.05) intable$addSymbol(rowKey=norm, "norm", '*')
+              }
 
               if (lth!=uth) {
                 statUI  <- UncertainInterval::quality.threshold.uncertain(Vref, Vtest, lth, uth, model=model)
@@ -175,6 +201,8 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 PPV  =ind["PPV"],
                 SNPV =ind["SNPV"],
                 SPPV =ind["SPPV"],
+                LRm  =ind["LR-"],
+                LRp  =ind["LR+"],
                 C    =ind["C"]
                 ))
 

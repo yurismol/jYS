@@ -99,6 +99,7 @@ children:
             name: isMD
           - type: CheckBox
             name: polygon
+            enable: (isMD || isTGR)
           - type: CheckBox
             name: isROC
   - type: CollapseBox
