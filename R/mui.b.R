@@ -5,7 +5,6 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
     "mUIClass",
     inherit = mUIBase,
     private = list(
-        shared_data = NULL,
         lowercut = NULL,
         uppercut = NULL,
 
@@ -89,7 +88,6 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             ref1 <- toString(lvl[lvl!=ref0])
             fct  <- ifelse(fct==ref0, 0, 1)
             dat[,1] <- factor(fct)
-            private$shared_data <- dat
 
             if (self$options$isProp) {
               intable <- self$results$stat$intstat
@@ -241,7 +239,6 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             ref  <- self$options$ref
             test <- self$options$test
             key  <- image$key
-            #dat  <- private$shared_data
             dat  <- private$.replaceLevels()
             fct  <- dat[,1]
             lvl  <- levels(fct)
@@ -281,7 +278,6 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             ref  <- self$options$ref
             test <- self$options$test
             key  <- image$key
-            #dat  <- private$shared_data
             dat  <- private$.replaceLevels()
 
             cols <- RColorBrewer::brewer.pal(n=8, name="Dark2")
@@ -302,7 +298,6 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             ref  <- self$options$ref
             test <- self$options$test
             key  <- image$key
-            #dat  <- private$shared_data
             dat  <- private$.replaceLevels()
 
 	    p <- UncertainInterval::plotMD(dat[[ref]], dat[[key]], plot=TRUE,
