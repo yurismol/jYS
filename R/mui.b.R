@@ -64,6 +64,20 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             }
         },
 
+        .replaceLevels = function() {
+            ref  <- self$options$ref
+            ref0 <- self$options$refval
+            test <- self$options$test
+            dat  <- data.frame(self$data, check.names=FALSE)
+            dat  <- jmvcore::select(dat, c(ref, test))
+            fct  <- dat[,1]
+            lvl  <- levels(fct)
+            ref1 <- toString(lvl[lvl!=ref0])
+            fct  <- ifelse(fct==ref0, 0, 1)
+            dat[,1] <- factor(fct)
+            return(dat)
+        },
+
         .run = function() {
             ref  <- self$options$ref
             ref0 <- self$options$refval
@@ -227,7 +241,8 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             ref  <- self$options$ref
             test <- self$options$test
             key  <- image$key
-            dat  <- private$shared_data
+            #dat  <- private$shared_data
+            dat  <- private$.replaceLevels()
             fct  <- dat[,1]
             lvl  <- levels(fct)
             Vref  <- dat[[ref]]
@@ -266,7 +281,8 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             ref  <- self$options$ref
             test <- self$options$test
             key  <- image$key
-            dat  <- private$shared_data
+            #dat  <- private$shared_data
+            dat  <- private$.replaceLevels()
 
             cols <- RColorBrewer::brewer.pal(n=8, name="Dark2")
             col  <- cols[which(test==key)]
@@ -286,7 +302,9 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             ref  <- self$options$ref
             test <- self$options$test
             key  <- image$key
-            dat  <- private$shared_data
+            #dat  <- private$shared_data
+            dat  <- private$.replaceLevels()
+
 	    p <- UncertainInterval::plotMD(dat[[ref]], dat[[key]], plot=TRUE,
                 intersection='Youden',
 		model=ifelse(self$options$model=="none","kernel","binormal"))
