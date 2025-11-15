@@ -42,6 +42,16 @@ children:
         label: Method
         children:
           - type: RadioButton
+            name: Dichotomization (no uncertainty)
+            optionName: UImethod
+            optionPart: noUI
+            events:
+              change: ./mui.events::onChange_met
+            children:
+              - type: CheckBox
+                name: youden
+                enable: ({return ui['UImethod'].value()=="noUI";})
+          - type: RadioButton
             name: Two-graph ROC curves
             optionName: UImethod
             optionPart: TGR
@@ -82,16 +92,6 @@ children:
                 enable: ({return ui['UImethod'].value()=="UI";})
                 events:
                   change: ./mui.events::onChange_met
-          - type: RadioButton
-            name: Dichotomization (no uncertainty)
-            optionName: UImethod
-            optionPart: noUI
-            events:
-              change: ./mui.events::onChange_met
-            children:
-              - type: CheckBox
-                name: youden
-                enable: ({return ui['UImethod'].value()=="noUI";})
       - type: Label
         label: Plots
         children:

@@ -83,6 +83,23 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
         if (self$options$adjust!='none') {
             matrix$setNote("adjust", jmvcore::format(.("Simultaneous multiple correlation comparisons using {n} method"), n=self$options$adjust))
         }
+
+         images <- self$results$get('rplots')
+         nc <- 0
+         if (self$options$hclust && nVars>2) {
+           nc  <- self$options$numClust
+         } else if (self$options$clustMan>"" && nVars>2) {
+           nc  <- length(strsplit(self$options$clustMan,",")[[1]])+1
+         }
+         #self$results$pre$setContent(nc)
+         if (nc>0) {
+           cmb <- combn(1:nc, 2)
+           for (i in 1:ncol(cmb)) {
+             cm    <- cmb[,i]
+             key   <- paste(cm[1], cm[2], sep="_")
+             image <- images$addItem(key)
+           }
+         }
      },
 
      .run = function() {
@@ -205,6 +222,7 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             image <- self$results$plot
             image$setState(cor)
          }
+
        },
 
       .test=function(var1, var2, hyp, mtord) {
@@ -368,11 +386,13 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 	      crr$m <- c$s
 
 	      key <- paste(cm[1], cm[2], sep="_")
-              image <- images$addItem(key)
+              #image <- images$addItem(key)
+
+              image <- images$get(key=key)  # or whatever the $get() thing is
               nm <- jmvcore::format(.("Matrix #{i}"), i=i+nCl-1)
               image$setTitle(nm)
+              image$setStatus('complete')
               image$setVisible(visible=TRUE)
-              #image$setStatus(c('complete', 'error', 'inited', 'running')[1])
               image$setState(crr)
             }
           }
@@ -401,7 +421,6 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
           nrow <- nrow(cor$r)
           ncol <- ncol(cor$r)
 	  ncex <- 1.8-0.055*max(ncol, nrow)
-          #self$results$pre$setContent(nrow)
 	  p <- corrplot::corrplot(cor$r, p.mat=cor$p,
 		tl.cex=1.5, tl.col="black",
 		mar=c(0, 0, ifelse(cor$m>"",1,0), 0), main=cor$m,
