@@ -286,8 +286,8 @@
             "decision": [
                 "решение"
             ],
-            "Degree of<br>Freedom (df)": [
-                "Степени<br>свободы (df)"
+            "Degree of Freedom (df)": [
+                "Степени своботы (df)"
             ],
             "Dichotomization (no uncertainty)": [
                 "Дихотомизация (без неопределенности)"
@@ -523,6 +523,9 @@
             "Missing data patterns": [
                 "Паттерны пропущенных данных"
             ],
+            "Missing Patterns": [
+                "Паттерны пропусков"
+            ],
             "Missing Values Estimation": [
                 "Оценка пропусков данных"
             ],
@@ -534,9 +537,6 @@
             ],
             "Missing values imputation using the prediction power of Random Forests": [
                 "Ввод пропущенных данных с использованием предсказательной силы метода случайных лесов"
-            ],
-            "Missing<br>Patterns": [
-                "Паттерны<br>пропусков"
             ],
             "missRanger (2021)": [
                 ""
@@ -577,11 +577,8 @@
             "None": [
                 "Нет"
             ],
-            "Normality in Intervals": [
-                "Нормальность в интервалах"
-            ],
-            "Normality<br>p-value": [
-                "Нормальность<br>p-значение"
+            "Normality p-value": [
+                "Нормальность p-значение"
             ],
             "NPV - Negative Predictive Value of the negative class TN/(TN+FN)": [
                 "NPV - отрицательное прогностическое значение отрицательного класса TN/(TN+FN)"
@@ -602,7 +599,7 @@
                 "Количество паттернов"
             ],
             "Number of trees to grow in each forest": [
-                "Количество деревьев,<br>выращиваемых в каждом случайном лесе"
+                "Количество деревьев, выращиваемых в каждом случайном лесе"
             ],
             "observed": [
                 "заполнено"
@@ -622,6 +619,9 @@
             "Outliers fences": [
                 "Границы для выбросов"
             ],
+            "Outliers found": [
+                "Найдено выбросов"
+            ],
             "Outliers identification": [
                 "Выявление выбросов"
             ],
@@ -636,9 +636,6 @@
             ],
             "Outliers removal": [
                 "Удаление выбросов"
-            ],
-            "Outliers<br>found": [
-                "Найдено<br>выбросов"
             ],
             "Output information": [
                 "Выходная информация"
@@ -701,7 +698,7 @@
                 "PPV - положительная прогностическая ценность положительного класса TP/(TN+FN)"
             ],
             "Predictive Mean Matching (PMM) steps": [
-                "Шаги предиктивного<br>cреднего сопоставления (PMM)"
+                "Шаги предиктивного cреднего сопоставления (PMM)"
             ],
             "Predictor": [
                 "Предиктор"
@@ -710,7 +707,7 @@
                 "Предикторы"
             ],
             "Prevalence": [
-                "Распростра-<br>ненность"
+                "Распространенность"
             ],
             "Proportions of Intervals": [
                 "Пропорции в интервалах"

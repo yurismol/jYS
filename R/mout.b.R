@@ -230,10 +230,10 @@ mOUTClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
           #outable$addColumn(name="var", title="Variable", type='text')
 	  grp   <- self$options$group
 	  if (!is.null(grp)) outable$addColumn(name="grp", title=.("Group"), type='text')
-          outable$addColumn(name="noutl", title=.("Outliers<br>found"), type='integer')
+          outable$addColumn(name="noutl", title=.("Outliers found"), type='integer')
           outlcheck <- self$options$outlcheck
           fence <- as.double(self$options$fence)
-          if (self$options$norm) outable$addColumn(name="psh", title=.("Normality<br>p-value"), type='number')
+          if (self$options$norm) outable$addColumn(name="psh", title=.("Normality p-value"), type='number')
           if (outlcheck %in% c("ZS", "MAH")) {
             outable$addColumn(name="m", title=.("Mean"), type='number')
           } else {
@@ -267,7 +267,7 @@ mOUTClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             nm <- names(outl)
             tab  <- oind$get(key=key)
             if (!is.null(grp)) tab$addColumn(name="grp",  title=.("Group"), type='text')
-            tab$addColumn(name="onum", title=.("Outliers<br>found"), type='integer')
+            tab$addColumn(name="onum", title=.("Outliers found"), type='integer')
             tab$addColumn(name="indx", title=.("Indices (Rows)"), type='text')
             for (j in seq_along(outl)) {
               lst  <- unlist(outl[[j]])

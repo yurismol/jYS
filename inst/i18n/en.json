@@ -286,7 +286,7 @@
             "decision": [
                 ""
             ],
-            "Degree of<br>Freedom (df)": [
+            "Degree of Freedom (df)": [
                 ""
             ],
             "Dichotomization (no uncertainty)": [
@@ -523,6 +523,9 @@
             "Missing data patterns": [
                 ""
             ],
+            "Missing Patterns": [
+                ""
+            ],
             "Missing Values Estimation": [
                 ""
             ],
@@ -533,9 +536,6 @@
                 ""
             ],
             "Missing values imputation using the prediction power of Random Forests": [
-                ""
-            ],
-            "Missing<br>Patterns": [
                 ""
             ],
             "missRanger (2021)": [
@@ -577,10 +577,7 @@
             "None": [
                 ""
             ],
-            "Normality in Intervals": [
-                ""
-            ],
-            "Normality<br>p-value": [
+            "Normality p-value": [
                 ""
             ],
             "NPV - Negative Predictive Value of the negative class TN/(TN+FN)": [
@@ -622,6 +619,9 @@
             "Outliers fences": [
                 ""
             ],
+            "Outliers found": [
+                ""
+            ],
             "Outliers identification": [
                 ""
             ],
@@ -635,9 +635,6 @@
                 ""
             ],
             "Outliers removal": [
-                ""
-            ],
-            "Outliers<br>found": [
                 ""
             ],
             "Output information": [

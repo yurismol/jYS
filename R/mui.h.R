@@ -12,10 +12,10 @@ mUIOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             isMCI = FALSE,
             isProp = FALSE,
             UImethod = "TGR",
-            minSe = 0.9,
-            minSp = 0.9,
-            uiSe = 0.55,
-            uiSp = 0.55,
+            minSe = 90,
+            minSp = 90,
+            uiSe = 55,
+            uiSp = 55,
             isROC = FALSE,
             isTGR = TRUE,
             isMD = TRUE,
@@ -68,27 +68,27 @@ mUIOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             private$..minSe <- jmvcore::OptionNumber$new(
                 "minSe",
                 minSe,
-                min=0.75,
-                max=0.99,
-                default=0.9)
+                min=75,
+                max=99,
+                default=90)
             private$..minSp <- jmvcore::OptionNumber$new(
                 "minSp",
                 minSp,
-                min=0.75,
-                max=0.99,
-                default=0.9)
+                min=75,
+                max=99,
+                default=90)
             private$..uiSe <- jmvcore::OptionNumber$new(
                 "uiSe",
                 uiSe,
-                min=0.51,
-                max=0.8,
-                default=0.55)
+                min=51,
+                max=80,
+                default=55)
             private$..uiSp <- jmvcore::OptionNumber$new(
                 "uiSp",
                 uiSp,
-                min=0.51,
-                max=0.8,
-                default=0.55)
+                min=51,
+                max=80,
+                default=55)
             private$..isROC <- jmvcore::OptionBool$new(
                 "isROC",
                 isROC,
@@ -368,10 +368,10 @@ mUI <- function(
     isMCI = FALSE,
     isProp = FALSE,
     UImethod = "TGR",
-    minSe = 0.9,
-    minSp = 0.9,
-    uiSe = 0.55,
-    uiSp = 0.55,
+    minSe = 90,
+    minSp = 90,
+    uiSe = 55,
+    uiSp = 55,
     isROC = FALSE,
     isTGR = TRUE,
     isMD = TRUE,

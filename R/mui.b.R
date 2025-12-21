@@ -13,23 +13,21 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             private$.initOutputs()
             uitable  <- self$results$stat$uistat
             uitable$setNote('ui', paste(
-                          .('Uncertain Interval (UI) is placed around the point of intersection between the two distributions with and without the targeted state.'), "<br>",
+                          .('Uncertain Interval (UI) is placed around the point of intersection between the two distributions with and without the targeted state.'),
                           .('Uncertain Interval is considered to be a range of test scores that is inconclusive and does not warrant a right decision.')))
             mcitable <- self$results$stat$mcistat
-            mcitable$setNote('mci', paste(
-                          .('More Certain Interval (MCI) is interval outside the Uncertain Interval and divide into low and high parts.'), "<br>",
-                          .('Concordance - C-Statistic or AUC. The probability that a random chosen patient with the condition is correctly ranked higher than a randomly chosen patient without the condition'), "<br>",
-                          .('Se - sensitivity of the positive and negative classifications TP/(TP+FN)'), "<br>",
-                          .('Sp - specificity of the positive and negative classifications TN/(TN+FN)'), "<br>",
-                          .('CCR - Correct Classification Rate or accuracy of the positive and negative classifications (TP+TN)/(TN+FP+FN+TP)'), "<br>",
-                          .('Balance - balance between correct and incorrect classified (TP+TN)/(FP+FN)'), "<br>",
-                          .('NPV - Negative Predictive Value of the negative class TN/(TN+FN)'), "<br>",
-                          .('PPV - Positive Predictive Value of the positive class TP/(TN+FN)'), "<br>",
-                          .('SNPV - standardized negative predictive value of the negative class'), "<br>",
-                          .('SPPV - standardized positive predictive value of the positive class'), "<br>",
-                          .('LR- - Negative Likelihood Ratio P(-|D+))/(P(-|D-)). The probability of a person with the condition receiving a negative classification / probability of a person without the condition receiving a negative classification'), "<br>",
-                          .('LR+ - Positive Likelihood Ratio (P(+|D+))/(P(+|D-)) The probability of a person with the condition receiving a positive classification / probability of a person without the condition receiving a positive classification')
-            ))
+            mcitable$setNote('mci1', .('More Certain Interval (MCI) is interval outside the Uncertain Interval and divide into low and high parts.'))
+            mcitable$setNote('mci2', .('Concordance - C-Statistic or AUC. The probability that a random chosen patient with the condition is correctly ranked higher than a randomly chosen patient without the condition'))
+            mcitable$setNote('mci3', .('Se - sensitivity of the positive and negative classifications TP/(TP+FN)'))
+            mcitable$setNote('mci4', .('Sp - specificity of the positive and negative classifications TN/(TN+FN)'))
+            mcitable$setNote('mci5', .('CCR - Correct Classification Rate or accuracy of the positive and negative classifications (TP+TN)/(TN+FP+FN+TP)'))
+            mcitable$setNote('mci6', .('Balance - balance between correct and incorrect classified (TP+TN)/(FP+FN)'))
+            mcitable$setNote('mci7', .('NPV - Negative Predictive Value of the negative class TN/(TN+FN)'))
+            mcitable$setNote('mci8', .('PPV - Positive Predictive Value of the positive class TP/(TN+FN)'))
+            mcitable$setNote('mci9', .('SNPV - standardized negative predictive value of the negative class'))
+            mcitable$setNote('mciA', .('SPPV - standardized positive predictive value of the positive class'))
+            mcitable$setNote('mciA', .('LR- - Negative Likelihood Ratio P(-|D+))/(P(-|D-)). The probability of a person with the condition receiving a negative classification / probability of a person without the condition receiving a negative classification'))
+            mcitable$setNote('mciA', .('LR+ - Positive Likelihood Ratio (P(+|D+))/(P(+|D-)) The probability of a person with the condition receiving a positive classification / probability of a person without the condition receiving a positive classification'))
         },
 
         .initOutputs=function() {
@@ -91,10 +89,10 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
             if (self$options$isProp) {
               intable <- self$results$stat$intstat
-              intable$addColumn(name="norm", title="Normality<br>p-value", type="number")
-              intable$addColumn(name="mciL", title=paste0(.("MCI=0"),"<BR>",ref0), type="integer")
+              intable$addColumn(name="norm", title="Normality p-value", type="number", format='pvalue')
+              intable$addColumn(name="mciL", title=paste0(.("MCI=0 ("),ref0,")"), type="integer")
               intable$addColumn(name="ui",   title=.("UI"),    type="integer")
-              intable$addColumn(name="mciU", title=paste0(.("MCI=1"),"<BR>",ref1), type="integer")
+              intable$addColumn(name="mciU", title=paste0(.("MCI=1 ("),ref1,")"), type="integer")
               intable$addColumn(name="sum",  title=.("Sum"),   type="integer")
               intable$setNote('flag', .('*p<0.05 - The hypothesis of normal distribution was rejected by the Shapiro-Wilk test'))
             }
@@ -136,7 +134,7 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               if (self$options$UImethod=="TGR") {
                 p   <- UncertainInterval::TG.ROC(Vref, Vtest, plot=FALSE,
                        model=self$options$model,
-                       Se.criterion=self$options$minSe, Sp.criterion=self$options$minSp)
+                       Se.criterion=self$options$minSe/100, Sp.criterion=self$options$minSp/100)
                 lth <- p["L"]; uth = p["U"]
               } else if (self$options$UImethod=="UI") {
                 if (private$.columnType(dat[[var]])=="ordinal2") {
@@ -145,11 +143,11 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 } else {
                   if (self$options$model=="binormal") {
                     ui  <- UncertainInterval::ui.binormal(Vref, Vtest,
-                           UI.Se=self$options$uiSe, UI.Sp=self$options$uiSp)
+                           UI.Se=self$options$uiSe/100, UI.Sp=self$options$uiSp/100)
                     lth <- ui$solution["L"]; uth = ui$solution["U"]
                   } else {
                     ui  <- UncertainInterval::ui.nonpar(Vref, Vtest,
-                           UI.Se=self$options$uiSe, UI.Sp=self$options$uiSp)
+                           UI.Se=self$options$uiSe/100, UI.Sp=self$options$uiSp/100)
                     lth <- ui[1]; uth = ui[2]
                   }
                 }
@@ -185,11 +183,11 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 sw <- try(shapiro.test(df))
                 if (jmvcore::isError(sw)) norm1 <- ""
                 else norm1 <- sw$p.value
-                intable$addRow(rowKey=norm0, list(var=var, norm=ifelse(norm0<0.001, "<0.001", norm0), lev=ref0,     mciL=t[1,1], ui=t[1,2], mciU=t[1,3], sum=t[1,1]+t[1,2]+t[1,3]))
+                intable$addRow(rowKey=norm0, list(var=var, norm=norm0, lev=ref0,     mciL=t[1,1], ui=t[1,2], mciU=t[1,3], sum=t[1,1]+t[1,2]+t[1,3]))
                 if (norm0<0.05) intable$addSymbol(rowKey=norm0, "norm", '*')
-                intable$addRow(rowKey=norm1, list(var="", norm=ifelse(norm1<0.001, "<0.001", norm1), lev=ref1,     mciL=t[2,1], ui=t[2,2], mciU=t[2,3], sum=t[2,1]+t[2,2]+t[2,3]))
+                intable$addRow(rowKey=norm1, list(var="", norm=norm1, lev=ref1,     mciL=t[2,1], ui=t[2,2], mciU=t[2,3], sum=t[2,1]+t[2,2]+t[2,3]))
                 if (norm1<0.05) intable$addSymbol(rowKey=norm1, "norm", '*')
-                intable$addRow(rowKey=norm,  list(var="", norm=ifelse(norm <0.001, "<0.001", norm),  lev=.("Sum"), mciL=t[3,1], ui=t[3,2], mciU=t[3,3], sum=t[3,1]+t[3,2]+t[3,3]))
+                intable$addRow(rowKey=norm,  list(var="", norm=norm,  lev=.("Sum"), mciL=t[3,1], ui=t[3,2], mciU=t[3,3], sum=t[3,1]+t[3,2]+t[3,3]))
                 if (norm<0.05) intable$addSymbol(rowKey=norm, "norm", '*')
               }
 
@@ -252,9 +250,12 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             ua   <- UncertainInterval::ui.nonpar(Vref, Vtest)
             par  <- UncertainInterval::quality.threshold.uncertain(Vref, Vtest, ua[1], ua[2])
             if (par$direction=="<") cols <- c("red", "blue") else cols <- c("blue", "red")
+            decopt <- getOption("OutDec")
+            options(OutDec=".")
 	    p    <- UncertainInterval::TG.ROC(Vref, Vtest, plot=TRUE,
                     model=self$options$model,
-                    Se.criterion=self$options$minSe, Sp.criterion=self$options$minSp)
+                    Se.criterion=self$options$minSe/100, Sp.criterion=self$options$minSp/100)
+            options(OutDec=decopt)
 	    lth  <- p["L"]; uth = p["U"]
             #title(xlab=key, ylab="Sens-Spec")
             #is <- get.intersection(dat[[ref]], dat[[key]], model=c("kernel", "binormal", "ordinal")[3])

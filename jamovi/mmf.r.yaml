@@ -34,14 +34,15 @@ items:
               - name: pval
                 title: p<sub>value</sub>
                 type: number
+                format: zto,pvalue
               - name: d2
                 title: "D\u00B2"
                 type: number
               - name: df
-                title: Degree of<br>Freedom (df)
+                title: Degree of Freedom (df)
                 type: integer
               - name: mpat
-                title: Missing<br>Patterns
+                title: Missing Patterns
                 type: integer
     
         - name: mars
@@ -65,6 +66,7 @@ items:
               - name: mar
                 title: p<sub>value</sub>
                 type: number
+                format: zto,pvalue
                 #superTitle: MAR
               - name: exp
                 title: Explanatory
@@ -93,6 +95,7 @@ items:
               - name: pval
                 title: p<sub>value</sub>
                 type: number
+                format: zto,pvalue
 
         - name: cplot
           title: Correlations between variables

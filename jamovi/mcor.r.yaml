@@ -95,6 +95,7 @@ items:
             title: ""
             type: text
             content: p-value
+            format: zto,pvalue
             visible: (pval)
 
           - name: .name[n]

@@ -393,6 +393,7 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `title`="", 
                         `type`="text", 
                         `content`="p-value", 
+                        `format`="zto,pvalue", 
                         `visible`="(pval)"),
                     list(
                         `name`=".name[n]", 

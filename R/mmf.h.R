@@ -209,18 +209,19 @@ mMFResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 list(
                                     `name`="pval", 
                                     `title`="p<sub>value</sub>", 
-                                    `type`="number"),
+                                    `type`="number", 
+                                    `format`="zto,pvalue"),
                                 list(
                                     `name`="d2", 
                                     `title`="D\u00B2", 
                                     `type`="number"),
                                 list(
                                     `name`="df", 
-                                    `title`="Degree of<br>Freedom (df)", 
+                                    `title`="Degree of Freedom (df)", 
                                     `type`="integer"),
                                 list(
                                     `name`="mpat", 
-                                    `title`="Missing<br>Patterns", 
+                                    `title`="Missing Patterns", 
                                     `type`="integer"))))
                         self$add(jmvcore::Table$new(
                             options=options,
@@ -244,7 +245,8 @@ mMFResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 list(
                                     `name`="mar", 
                                     `title`="p<sub>value</sub>", 
-                                    `type`="number"),
+                                    `type`="number", 
+                                    `format`="zto,pvalue"),
                                 list(
                                     `name`="exp", 
                                     `title`="Explanatory", 
@@ -272,7 +274,8 @@ mMFResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                     list(
                                         `name`="pval", 
                                         `title`="p<sub>value</sub>", 
-                                        `type`="number")))))
+                                        `type`="number", 
+                                        `format`="zto,pvalue")))))
                         self$add(jmvcore::Image$new(
                             options=options,
                             name="cplot",

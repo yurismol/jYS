@@ -59,30 +59,30 @@ options:
     - name: minSe
       title: Sensitivity outside UI >
       type: Number
-      min: 0.75
-      max: 0.99
-      default: 0.9
+      min: 75
+      max: 99
+      default: 90
 
     - name: minSp
       title: Specificity outside UI >
       type: Number
-      min: 0.75
-      max: 0.99
-      default: 0.9
+      min: 75
+      max: 99
+      default: 90
 
     - name: uiSe
       title: Sensitivity inside UI <
       type: Number
-      min: 0.51
-      max: 0.8
-      default: 0.55
+      min: 51
+      max: 80
+      default: 55
 
     - name: uiSp
       title: Specificity inside UI <
       type: Number
-      min: 0.51
-      max: 0.8
-      default: 0.55
+      min: 51
+      max: 80
+      default: 55
 
     - name: isROC
       title: ROC curves
