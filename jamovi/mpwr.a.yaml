@@ -1,0 +1,106 @@
+---
+name:  mPWR
+title: Power Analysis
+menuGroup: jYS
+version: '1.0.13'
+jas: '1.2'
+
+options:
+    - name: calc
+      title: 'Purpose of Calculation'
+      type: List
+      options:
+        - name: n
+          title: "N per group"
+        - name: power
+          title: "Power"
+        - name: es
+          title: "Effect size"
+      default: n
+
+    - name: design
+      title: 'Design'
+      type: List
+      options:
+        - name: independent
+          title: "Independent Samples (Student)"
+        - name: welch
+          title: "Independent Samples (Welch)"
+        - name: independent_np
+          title: "Independent Samples (Wilcoxon)"
+        - name: paired
+          title: "Paired Samples (Student)"
+        - name: paired_np
+          title: "Paired Samples (Wilcoxon)"
+        - name: one.sample
+          title: "One Sample (Student)"
+        - name: one.sample_np
+          title: "One Sample (Wilcoxon)"
+      default: independent
+
+    - name: es
+      title: "Minimally-interesting effect size (&delta;)"
+      type: Number
+      min: 0.01
+      default: .5
+
+    - name: power
+      title: "Minimum desired power"
+      type: Number
+      min: 0
+      max: 1
+      default: .9
+
+    - name: n
+      title: "N per group (or pairs/sample)"
+      type: Integer
+      min: 2
+      default: 30
+
+    - name: alt
+      title: Tails
+      type: List
+      options:
+        - "two.sided"
+        - "one.sided"
+        #- "two.one.sided"
+      default: "two.sided"
+
+    - name: alpha
+      title: "&alpha; (type I error rate)"
+      type: Number
+      min: 0
+      default: 0.05
+
+    - name: n_ratio
+      title: "Sample size ratio (N<sub>2</sub>/N<sub>1</sub>)"
+      type: Number
+      min: 0
+      default: 1
+
+    - name: var_ratio
+      title: "Variance ratio (SD\u2081\u00B2 / SD\u2082\u00B2)"
+      type: Number
+      min: 0.01
+      default: 1
+
+    - name: plot_err
+      title: "Type 1 and Type 2 error plots"
+      type: Bool
+      default: false
+
+    - name: power_curve
+      title: "Power Curve (Power by N)"
+      type: Bool
+      default: false
+
+    - name: power_es_curve
+      title: "Power by Effect Size Curve"
+      type: Bool
+      default: false
+
+    - name: n_es_curve
+      title: "N by Effect Size Curve"
+      type: Bool
+      default: false
+...

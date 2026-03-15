@@ -40,6 +40,12 @@
             "*pairwise complete observations": [
                 ""
             ],
+            "&alpha;": [
+                ""
+            ],
+            "&alpha; (type I error rate)": [
+                ""
+            ],
             "%": [
                 ""
             ],
@@ -121,6 +127,9 @@
             "Alphabetical": [
                 ""
             ],
+            "Alternative": [
+                ""
+            ],
             "an array of MARs": [
                 ""
             ],
@@ -170,6 +179,12 @@
                 ""
             ],
             "Calculated fences for outliers": [
+                ""
+            ],
+            "Calculated parameter: ": [
+                ""
+            ],
+            "Calculation error:\n": [
                 ""
             ],
             "CCR - Correct Classification Rate or accuracy of the positive and negative classifications (TP+TN)/(TN+FP+FN+TP)": [
@@ -289,6 +304,12 @@
             "Degree of Freedom (df)": [
                 ""
             ],
+            "Design": [
+                ""
+            ],
+            "Design: ": [
+                ""
+            ],
             "Dichotomization (no uncertainty)": [
                 ""
             ],
@@ -299,6 +320,12 @@
                 ""
             ],
             "Dotted line": [
+                ""
+            ],
+            "Effect size": [
+                ""
+            ],
+            "Effect Size (d)": [
                 ""
             ],
             "Ellipse": [
@@ -388,6 +415,15 @@
             "Incomplete Variables": [
                 ""
             ],
+            "Independent Samples (Student)": [
+                ""
+            ],
+            "Independent Samples (Welch)": [
+                ""
+            ],
+            "Independent Samples (Wilcoxon)": [
+                ""
+            ],
             "Indices (Rows)": [
                 ""
             ],
@@ -445,6 +481,9 @@
             "Line width": [
                 ""
             ],
+            "Log / Errors": [
+                ""
+            ],
             "Lower fence": [
                 ""
             ],
@@ -487,10 +526,10 @@
             "MCAR (Missing Completely at Random) and MAR (Missing at Random) estimation": [
                 ""
             ],
-            "MCI=0": [
+            "MCI=0 (": [
                 ""
             ],
-            "MCI=1": [
+            "MCI=1 (": [
                 ""
             ],
             "McQuitty Linkage (WPGMA)": [
@@ -508,10 +547,16 @@
             "Method": [
                 ""
             ],
+            "Minimally-interesting effect size (&delta;)": [
+                ""
+            ],
             "Minimum {minVar} variables (Complete + Incomplete) are required": [
                 ""
             ],
             "Minimum 2 impute variables are required": [
+                ""
+            ],
+            "Minimum desired power": [
                 ""
             ],
             "missForest (2012)": [
@@ -571,6 +616,27 @@
             "N - number of missing values;": [
                 ""
             ],
+            "N by Effect Size": [
+                ""
+            ],
+            "N by Effect Size Curve": [
+                ""
+            ],
+            "N for group 1": [
+                ""
+            ],
+            "N per group": [
+                ""
+            ],
+            "N per group (or pairs/sample)": [
+                ""
+            ],
+            "N1": [
+                ""
+            ],
+            "N2": [
+                ""
+            ],
             "Non-parametric": [
                 ""
             ],
@@ -602,6 +668,15 @@
                 ""
             ],
             "observed": [
+                ""
+            ],
+            "One Sample (Student)": [
+                ""
+            ],
+            "One Sample (Wilcoxon)": [
+                ""
+            ],
+            "one-tailed": [
                 ""
             ],
             "OOB errors table": [
@@ -649,6 +724,12 @@
             "Paired": [
                 ""
             ],
+            "Paired Samples (Student)": [
+                ""
+            ],
+            "Paired Samples (Wilcoxon)": [
+                ""
+            ],
             "Pastel1": [
                 ""
             ],
@@ -694,6 +775,27 @@
             "Polygon": [
                 ""
             ],
+            "Power": [
+                ""
+            ],
+            "Power Analysis": [
+                ""
+            ],
+            "Power Analysis Results": [
+                ""
+            ],
+            "Power by Effect Size": [
+                ""
+            ],
+            "Power by Effect Size Curve": [
+                ""
+            ],
+            "Power Curve": [
+                ""
+            ],
+            "Power Curve (Power by N)": [
+                ""
+            ],
             "PPV - Positive Predictive Value of the positive class TP/(TN+FN)": [
                 ""
             ],
@@ -718,10 +820,16 @@
             "provide a correlation matrix plot.": [
                 ""
             ],
+            "Purpose of Calculation": [
+                ""
+            ],
             "PVU - proportion of variance unexplained 1-R² (for Continuous variables);": [
                 ""
             ],
             "Reference level": [
+                ""
+            ],
+            "Relative size of group 2 to group 1": [
                 ""
             ],
             "Remove outliers": [
@@ -758,6 +866,15 @@
                 ""
             ],
             "ROC graphs": [
+                ""
+            ],
+            "Sample Size (N)": [
+                ""
+            ],
+            "Sample Size (N1)": [
+                ""
+            ],
+            "Sample size ratio (N<sub>2</sub>/N<sub>1</sub>)": [
                 ""
             ],
             "Save": [
@@ -859,7 +976,13 @@
             "Tables": [
                 ""
             ],
+            "Tails": [
+                ""
+            ],
             "Test for normality": [
+                ""
+            ],
+            "The 'pwrss' package is not installed. Please install it in R.": [
                 ""
             ],
             "The Best point on ROC": [
@@ -880,7 +1003,19 @@
             "Total number of missing entries {}": [
                 ""
             ],
+            "two one-tailed": [
+                ""
+            ],
             "Two-graph ROC curves": [
+                ""
+            ],
+            "two-tailed": [
+                ""
+            ],
+            "Type 1 and Type 2 Error Plots": [
+                ""
+            ],
+            "Type 1 and Type 2 error plots": [
                 ""
             ],
             "UI": [
@@ -932,6 +1067,9 @@
                 ""
             ],
             "Variables": [
+                ""
+            ],
+            "Variance ratio (SD₁² / SD₂²)": [
                 ""
             ],
             "Ward´s D2 Linkage": [

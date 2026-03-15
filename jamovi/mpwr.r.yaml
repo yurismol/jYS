@@ -1,0 +1,127 @@
+---
+name:  mPWR
+title: Power Analysis
+jrs:   '1.1'
+refs:
+    - jys
+    - pwrss_pkg
+    - bulus_2024
+    - bulus_2023
+    - chow_2018
+    - cohen_1988
+    - lakens_2017
+
+items:
+    - name:  powerTable
+      title: Power Analysis Results
+      type:  Table
+      rows:  1
+      clearWith:
+        - calc
+        - design
+        - es
+        - power
+        - n
+        - alt
+        - alpha
+        - n_ratio
+        - var_ratio
+      columns:
+        - name: n1
+          title: N1
+          type: integer
+        - name: n2
+          title: N2
+          type: integer
+        - name: es
+          title: Effect Size (d)
+          type: number
+        - name: power
+          title: Power
+          type: number
+          format: pvalue
+        - name: alpha
+          title: '&alpha;'
+          type: number
+          format: pvalue
+        - name: alt
+          title: Alternative
+          type: text
+
+    - name:  plot
+      title: Type 1 and Type 2 Error Plots
+      type:  Image
+      width: 500
+      height: 400
+      renderFun: .plot
+      visible: (plot_err)
+      clearWith:
+        - calc
+        - design
+        - es
+        - power
+        - n
+        - alt
+        - alpha
+        - n_ratio
+        - var_ratio
+
+    - name:  powerCurve
+      title: Power Curve
+      type:  Image
+      width: 500
+      height: 400
+      renderFun: .powerCurve
+      visible: (power_curve)
+      clearWith:
+        - calc
+        - design
+        - es
+        - power
+        - n
+        - alt
+        - alpha
+        - n_ratio
+        - var_ratio
+
+    - name:  powerEsCurve
+      title: Power by Effect Size
+      type:  Image
+      width: 500
+      height: 400
+      renderFun: .powerEsCurve
+      visible: (power_es_curve)
+      clearWith:
+        - calc
+        - design
+        - es
+        - power
+        - n
+        - alt
+        - alpha
+        - n_ratio
+        - var_ratio
+
+    - name:  nEsCurve
+      title: N by Effect Size
+      type:  Image
+      width: 500
+      height: 400
+      renderFun: .nEsCurve
+      visible: (n_es_curve)
+      clearWith:
+        - calc
+        - design
+        - es
+        - power
+        - n
+        - alt
+        - alpha
+        - n_ratio
+        - var_ratio
+
+    - name:  text
+      title: Log / Errors
+      type:  Preformatted
+      visible: false
+...

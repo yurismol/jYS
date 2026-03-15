@@ -1,0 +1,73 @@
+title: Power Analysis
+name: mPWR
+jus: '3.0'
+stage: 0
+compilerMode: tame
+children:
+  - type: LayoutBox
+    margin: large
+    children:
+      - type: ComboBox
+        name: calc
+      - type: ComboBox
+        name: design
+  - type: LayoutBox
+    margin: large
+    children:
+      - name: es
+        type: TextBox
+        label: Minimally-interesting effect size (&delta;)
+        format: number
+        enable: '(!calc:es)'
+      - name: power
+        type: TextBox
+        label: Minimum desired power
+        format: number
+        enable: '(!calc:power)'
+      - name: 'n'
+        type: TextBox
+        label: N for group 1
+        format: number
+        enable: '(!calc:n)'
+      - name: n_ratio
+        type: TextBox
+        label: Relative size of group 2 to group 1
+        format: number
+        enable: '(design:independent || design:welch || design:independent_np)'
+      - name: var_ratio
+        type: TextBox
+        label: "Variance ratio (SD\u2081\u00B2 / SD\u2082\u00B2)"
+        format: number
+        enable: '(design:welch)'
+      - name: alpha
+        type: TextBox
+        label: '&alpha; (type I error rate)'
+        format: number
+        enable: '(!calc:alpha)'
+        suggestedValues:
+          - value: 0.1
+          - value: 0.05
+          - value: 0.01
+          - value: 0.001
+      - name: alt
+        type: ComboBox
+        label: Tails
+        options:
+          - title: two-tailed
+            name: two.sided
+          - title: one-tailed
+            name: one.sided
+          #- title: two one-tailed
+          #  name: two.one.sided
+  - type: CollapseBox
+    label: Plots
+    collapsed: false
+    children:
+      - name: plot_err
+        type: CheckBox
+      - name: power_curve
+        type: CheckBox
+      - name: power_es_curve
+        type: CheckBox
+      - name: n_es_curve
+        type: CheckBox
