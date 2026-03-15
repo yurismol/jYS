@@ -12,7 +12,7 @@ mPWROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             power = 0.9,
             n = 30,
             alt = "two.sided",
-            alpha = 0.05,
+            alpha = "0.05",
             n_ratio = 1,
             var_ratio = 1,
             plot_err = FALSE,
@@ -69,11 +69,15 @@ mPWROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "two.sided",
                     "one.sided"),
                 default="two.sided")
-            private$..alpha <- jmvcore::OptionNumber$new(
+            private$..alpha <- jmvcore::OptionList$new(
                 "alpha",
                 alpha,
-                min=0,
-                default=0.05)
+                options=list(
+                    "0.1",
+                    "0.05",
+                    "0.01",
+                    "0.001"),
+                default="0.05")
             private$..n_ratio <- jmvcore::OptionNumber$new(
                 "n_ratio",
                 n_ratio,
@@ -351,7 +355,7 @@ mPWR <- function(
     power = 0.9,
     n = 30,
     alt = "two.sided",
-    alpha = 0.05,
+    alpha = "0.05",
     n_ratio = 1,
     var_ratio = 1,
     plot_err = FALSE,

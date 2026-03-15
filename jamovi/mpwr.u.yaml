@@ -40,15 +40,9 @@ children:
         format: number
         enable: '(design:welch)'
       - name: alpha
-        type: TextBox
+        type: ComboBox
         label: '&alpha; (type I error rate)'
-        format: number
         enable: '(!calc:alpha)'
-        suggestedValues:
-          - value: 0.1
-          - value: 0.05
-          - value: 0.01
-          - value: 0.001
       - name: alt
         type: ComboBox
         label: Tails

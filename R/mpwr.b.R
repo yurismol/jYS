@@ -19,7 +19,7 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             power     <- self$options$power
             n_g1      <- self$options$n
             alt       <- self$options$alt
-            alpha     <- self$options$alpha
+            alpha     <- as.numeric(self$options$alpha)
             n_ratio   <- self$options$n_ratio
             var_ratio <- self$options$var_ratio
 
@@ -185,7 +185,7 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             power     <- self$options$power
             n_g1      <- self$options$n
             alt       <- self$options$alt
-            alpha     <- self$options$alpha
+            alpha     <- as.numeric(self$options$alpha)
             n_ratio   <- self$options$n_ratio
             var_ratio <- self$options$var_ratio
 
@@ -306,7 +306,7 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             power_val <- self$options$power
             n_g1      <- self$options$n
             alt       <- self$options$alt
-            alpha     <- self$options$alpha
+            alpha     <- as.numeric(self$options$alpha)
             n_ratio   <- self$options$n_ratio
             var_ratio <- self$options$var_ratio
 
@@ -422,7 +422,7 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             power_val <- self$options$power
             n_g1      <- self$options$n
             alt       <- self$options$alt
-            alpha     <- self$options$alpha
+            alpha     <- as.numeric(self$options$alpha)
             n_ratio   <- self$options$n_ratio
             var_ratio <- self$options$var_ratio
 
@@ -539,7 +539,7 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             power_val <- self$options$power
             n_g1      <- self$options$n
             alt       <- self$options$alt
-            alpha     <- self$options$alpha
+            alpha     <- as.numeric(self$options$alpha)
             n_ratio   <- self$options$n_ratio
             var_ratio <- self$options$var_ratio
 
