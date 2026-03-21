@@ -1,6 +1,6 @@
 ---
 name:  mPWR
-title: Power Analysis
+title: A Priori Power Analysis
 jrs:   '1.1'
 refs:
     - jys
@@ -13,7 +13,7 @@ refs:
 
 items:
     - name:  powerTable
-      title: Power Analysis Results
+      title: A Priori Power Analysis Results
       type:  Table
       rows:  1
       clearWith:
@@ -33,20 +33,39 @@ items:
         - name: n2
           title: N2
           type: integer
-        - name: es
-          title: Effect Size (d)
-          type: number
         - name: power
           title: Power
           type: number
           format: pvalue
+        - name: es
+          title: Effect Size
+          type: number
+        - name: n1_user
+          title: N1
+          type: integer
+          superTitle: User Defined
+        - name: n2_user
+          title: N2
+          type: integer
+          superTitle: User Defined
+        - name: es_user
+          title: Effect Size
+          type: number
+          superTitle: User Defined
+        - name: power_user
+          title: Power
+          type: number
+          format: pvalue
+          superTitle: User Defined
         - name: alpha
           title: '&alpha;'
           type: number
           format: pvalue
+          superTitle: User Defined
         - name: alt
           title: Alternative
           type: text
+          superTitle: User Defined
 
     - name:  plot
       title: Type 1 and Type 2 Error Plots

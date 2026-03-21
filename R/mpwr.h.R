@@ -44,7 +44,9 @@ mPWROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "paired",
                     "paired_np",
                     "one.sample",
-                    "one.sample_np"),
+                    "one.sample_np",
+                    "onecor",
+                    "onecor_np"),
                 default="independent")
             private$..es <- jmvcore::OptionNumber$new(
                 "es",
@@ -165,7 +167,7 @@ mPWRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             super$initialize(
                 options=options,
                 name="",
-                title="Power Analysis",
+                title="A Priori Power Analysis",
                 refs=list(
                     "jys",
                     "pwrss_pkg",
@@ -177,7 +179,7 @@ mPWRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Table$new(
                 options=options,
                 name="powerTable",
-                title="Power Analysis Results",
+                title="A Priori Power Analysis Results",
                 rows=1,
                 clearWith=list(
                     "calc",
@@ -199,23 +201,46 @@ mPWRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `title`="N2", 
                         `type`="integer"),
                     list(
-                        `name`="es", 
-                        `title`="Effect Size (d)", 
-                        `type`="number"),
-                    list(
                         `name`="power", 
                         `title`="Power", 
                         `type`="number", 
                         `format`="pvalue"),
                     list(
+                        `name`="es", 
+                        `title`="Effect Size", 
+                        `type`="number"),
+                    list(
+                        `name`="n1_user", 
+                        `title`="N1", 
+                        `type`="integer", 
+                        `superTitle`="User Defined"),
+                    list(
+                        `name`="n2_user", 
+                        `title`="N2", 
+                        `type`="integer", 
+                        `superTitle`="User Defined"),
+                    list(
+                        `name`="es_user", 
+                        `title`="Effect Size", 
+                        `type`="number", 
+                        `superTitle`="User Defined"),
+                    list(
+                        `name`="power_user", 
+                        `title`="Power", 
+                        `type`="number", 
+                        `format`="pvalue", 
+                        `superTitle`="User Defined"),
+                    list(
                         `name`="alpha", 
                         `title`="&alpha;", 
                         `type`="number", 
-                        `format`="pvalue"),
+                        `format`="pvalue", 
+                        `superTitle`="User Defined"),
                     list(
                         `name`="alt", 
                         `title`="Alternative", 
-                        `type`="text"))))
+                        `type`="text", 
+                        `superTitle`="User Defined"))))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot",
@@ -315,7 +340,7 @@ mPWRBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 weightsSupport = 'na')
         }))
 
-#' Power Analysis
+#' A Priori Power Analysis
 #'
 #' 
 #' @param calc .

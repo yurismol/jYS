@@ -78,12 +78,12 @@ analyses:
     category: analyses
     menuGroup: jYS
     menuTitle: Uncertain Interval (UI)
-  - title: Power Analysis
+  - title: A Priori Power Analysis
     name: mPWR
     ns: jYS
     category: analyses
     menuGroup: jYS
-    menuTitle: Power Analysis
+    menuTitle: A Priori Power Analysis
 usesNative: true
 minApp: 1.0.8
 

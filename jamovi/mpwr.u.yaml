@@ -1,4 +1,4 @@
-title: Power Analysis
+title: A Priori Power Analysis
 name: mPWR
 jus: '3.0'
 stage: 0
@@ -16,7 +16,7 @@ children:
     children:
       - name: es
         type: TextBox
-        label: Minimally-interesting effect size (&delta;)
+        label: Minimally-interesting effect size
         format: number
         enable: '(!calc:es)'
       - name: power
@@ -42,7 +42,6 @@ children:
       - name: alpha
         type: ComboBox
         label: '&alpha; (type I error rate)'
-        enable: '(!calc:alpha)'
       - name: alt
         type: ComboBox
         label: Tails
@@ -51,8 +50,6 @@ children:
             name: two.sided
           - title: one-tailed
             name: one.sided
-          #- title: two one-tailed
-          #  name: two.one.sided
   - type: CollapseBox
     label: Plots
     collapsed: false

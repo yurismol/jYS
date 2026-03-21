@@ -70,6 +70,18 @@
             "0 =": [
                 "0 ="
             ],
+            "0.001": [
+                "0.001"
+            ],
+            "0.01": [
+                "0.01"
+            ],
+            "0.05": [
+                "0.05"
+            ],
+            "0.1": [
+                "0.1"
+            ],
             "1 - Specificity": [
                 "1 - Специфичность"
             ],
@@ -111,6 +123,12 @@
             ],
             "a correlation matrix table": [
                 "таблица корреляционной матрицы"
+            ],
+            "A Priori Power Analysis": [
+                "Априорный анализ мощности"
+            ],
+            "A Priori Power Analysis Results": [
+                "Результаты априорного анализа мощности"
             ],
             "Accent": [
                 "Акцент"
@@ -184,8 +202,8 @@
             "Calculated parameter: ": [
                 "Рассчитанный параметр: "
             ],
-            "Calculation error:\n": [
-                "Ошибка расчета: "
+            "Calculation error:": [
+                "Ошибка расчета:"
             ],
             "CCR - Correct Classification Rate or accuracy of the positive and negative classifications (TP+TN)/(TN+FP+FN+TP)": [
                 "CCR - Правильная классификация или точность положительных и отрицательных классификаций (TP+TN)/(TN+FP+FN+TP)"
@@ -325,8 +343,14 @@
             "Effect size": [
                 "Размер эффекта"
             ],
-            "Effect Size (d)": [
-                "Размер эффекта (d)"
+            "Effect Size": [
+                "Размер эффекта"
+            ],
+            "Effect size measure: Cohen's d": [
+                "Показатель размера эффекта: d Коэна"
+            ],
+            "Effect size measure: correlation coefficient (r)": [
+                "Показатель размера эффекта: коэффициент корреляции (r)"
             ],
             "Ellipse": [
                 "Эллипс"
@@ -547,7 +571,7 @@
             "Method": [
                 "Метод"
             ],
-            "Minimally-interesting effect size (&delta;)": [
+            "Minimally-interesting effect size": [
                 "Минимально интересующий размер эффекта"
             ],
             "Minimum {minVar} variables (Complete + Incomplete) are required": [
@@ -676,6 +700,12 @@
             "One Sample (Wilcoxon)": [
                 "Одна выборка (Вилкоксон)"
             ],
+            "One Sample Correlation (Pearson)": [
+                "Корреляция одной выборки (Пирсон)"
+            ],
+            "One Sample Correlation (Spearman)": [
+                "Корреляция одной выборки (Спирмен)"
+            ],
             "one-tailed": [
                 "односторонний"
             ],
@@ -778,17 +808,14 @@
             "Power": [
                 "Мощность"
             ],
-            "Power Analysis": [
-                "Анализ мощности"
-            ],
-            "Power Analysis Results": [
-                "Результаты анализа мощности"
-            ],
             "Power by Effect Size": [
                 "Мощность от размера эффекта"
             ],
             "Power by Effect Size Curve": [
                 "Кривая мощности от размера эффекта"
+            ],
+            "Power calculation for Spearman's correlation is a penalized asymptotic approximation based on Fisher's Z-transformation (ARE = 0.912).": [
+                "Расчет мощности для корреляции Спирмена является пенализированным асимптотическим приближением на основе Z-преобразования Фишера (ARE = 0.912)."
             ],
             "Power Curve": [
                 "Кривая мощности"
@@ -1050,6 +1077,9 @@
             ],
             "Upper threshold": [
                 "Верхний порог"
+            ],
+            "User Defined": [
+                "Задано пользователем"
             ],
             "Variable": [
                 "Переменная"

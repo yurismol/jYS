@@ -70,6 +70,18 @@
             "0 =": [
                 ""
             ],
+            "0.001": [
+                ""
+            ],
+            "0.01": [
+                ""
+            ],
+            "0.05": [
+                ""
+            ],
+            "0.1": [
+                ""
+            ],
             "1 - Specificity": [
                 ""
             ],
@@ -110,6 +122,12 @@
                 ""
             ],
             "a correlation matrix table": [
+                ""
+            ],
+            "A Priori Power Analysis": [
+                ""
+            ],
+            "A Priori Power Analysis Results": [
                 ""
             ],
             "Accent": [
@@ -184,7 +202,7 @@
             "Calculated parameter: ": [
                 ""
             ],
-            "Calculation error:\n": [
+            "Calculation error:": [
                 ""
             ],
             "CCR - Correct Classification Rate or accuracy of the positive and negative classifications (TP+TN)/(TN+FP+FN+TP)": [
@@ -325,7 +343,13 @@
             "Effect size": [
                 ""
             ],
-            "Effect Size (d)": [
+            "Effect Size": [
+                ""
+            ],
+            "Effect size measure: Cohen's d": [
+                ""
+            ],
+            "Effect size measure: correlation coefficient (r)": [
                 ""
             ],
             "Ellipse": [
@@ -547,7 +571,7 @@
             "Method": [
                 ""
             ],
-            "Minimally-interesting effect size (&delta;)": [
+            "Minimally-interesting effect size": [
                 ""
             ],
             "Minimum {minVar} variables (Complete + Incomplete) are required": [
@@ -676,6 +700,12 @@
             "One Sample (Wilcoxon)": [
                 ""
             ],
+            "One Sample Correlation (Pearson)": [
+                ""
+            ],
+            "One Sample Correlation (Spearman)": [
+                ""
+            ],
             "one-tailed": [
                 ""
             ],
@@ -778,16 +808,13 @@
             "Power": [
                 ""
             ],
-            "Power Analysis": [
-                ""
-            ],
-            "Power Analysis Results": [
-                ""
-            ],
             "Power by Effect Size": [
                 ""
             ],
             "Power by Effect Size Curve": [
+                ""
+            ],
+            "Power calculation for Spearman's correlation is a penalized asymptotic approximation based on Fisher's Z-transformation (ARE = 0.912).": [
                 ""
             ],
             "Power Curve": [
@@ -1049,6 +1076,9 @@
                 ""
             ],
             "Upper threshold": [
+                ""
+            ],
+            "User Defined": [
                 ""
             ],
             "Variable": [

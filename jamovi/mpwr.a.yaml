@@ -1,6 +1,6 @@
 ---
 name:  mPWR
-title: Power Analysis
+title: A Priori Power Analysis
 menuGroup: jYS
 version: '1.0.13'
 jas: '1.2'
@@ -36,10 +36,14 @@ options:
           title: "One Sample (Student)"
         - name: one.sample_np
           title: "One Sample (Wilcoxon)"
+        - name: onecor
+          title: "One Sample Correlation (Pearson)"
+        - name: onecor_np
+          title: "One Sample Correlation (Spearman)"
       default: independent
 
     - name: es
-      title: "Minimally-interesting effect size (&delta;)"
+      title: "Minimally-interesting effect size"
       type: Number
       min: 0.01
       default: .5
@@ -63,18 +67,21 @@ options:
       options:
         - "two.sided"
         - "one.sided"
-        #- "two.one.sided"
       default: "two.sided"
 
     - name: alpha
       title: "&alpha; (type I error rate)"
       type: List
       options:
-        - "0.1"
-        - "0.05"
-        - "0.01"
-        - "0.001"
-      default: "0.05"
+        - name: '0.1'
+          title: '0.1'
+        - name: '0.05'
+          title: '0.05'
+        - name: '0.01'
+          title: '0.01'
+        - name: '0.001'
+          title: '0.001'
+      default: '0.05'
 
     - name: n_ratio
       title: "Sample size ratio (N<sub>2</sub>/N<sub>1</sub>)"
