@@ -23,4 +23,7 @@ Some usefull [Jamovi](https://www.jamovi.org/) procedures for researchers
 - Three-Way threshold determination in test results
   - UncertainInterval (Hans Landsheer)
 
+- A Priori Power Analysis
+  - Statistical Power and Sample Size Calculation Tools (Metin Bulus, Sebastian Jentschke)
+
 Author: [Yuri Smolyakov](https://t.me/jYSmol)
