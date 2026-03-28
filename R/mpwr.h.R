@@ -327,7 +327,7 @@ mPWRBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             super$initialize(
                 package = "jYS",
                 name = "mPWR",
-                version = c(1,0,13),
+                version = c(1,0,14),
                 options = options,
                 results = mPWRResults$new(options=options),
                 data = data,

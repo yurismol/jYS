@@ -82,8 +82,9 @@ analyses:
     name: mPWR
     ns: jYS
     category: analyses
-    menuGroup: jYS
+    menuGroup: Power
     menuTitle: A Priori Power Analysis
+    menuSubgroup: jYS
 usesNative: true
 minApp: 1.0.8
 
