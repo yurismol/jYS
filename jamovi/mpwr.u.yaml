@@ -18,30 +18,37 @@ children:
         type: TextBox
         label: Minimally-interesting effect size
         format: number
-        enable: '(!calc:es)'
+        enable: (!calc:es)
       - name: power
         type: TextBox
         label: Minimum desired power
         format: number
-        enable: '(!calc:power)'
+        enable: (!calc:power)
       - name: 'n'
         type: TextBox
         label: N for group 1
         format: number
-        enable: '(!calc:n)'
+        enable: (!calc:n)
       - name: n_ratio
         type: TextBox
         label: Relative size of group 2 to group 1
         format: number
-        enable: '(design:independent || design:welch || design:independent_np)'
+        enable: (design:independent || design:welch || design:independent_np)
       - name: var_ratio
         type: TextBox
-        label: "Variance ratio (SD\u2081\u00B2 / SD\u2082\u00B2)"
+        label: Variance ratio (SD₁² / SD₂²)
         format: number
-        enable: '(design:welch)'
+        enable: (design:welch)
       - name: alpha
-        type: ComboBox
+        type: TextBox
         label: '&alpha; (type I error rate)'
+        format: number
+        enable: '(!calc:alpha)'
+        suggestedValues:
+          - value: 0.1
+          - value: 0.05
+          - value: 0.01
+          - value: 0.001
       - name: alt
         type: ComboBox
         label: Tails

@@ -72,17 +72,23 @@ options:
 
     - name: alpha
       title: "&alpha; (type I error rate)"
-      type: List
-      options:
-        - name: '0.1'
-          title: '0.1'
-        - name: '0.05'
-          title: '0.05'
-        - name: '0.01'
-          title: '0.01'
-        - name: '0.001'
-          title: '0.001'
-      default: '0.05'
+      type: Number
+      min: 0
+      default: 0.05
+
+    #- name: alpha
+    #  title: "&alpha; (type I error rate)"
+    #  type: List
+    #  options:
+    #    - name: '0.1'
+    #      title: '0.1'
+    #    - name: '0.05'
+    #      title: '0.05'
+    #    - name: '0.01'
+    #      title: '0.01'
+    #    - name: '0.001'
+    #      title: '0.001'
+    #  default: '0.05'
 
     - name: n_ratio
       title: "Sample size ratio (N<sub>2</sub>/N<sub>1</sub>)"
