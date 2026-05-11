@@ -9,7 +9,7 @@ mPWROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             calc = "n",
             design = "independent",
             es = 0.5,
-            power = 0.9,
+            power = 0.8,
             n = 30,
             alt = "two.sided",
             alpha = 0.05,
@@ -58,7 +58,7 @@ mPWROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 power,
                 min=0,
                 max=1,
-                default=0.9)
+                default=0.8)
             private$..n <- jmvcore::OptionInteger$new(
                 "n",
                 n,
@@ -373,7 +373,7 @@ mPWR <- function(
     calc = "n",
     design = "independent",
     es = 0.5,
-    power = 0.9,
+    power = 0.8,
     n = 30,
     alt = "two.sided",
     alpha = 0.05,

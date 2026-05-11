@@ -62,23 +62,25 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             rw <- matrix$setRow(rowKey=var, values)
   
         }
-        hyp <- self$options$get('hyp')
+        hyp  <- self$options$get('hyp')
         flag <- self$options$get('flag')
+        sign <- '* p < .05, ** p < .01, *** p < .001'
+        if (self$options$decSymbol==",") sign <- '* p < ,05; ** p < ,01; *** p < ,001'
         if (hyp=='pos') {
             matrix$setNote('hyp', .('H\u2090 is positive correlation'))
             hyp <- 'greater'
             if (flag)
-                matrix$setNote('flag', .('* p < .05, ** p < .01, *** p < .001, one-tailed'))
+                matrix$setNote('flag', paste0(sign, ', ', .('one-tailed')))
         } else if (hyp=='neg') {
             matrix$setNote('hyp', .('H\u2090 is negative correlation'))
             hyp <- 'less'
             if (flag)
-                matrix$setNote('flag', .('* p < .05, ** p < .01, *** p < .001, one-tailed'))
+                matrix$setNote('flag', paste0(sign, ', ', .('one-tailed')))
         } else {
             matrix$setNote('hyp', NULL)
             hyp <- 'two.sided'
             if (flag)
-                matrix$setNote('flag', '* p < .05, ** p < .01, *** p < .001')
+                matrix$setNote('flag', sign)
         }
         if (self$options$adjust!='none') {
             matrix$setNote("adjust", jmvcore::format(.("Simultaneous multiple correlation comparisons using {n} method"), n=self$options$adjust))
@@ -103,7 +105,7 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
      },
 
      .run = function() {
-        options(OutDec=",")
+        #options(OutDec=",")
         matrix <- self$results$matrix
         vars   <- self$options$vars
         nVars  <- length(vars)
@@ -124,8 +126,9 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 	if (!is.null(self$options$group)) {
 	   subs <- paste(self$options$group, " == \"", self$options$selgroup,"\"", sep="")
            self$results$text$setContent(paste("<h2>", subs, "</h2>", sep=""))
-	   sub <- paste("`", self$options$group, "`==\"", self$options$selgroup,"\"", sep="")
-           dat <- subset(dat, eval(parse(text=sub)))
+	   ###sub <- paste("`", self$options$group, "`==\"", self$options$selgroup,"\"", sep="")
+           ###dat <- subset(dat, eval(parse(text=sub)))
+           dat <- dat[dat[[self$options$group]] == self$options$selgroup, , drop=FALSE]
         }
 
         if (self$options$adjust!='none' && nVars>1) {
@@ -226,7 +229,7 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
        },
 
       .test=function(var1, var2, hyp, mtord) {
-        options(OutDec=",")
+        #options(OutDec=",")
         results <- list()
         suppressWarnings({
             if (mtord) {

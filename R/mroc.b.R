@@ -53,10 +53,11 @@ mROCClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
           self$results$text$setContent(" ")
 	  #if (!is.null(self$options$groups) && (!self$options$sepROC || is.na(key))) {
 	  if (!is.null(self$options$groups) && !self$options$sepROC) {
-	    subs <- paste(self$options$groups, "==\"", self$options$selgroup,"\"", sep="")
+	    #subs <- paste(self$options$groups, "==\"", self$options$selgroup,"\"", sep="")
             #self$results$text$setContent(paste("<h2>", subs, "</h2>", sep=""))
-	    sub <- paste("`", self$options$groups, "`==\"", self$options$selgroup,"\"", sep="")
-            dat <- subset(dat, eval(parse(text=sub)))
+	    #sub <- paste("`", self$options$groups, "`==\"", self$options$selgroup,"\"", sep="")
+	    ###dat <- subset(dat, eval(parse(text=sub)))
+	    dat <- dat[dat[[self$options$groups]] == self$options$selgroup, , drop=FALSE]
           }
           cls   <- jmvcore::select(dat, self$options$class)
           lev   <- base::levels(cls[!is.na(cls[[self$options$class]]), self$options$class])
@@ -89,8 +90,9 @@ mROCClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               frm <- stats::as.formula(jmvcore:::composeFormula(self$options$class, var))
 	    } else if (!is.na(key)) {
 	      kk  <- self$options$groups
-	      sub <- paste("`", self$options$groups, "`==\"", var,"\"", sep="")
-	      dd <- subset(dat, eval(parse(text=sub)))
+	      ###sub <- paste("`", self$options$groups, "`==\"", var,"\"", sep="")
+	      ###dd <- subset(dat, eval(parse(text=sub)))
+	      dd <- dat[dat[[self$options$groups]] == var, , drop=FALSE]
 	      pair <- FALSE
               frm <- stats::as.formula(jmvcore:::composeFormula(self$options$class, image$key))
 	    }
