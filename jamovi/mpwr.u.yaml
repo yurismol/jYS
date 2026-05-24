@@ -39,6 +39,41 @@ children:
         label: Variance ratio (SD₁² / SD₂²)
         format: number
         enable: (design:welch)
+      - name: k_total
+        type: TextBox
+        label: Total predictors
+        format: number
+        enable: (design:linear)
+      - name: k_tested
+        type: TextBox
+        label: Tested predictors
+        format: number
+        enable: (design:linear)
+      - name: base_prob
+        type: TextBox
+        label: Base probability
+        format: number
+        enable: (design:logistic)
+      - name: r2_predictor
+        type: TextBox
+        label: R² of predictor X with other covariates
+        format: number
+        enable: (design:logistic)
+      - name: df_chisq
+        type: TextBox
+        label: Degrees of freedom
+        format: number
+        enable: (design:chisq)
+      - name: factor_levels
+        type: TextBox
+        label: Number of factor levels/groups
+        format: number
+        enable: (design:anova)
+      - name: k_covariates
+        type: TextBox
+        label: Number of covariates
+        format: number
+        enable: (design:anova)
       - name: alpha
         type: TextBox
         label: '&alpha; (type I error rate)'

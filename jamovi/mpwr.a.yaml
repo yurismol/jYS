@@ -41,6 +41,14 @@ options:
           title: "One Sample Correlation (Pearson)"
         - name: onecor_np
           title: "One Sample Correlation (Spearman)"
+        - name: linear
+          title: "Linear Regression (F-Test)"
+        - name: logistic
+          title: "Logistic Regression (Wald Z-Test)"
+        - name: chisq
+          title: "Chi-square Goodness-of-Fit / Independence (Chi-square Test)"
+        - name: anova
+          title: "ANOVA / ANCOVA (F-Test)"
       default: independent
 
     - name: es
@@ -121,4 +129,48 @@ options:
       title: "N by Effect Size Curve"
       type: Bool
       default: false
+
+    - name: k_total
+      title: "Total predictors"
+      type: Integer
+      min: 1
+      default: 2
+
+    - name: k_tested
+      title: "Tested predictors"
+      type: Integer
+      min: 1
+      default: 2
+
+    - name: base_prob
+      title: "Base probability"
+      type: Number
+      min: 0.001
+      max: 0.999
+      default: 0.15
+
+    - name: r2_predictor
+      title: "R\u00B2 of predictor X with other covariates"
+      type: Number
+      min: 0
+      max: 0.99
+      default: 0
+
+    - name: df_chisq
+      title: "Degrees of freedom"
+      type: Integer
+      min: 1
+      default: 1
+
+    - name: factor_levels
+      title: "Number of factor levels/groups"
+      type: Integer
+      min: 2
+      default: 3
+
+    - name: k_covariates
+      title: "Number of covariates"
+      type: Integer
+      min: 0
+      default: 0
 ...

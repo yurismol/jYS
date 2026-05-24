@@ -26,6 +26,13 @@ items:
         - alpha
         - n_ratio
         - var_ratio
+        - k_total
+        - k_tested
+        - base_prob
+        - r2_predictor
+        - df_chisq
+        - factor_levels
+        - k_covariates
       columns:
         - name: n1
           title: N1
@@ -84,6 +91,13 @@ items:
         - alpha
         - n_ratio
         - var_ratio
+        - k_total
+        - k_tested
+        - base_prob
+        - r2_predictor
+        - df_chisq
+        - factor_levels
+        - k_covariates
 
     - name:  powerCurve
       title: Power Curve
@@ -102,6 +116,13 @@ items:
         - alpha
         - n_ratio
         - var_ratio
+        - k_total
+        - k_tested
+        - base_prob
+        - r2_predictor
+        - df_chisq
+        - factor_levels
+        - k_covariates
 
     - name:  powerEsCurve
       title: Power by Effect Size
@@ -120,6 +141,13 @@ items:
         - alpha
         - n_ratio
         - var_ratio
+        - k_total
+        - k_tested
+        - base_prob
+        - r2_predictor
+        - df_chisq
+        - factor_levels
+        - k_covariates
 
     - name:  nEsCurve
       title: N by Effect Size
@@ -138,6 +166,13 @@ items:
         - alpha
         - n_ratio
         - var_ratio
+        - k_total
+        - k_tested
+        - base_prob
+        - r2_predictor
+        - df_chisq
+        - factor_levels
+        - k_covariates
 
     - name:  text
       title: Log / Errors

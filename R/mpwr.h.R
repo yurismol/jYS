@@ -18,7 +18,14 @@ mPWROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             plot_err = FALSE,
             power_curve = FALSE,
             power_es_curve = FALSE,
-            n_es_curve = FALSE, ...) {
+            n_es_curve = FALSE,
+            k_total = 2,
+            k_tested = 2,
+            base_prob = 0.15,
+            r2_predictor = 0,
+            df_chisq = 1,
+            factor_levels = 3,
+            k_covariates = 0, ...) {
 
             super$initialize(
                 package="jYS",
@@ -46,7 +53,11 @@ mPWROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "one.sample",
                     "one.sample_np",
                     "onecor",
-                    "onecor_np"),
+                    "onecor_np",
+                    "linear",
+                    "logistic",
+                    "chisq",
+                    "anova"),
                 default="independent")
             private$..es <- jmvcore::OptionNumber$new(
                 "es",
@@ -102,6 +113,43 @@ mPWROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "n_es_curve",
                 n_es_curve,
                 default=FALSE)
+            private$..k_total <- jmvcore::OptionInteger$new(
+                "k_total",
+                k_total,
+                min=1,
+                default=2)
+            private$..k_tested <- jmvcore::OptionInteger$new(
+                "k_tested",
+                k_tested,
+                min=1,
+                default=2)
+            private$..base_prob <- jmvcore::OptionNumber$new(
+                "base_prob",
+                base_prob,
+                min=0.001,
+                max=0.999,
+                default=0.15)
+            private$..r2_predictor <- jmvcore::OptionNumber$new(
+                "r2_predictor",
+                r2_predictor,
+                min=0,
+                max=0.99,
+                default=0)
+            private$..df_chisq <- jmvcore::OptionInteger$new(
+                "df_chisq",
+                df_chisq,
+                min=1,
+                default=1)
+            private$..factor_levels <- jmvcore::OptionInteger$new(
+                "factor_levels",
+                factor_levels,
+                min=2,
+                default=3)
+            private$..k_covariates <- jmvcore::OptionInteger$new(
+                "k_covariates",
+                k_covariates,
+                min=0,
+                default=0)
 
             self$.addOption(private$..calc)
             self$.addOption(private$..design)
@@ -116,6 +164,13 @@ mPWROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..power_curve)
             self$.addOption(private$..power_es_curve)
             self$.addOption(private$..n_es_curve)
+            self$.addOption(private$..k_total)
+            self$.addOption(private$..k_tested)
+            self$.addOption(private$..base_prob)
+            self$.addOption(private$..r2_predictor)
+            self$.addOption(private$..df_chisq)
+            self$.addOption(private$..factor_levels)
+            self$.addOption(private$..k_covariates)
         }),
     active = list(
         calc = function() private$..calc$value,
@@ -130,7 +185,14 @@ mPWROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         plot_err = function() private$..plot_err$value,
         power_curve = function() private$..power_curve$value,
         power_es_curve = function() private$..power_es_curve$value,
-        n_es_curve = function() private$..n_es_curve$value),
+        n_es_curve = function() private$..n_es_curve$value,
+        k_total = function() private$..k_total$value,
+        k_tested = function() private$..k_tested$value,
+        base_prob = function() private$..base_prob$value,
+        r2_predictor = function() private$..r2_predictor$value,
+        df_chisq = function() private$..df_chisq$value,
+        factor_levels = function() private$..factor_levels$value,
+        k_covariates = function() private$..k_covariates$value),
     private = list(
         ..calc = NA,
         ..design = NA,
@@ -144,7 +206,14 @@ mPWROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..plot_err = NA,
         ..power_curve = NA,
         ..power_es_curve = NA,
-        ..n_es_curve = NA)
+        ..n_es_curve = NA,
+        ..k_total = NA,
+        ..k_tested = NA,
+        ..base_prob = NA,
+        ..r2_predictor = NA,
+        ..df_chisq = NA,
+        ..factor_levels = NA,
+        ..k_covariates = NA)
 )
 
 mPWRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
@@ -186,7 +255,14 @@ mPWRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "alt",
                     "alpha",
                     "n_ratio",
-                    "var_ratio"),
+                    "var_ratio",
+                    "k_total",
+                    "k_tested",
+                    "base_prob",
+                    "r2_predictor",
+                    "df_chisq",
+                    "factor_levels",
+                    "k_covariates"),
                 columns=list(
                     list(
                         `name`="n1", 
@@ -254,7 +330,14 @@ mPWRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "alt",
                     "alpha",
                     "n_ratio",
-                    "var_ratio")))
+                    "var_ratio",
+                    "k_total",
+                    "k_tested",
+                    "base_prob",
+                    "r2_predictor",
+                    "df_chisq",
+                    "factor_levels",
+                    "k_covariates")))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="powerCurve",
@@ -272,7 +355,14 @@ mPWRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "alt",
                     "alpha",
                     "n_ratio",
-                    "var_ratio")))
+                    "var_ratio",
+                    "k_total",
+                    "k_tested",
+                    "base_prob",
+                    "r2_predictor",
+                    "df_chisq",
+                    "factor_levels",
+                    "k_covariates")))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="powerEsCurve",
@@ -290,7 +380,14 @@ mPWRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "alt",
                     "alpha",
                     "n_ratio",
-                    "var_ratio")))
+                    "var_ratio",
+                    "k_total",
+                    "k_tested",
+                    "base_prob",
+                    "r2_predictor",
+                    "df_chisq",
+                    "factor_levels",
+                    "k_covariates")))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="nEsCurve",
@@ -308,7 +405,14 @@ mPWRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "alt",
                     "alpha",
                     "n_ratio",
-                    "var_ratio")))
+                    "var_ratio",
+                    "k_total",
+                    "k_tested",
+                    "base_prob",
+                    "r2_predictor",
+                    "df_chisq",
+                    "factor_levels",
+                    "k_covariates")))
             self$add(jmvcore::Preformatted$new(
                 options=options,
                 name="text",
@@ -352,6 +456,13 @@ mPWRBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param power_curve .
 #' @param power_es_curve .
 #' @param n_es_curve .
+#' @param k_total .
+#' @param k_tested .
+#' @param base_prob .
+#' @param r2_predictor .
+#' @param df_chisq .
+#' @param factor_levels .
+#' @param k_covariates .
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$powerTable} \tab \tab \tab \tab \tab a table \cr
@@ -382,7 +493,14 @@ mPWR <- function(
     plot_err = FALSE,
     power_curve = FALSE,
     power_es_curve = FALSE,
-    n_es_curve = FALSE) {
+    n_es_curve = FALSE,
+    k_total = 2,
+    k_tested = 2,
+    base_prob = 0.15,
+    r2_predictor = 0,
+    df_chisq = 1,
+    factor_levels = 3,
+    k_covariates = 0) {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
         stop("mPWR requires jmvcore to be installed (restart may be required)")
@@ -401,7 +519,14 @@ mPWR <- function(
         plot_err = plot_err,
         power_curve = power_curve,
         power_es_curve = power_es_curve,
-        n_es_curve = n_es_curve)
+        n_es_curve = n_es_curve,
+        k_total = k_total,
+        k_tested = k_tested,
+        base_prob = base_prob,
+        r2_predictor = r2_predictor,
+        df_chisq = df_chisq,
+        factor_levels = factor_levels,
+        k_covariates = k_covariates)
 
     analysis <- mPWRClass$new(
         options = options,

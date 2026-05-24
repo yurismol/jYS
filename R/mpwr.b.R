@@ -30,6 +30,9 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             arg_d     <- if (calc == "es") NULL else es
             arg_power <- if (calc == "power") NULL else power
             
+            es_arg <- "d"
+            n_arg  <- "n2"
+            
             if (is_cor) {
                 n_mult <- 1
                 args_list <- list(
@@ -43,6 +46,64 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 eff_n <- if (is_spearman) max(4, round(n_g1 * are_spearman)) else max(4, n_g1)
                 args_list$n <- if (calc == "n") NULL else eff_n
                 func_to_call <- pwrss::power.z.onecor
+                es_arg <- "rho"
+                n_arg  <- "n"
+            } else if (design == "linear") {
+                n_mult <- 1
+                args_list <- list(
+                    r.squared.change = arg_d,
+                    k.total          = self$options$k_total,
+                    k.tested         = self$options$k_tested,
+                    power            = arg_power,
+                    alpha            = alpha,
+                    verbose          = FALSE
+                )
+                args_list$n <- if (calc == "n") NULL else max(4, n_g1)
+                func_to_call <- pwrss::power.f.regression
+                es_arg <- "r.squared.change"
+                n_arg  <- "n"
+            } else if (design == "logistic") {
+                n_mult <- 1
+                args_list <- list(
+                    odds.ratio          = arg_d,
+                    base.prob           = self$options$base_prob,
+                    r.squared.predictor = self$options$r2_predictor,
+                    power               = arg_power,
+                    alpha               = alpha,
+                    alternative         = alt,
+                    verbose             = FALSE
+                )
+                args_list$n <- if (calc == "n") NULL else max(4, n_g1)
+                func_to_call <- pwrss::power.z.logistic
+                es_arg <- "odds.ratio"
+                n_arg  <- "n"
+            } else if (design == "chisq") {
+                n_mult <- 1
+                args_list <- list(
+                    w       = arg_d,
+                    df      = self$options$df_chisq,
+                    power   = arg_power,
+                    alpha   = alpha,
+                    verbose = FALSE
+                )
+                args_list$n <- if (calc == "n") NULL else max(4, n_g1)
+                func_to_call <- pwrss::power.chisq.gof
+                es_arg <- "w"
+                n_arg  <- "n"
+            } else if (design == "anova") {
+                n_mult <- 1
+                args_list <- list(
+                    eta.squared   = arg_d,
+                    factor.levels = self$options$factor_levels,
+                    k.covariates  = self$options$k_covariates,
+                    power         = arg_power,
+                    alpha         = alpha,
+                    verbose       = FALSE
+                )
+                args_list$n.total <- if (calc == "n") NULL else max(4, n_g1)
+                func_to_call <- pwrss::power.f.ancova
+                es_arg <- "eta.squared"
+                n_arg  <- "n.total"
             } else {
                 args_list <- list(
                     d           = arg_d,
@@ -94,17 +155,26 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             if (calc == "es") {
                 get_pwr <- function(d_val) {
                     tmp_args <- args_list
-                    if (is_cor) tmp_args$rho <- d_val else tmp_args$d <- d_val
+                    tmp_args[[es_arg]] <- d_val
                     tmp_args$power <- NULL
                     tmp <- try(do.call(func_to_call, tmp_args), silent = TRUE)
                     if (inherits(tmp, "try-error")) return(-0.99)
                     return(tmp$power - power)
                 }
-                opt <- try(uniroot(get_pwr, interval = if (is_cor) c(1e-4, 0.99) else c(1e-4, 5), extendInt = "yes"), silent = TRUE)
+                
+                if (es_arg %in% c("rho", "r.squared.change", "eta.squared", "w")) {
+                    interval <- c(1e-4, 0.99)
+                } else if (es_arg == "odds.ratio") {
+                    interval <- c(1.0001, 10)
+                } else {
+                    interval <- c(1e-4, 5)
+                }
+                
+                opt <- try(uniroot(get_pwr, interval = interval, extendInt = "yes"), silent = TRUE)
                 if (inherits(opt, "try-error")) {
                     res <- opt
                 } else {
-                    if (is_cor) args_list$rho <- opt$root else args_list$d <- opt$root
+                    args_list[[es_arg]] <- opt$root
                     args_list$power <- NULL
                     res <- try(do.call(func_to_call, args_list), silent = TRUE)
                 }
@@ -113,11 +183,13 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 if (inherits(res, "try-error")) {
                     get_n <- function(n_val) {
                         tmp_args <- args_list
-                        if (is_cor) {
+                        if (n_arg == "n2") {
+                            tmp_args$n2 <- max(2, round(n_val * n_mult))
+                        } else if (is_cor) {
                             eff_n <- if (is_spearman) max(4, round(n_val * are_spearman)) else max(4, round(n_val))
                             tmp_args$n <- eff_n
                         } else {
-                            tmp_args$n2 <- max(2, round(n_val * n_mult))
+                            tmp_args[[n_arg]] <- max(4, round(n_val))
                         }
                         tmp_args$power <- NULL
                         tmp <- try(do.call(func_to_call, tmp_args), silent = TRUE)
@@ -129,11 +201,13 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     if (inherits(opt, "try-error")) {
                         res <- opt
                     } else {
-                        if (is_cor) {
+                        if (n_arg == "n2") {
+                            args_list$n2 <- max(2, round(opt$root * n_mult))
+                        } else if (is_cor) {
                             calc_n <- max(4, round(opt$root))
                             args_list$n <- if (is_spearman) max(4, round(calc_n * are_spearman)) else calc_n
                         } else {
-                            args_list$n2 <- max(2, round(opt$root * n_mult))
+                            args_list[[n_arg]] <- max(4, round(opt$root))
                         }
                         args_list$power <- NULL
                         res <- try(do.call(func_to_call, args_list), silent = TRUE)
@@ -152,7 +226,7 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             } else {
                 table <- self$results$powerTable
                 
-                show_n2 <- !(design %in% c("one.sample", "one.sample_np", "onecor", "onecor_np"))
+                show_n2 <- !(design %in% c("one.sample", "one.sample_np", "onecor", "onecor_np", "linear", "logistic", "chisq", "anova"))
                 
                 table$getColumn("n1")$setVisible(calc == "n")
                 table$getColumn("n2")$setVisible(calc == "n" && show_n2)
@@ -164,7 +238,8 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 table$getColumn("es_user")$setVisible(calc != "es")
                 table$getColumn("power_user")$setVisible(calc != "power")
                 
-                res_n1 <- if (is_cor) res$n else res$n[1]
+                res_n1 <- if (n_arg == "n.total") res$n.total else res$n
+                if (length(res_n1) > 0) res_n1 <- res_n1[1]
                 if (is_spearman && calc != "n") res_n1 <- n_g1
                 
                 if (design %in% c("independent", "welch", "independent_np")) {
@@ -175,7 +250,7 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     res_n2 <- NA 
                 }
                 
-                res_es <- if (is_cor) (if (!is.null(res$parms$rho)) res$parms$rho else es) else (if (!is.null(res$parms$d)) res$parms$d else es)
+                res_es <- if (!is.null(res$parms[[es_arg]])) res$parms[[es_arg]] else es
                 res_pw <- if (!is.null(res$power)) res$power else power
                 res_a  <- if (!is.null(res$parms$alpha)) res$parms$alpha else alpha
                 
@@ -215,17 +290,24 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     one.sample = .("One Sample (Student)"),
                     one.sample_np = .("One Sample (Wilcoxon)"),
                     onecor = .("One Sample Correlation (Pearson)"),
-                    onecor_np = .("One Sample Correlation (Spearman)")
+                    onecor_np = .("One Sample Correlation (Spearman)"),
+                    linear = .("Linear Regression (F-Test)"),
+                    logistic = .("Logistic Regression (Wald Z-Test)"),
+                    chisq = .("Chi-square Goodness-of-Fit / Independence (Chi-square Test)"),
+                    anova = .("ANOVA / ANCOVA (F-Test)")
                 )
                 
                 table$setNote("calc_note", paste0(.("Calculated parameter: "), calc_map[[calc]]))
                 table$setNote("design_note", paste0(.("Design: "), design_text))
                 
-                es_measure_text <- if (is_cor) {
-                    .("Effect size measure: correlation coefficient (r)")
-                } else {
-                    .("Effect size measure: Cohen's d")
-                }
+                es_measure_text <- switch(es_arg,
+                    d = .("Effect size measure: Cohen's d"),
+                    rho = .("Effect size measure: correlation coefficient (r)"),
+                    r.squared.change = .("Effect size measure: R-squared change (f\u00B2)"),
+                    odds.ratio = .("Effect size measure: Odds Ratio"),
+                    w = .("Effect size measure: Cohen's w"),
+                    eta.squared = .("Effect size measure: Eta-squared (\u03B7\u00B2)")
+                )
                 table$setNote("es_measure_note", es_measure_text)
                 
                 if (is_spearman) {
@@ -256,6 +338,9 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             arg_d     <- if (calc == "es") NULL else es
             arg_power <- if (calc == "power") NULL else power
             
+            es_arg <- "d"
+            n_arg  <- "n2"
+            
             if (is_cor) {
                 n_mult <- 1
                 args_list <- list(
@@ -269,6 +354,64 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 eff_n <- if (is_spearman) max(4, round(n_g1 * are_spearman)) else max(4, n_g1)
                 args_list$n <- if (calc == "n") NULL else eff_n
                 func_to_call <- pwrss::power.z.onecor
+                es_arg <- "rho"
+                n_arg  <- "n"
+            } else if (design == "linear") {
+                n_mult <- 1
+                args_list <- list(
+                    r.squared.change = arg_d,
+                    k.total          = self$options$k_total,
+                    k.tested         = self$options$k_tested,
+                    power            = arg_power,
+                    alpha            = alpha,
+                    verbose          = FALSE
+                )
+                args_list$n <- if (calc == "n") NULL else max(4, n_g1)
+                func_to_call <- pwrss::power.f.regression
+                es_arg <- "r.squared.change"
+                n_arg  <- "n"
+            } else if (design == "logistic") {
+                n_mult <- 1
+                args_list <- list(
+                    odds.ratio          = arg_d,
+                    base.prob           = self$options$base_prob,
+                    r.squared.predictor = self$options$r2_predictor,
+                    power               = arg_power,
+                    alpha               = alpha,
+                    alternative         = alt,
+                    verbose             = FALSE
+                )
+                args_list$n <- if (calc == "n") NULL else max(4, n_g1)
+                func_to_call <- pwrss::power.z.logistic
+                es_arg <- "odds.ratio"
+                n_arg  <- "n"
+            } else if (design == "chisq") {
+                n_mult <- 1
+                args_list <- list(
+                    w       = arg_d,
+                    df      = self$options$df_chisq,
+                    power   = arg_power,
+                    alpha   = alpha,
+                    verbose = FALSE
+                )
+                args_list$n <- if (calc == "n") NULL else max(4, n_g1)
+                func_to_call <- pwrss::power.chisq.gof
+                es_arg <- "w"
+                n_arg  <- "n"
+            } else if (design == "anova") {
+                n_mult <- 1
+                args_list <- list(
+                    eta.squared   = arg_d,
+                    factor.levels = self$options$factor_levels,
+                    k.covariates  = self$options$k_covariates,
+                    power         = arg_power,
+                    alpha         = alpha,
+                    verbose       = FALSE
+                )
+                args_list$n.total <- if (calc == "n") NULL else max(4, n_g1)
+                func_to_call <- pwrss::power.f.ancova
+                es_arg <- "eta.squared"
+                n_arg  <- "n.total"
             } else {
                 args_list <- list(
                     d           = arg_d,
@@ -320,16 +463,25 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             if (calc == "es") {
                 get_pwr <- function(d_val) {
                     tmp_args <- args_list
-                    if (is_cor) tmp_args$rho <- d_val else tmp_args$d <- d_val
+                    tmp_args[[es_arg]] <- d_val
                     tmp_args$power <- NULL
                     tmp <- try(do.call(func_to_call, tmp_args), silent = TRUE)
                     if (inherits(tmp, "try-error")) return(-0.99)
                     return(tmp$power - power)
                 }
-                opt <- try(uniroot(get_pwr, interval = if (is_cor) c(1e-4, 0.99) else c(1e-4, 5), extendInt = "yes"), silent = TRUE)
+                
+                if (es_arg %in% c("rho", "r.squared.change", "eta.squared", "w")) {
+                    interval <- c(1e-4, 0.99)
+                } else if (es_arg == "odds.ratio") {
+                    interval <- c(1.0001, 10)
+                } else {
+                    interval <- c(1e-4, 5)
+                }
+                
+                opt <- try(uniroot(get_pwr, interval = interval, extendInt = "yes"), silent = TRUE)
                 if (inherits(opt, "try-error")) return(FALSE)
                 
-                if (is_cor) args_list$rho <- opt$root else args_list$d <- opt$root
+                args_list[[es_arg]] <- opt$root
                 args_list$power <- NULL
                 res <- try(do.call(func_to_call, args_list), silent = TRUE)
                 
@@ -338,11 +490,13 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 if (inherits(res, "try-error")) {
                     get_n <- function(n_val) {
                         tmp_args <- args_list
-                        if (is_cor) {
+                        if (n_arg == "n2") {
+                            tmp_args$n2 <- max(2, round(n_val * n_mult))
+                        } else if (is_cor) {
                             eff_n <- if (is_spearman) max(4, round(n_val * are_spearman)) else max(4, round(n_val))
                             tmp_args$n <- eff_n
                         } else {
-                            tmp_args$n2 <- max(2, round(n_val * n_mult))
+                            tmp_args[[n_arg]] <- max(4, round(n_val))
                         }
                         tmp_args$power <- NULL
                         tmp <- try(do.call(func_to_call, tmp_args), silent = TRUE)
@@ -352,11 +506,13 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     opt <- try(uniroot(get_n, interval = c(4, 5000), extendInt = "yes"), silent = TRUE)
                     if (inherits(opt, "try-error")) return(FALSE)
                     
-                    if (is_cor) {
+                    if (n_arg == "n2") {
+                        args_list$n2 <- max(2, round(opt$root * n_mult))
+                    } else if (is_cor) {
                         calc_n <- max(4, round(opt$root))
                         args_list$n <- if (is_spearman) max(4, round(calc_n * are_spearman)) else calc_n
                     } else {
-                        args_list$n2 <- max(2, round(opt$root * n_mult))
+                        args_list[[n_arg]] <- max(4, round(opt$root))
                     }
                     args_list$power <- NULL
                     res <- try(do.call(func_to_call, args_list), silent = TRUE)
@@ -368,7 +524,26 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             }
 
             if (!inherits(res, "try-error")) {
-                if (!is.null(res$df)) {
+                if (!is.null(res$df1) && !is.null(res$df2)) {
+                    pwrss::power.f.test(
+                        ncp         = res$ncp,
+                        null.ncp    = if (!is.null(res$null.ncp)) res$null.ncp else 0,
+                        df1         = res$df1,
+                        df2         = res$df2,
+                        alpha       = res$parms$alpha,
+                        plot        = TRUE,
+                        verbose     = FALSE
+                    )
+                } else if (!is.null(res$df) && res$test == "Chi-square Test") {
+                    pwrss::power.chisq.test(
+                        ncp         = res$ncp,
+                        null.ncp    = if (!is.null(res$null.ncp)) res$null.ncp else 0,
+                        df          = res$df,
+                        alpha       = res$parms$alpha,
+                        plot        = TRUE,
+                        verbose     = FALSE
+                    )
+                } else if (!is.null(res$df)) {
                     pwrss::power.t.test(
                         ncp         = res$ncp,
                         null.ncp    = if (!is.null(res$null.ncp)) res$null.ncp else 0,
@@ -417,10 +592,42 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             
             args_list <- list(alpha = alpha, alternative = alt, verbose = FALSE)
 
+            es_arg <- "d"
+            n_arg  <- "n2"
+
             if (is_cor) {
                 n_mult <- 1
                 args_list$null.rho <- 0
                 func_to_call <- pwrss::power.z.onecor
+                es_arg <- "rho"
+                n_arg  <- "n"
+            } else if (design == "linear") {
+                n_mult <- 1
+                args_list$k.total  <- self$options$k_total
+                args_list$k.tested <- self$options$k_tested
+                func_to_call <- pwrss::power.f.regression
+                es_arg <- "r.squared.change"
+                n_arg  <- "n"
+            } else if (design == "logistic") {
+                n_mult <- 1
+                args_list$base.prob           <- self$options$base_prob
+                args_list$r.squared.predictor <- self$options$r2_predictor
+                func_to_call <- pwrss::power.z.logistic
+                es_arg <- "odds.ratio"
+                n_arg  <- "n"
+            } else if (design == "chisq") {
+                n_mult <- 1
+                args_list$df <- self$options$df_chisq
+                func_to_call <- pwrss::power.chisq.gof
+                es_arg <- "w"
+                n_arg  <- "n"
+            } else if (design == "anova") {
+                n_mult <- 1
+                args_list$factor.levels <- self$options$factor_levels
+                args_list$k.covariates  <- self$options$k_covariates
+                func_to_call <- pwrss::power.f.ancova
+                es_arg <- "eta.squared"
+                n_arg  <- "n.total"
             } else if (design == "independent") {
                 n_mult <- if (n_ratio > 0) n_ratio else 1
                 args_list$n.ratio <- if (n_ratio > 0) 1 / n_ratio else 1
@@ -448,41 +655,56 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 func_to_call <- pwrss::power.t.student
             }
 
+            if (design %in% c("linear", "chisq", "anova")) {
+                args_list$alternative <- NULL
+            }
+
             if (calc == "es") {
                 get_pwr <- function(d_val) {
                     tmp_args <- args_list
-                    if (is_cor) {
-                        tmp_args$rho <- d_val
+                    tmp_args[[es_arg]] <- d_val
+                    if (n_arg == "n2") {
+                        tmp_args$n2 <- max(2, round(n_g1 * n_mult))
+                    } else if (is_cor) {
                         tmp_args$n <- if (is_spearman) max(4, round(n_g1 * are_spearman)) else max(4, round(n_g1))
                     } else {
-                        tmp_args$d <- d_val
-                        tmp_args$n2 <- max(2, round(n_g1 * n_mult))
+                        tmp_args[[n_arg]] <- max(4, round(n_g1))
                     }
                     tmp_args$power <- NULL
                     tmp <- try(do.call(func_to_call, tmp_args), silent = TRUE)
                     if (inherits(tmp, "try-error")) return(-0.99)
                     return(tmp$power - power_val)
                 }
-                opt <- try(uniroot(get_pwr, interval = if(is_cor) c(1e-4, 0.99) else c(1e-4, 5), extendInt = "yes"), silent = TRUE)
+                
+                if (es_arg %in% c("rho", "r.squared.change", "eta.squared", "w")) {
+                    interval <- c(1e-4, 0.99)
+                } else if (es_arg == "odds.ratio") {
+                    interval <- c(1.0001, 10)
+                } else {
+                    interval <- c(1e-4, 5)
+                }
+                
+                opt <- try(uniroot(get_pwr, interval = interval, extendInt = "yes"), silent = TRUE)
                 if (inherits(opt, "try-error")) return(FALSE)
                 arg_d <- opt$root
             } else { arg_d <- es }
             
             if (calc == "n") {
                 tmp_args <- args_list
-                if (is_cor) tmp_args$rho <- arg_d else tmp_args$d <- arg_d
+                tmp_args[[es_arg]] <- arg_d
                 tmp_args$power <- power_val
-                if (is_cor) tmp_args$n <- NULL else tmp_args$n2 <- NULL
+                if (n_arg == "n2") tmp_args$n2 <- NULL else if (is_cor) tmp_args$n <- NULL else tmp_args[[n_arg]] <- NULL
                 res <- try(do.call(func_to_call, tmp_args), silent = TRUE)
                 if (inherits(res, "try-error")) {
                     get_n <- function(n_val) {
                         t_args <- args_list
-                        if (is_cor) {
-                            t_args$rho <- arg_d
+                        t_args[[es_arg]] <- arg_d
+                        if (n_arg == "n2") {
+                            t_args$n2 <- max(2, round(n_val * n_mult))
+                        } else if (is_cor) {
                             t_args$n <- if (is_spearman) max(4, round(n_val * are_spearman)) else max(4, round(n_val))
                         } else {
-                            t_args$d <- arg_d
-                            t_args$n2 <- max(2, round(n_val * n_mult))
+                            t_args[[n_arg]] <- max(4, round(n_val))
                         }
                         t_args$power <- NULL
                         tmp <- try(do.call(func_to_call, t_args), silent = TRUE)
@@ -492,17 +714,22 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     opt <- try(uniroot(get_n, interval = c(4, 5000), extendInt = "yes"), silent = TRUE)
                     if (inherits(opt, "try-error")) return(FALSE)
                     target_n1 <- opt$root
-                } else { target_n1 <- if(is_cor) (if(is_spearman) ceiling(res$n / are_spearman) else res$n) else res$n[1] }
+                } else {
+                    res_n1 <- if (n_arg == "n.total") res$n.total else res$n
+                    if (length(res_n1) > 0) res_n1 <- res_n1[1]
+                    target_n1 <- if(is_spearman) ceiling(res_n1 / are_spearman) else res_n1
+                }
             } else { target_n1 <- n_g1 }
             
             if (calc == "power") {
                 tmp_args <- args_list
-                if (is_cor) {
-                    tmp_args$rho <- arg_d
+                tmp_args[[es_arg]] <- arg_d
+                if (n_arg == "n2") {
+                    tmp_args$n2 <- max(2, round(target_n1 * n_mult))
+                } else if (is_cor) {
                     tmp_args$n <- if (is_spearman) max(4, round(target_n1 * are_spearman)) else max(4, round(target_n1))
                 } else {
-                    tmp_args$d <- arg_d
-                    tmp_args$n2 <- max(2, round(target_n1 * n_mult))
+                    tmp_args[[n_arg]] <- max(4, round(target_n1))
                 }
                 tmp_args$power <- NULL
                 res <- try(do.call(func_to_call, tmp_args), silent = TRUE)
@@ -513,12 +740,13 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             pwr_seq <- numeric(length(n_seq))
             for (i in seq_along(n_seq)) {
                 t_args <- args_list
-                if (is_cor) {
-                    t_args$rho <- arg_d
+                t_args[[es_arg]] <- arg_d
+                if (n_arg == "n2") {
+                    t_args$n2 <- max(2, round(n_seq[i] * n_mult))
+                } else if (is_cor) {
                     t_args$n <- if (is_spearman) max(4, round(n_seq[i] * are_spearman)) else max(4, round(n_seq[i]))
                 } else {
-                    t_args$d <- arg_d
-                    t_args$n2 <- max(2, round(n_seq[i] * n_mult))
+                    t_args[[n_arg]] <- max(4, round(n_seq[i]))
                 }
                 t_args$power <- NULL
                 tmp <- try(do.call(func_to_call, t_args), silent = TRUE)
@@ -561,10 +789,42 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             
             args_list <- list(alpha = alpha, alternative = alt, verbose = FALSE)
 
+            es_arg <- "d"
+            n_arg  <- "n2"
+
             if (is_cor) {
                 n_mult <- 1
                 args_list$null.rho <- 0
                 func_to_call <- pwrss::power.z.onecor
+                es_arg <- "rho"
+                n_arg  <- "n"
+            } else if (design == "linear") {
+                n_mult <- 1
+                args_list$k.total  <- self$options$k_total
+                args_list$k.tested <- self$options$k_tested
+                func_to_call <- pwrss::power.f.regression
+                es_arg <- "r.squared.change"
+                n_arg  <- "n"
+            } else if (design == "logistic") {
+                n_mult <- 1
+                args_list$base.prob           <- self$options$base_prob
+                args_list$r.squared.predictor <- self$options$r2_predictor
+                func_to_call <- pwrss::power.z.logistic
+                es_arg <- "odds.ratio"
+                n_arg  <- "n"
+            } else if (design == "chisq") {
+                n_mult <- 1
+                args_list$df <- self$options$df_chisq
+                func_to_call <- pwrss::power.chisq.gof
+                es_arg <- "w"
+                n_arg  <- "n"
+            } else if (design == "anova") {
+                n_mult <- 1
+                args_list$factor.levels <- self$options$factor_levels
+                args_list$k.covariates  <- self$options$k_covariates
+                func_to_call <- pwrss::power.f.ancova
+                es_arg <- "eta.squared"
+                n_arg  <- "n.total"
             } else if (design == "independent") {
                 n_mult <- if (n_ratio > 0) n_ratio else 1
                 args_list$n.ratio <- if (n_ratio > 0) 1 / n_ratio else 1
@@ -592,41 +852,56 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 func_to_call <- pwrss::power.t.student
             }
 
+            if (design %in% c("linear", "chisq", "anova")) {
+                args_list$alternative <- NULL
+            }
+
             if (calc == "es") {
                 get_pwr <- function(d_val) {
                     tmp_args <- args_list
-                    if (is_cor) {
-                        tmp_args$rho <- d_val
+                    tmp_args[[es_arg]] <- d_val
+                    if (n_arg == "n2") {
+                        tmp_args$n2 <- max(2, round(n_g1 * n_mult))
+                    } else if (is_cor) {
                         tmp_args$n <- if (is_spearman) max(4, round(n_g1 * are_spearman)) else max(4, round(n_g1))
                     } else {
-                        tmp_args$d <- d_val
-                        tmp_args$n2 <- max(2, round(n_g1 * n_mult))
+                        tmp_args[[n_arg]] <- max(4, round(n_g1))
                     }
                     tmp_args$power <- NULL
                     tmp <- try(do.call(func_to_call, tmp_args), silent = TRUE)
                     if (inherits(tmp, "try-error")) return(-0.99)
                     return(tmp$power - power_val)
                 }
-                opt <- try(uniroot(get_pwr, interval = if (is_cor) c(1e-4, 0.99) else c(1e-4, 5), extendInt = "yes"), silent = TRUE)
+                
+                if (es_arg %in% c("rho", "r.squared.change", "eta.squared", "w")) {
+                    interval <- c(1e-4, 0.99)
+                } else if (es_arg == "odds.ratio") {
+                    interval <- c(1.0001, 10)
+                } else {
+                    interval <- c(1e-4, 5)
+                }
+                
+                opt <- try(uniroot(get_pwr, interval = interval, extendInt = "yes"), silent = TRUE)
                 if (inherits(opt, "try-error")) return(FALSE)
                 arg_d <- opt$root
             } else { arg_d <- es }
             
             if (calc == "n") {
                 tmp_args <- args_list
-                if (is_cor) tmp_args$rho <- arg_d else tmp_args$d <- arg_d
+                tmp_args[[es_arg]] <- arg_d
                 tmp_args$power <- power_val
-                if (is_cor) tmp_args$n <- NULL else tmp_args$n2 <- NULL
+                if (n_arg == "n2") tmp_args$n2 <- NULL else if (is_cor) tmp_args$n <- NULL else tmp_args[[n_arg]] <- NULL
                 res <- try(do.call(func_to_call, tmp_args), silent = TRUE)
                 if (inherits(res, "try-error")) {
                     get_n <- function(n_val) {
                         t_args <- args_list
-                        if (is_cor) {
-                            t_args$rho <- arg_d
+                        t_args[[es_arg]] <- arg_d
+                        if (n_arg == "n2") {
+                            t_args$n2 <- max(2, round(n_val * n_mult))
+                        } else if (is_cor) {
                             t_args$n <- if (is_spearman) max(4, round(n_val * are_spearman)) else max(4, round(n_val))
                         } else {
-                            t_args$d <- arg_d
-                            t_args$n2 <- max(2, round(n_val * n_mult))
+                            t_args[[n_arg]] <- max(4, round(n_val))
                         }
                         t_args$power <- NULL
                         tmp <- try(do.call(func_to_call, t_args), silent = TRUE)
@@ -636,34 +911,44 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     opt <- try(uniroot(get_n, interval = c(4, 5000), extendInt = "yes"), silent = TRUE)
                     if (inherits(opt, "try-error")) return(FALSE)
                     target_n1 <- opt$root
-                } else { target_n1 <- if(is_cor) (if(is_spearman) ceiling(res$n / are_spearman) else res$n) else res$n[1] }
+                } else {
+                    res_n1 <- if (n_arg == "n.total") res$n.total else res$n
+                    if (length(res_n1) > 0) res_n1 <- res_n1[1]
+                    target_n1 <- if(is_spearman) ceiling(res_n1 / are_spearman) else res_n1
+                }
             } else { target_n1 <- n_g1 }
             
             if (calc == "power") {
                 tmp_args <- args_list
-                if (is_cor) {
-                    tmp_args$rho <- arg_d
+                tmp_args[[es_arg]] <- arg_d
+                if (n_arg == "n2") {
+                    tmp_args$n2 <- max(2, round(target_n1 * n_mult))
+                } else if (is_cor) {
                     tmp_args$n <- if (is_spearman) max(4, round(target_n1 * are_spearman)) else max(4, round(target_n1))
                 } else {
-                    tmp_args$d <- arg_d
-                    tmp_args$n2 <- max(2, round(target_n1 * n_mult))
+                    tmp_args[[n_arg]] <- max(4, round(target_n1))
                 }
                 tmp_args$power <- NULL
                 res <- try(do.call(func_to_call, tmp_args), silent = TRUE)
                 target_pwr <- if (!inherits(res, "try-error")) res$power else NA
             } else { target_pwr <- power_val }
             
-            d_seq <- if(is_cor) seq(max(0.01, arg_d * 0.2), min(0.99, arg_d * 2.5), length.out = 50) else seq(max(0.01, arg_d * 0.2), arg_d * 2.5, length.out = 50)
+            if (es_arg %in% c("rho", "r.squared.change", "eta.squared")) {
+                d_seq <- seq(max(0.01, arg_d * 0.2), min(0.99, arg_d * 2.5), length.out = 50)
+            } else {
+                d_seq <- seq(max(0.01, arg_d * 0.2), arg_d * 2.5, length.out = 50)
+            }
             pwr_seq <- numeric(length(d_seq))
             
             for (i in seq_along(d_seq)) {
                 t_args <- args_list
-                if (is_cor) {
-                    t_args$rho <- d_seq[i]
+                t_args[[es_arg]] <- d_seq[i]
+                if (n_arg == "n2") {
+                    t_args$n2 <- max(2, round(target_n1 * n_mult))
+                } else if (is_cor) {
                     t_args$n <- if (is_spearman) max(4, round(target_n1 * are_spearman)) else max(4, round(target_n1))
                 } else {
-                    t_args$d <- d_seq[i]
-                    t_args$n2 <- max(2, round(target_n1 * n_mult))
+                    t_args[[n_arg]] <- max(4, round(target_n1))
                 }
                 t_args$power <- NULL
                 tmp <- try(do.call(func_to_call, t_args), silent = TRUE)
@@ -707,10 +992,42 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             
             args_list <- list(alpha = alpha, alternative = alt, verbose = FALSE)
 
+            es_arg <- "d"
+            n_arg  <- "n2"
+
             if (is_cor) {
                 n_mult <- 1
                 args_list$null.rho <- 0
                 func_to_call <- pwrss::power.z.onecor
+                es_arg <- "rho"
+                n_arg  <- "n"
+            } else if (design == "linear") {
+                n_mult <- 1
+                args_list$k.total  <- self$options$k_total
+                args_list$k.tested <- self$options$k_tested
+                func_to_call <- pwrss::power.f.regression
+                es_arg <- "r.squared.change"
+                n_arg  <- "n"
+            } else if (design == "logistic") {
+                n_mult <- 1
+                args_list$base.prob           <- self$options$base_prob
+                args_list$r.squared.predictor <- self$options$r2_predictor
+                func_to_call <- pwrss::power.z.logistic
+                es_arg <- "odds.ratio"
+                n_arg  <- "n"
+            } else if (design == "chisq") {
+                n_mult <- 1
+                args_list$df <- self$options$df_chisq
+                func_to_call <- pwrss::power.chisq.gof
+                es_arg <- "w"
+                n_arg  <- "n"
+            } else if (design == "anova") {
+                n_mult <- 1
+                args_list$factor.levels <- self$options$factor_levels
+                args_list$k.covariates  <- self$options$k_covariates
+                func_to_call <- pwrss::power.f.ancova
+                es_arg <- "eta.squared"
+                n_arg  <- "n.total"
             } else if (design == "independent") {
                 n_mult <- if (n_ratio > 0) n_ratio else 1
                 args_list$n.ratio <- if (n_ratio > 0) 1 / n_ratio else 1
@@ -738,34 +1055,49 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 func_to_call <- pwrss::power.t.student
             }
 
+            if (design %in% c("linear", "chisq", "anova")) {
+                args_list$alternative <- NULL
+            }
+
             if (calc == "es") {
                 get_pwr <- function(d_val) {
                     tmp_args <- args_list
-                    if (is_cor) {
-                        tmp_args$rho <- d_val
+                    tmp_args[[es_arg]] <- d_val
+                    if (n_arg == "n2") {
+                        tmp_args$n2 <- max(2, round(n_g1 * n_mult))
+                    } else if (is_cor) {
                         tmp_args$n <- if (is_spearman) max(4, round(n_g1 * are_spearman)) else max(4, round(n_g1))
                     } else {
-                        tmp_args$d <- d_val
-                        tmp_args$n2 <- max(2, round(n_g1 * n_mult))
+                        tmp_args[[n_arg]] <- max(4, round(n_g1))
                     }
                     tmp_args$power <- NULL
                     tmp <- try(do.call(func_to_call, tmp_args), silent = TRUE)
                     if (inherits(tmp, "try-error")) return(-0.99)
                     return(tmp$power - power_val)
                 }
-                opt <- try(uniroot(get_pwr, interval = if(is_cor) c(1e-4, 0.99) else c(1e-4, 5), extendInt = "yes"), silent = TRUE)
+                
+                if (es_arg %in% c("rho", "r.squared.change", "eta.squared", "w")) {
+                    interval <- c(1e-4, 0.99)
+                } else if (es_arg == "odds.ratio") {
+                    interval <- c(1.0001, 10)
+                } else {
+                    interval <- c(1e-4, 5)
+                }
+                
+                opt <- try(uniroot(get_pwr, interval = interval, extendInt = "yes"), silent = TRUE)
                 if (inherits(opt, "try-error")) return(FALSE)
                 arg_d <- opt$root
             } else { arg_d <- es }
             
             if (calc == "power") {
                 tmp_args <- args_list
-                if (is_cor) {
-                    tmp_args$rho <- arg_d
+                tmp_args[[es_arg]] <- arg_d
+                if (n_arg == "n2") {
+                    tmp_args$n2 <- max(2, round(n_g1 * n_mult))
+                } else if (is_cor) {
                     tmp_args$n <- if (is_spearman) max(4, round(n_g1 * are_spearman)) else max(4, round(n_g1))
                 } else {
-                    tmp_args$d <- arg_d
-                    tmp_args$n2 <- max(2, round(n_g1 * n_mult))
+                    tmp_args[[n_arg]] <- max(4, round(n_g1))
                 }
                 tmp_args$power <- NULL
                 res <- try(do.call(func_to_call, tmp_args), silent = TRUE)
@@ -774,19 +1106,20 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             
             if (calc == "n") {
                 tmp_args <- args_list
-                if (is_cor) tmp_args$rho <- arg_d else tmp_args$d <- arg_d
+                tmp_args[[es_arg]] <- arg_d
                 tmp_args$power <- target_pwr
-                if (is_cor) tmp_args$n <- NULL else tmp_args$n2 <- NULL
+                if (n_arg == "n2") tmp_args$n2 <- NULL else if (is_cor) tmp_args$n <- NULL else tmp_args[[n_arg]] <- NULL
                 res <- try(do.call(func_to_call, tmp_args), silent = TRUE)
                 if (inherits(res, "try-error")) {
                     get_n <- function(n_val) {
                         t_args <- args_list
-                        if (is_cor) {
-                            t_args$rho <- arg_d
+                        t_args[[es_arg]] <- arg_d
+                        if (n_arg == "n2") {
+                            t_args$n2 <- max(2, round(n_val * n_mult))
+                        } else if (is_cor) {
                             t_args$n <- if (is_spearman) max(4, round(n_val * are_spearman)) else max(4, round(n_val))
                         } else {
-                            t_args$d <- arg_d
-                            t_args$n2 <- max(2, round(n_val * n_mult))
+                            t_args[[n_arg]] <- max(4, round(n_val))
                         }
                         t_args$power <- NULL
                         tmp <- try(do.call(func_to_call, t_args), silent = TRUE)
@@ -796,36 +1129,47 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     opt <- try(uniroot(get_n, interval = c(4, 5000), extendInt = "yes"), silent = TRUE)
                     if (inherits(opt, "try-error")) return(FALSE)
                     target_n1 <- opt$root
-                } else { target_n1 <- if (is_cor) (if (is_spearman) ceiling(res$n / are_spearman) else res$n) else res$n[1] }
+                } else {
+                    res_n1 <- if (n_arg == "n.total") res$n.total else res$n
+                    if (length(res_n1) > 0) res_n1 <- res_n1[1]
+                    target_n1 <- if(is_spearman) ceiling(res_n1 / are_spearman) else res_n1
+                }
             } else { target_n1 <- n_g1 }
 
-            d_seq <- if (is_cor) seq(max(0.01, arg_d * 0.2), min(0.99, arg_d * 2.5), length.out = 50) else seq(max(0.01, arg_d * 0.2), arg_d * 2.5, length.out = 50)
+            if (es_arg %in% c("rho", "r.squared.change", "eta.squared")) {
+                d_seq <- seq(max(0.01, arg_d * 0.2), min(0.99, arg_d * 2.5), length.out = 50)
+            } else {
+                d_seq <- seq(max(0.01, arg_d * 0.2), arg_d * 2.5, length.out = 50)
+            }
             n_seq <- numeric(length(d_seq))
             
             for (i in seq_along(d_seq)) {
                 t_args <- args_list
-                if (is_cor) {
-                    t_args$rho <- d_seq[i]
-                    t_args$power <- target_pwr
+                t_args[[es_arg]] <- d_seq[i]
+                t_args$power <- target_pwr
+                if (n_arg == "n2") {
+                    t_args$n2 <- NULL
+                } else if (is_cor) {
                     t_args$n <- NULL
                 } else {
-                    t_args$d <- d_seq[i]
-                    t_args$power <- target_pwr
-                    t_args$n2 <- NULL
+                    t_args[[n_arg]] <- NULL
                 }
                 tmp <- try(do.call(func_to_call, t_args), silent = TRUE)
                 
                 if (!inherits(tmp, "try-error")) {
-                    n_seq[i] <- if (is_cor) (if (is_spearman) ceiling(tmp$n / are_spearman) else tmp$n) else tmp$n[1]
+                    res_n1 <- if (n_arg == "n.total") tmp$n.total else tmp$n
+                    if (length(res_n1) > 0) res_n1 <- res_n1[1]
+                    n_seq[i] <- if (is_spearman) ceiling(res_n1 / are_spearman) else res_n1
                 } else {
                     get_n_loop <- function(n_val) {
                         tt_args <- args_list
-                        if (is_cor) {
-                            tt_args$rho <- d_seq[i]
+                        tt_args[[es_arg]] <- d_seq[i]
+                        if (n_arg == "n2") {
+                            tt_args$n2 <- max(2, round(n_val * n_mult))
+                        } else if (is_cor) {
                             tt_args$n <- if (is_spearman) max(4, round(n_val * are_spearman)) else max(4, round(n_val))
                         } else {
-                            tt_args$d <- d_seq[i]
-                            tt_args$n2 <- max(2, round(n_val * n_mult))
+                            tt_args[[n_arg]] <- max(4, round(n_val))
                         }
                         tt_args$power <- NULL
                         tmp2 <- try(do.call(func_to_call, tt_args), silent = TRUE)
