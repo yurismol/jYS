@@ -81,6 +81,7 @@ mROCClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 	  for (var in vars) {
 	    d <- d+1
 
+
 	    if (split) d <- which(sapply(self$options$vars, function(X) key %in% X))[[1]]
 
 	    if (is.na(key) || split) {
