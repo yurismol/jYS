@@ -3,7 +3,7 @@ name:  mPWR
 title: A Priori Power Analysis
 menuGroup: Power
 menuSubgroup: jYS
-version: '1.0.14'
+version: '1.0.15'
 jas: '1.2'
 
 options:
