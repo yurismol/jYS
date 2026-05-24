@@ -80,7 +80,8 @@ mROCOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 options=list(
                     "none",
                     "succ",
-                    "wcontr"),
+                    "wcontr",
+                    "w05"),
                 default="none")
             private$..mAst <- jmvcore::OptionBool$new(
                 "mAst",

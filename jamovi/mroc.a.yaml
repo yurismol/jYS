@@ -70,6 +70,8 @@ options:
           name:  succ
         - title: With control
           name:  wcontr
+        - title: With 0.5
+          name:  w05
       default: none
 
     - name: mAst
