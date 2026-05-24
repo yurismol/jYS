@@ -1,0 +1,157 @@
+---
+name:  mMLP
+title: MLP Classifier
+menuGroup: jYS
+menuTitle: MLP Classifier
+version: '1.1.0'
+jas: '1.2'
+
+options:
+    - name: data
+      type: Data
+
+    - name: dep
+      title: Dependent Variable (Target)
+      type: Variable
+      suggested:
+        - nominal
+        - ordinal
+      permitted:
+        - factor
+      required: true
+
+    - name: covs
+      title: Covariates (Continuous Predictors)
+      type: Variables
+      suggested:
+        - continuous
+      permitted:
+        - numeric
+
+    - name: factors
+      title: Factors (Categorical Predictors)
+      type: Variables
+      suggested:
+        - nominal
+        - ordinal
+      permitted:
+        - factor
+
+    - name: hidden_structure
+      title: Hidden Layer Structure
+      type: String
+      default: '10,5'
+
+    - name: activation
+      title: Hidden Activation Function
+      type: List
+      options:
+        - name: relu
+          title: ReLU
+        - name: sigmoid
+          title: Sigmoid
+        - name: tanh
+          title: Tanh
+        - name: softmax
+          title: Softmax
+      default: relu
+
+    - name: out_activation
+      title: Output Activation Function
+      type: List
+      options:
+        - name: sigmoid
+          title: Sigmoid
+        - name: identity
+          title: Identity (Linear)
+        - name: softmax
+          title: Softmax
+      default: sigmoid
+
+    - name: decay
+      title: Weight Decay (Regularization)
+      type: Number
+      min: 0
+      default: 0.1
+
+    - name: maxit
+      title: Max Iterations (Epochs)
+      type: Integer
+      min: 10
+      default: 100
+
+    - name: rang
+      title: Initial Weights Range
+      type: Number
+      min: 0.01
+      default: 0.7
+
+    - name: partition
+      title: Partition Method
+      type: List
+      options:
+        - name: holdout
+          title: Hold-out Validation Split
+        - name: kfold
+          title: K-Fold Cross-Validation
+      default: kfold
+
+    - name: val_split
+      title: Hold-out Validation Split (%)
+      type: Number
+      min: 10
+      max: 90
+      default: 30
+
+    - name: cv_folds
+      title: Cross-Validation Folds (K)
+      type: Integer
+      min: 2
+      max: 20
+      default: 5
+
+    - name: show_imp
+      title: Permutation Importance
+      type: Bool
+      default: false
+
+    - name: show_topo
+      title: Network Topology / Architecture Diagram
+      type: Bool
+      default: false
+
+    - name: show_curve
+      title: Learning Curve
+      type: Bool
+      default: false
+
+    - name: show_matrix
+      title: Confusion Matrix
+      type: Bool
+      default: false
+
+    - name: show_roc
+      title: ROC Analysis
+      type: Bool
+      default: false
+
+    - name: roc_x
+      title: ROC X-axis Coordinate
+      type: List
+      options:
+        - name: spec
+          title: Specificity
+        - name: 1spec
+          title: 1 - Specificity
+      default: 1spec
+
+    - name: roc_unit
+      title: ROC Axis Units
+      type: List
+      options:
+        - name: decimal
+          title: Decimal (0 to 1)
+        - name: percent
+          title: Percentage (%)
+      default: percent
+...

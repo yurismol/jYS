@@ -1,0 +1,212 @@
+---
+name:  mMLP
+title: MLP Classifier
+jrs:   '1.1'
+refs: [jys, rip, bish, adam]
+
+items:
+    - name: text
+      title: Conditions
+      type: Html
+      visible: false
+
+    - name: infoTable
+      title: Model Information & Accuracy
+      type: Table
+      rows: 1
+      clearWith:
+          - dep
+          - covs
+          - factors
+          - hidden_structure
+          - activation
+          - out_activation
+          - decay
+          - maxit
+          - rang
+          - partition
+          - val_split
+          - cv_folds
+      columns:
+          - name: size
+            title: Hidden Layers
+            type: text
+          - name: decay
+            title: Weight Decay
+            type: number
+          - name: maxit
+            title: Max Iterations
+            type: integer
+          - name: trainAcc
+            title: Training Accuracy (%)
+            type: number
+          - name: valAcc
+            title: Hold-out Accuracy (%)
+            type: number
+          - name: cvAcc
+            title: K-Fold CV Accuracy (%)
+            type: number
+
+    - name: importanceTable
+      title: Predictor Importance
+      type: Table
+      visible: (show_imp)
+      clearWith:
+          - dep
+          - covs
+          - factors
+          - hidden_structure
+          - activation
+          - out_activation
+          - decay
+          - maxit
+          - rang
+      columns:
+          - name: var
+            title: Predictor
+            type: text
+          - name: imp
+            title: Mean Decrease in Accuracy
+            type: number
+          - name: rank
+            title: Rank
+            type: integer
+
+    - name: importancePlot
+      title: Predictor Importance Chart
+      type: Image
+      visible: (show_imp)
+      width:  500
+      height: 350
+      renderFun: .importancePlot
+      requiresData: true
+      clearWith:
+          - dep
+          - covs
+          - factors
+          - hidden_structure
+          - activation
+          - out_activation
+          - decay
+          - maxit
+          - rang
+
+    - name: topoPlot
+      title: MLP Network Topology
+      type: Image
+      visible: (show_topo)
+      width:  600
+      height: 500
+      renderFun: .topoPlot
+      requiresData: true
+      clearWith:
+          - dep
+          - covs
+          - factors
+          - hidden_structure
+          - activation
+          - out_activation
+          - decay
+          - maxit
+          - rang
+
+    - name: curvePlot
+      title: MLP Learning Curve
+      type: Image
+      visible: (show_curve)
+      width:  500
+      height: 350
+      renderFun: .curvePlot
+      requiresData: true
+      clearWith:
+          - dep
+          - covs
+          - factors
+          - hidden_structure
+          - activation
+          - out_activation
+          - decay
+          - maxit
+          - rang
+          - val_split
+
+    - name: matrixTable
+      title: Confusion Matrix
+      type: Table
+      visible: (show_matrix)
+      clearWith:
+          - dep
+          - covs
+          - factors
+          - hidden_structure
+          - activation
+          - out_activation
+          - decay
+          - maxit
+          - rang
+          - partition
+          - val_split
+          - cv_folds
+      columns:
+          - name: actual
+            title: Actual \ Predicted
+            type: text
+          - name: pred_neg
+            title: Negative Class
+            type: integer
+          - name: pred_pos
+            title: Positive Class
+            type: integer
+
+    - name: statsTable
+      title: Performance Statistics
+      type: Table
+      visible: (show_matrix)
+      clearWith:
+          - dep
+          - covs
+          - factors
+          - hidden_structure
+          - activation
+          - out_activation
+          - decay
+          - maxit
+          - rang
+          - partition
+          - val_split
+          - cv_folds
+      columns:
+          - name: metric
+            title: Metric
+            type: text
+          - name: trainVal
+            title: Training
+            type: number
+          - name: cvVal
+            title: Validation
+            type: number
+
+    - name: rocPlot
+      title: ROC Analysis Comparison
+      type: Image
+      visible: (show_roc)
+      width:  500
+      height: 500
+      renderFun: .rocPlot
+      requiresData: true
+      clearWith:
+          - dep
+          - covs
+          - factors
+          - hidden_structure
+          - activation
+          - out_activation
+          - decay
+          - maxit
+          - rang
+          - partition
+          - val_split
+          - cv_folds
+          - roc_x
+          - roc_unit
+...

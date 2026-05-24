@@ -1,7 +1,7 @@
 ---
 title: jYS Extended Functions
 name: jYS
-version: 1.0.15
+version: 1.1.0
 jms: '1.0'
 authors:
   - Yuri Smolyakov
@@ -44,6 +44,9 @@ datasets:
   - name: UI for binomial logistis models
     path: UI_LOG.omv
     description: Uncertain Interval estimation for binomial logistis models
+  - name: Neural Network Classification
+    path: MLP.omv
+    description: Neural Network Classifier (multilayer perceptron) demonstration
 analyses:
   - title: Correlation clustering
     name: mCOR
@@ -85,6 +88,12 @@ analyses:
     menuGroup: Power
     menuTitle: A Priori Power Analysis
     menuSubgroup: jYS
+  - title: MLP Classifier
+    name: mMLP
+    ns: jYS
+    category: analyses
+    menuGroup: jYS
+    menuTitle: MLP Classifier
 usesNative: true
 minApp: 1.0.8
 

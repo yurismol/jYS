@@ -182,3 +182,26 @@ refs:
         issue: 4
         pages: 355-362
         url: https://doi.org/10.1177/1948550617697177
+
+    rip:
+        type: 'book'
+        author: Ripley, B. D.
+        year: 1996
+        title: "Pattern Recognition and Neural Networks"
+        publisher: 'Cambridge University Press'
+
+    bish:
+        type: 'book'
+        author: Bishop, C. M.
+        year: 2006
+        title: "Pattern Recognition and Machine Learning"
+        publisher: 'Springer'
+
+    adam:
+        type: 'article'
+        author: Kingma, D. P., & Ba, J.
+        year: 2014
+        title: "Adam: A Method for Stochastic Optimization"
+        publisher: 'arXiv preprint arXiv:1412.6980'
+        url: https://arxiv.org/abs/1412.6980
+

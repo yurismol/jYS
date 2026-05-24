@@ -26,4 +26,6 @@ Some usefull [Jamovi](https://www.jamovi.org/) procedures for researchers
 - Statistical Power and Sample Size Calculation Tools
   - pwrss (Metin Bulus, Sebastian Jentschke)
 
+- MLP Classifier
+
 Author: [Yuri Smolyakov](https://t.me/jYSmol)

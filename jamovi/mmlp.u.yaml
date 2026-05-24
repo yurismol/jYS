@@ -1,0 +1,99 @@
+title: MLP Classifier
+name: mMLP
+jus: '3.0'
+stage: 0
+compilerMode: wild
+children:
+  - type: VariableSupplier
+    persistentItems: false
+    stretchFactor: 1
+    children:
+      - type: TargetLayoutBox
+        label: Dependent Variable (Target)
+        children:
+          - type: VariablesListBox
+            name: dep
+            maxItemCount: 1
+            isTarget: true
+      - type: TargetLayoutBox
+        label: Covariates (Continuous Predictors)
+        children:
+          - type: VariablesListBox
+            name: covs
+            isTarget: true
+      - type: TargetLayoutBox
+        label: Factors (Categorical Predictors)
+        children:
+          - type: VariablesListBox
+            name: factors
+            isTarget: true
+
+  - type: CollapseBox
+    label: Model Parameters
+    collapsed: true
+    children:
+      - name: hidden_structure
+        type: TextBox
+        label: Hidden Layer Structure (e.g., 8 or 10,5)
+        format: string
+      - name: activation
+        type: ComboBox
+        label: Hidden Activation Function
+      - name: out_activation
+        type: ComboBox
+        label: Output Activation Function
+      - name: decay
+        type: TextBox
+        label: Weight Decay (L2 Regularization)
+        format: number
+      - name: maxit
+        type: TextBox
+        label: Max Iterations (Epochs)
+        format: number
+      - name: rang
+        type: TextBox
+        label: Initial Weights Range
+        format: number
+
+  - type: CollapseBox
+    label: Validation Settings
+    collapsed: true
+    children:
+      - name: partition
+        type: ComboBox
+        label: Partition Method
+      - name: val_split
+        type: TextBox
+        label: Hold-out Validation Split (%)
+        format: number
+        enable: (partition:holdout)
+      - name: cv_folds
+        type: TextBox
+        label: Cross-Validation Folds (K)
+        format: number
+        enable: (partition:kfold)
+
+  - type: CollapseBox
+    label: Outputs & Evaluation
+    collapsed: false
+    children:
+      - name: show_imp
+        type: CheckBox
+      - name: show_topo
+        type: CheckBox
+      - name: show_curve
+        type: CheckBox
+      - name: show_matrix
+        type: CheckBox
+      - name: show_roc
+        type: CheckBox
+        children:
+          - name: roc_x
+            type: ComboBox
+            label: X-axis Coordinate
+            enable: (show_roc)
+          - name: roc_unit
+            type: ComboBox
+            label: Axis Units
+            enable: (show_roc)
+...
