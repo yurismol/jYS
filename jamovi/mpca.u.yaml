@@ -1,0 +1,128 @@
+title: PCA Submodule
+name: mPCA
+jus: '3.0'
+stage: 0
+compilerMode: tame
+children:
+  - type: VariableSupplier
+    persistentItems: false
+    stretchFactor: 1
+    children:
+      - type: TargetLayoutBox
+        label: Variables for PCA
+        children:
+          - type: VariablesListBox
+            name: vars
+            isTarget: true
+      - type: TargetLayoutBox
+        label: Grouping Variable
+        children:
+          - type: VariablesListBox
+            name: classVar
+            maxItemCount: 1
+            isTarget: true
+            fitToGrid: true
+      - type: TargetLayoutBox
+        label: Filter Variable
+        children:
+          - type: VariablesListBox
+            name: group
+            maxItemCount: 1
+            isTarget: true
+            fitToGrid: true
+          - type: LevelSelector
+            label: ''
+            name: selgroup
+            enable: ({return ui['group'].value()!==null;})
+
+  - type: CollapseBox
+    label: PCA Configuration
+    collapsed: false
+    stretchFactor: 1
+    children:
+      - type: LayoutBox
+        margin: large
+        children:
+          - type: TextBox
+            name: npc
+            format: number
+            label: Number of components to retain
+          - type: TextBox
+            name: pcX
+            format: number
+            label: PC for X axis (Plot)
+          - type: TextBox
+            name: pcY
+            format: number
+            label: PC for Y axis (Plot)
+
+  - type: CollapseBox
+    label: Tables and Visualizations
+    collapsed: false
+    stretchFactor: 1
+    children:
+      - type: LayoutBox
+        margin: large
+        children:
+          - type: CheckBox
+            name: loadingsTable
+          - type: CheckBox
+            name: loadingsHeatmap
+          - type: CheckBox
+            name: screePlot
+          - type: CheckBox
+            name: scorePlot
+          - type: CheckBox
+            name: biplot
+          - type: CheckBox
+            name: cos2Table
+          - type: CheckBox
+            name: cos2Heatmap
+
+  - type: CollapseBox
+    label: Analysis by Groups
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: LayoutBox
+        margin: large
+        children:
+          - type: Label
+            label: K-Means «Blind» Clustering
+            enable: ({return ui['classVar'].value()!==null;})
+          - type: CheckBox
+            name: kmeansTable
+            enable: ({return ui['classVar'].value()!==null;})
+          - type: TextBox
+            name: kMeansK
+            format: number
+            label: Number of clusters (K)
+            enable: ({return ui['classVar'].value()!==null;})
+          
+          - type: Label
+            label: Regression Model & Validation
+            enable: ({return ui['classVar'].value()!==null;})
+          - type: CheckBox
+            name: regTable
+            enable: ({return ui['classVar'].value()!==null;})
+          - type: CheckBox
+            name: rocPlot
+            enable: ({return ui['classVar'].value()!==null;})
+            children:
+              - name: roc_x
+                type: ComboBox
+                label: X-axis Coordinate
+                enable: (rocPlot)
+              - name: roc_unit
+                type: ComboBox
+                label: Axis Units
+                enable: (rocPlot)
+              - name: palBrewer
+                type: ComboBox
+                label: Brewer's qualitative palette
+                enable: (rocPlot)
+          - type: TextBox
+            name: regKFold
+            format: number
+            label: K-folds for CV
+            enable: ({return ui['classVar'].value()!==null;})

@@ -26,6 +26,7 @@ items:
               - learnvar
               - imputevar
           description: MAR classification table
+          rows: 1
           columns:
               - name: name
                 title: ""

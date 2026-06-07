@@ -32,6 +32,14 @@ items:
               - name: int
                 title: Intersection
                 type: number
+              - name: lth
+                title: Lower threshold
+                type: number
+                visible: (UImethod != "noUI")
+              - name: uth
+                title: Upper threshold
+                type: number
+                visible: (UImethod != "noUI")
     
         - name: mcistat
           title: More Certain Interval (MCI)
@@ -46,7 +54,43 @@ items:
                 title: Predictor
                 type: text
                 content: ($key)
-
+              - name: C
+                title: Concordance
+                type: number
+              - name: Se
+                title: Se
+                type: number
+              - name: Sp
+                title: Sp
+                type: number
+              - name: CCR
+                title: CCR
+                type: number
+              - name: bal
+                title: Balance
+                type: number
+              - name: NPV
+                title: NPV
+                type: number
+              - name: PPV
+                title: PPV
+                type: number
+              - name: SNPV
+                title: SNPV
+                type: number
+              - name: SPPV
+                title: SPPV
+                type: number
+              - name: LRm
+                title: LR-
+                type: number
+              - name: LRp
+                title: LR+
+                type: number
+              - name: Prevalence
+                title: Prevalence
+                type: number
+    
         - name: intstat
           title: Proportions of Intervals
           type: Table

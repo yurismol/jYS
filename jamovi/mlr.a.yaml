@@ -1,9 +1,9 @@
 ---
-name:  mMLP
-title: MLP Classifier
+name:  mLR
+title: Logistic Regression
 menuGroup: jYS
-menuTitle: MLP Classifier
-version: '1.1.0'
+menuTitle: Logistic Regression
+version: '1.0.0'
 jas: '1.2'
 
 options:
@@ -37,63 +37,64 @@ options:
       permitted:
         - factor
 
-    - name: hidden_structure
-      title: Hidden Layer Structure
-      type: String
-      default: '10,5'
+    - name: group
+      title: Filter Variable
+      required: false
+      suggested:
+        - nominal
+        - ordinal
+      permitted:
+        - factor
+      type: Variable
 
-    - name: activation
-      title: Hidden Activation Function
+    - name: selgroup
+      title: Select group for filtering
+      type: Level
+      variable: (group)
+
+    - name: method
+      title: Feature Selection Method
       type: List
       options:
-        - name: relu
-          title: ReLU
-        - name: sigmoid
-          title: Sigmoid
-        - name: tanh
-          title: Tanh
-        - name: softmax
-          title: Softmax
-      default: relu
+        - name: manual
+          title: Manual (Use All Predictors)
+        - name: forward
+          title: Forward Stepwise Selection (AIC)
+        - name: backward
+          title: Backward Stepwise Elimination (AIC)
+        - name: lasso
+          title: LASSO L1 Regularization
+        - name: elastic
+          title: ElasticNet (L1 + L2 Regularization)
+      default: manual
 
-    - name: out_activation
-      title: Output Activation Function
+    - name: elastic_alpha
+      title: ElasticNet Alpha (L1 Ratio)
+      type: Number
+      min: 0.0
+      max: 1.0
+      default: 0.5
+
+    - name: lasso_penalty
+      title: Regularization Penalty Choice
       type: List
       options:
-        - name: sigmoid
-          title: Sigmoid
-        - name: identity
-          title: Identity (Linear)
-        - name: softmax
-          title: Softmax
-      default: sigmoid
-
-    - name: decay
-      title: Weight Decay (Regularization)
-      type: Number
-      min: 0
-      default: 0.1
-
-    - name: maxit
-      title: Max Iterations (Epochs)
-      type: Integer
-      min: 10
-      default: 100
-
-    - name: rang
-      title: Initial Weights Range
-      type: Number
-      min: 0.01
-      default: 0.7
+        - name: min
+          title: Lambda Min (Minimum CV Error)
+        - name: 1se
+          title: Lambda 1SE (Most Sparse Model)
+      default: min
 
     - name: partition
-      title: Partition Method
+      title: Validation Method
       type: List
       options:
         - name: holdout
           title: Hold-out Validation Split
         - name: kfold
           title: K-Fold Cross-Validation
+        - name: repeated_kfold
+          title: Repeated Stratified K-Fold CV
       default: kfold
 
     - name: val_split
@@ -110,25 +111,17 @@ options:
       max: 20
       default: 5
 
-    - name: show_imp
-      title: Permutation Importance
-      type: Bool
-      default: false
+    - name: cv_repeats
+      title: Cross-Validation Repeats
+      type: Integer
+      min: 1
+      max: 10
+      default: 3
 
-    - name: show_topo
-      title: Network Topology / Architecture Diagram
+    - name: show_formula
+      title: Show Model Formula
       type: Bool
-      default: false
-
-    - name: show_curve
-      title: Learning Curve
-      type: Bool
-      default: false
-
-    - name: show_matrix
-      title: Confusion Matrix
-      type: Bool
-      default: false
+      default: true
 
     - name: show_roc
       title: ROC Analysis
@@ -154,16 +147,6 @@ options:
         - name: percent
           title: Percentage (%)
       default: percent
-
-    - name: multiclass_roc_type
-      title: Multiclass ROC Layout
-      type: List
-      options:
-        - name: combined
-          title: Combined Plot (Single Axes)
-        - name: separate
-          title: Separate Plots (Class-Specific)
-      default: combined
 
     - name: palBrewer
       title: Brewer's qualitative palette

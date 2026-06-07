@@ -76,7 +76,7 @@ children:
         enable: (design:anova)
       - name: alpha
         type: TextBox
-        label: '&alpha; (type I error rate)'
+        label: 'α (type I error rate)'
         format: number
         enable: '(!calc:alpha)'
         suggestedValues:

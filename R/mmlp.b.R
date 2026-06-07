@@ -4,6 +4,25 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
     "mMLPClass",
     inherit = mMLPBase,
     private = list(
+        .init = function() {
+            private$.initOutputs()
+        },
+        
+        .initOutputs = function() {
+            # Predict Class
+            keys <- "predClass"
+            titles <- .("Predicted Class")
+            descriptions <- .("MLP Classifier Predicted Class")
+            measureTypes <- "factor"
+            self$results$predClass$set(keys, titles, descriptions, measureTypes)
+            
+            # Predict Prob
+            keys <- "predProb"
+            titles <- .("Predicted Probability")
+            descriptions <- .("MLP Classifier Predicted Probability")
+            measureTypes <- "continuous"
+            self$results$predProb$set(keys, titles, descriptions, measureTypes)
+        },
         
         .run = function() {
             dep <- self$options$dep
@@ -35,13 +54,29 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             y <- as.factor(clean_data[[dep]])
             y_levels <- levels(y)
 
-            if (length(y_levels) != 2) {
+            if (length(y_levels) < 2) {
                 self$results$text$setVisible(TRUE)
-                self$results$text$setContent(.("The dependent variable must have exactly 2 levels (binary classification)."))
+                self$results$text$setContent(.("The dependent variable must have at least 2 levels."))
                 return()
             }
 
-            y_num <- ifelse(y == y_levels[2], 1, 0)
+            C <- length(y_levels)
+            
+            encode_target <- function(y_factor, num_classes) {
+                if (num_classes == 2) {
+                    return(ifelse(y_factor == levels(y_factor)[2], 1, 0))
+                } else {
+                    y_int <- as.integer(y_factor)
+                    one_hot <- matrix(0, nrow = length(y_int), ncol = num_classes)
+                    for (i in seq_along(y_int)) {
+                        one_hot[i, y_int[i]] <- 1
+                    }
+                    colnames(one_hot) <- levels(y_factor)
+                    return(one_hot)
+                }
+            }
+            
+            y_num <- encode_target(y, C)
 
             # Standardize Continuous Covariates
             if (length(covs) > 0) {
@@ -54,6 +89,9 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             formula_str <- jmvcore:::composeFormula(NULL, c(covs, factors))
             X_matrix <- model.matrix(as.formula(formula_str), data = clean_data)
             X_matrix <- X_matrix[, -1, drop = FALSE] # Drop intercept column
+            colnames(X_matrix) <- gsub("^`|`$", "", colnames(X_matrix))
+            colnames(X_matrix) <- gsub("`|\\\\", "", colnames(X_matrix))
+            colnames(X_matrix) <- gsub('["\']', "", colnames(X_matrix))
 
             # Parse Hidden Layer Structure
             hidden_str <- self$options$hidden_structure
@@ -91,10 +129,35 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 return()
             }
 
+            # Helpers for predictions and accuracies
+            get_predictions <- function(prob, num_classes) {
+                if (num_classes == 2) {
+                    return(ifelse(prob >= 0.5, 1, 0))
+                } else {
+                    return(apply(prob, 1, which.max))
+                }
+            }
+
+            get_accuracy <- function(pred, y_target, num_classes) {
+                if (num_classes == 2) {
+                    return(mean(pred == y_target) * 100)
+                } else {
+                    return(mean(pred == as.integer(y_target)) * 100)
+                }
+            }
+
+            subset_target <- function(y_target, idx) {
+                if (is.matrix(y_target)) {
+                    return(y_target[idx, , drop = FALSE])
+                } else {
+                    return(y_target[idx])
+                }
+            }
+
             # Baseline Training Performance
             train_prob <- private$.predict_mlp(fit_full, X_matrix)
-            train_pred <- ifelse(train_prob >= 0.5, 1, 0)
-            train_acc <- mean(train_pred == y_num) * 100
+            train_pred <- get_predictions(train_prob, C)
+            train_acc <- get_accuracy(train_pred, if (C == 2) y_num else y, C)
 
             partition <- self$options$partition
             val_acc <- NA
@@ -108,20 +171,18 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
             # 2. Hold-out Validation Split (Stratified)
             set.seed(42)
-            idx0 <- which(y_num == 0)
-            idx1 <- which(y_num == 1)
-            
-            n_test0 <- max(1, round(length(idx0) * val_split))
-            n_test1 <- max(1, round(length(idx1) * val_split))
-            
-            test_idx0 <- sample(idx0, n_test0)
-            test_idx1 <- sample(idx1, n_test1)
-            test_idx <- c(test_idx0, test_idx1)
+            test_idx_list <- list()
+            for (c_idx in seq_along(y_levels)) {
+                idx_c <- which(as.integer(y) == c_idx)
+                n_test_c <- max(1, round(length(idx_c) * val_split))
+                test_idx_list[[c_idx]] <- sample(idx_c, n_test_c)
+            }
+            test_idx <- unlist(test_idx_list)
             train_idx <- setdiff(1:nrow(X_matrix), test_idx)
 
             fit_val <- try(private$.fit_mlp(
                 X = X_matrix[train_idx, , drop = FALSE], 
-                y = y_num[train_idx], 
+                y = subset_target(y_num, train_idx), 
                 hidden_sizes = hidden_sizes, 
                 hidden_activation = hidden_activation, 
                 out_activation = out_activation, 
@@ -132,9 +193,9 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
             if (!inherits(fit_val, "try-error")) {
                 val_prob <- private$.predict_mlp(fit_val, X_matrix[test_idx, , drop = FALSE])
-                val_pred <- ifelse(val_prob >= 0.5, 1, 0)
+                val_pred <- get_predictions(val_prob, C)
                 if (partition == "holdout") {
-                    val_acc <- mean(val_pred == y_num[test_idx]) * 100
+                    val_acc <- get_accuracy(val_pred, if (C == 2) y_num[test_idx] else y[test_idx], C)
                 }
             } else {
                 val_acc <- NA
@@ -156,8 +217,8 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     return(folds)
                 }
 
-                folds <- create_stratified_folds(y_num, cv_folds)
-                cv_pred_probs <- numeric(nrow(X_matrix))
+                folds <- create_stratified_folds(y, cv_folds)
+                cv_pred_probs <- if (C == 2) numeric(nrow(X_matrix)) else matrix(0, nrow = nrow(X_matrix), ncol = C)
                 cv_preds <- numeric(nrow(X_matrix))
                 cv_errors <- 0
                 
@@ -167,7 +228,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     
                     fit_cv <- try(private$.fit_mlp(
                         X = X_matrix[tr_idx, , drop = FALSE], 
-                        y = y_num[tr_idx], 
+                        y = subset_target(y_num, tr_idx), 
                         hidden_sizes = hidden_sizes, 
                         hidden_activation = hidden_activation, 
                         out_activation = out_activation, 
@@ -178,15 +239,19 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
                     if (!inherits(fit_cv, "try-error")) {
                         p_prob <- private$.predict_mlp(fit_cv, X_matrix[t_idx, , drop = FALSE])
-                        cv_pred_probs[t_idx] <- p_prob
-                        cv_preds[t_idx] <- ifelse(p_prob >= 0.5, 1, 0)
+                        if (C == 2) {
+                            cv_pred_probs[t_idx] <- p_prob
+                        } else {
+                            cv_pred_probs[t_idx, ] <- p_prob
+                        }
+                        cv_preds[t_idx] <- get_predictions(p_prob, C)
                     } else {
                         cv_errors <- cv_errors + 1
                     }
                 }
 
                 if (cv_errors == 0) {
-                    cv_acc <- mean(cv_preds == y_num) * 100
+                    cv_acc <- get_accuracy(cv_preds, if (C == 2) y_num else y, C)
                 } else {
                     cv_acc <- NA
                 }
@@ -196,14 +261,51 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
             # Write Model Info Table
             info_table <- self$results$infoTable
-            info_table$setRow(rowNo = 1, values = list(
-                size = paste0(hidden_str, " (", hidden_activation, " / ", out_activation, ")"),
-                decay = decay,
-                maxit = maxit,
-                trainAcc = train_acc,
-                valAcc = val_acc,
-                cvAcc = cv_acc
-            ))
+            
+            fmt_pct <- function(val) {
+                if (is.null(val) || is.na(val)) return("-")
+                return(sprintf("%.2f%%", val))
+            }
+            
+            metrics <- c(
+                .("Hidden Layers"),
+                .("Weight Decay"),
+                .("Max Iterations"),
+                .("Training Accuracy (%)"),
+                .("Hold-out Accuracy (%)"),
+                .("K-Fold CV Accuracy (%)")
+            )
+            
+            values <- c(
+                paste0(hidden_str, " (", hidden_activation, " / ", if (C > 2) "softmax" else out_activation, ")"),
+                as.character(decay),
+                as.character(maxit),
+                fmt_pct(train_acc),
+                if (partition == "holdout") fmt_pct(val_acc) else "-",
+                if (partition == "kfold") fmt_pct(cv_acc) else "-"
+            )
+            
+            for (i in 1:6) {
+                info_table$setRow(rowNo = i, values = list(
+                    metric = metrics[i],
+                    value = values[i]
+                ))
+            }
+            
+            info_table$setNote("n1", .("Hidden Layers: network architecture (hidden layer sizes, hidden / output activation functions)"))
+            info_table$setNote("n2", .("Weight Decay: L2 regularization penalty parameter."))
+            info_table$setNote("n3", .("Max Iterations: maximum number of training epochs."))
+            info_table$setNote("n4", .("Training Accuracy: classification accuracy on the training dataset."))
+            if (partition == "holdout") {
+                info_table$setNote("n5", .("Hold-out Accuracy: classification accuracy on the hold-out validation dataset."))
+            } else {
+                info_table$setNote("n5", NULL)
+            }
+            if (partition == "kfold") {
+                info_table$setNote("n6", .("K-Fold CV Accuracy: average classification accuracy across cross-validation folds."))
+            } else {
+                info_table$setNote("n6", NULL)
+            }
 
             # 4. Permutation Importance
             if (self$options$show_imp) {
@@ -220,8 +322,8 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     X_shuffled <- X_shuffled[, -1, drop = FALSE]
                     
                     shuf_prob <- private$.predict_mlp(fit_full, X_shuffled)
-                    shuf_pred <- ifelse(shuf_prob >= 0.5, 1, 0)
-                    shuf_acc <- mean(shuf_pred == y_num) * 100
+                    shuf_pred <- get_predictions(shuf_prob, C)
+                    shuf_acc <- get_accuracy(shuf_pred, if (C == 2) y_num else y, C)
                     
                     # Permutation decrease in accuracy
                     imp_values[v_idx] <- max(0, train_acc - shuf_acc)
@@ -255,7 +357,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     b = fit_full$b,
                     layer_sizes = fit_full$layer_sizes,
                     input_names = colnames(X_matrix),
-                    output_names = y_levels[2],
+                    output_names = if (C == 2) y_levels[2] else y_levels,
                     activations = fit_full$activations
                 )
                 image_topo <- self$results$topoPlot
@@ -267,9 +369,13 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 iter_seq <- seq(10, maxit, length.out = min(10, max(2, maxit / 10)))
                 iter_seq <- unique(round(iter_seq))
                 
-                compute_cross_entropy <- function(y_vec, p_vec) {
-                    p_vec <- pmin(pmax(p_vec, 1e-15), 1 - 1e-15)
-                    mean(- (y_vec * log(p_vec) + (1 - y_vec) * log(1 - p_vec)))
+                compute_cross_entropy <- function(y_target, p_pred) {
+                    p_pred <- pmin(pmax(p_pred, 1e-15), 1 - 1e-15)
+                    if (is.matrix(y_target) && ncol(y_target) > 1) {
+                        mean(-rowSums(y_target * log(p_pred)))
+                    } else {
+                        mean(- (y_target * log(p_pred) + (1 - y_target) * log(1 - p_pred)))
+                    }
                 }
                 
                 train_losses <- numeric(length(iter_seq))
@@ -278,7 +384,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 for (it_idx in seq_along(iter_seq)) {
                     fit_temp <- try(private$.fit_mlp(
                         X = X_matrix[train_idx, , drop = FALSE], 
-                        y = y_num[train_idx], 
+                        y = subset_target(y_num, train_idx), 
                         hidden_sizes = hidden_sizes, 
                         hidden_activation = hidden_activation, 
                         out_activation = out_activation, 
@@ -290,8 +396,8 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     if (!inherits(fit_temp, "try-error")) {
                         p_tr <- private$.predict_mlp(fit_temp, X_matrix[train_idx, , drop = FALSE])
                         p_va <- private$.predict_mlp(fit_temp, X_matrix[test_idx, , drop = FALSE])
-                        train_losses[it_idx] <- compute_cross_entropy(y_num[train_idx], p_tr)
-                        val_losses[it_idx] <- compute_cross_entropy(y_num[test_idx], p_va)
+                        train_losses[it_idx] <- compute_cross_entropy(subset_target(y_num, train_idx), p_tr)
+                        val_losses[it_idx] <- compute_cross_entropy(subset_target(y_num, test_idx), p_va)
                     } else {
                         train_losses[it_idx] <- NA
                         val_losses[it_idx] <- NA
@@ -312,65 +418,111 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             if (self$options$show_matrix) {
                 can_run_matrix <- FALSE
                 if (partition == "kfold" && cv_errors == 0) {
-                    actual_val <- y_num
+                    actual_val <- if (C == 2) y_num else as.integer(y)
                     pred_val <- cv_preds
                     can_run_matrix <- TRUE
                 } else if (partition == "holdout" && !is.null(val_pred)) {
-                    actual_val <- y_num[test_idx]
+                    actual_val <- if (C == 2) y_num[test_idx] else as.integer(y)[test_idx]
                     pred_val <- val_pred
                     can_run_matrix <- TRUE
                 }
 
                 if (can_run_matrix) {
-                    cm <- table(Actual = actual_val, Predicted = pred_val)
+                    actual_idx <- if (C == 2) actual_val + 1 else actual_val
+                    pred_idx <- if (C == 2) pred_val + 1 else pred_val
                     
-                    neg_neg <- if ("0" %in% rownames(cm) && "0" %in% colnames(cm)) cm["0", "0"] else 0
-                    neg_pos <- if ("0" %in% rownames(cm) && "1" %in% colnames(cm)) cm["0", "1"] else 0
-                    pos_neg <- if ("1" %in% rownames(cm) && "0" %in% colnames(cm)) cm["1", "0"] else 0
-                    pos_pos <- if ("1" %in% rownames(cm) && "1" %in% colnames(cm)) cm["1", "1"] else 0
+                    actual_labels <- y_levels[actual_idx]
+                    pred_labels <- y_levels[pred_idx]
+                    
+                    cm_table <- table(
+                        Actual = factor(actual_labels, levels = y_levels), 
+                        Predicted = factor(pred_labels, levels = y_levels)
+                    )
                     
                     matrix_table <- self$results$matrixTable
-                    matrix_table$getColumn("pred_neg")$setTitle(paste0(y_levels[1], " (", .("Predicted"), ")"))
-                    matrix_table$getColumn("pred_pos")$setTitle(paste0(y_levels[2], " (", .("Predicted"), ")"))
                     
-                    matrix_table$addRow(rowKey = 1, values = list(
-                        actual = paste0(y_levels[1], " (", .("Actual"), ")"),
-                        pred_neg = neg_neg,
-                        pred_pos = neg_pos
-                    ))
-                    matrix_table$addRow(rowKey = 2, values = list(
-                        actual = paste0(y_levels[2], " (", .("Actual"), ")"),
-                        pred_neg = pos_neg,
-                        pred_pos = pos_pos
-                    ))
-                    
-                    # Performance stats table
-                    cm_tr <- table(Actual = y_num, Predicted = train_pred)
-                    t_neg_neg <- if ("0" %in% rownames(cm_tr) && "0" %in% colnames(cm_tr)) cm_tr["0", "0"] else 0
-                    t_neg_pos <- if ("0" %in% rownames(cm_tr) && "1" %in% colnames(cm_tr)) cm_tr["0", "1"] else 0
-                    t_pos_neg <- if ("1" %in% rownames(cm_tr) && "0" %in% colnames(cm_tr)) cm_tr["1", "0"] else 0
-                    t_pos_pos <- if ("1" %in% rownames(cm_tr) && "1" %in% colnames(cm_tr)) cm_tr["1", "1"] else 0
-                    
-                    calc_metrics <- function(tn, fp, fn, tp) {
-                        acc <- (tn + tp) / (tn + fp + fn + tp)
-                        sen <- tp / (tp + fn)
-                        spe <- tn / (tn + fp)
-                        prec <- tp / (tp + fp)
-                        f1 <- 2 * (prec * sen) / (prec + sen)
-                        npv <- tn / (tn + fn)
-                        
-                        list(
-                            acc = if (is.nan(acc)) 0 else acc,
-                            sen = if (is.nan(sen)) 0 else sen,
-                            spe = if (is.nan(spe)) 0 else spe,
-                            prec = if (is.nan(prec)) 0 else prec,
-                            f1 = if (is.nan(f1)) 0 else f1,
-                            npv = if (is.nan(npv)) 0 else npv
-                        )
+                    row_idx <- 1
+                    for (act_lev in y_levels) {
+                        for (pred_lev in y_levels) {
+                            cnt <- cm_table[act_lev, pred_lev]
+                            matrix_table$addRow(rowKey = row_idx, values = list(
+                                actual = act_lev,
+                                predicted = pred_lev,
+                                count = cnt
+                            ))
+                            row_idx <- row_idx + 1
+                        }
                     }
                     
-                    tr_metrics <- calc_metrics(t_neg_neg, t_neg_pos, t_pos_neg, t_pos_pos)
-                    val_metrics_calculated <- calc_metrics(neg_neg, neg_pos, pos_neg, pos_pos)
+                    # Performance stats table
+                    if (C == 2) {
+                        neg_neg <- cm_table[y_levels[1], y_levels[1]]
+                        neg_pos <- cm_table[y_levels[1], y_levels[2]]
+                        pos_neg <- cm_table[y_levels[2], y_levels[1]]
+                        pos_pos <- cm_table[y_levels[2], y_levels[2]]
+                        
+                        cm_tr <- table(Actual = y_num, Predicted = train_pred)
+                        t_neg_neg <- if ("0" %in% rownames(cm_tr) && "0" %in% colnames(cm_tr)) cm_tr["0", "0"] else 0
+                        t_neg_pos <- if ("0" %in% rownames(cm_tr) && "1" %in% colnames(cm_tr)) cm_tr["0", "1"] else 0
+                        t_pos_neg <- if ("1" %in% rownames(cm_tr) && "0" %in% colnames(cm_tr)) cm_tr["1", "0"] else 0
+                        t_pos_pos <- if ("1" %in% rownames(cm_tr) && "1" %in% colnames(cm_tr)) cm_tr["1", "1"] else 0
+                        
+                        calc_metrics <- function(tn, fp, fn, tp) {
+                            acc <- (tn + tp) / (tn + fp + fn + tp)
+                            sen <- tp / (tp + fn)
+                            spe <- tn / (tn + fp)
+                            prec <- tp / (tp + fp)
+                            f1 <- 2 * (prec * sen) / (prec + sen)
+                            npv <- tn / (tn + fn)
+                            
+                            list(
+                                acc = if (is.nan(acc)) 0 else acc,
+                                sen = if (is.nan(sen)) 0 else sen,
+                                spe = if (is.nan(spe)) 0 else spe,
+                                prec = if (is.nan(prec)) 0 else prec,
+                                f1 = if (is.nan(f1)) 0 else f1,
+                                npv = if (is.nan(npv)) 0 else npv
+                            )
+                        }
+                        
+                        tr_metrics <- calc_metrics(t_neg_neg, t_neg_pos, t_pos_neg, t_pos_pos)
+                        val_metrics_calculated <- calc_metrics(neg_neg, neg_pos, pos_neg, pos_pos)
+                    } else {
+                        calc_metrics_multiclass <- function(actual, predicted, num_classes) {
+                            acc <- mean(actual == predicted)
+                            
+                            se_list <- numeric(num_classes)
+                            sp_list <- numeric(num_classes)
+                            pr_list <- numeric(num_classes)
+                            f1_list <- numeric(num_classes)
+                            npv_list <- numeric(num_classes)
+                            
+                            for (c in 1:num_classes) {
+                                tp <- sum(actual == c & predicted == c)
+                                fp <- sum(actual != c & predicted == c)
+                                fn <- sum(actual == c & predicted != c)
+                                tn <- sum(actual != c & predicted != c)
+                                
+                                se_list[c] <- if ((tp + fn) > 0) tp / (tp + fn) else 0
+                                sp_list[c] <- if ((tn + fp) > 0) tn / (tn + fp) else 0
+                                pr_list[c] <- if ((tp + fp) > 0) tp / (tp + fp) else 0
+                                f1_list[c] <- if ((se_list[c] + pr_list[c]) > 0) 2 * (se_list[c] * pr_list[c]) / (se_list[c] + pr_list[c]) else 0
+                                npv_list[c] <- if ((tn + fn) > 0) tn / (tn + fn) else 0
+                            }
+                            
+                            list(
+                                acc = acc,
+                                sen = mean(se_list),
+                                spe = mean(sp_list),
+                                prec = mean(pr_list),
+                                f1 = mean(f1_list),
+                                npv = mean(npv_list)
+                            )
+                        }
+                        
+                        tr_metrics <- calc_metrics_multiclass(as.integer(y), train_pred, C)
+                        val_metrics_calculated <- calc_metrics_multiclass(actual_val, pred_val, C)
+                    }
                     
                     stats_table <- self$results$statsTable
                     if (partition == "kfold") {
@@ -412,19 +564,135 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     can_run_roc <- TRUE
                 }
 
+                image_roc <- self$results$rocPlot
+                image_roc$clear()
+                parent_state <- list()
+
                 if (can_run_roc) {
-                    roc_data <- list(
-                        y = y_num,
-                        train_prob = as.numeric(train_prob),
-                        val_prob = if (is.null(val_prob)) NULL else as.numeric(val_prob),
-                        val_y = if (is.null(val_prob)) NULL else y_num[test_idx],
-                        cv_prob = if (is.null(cv_pred_probs)) NULL else as.numeric(cv_pred_probs),
-                        partition = partition,
-                        roc_x = self$options$roc_x,
-                        roc_unit = self$options$roc_unit
-                    )
-                    image_roc <- self$results$rocPlot
-                    image_roc$setState(roc_data)
+                    multiclass_roc_type <- self$options$multiclass_roc_type
+                    
+                    if (C == 2) {
+                        # Binary Case: 1 plot showing both Training and Validation
+                        roc_data <- list(
+                            type = "binary",
+                            C = C,
+                            y_levels = y_levels,
+                            y = y_num,
+                            train_prob = train_prob,
+                            val_prob = val_prob,
+                            val_y = if (is.null(val_prob)) NULL else y_num[test_idx],
+                            cv_prob = cv_pred_probs,
+                            partition = partition,
+                            roc_x = self$options$roc_x,
+                            roc_unit = self$options$roc_unit
+                        )
+                        image_roc$addItem(key = "binary")
+                        image_item <- image_roc$get(key = "binary")
+                        image_item$setTitle(.("ROC Analysis Comparison"))
+                        image_item$setState(roc_data)
+                        parent_state[["binary"]] <- roc_data
+                        
+                    } else if (multiclass_roc_type == "combined") {
+                        # Multiclass Combined Case: 2 separate combined plots: Training and Validation
+                        
+                        # Plot 1: Combined Training
+                        roc_data_tr <- list(
+                            type = "combined_training",
+                            C = C,
+                            y_levels = y_levels,
+                            y = as.integer(y),
+                            train_prob = train_prob,
+                            partition = partition,
+                            roc_x = self$options$roc_x,
+                            roc_unit = self$options$roc_unit
+                        )
+                        image_roc$addItem(key = "combined_training")
+                        image_item_tr <- image_roc$get(key = "combined_training")
+                        image_item_tr$setTitle(.("Combined ROC - Training"))
+                        image_item_tr$setState(roc_data_tr)
+                        parent_state[["combined_training"]] <- roc_data_tr
+                        
+                        # Plot 2: Combined Validation/CV
+                        roc_data_va <- list(
+                            type = "combined_validation",
+                            C = C,
+                            y_levels = y_levels,
+                            val_prob = val_prob,
+                            val_y = if (is.null(val_prob)) NULL else as.integer(y)[test_idx],
+                            cv_prob = cv_pred_probs,
+                            cv_y = as.integer(y),
+                            partition = partition,
+                            roc_x = self$options$roc_x,
+                            roc_unit = self$options$roc_unit
+                        )
+                        image_roc$addItem(key = "combined_validation")
+                        image_item_va <- image_roc$get(key = "combined_validation")
+                        val_title <- if (partition == "kfold") .("Combined ROC - Cross-Validation") else .("Combined ROC - Validation")
+                        image_item_va$setTitle(val_title)
+                        image_item_va$setState(roc_data_va)
+                        parent_state[["combined_validation"]] <- roc_data_va
+                        
+                    } else {
+                        # Multiclass Separate Case: C plots, one for each class
+                        for (c in 1:C) {
+                            lev <- y_levels[c]
+                            roc_data_c <- list(
+                                type = "separate",
+                                C = C,
+                                class_name = lev,
+                                train_y = as.numeric(as.integer(y) == c),
+                                train_prob = train_prob[, c],
+                                val_y = if (is.null(val_prob)) NULL else as.numeric(as.integer(y)[test_idx] == c),
+                                val_prob = if (is.null(val_prob)) NULL else val_prob[, c],
+                                cv_y = if (is.null(cv_pred_probs)) NULL else as.numeric(as.integer(y) == c),
+                                cv_prob = if (is.null(cv_pred_probs)) NULL else cv_pred_probs[, c],
+                                partition = partition,
+                                roc_x = self$options$roc_x,
+                                roc_unit = self$options$roc_unit
+                            )
+                            image_roc$addItem(key = lev)
+                            image_item <- image_roc$get(key = lev)
+                            image_item$setTitle(jmvcore::format(.("ROC Analysis for {class}"), class = lev))
+                            image_item$setState(roc_data_c)
+                            parent_state[[lev]] <- roc_data_c
+                        }
+                    }
+                    image_roc$setState(parent_state)
+                }
+            } else {
+                self$results$rocPlot$clear()
+            }
+
+            # 9. Save Predictions on Demand
+            if ((self$options$predClass && self$results$predClass$isNotFilled()) ||
+                (self$options$predProb && self$results$predProb$isNotFilled())) {
+                
+                pred_prob_col <- rep(NA, nrow(self$data))
+                pred_class_col <- rep(NA, nrow(self$data))
+                
+                full_probs <- private$.predict_mlp(fit_full, X_matrix)
+                full_preds_idx <- get_predictions(full_probs, C)
+                
+                if (C == 2) {
+                    full_classes <- ifelse(full_preds_idx == 1, y_levels[2], y_levels[1])
+                    full_prob_val <- as.numeric(full_probs)
+                } else {
+                    full_classes <- y_levels[full_preds_idx]
+                    full_prob_val <- apply(full_probs, 1, max)
+                }
+                
+                complete_case_indices <- as.integer(rownames(clean_data))
+                pred_prob_col[complete_case_indices] <- full_prob_val
+                pred_class_col[complete_case_indices] <- full_classes
+                
+                if (self$options$predClass && self$results$predClass$isNotFilled()) {
+                    self$results$predClass$setRowNums(rownames(self$data))
+                    self$results$predClass$setValues(index = 1, factor(pred_class_col, levels = y_levels))
+                }
+                
+                if (self$options$predProb && self$results$predProb$isNotFilled()) {
+                    self$results$predProb$setRowNums(rownames(self$data))
+                    self$results$predProb$setValues(index = 1, pred_prob_col)
                 }
             }
         },
@@ -475,7 +743,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             node_coords <- list()
             for (l in 1:(L+1)) {
                 size_l <- layer_sizes[l]
-                y_l <- seq(0.1, 0.9, length.out = size_l)
+                y_l <- seq(0.9, 0.1, length.out = size_l)
                 if (size_l == 1) y_l <- 0.5
                 node_coords[[l]] <- data.frame(
                     x = x_coords[l],
@@ -491,7 +759,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             }
             
             # Draw boundaries
-            plot(1, type = "n", xlim = c(0.5, L + 1.5), ylim = c(-0.1, 1.1), axes = FALSE, xlab = "", ylab = "", main = .("Neural Network Architecture"))
+            plot(1, type = "n", xlim = c(0.5, L + 2.0), ylim = c(-0.1, 1.1), axes = FALSE, xlab = "", ylab = "", main = .("Neural Network Architecture"))
             
             # Draw connection lines layer by layer
             for (l in 1:L) {
@@ -546,7 +814,8 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 lwd = 2, 
                 horiz = TRUE, 
                 bty = "n", 
-                cex = 0.9
+                cex = 0.9,
+                inset = 0.05
             )
             
             # Draw nodes circles and text labels
@@ -602,155 +871,388 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
         .rocPlot = function(image, ggtheme, theme, ...) {
             roc_data <- image$state
+            if (is.null(roc_data)) {
+                # Fallback to parent array's state
+                parent_state <- image$parent$state
+                if (!is.null(parent_state) && !is.null(image$key)) {
+                    roc_data <- parent_state[[image$key]]
+                }
+            }
             if (is.null(roc_data)) return(FALSE)
             if (!requireNamespace("pROC", quietly = TRUE)) return(FALSE)
             
-            roc_x <- roc_data$roc_x
-            roc_unit <- roc_data$roc_unit
-            partition <- roc_data$partition
-            is_pct <- roc_unit == "percent"
-            
-            # Calculate Training ROC curve
-            r_tr <- pROC::roc(roc_data$y, roc_data$train_prob, quiet = TRUE)
-            tr_df <- data.frame(
-                sens = r_tr$sensitivities,
-                spec = r_tr$specificities
-            )
-            auc_tr_val <- pROC::auc(r_tr)
-            auc_tr_str <- if (is_pct) paste0(round(auc_tr_val * 100, 1), "%") else round(auc_tr_val, 3)
-            tr_df$Dataset <- paste0(.("Training (AUC = "), auc_tr_str, ")")
-            
-            get_optimal <- function(r_obj) {
-                coords <- pROC::coords(r_obj, "best", best.method = "youden", quiet = TRUE)
-                if (is.matrix(coords)) coords <- coords[1, ]
-                data.frame(
-                    sens = coords["sensitivity"],
-                    spec = coords["specificity"],
-                    threshold = coords["threshold"]
-                )
+            # Ensure serialization does not distort matrices
+            if (!is.null(roc_data$train_prob)) {
+                roc_data$train_prob <- as.matrix(as.data.frame(roc_data$train_prob))
+            }
+            if (!is.null(roc_data$val_prob)) {
+                roc_data$val_prob <- as.matrix(as.data.frame(roc_data$val_prob))
+            }
+            if (!is.null(roc_data$cv_prob)) {
+                roc_data$cv_prob <- as.matrix(as.data.frame(roc_data$cv_prob))
             }
             
-            opt_tr <- get_optimal(r_tr)
-            opt_tr$Dataset <- tr_df$Dataset[1]
-            
-            df_all_list <- list(tr_df)
-            df_opt_list <- list(opt_tr)
-            colors_list <- c("#3366B2")
-            
-            # Add validation or cross-validation curves depending on partition method
-            if (partition == "holdout" && !is.null(roc_data$val_prob)) {
-                r_va <- pROC::roc(roc_data$val_y, roc_data$val_prob, quiet = TRUE)
-                va_df <- data.frame(
-                    sens = r_va$sensitivities,
-                    spec = r_va$specificities
-                )
-                auc_va_val <- pROC::auc(r_va)
-                auc_va_str <- if (is_pct) paste0(round(auc_va_val * 100, 1), "%") else round(auc_va_val, 3)
-                va_df$Dataset <- paste0(.("Hold-out Validation (AUC = "), auc_va_str, ")")
-                df_all_list[[2]] <- va_df
+            result <- tryCatch({
+                roc_x <- roc_data$roc_x
+                roc_unit <- roc_data$roc_unit
+                partition <- roc_data$partition
+                is_pct <- roc_unit == "percent"
+                legacy_axes <- (roc_x == "1spec")
+                C <- roc_data$C
                 
-                opt_va <- get_optimal(r_va)
-                opt_va$Dataset <- va_df$Dataset[1]
-                df_opt_list[[2]] <- opt_va
+                if (roc_data$type == "binary") {
+                    # ----------------------------------------------------
+                    # Binary Plotting Logic (C == 2)
+                    # ----------------------------------------------------
+                    y_val_bin <- if (!is.null(roc_data$y)) as.numeric(roc_data$y) else NULL
+                    train_prob_bin <- if (!is.null(roc_data$train_prob)) as.numeric(roc_data$train_prob) else NULL
+                    val_prob_bin <- if (!is.null(roc_data$val_prob)) as.numeric(roc_data$val_prob) else NULL
+                    val_y_bin <- if (!is.null(roc_data$val_y)) as.numeric(roc_data$val_y) else NULL
+                    cv_prob_bin <- if (!is.null(roc_data$cv_prob)) as.numeric(roc_data$cv_prob) else NULL
+                    cv_y_bin <- y_val_bin
+                    
+                    r_tr <- pROC::roc(y_val_bin, train_prob_bin, percent = is_pct, quiet = TRUE)
+                    cols <- c("#3366B2") # Training is always Blue
+                    if (self$options$palBrewer != "none") {
+                        cols <- RColorBrewer::brewer.pal(n=3, name=self$options$palBrewer)
+                    }
+                    active_cols <- c(cols[1])
+                    ltys <- c(1)         # Training is solid
+                    auc_tr_val <- as.numeric(pROC::auc(r_tr))
+                    auc_tr_str <- if (is_pct) paste0(round(auc_tr_val, 1), "%") else round(auc_tr_val, 3)
+                    leg_labels <- c(paste0(.("Training (AUC = "), auc_tr_str, ")"))
+                    
+                    thres_pattern <- ifelse(is_pct, "%.2f (%.1f%%, %.1f%%)", "%.2f (%.3f, %.3f)")
+                    
+                    p <- pROC::plot.roc(r_tr, col=cols[1],
+                        main=.("ROC Analysis Comparison"), cex.main=1.3,
+                        percent=is_pct,
+                        cex.lab=1.5, cex.axis=1.3, lwd=3, lty=1,
+                        legacy.axes=legacy_axes,
+                        xlab=ifelse(is_pct, ifelse(legacy_axes, .("100 - Specificity (%)"), .("Specificity (%)")), ifelse(legacy_axes, .("1 - Specificity"), .("Specificity"))),
+                        ylab=ifelse(is_pct, .("Sensitivity (%)"), .("Sensitivity")),
+                        print.thres=TRUE,
+                        print.thres.col=cols[1],
+                        print.thres.pch=19, print.thres.cex=1.3,
+                        print.thres.best.method="youden",
+                        print.thres.pattern=thres_pattern,
+                        grid=TRUE, add=FALSE
+                    )
+                    
+                    if (partition == "holdout" && !is.null(val_prob_bin)) {
+                        r_va <- pROC::roc(val_y_bin, val_prob_bin, percent = is_pct, quiet = TRUE)
+                        if (self$options$palBrewer == "none") {
+                            cols <- c(cols, "#E54028") # Holdout is Red
+                        }
+                        active_cols <- c(active_cols, cols[2])
+                        ltys <- c(ltys, 1)         # Holdout is solid
+                        auc_va_val <- as.numeric(pROC::auc(r_va))
+                        auc_va_str <- if (is_pct) paste0(round(auc_va_val, 1), "%") else round(auc_va_val, 3)
+                        leg_labels <- c(leg_labels, paste0(.("Hold-out Validation (AUC = "), auc_va_str, ")"))
+                        
+                        pROC::plot.roc(r_va, col=cols[2],
+                            percent=is_pct,
+                            lwd=3, lty=1,
+                            legacy.axes=legacy_axes,
+                            print.thres=TRUE,
+                            print.thres.col=cols[2],
+                            print.thres.pch=19, print.thres.cex=1.3,
+                            print.thres.best.method="youden",
+                            print.thres.pattern=thres_pattern,
+                            add=TRUE
+                        )
+                    } else if (partition == "kfold" && !is.null(cv_prob_bin)) {
+                        r_cv <- pROC::roc(cv_y_bin, cv_prob_bin, percent = is_pct, quiet = TRUE)
+                        if (self$options$palBrewer == "none") {
+                            cols <- c(cols, "#46B233") # CV is Green
+                        }
+                        active_cols <- c(active_cols, cols[2])
+                        ltys <- c(ltys, 2)         # CV is dashed
+                        auc_cv_val <- as.numeric(pROC::auc(r_cv))
+                        auc_cv_str <- if (is_pct) paste0(round(auc_cv_val, 1), "%") else round(auc_cv_val, 3)
+                        leg_labels <- c(leg_labels, paste0(.("K-Fold Cross-Validation (AUC = "), auc_cv_str, ")"))
+                        
+                        pROC::plot.roc(r_cv, col=cols[2],
+                            percent=is_pct,
+                            lwd=3, lty=2,
+                            legacy.axes=legacy_axes,
+                            print.thres=TRUE,
+                            print.thres.col=cols[2],
+                            print.thres.pch=19, print.thres.cex=1.3,
+                            print.thres.best.method="youden",
+                            print.thres.pattern=thres_pattern,
+                            add=TRUE
+                        )
+                    }
+                    
+                    legend("bottomright",
+                        cex=1.1, lwd=3, col=active_cols,
+                        lty=ltys,
+                        bg="white", box.lwd=1,
+                        legend=leg_labels
+                    )
+                    
+                } else if (roc_data$type == "combined_training") {
+                    # ----------------------------------------------------
+                    # Multiclass Combined Training Plotting Logic
+                    # ----------------------------------------------------
+                    y_val <- roc_data$y
+                    train_prob <- roc_data$train_prob
+                    y_levels <- roc_data$y_levels
+                    
+                    base_colors <- c("#3366B2", "#E54028", "#46B233", "#8A2BE2", "#FF8C00", "#C71585", "#008080", "#8B4513")
+                    if (self$options$palBrewer != "none") {
+                        max_n <- switch(self$options$palBrewer,
+                            "Accent" = 8, "Dark2" = 8, "Paired" = 12, "Pastel1" = 9,
+                            "Set1" = 9, "Set2" = 8, "Set3" = 12, 8)
+                        req_n <- max(3, min(C, max_n))
+                        base_colors <- RColorBrewer::brewer.pal(n=req_n, name=self$options$palBrewer)
+                        if (C > max_n) {
+                            base_colors <- grDevices::colorRampPalette(base_colors)(C)
+                        }
+                    }
+                    if (C > length(base_colors)) {
+                        cols <- grDevices::rainbow(C)
+                    } else {
+                        cols <- base_colors[1:C]
+                    }
+                    
+                    leg_labels <- c()
+                    thres_pattern <- ifelse(is_pct, "%.2f (%.1f%%, %.1f%%)", "%.2f (%.3f, %.3f)")
+                    
+                    for (c in 1:C) {
+                        lev <- y_levels[c]
+                        y_tr_c <- as.numeric(y_val == c)
+                        prob_tr_c <- train_prob[, c]
+                        r_tr <- pROC::roc(y_tr_c, prob_tr_c, percent = is_pct, quiet = TRUE)
+                        auc_tr <- as.numeric(pROC::auc(r_tr))
+                        auc_tr_str <- if (is_pct) paste0(round(auc_tr, 1), "%") else round(auc_tr, 3)
+                        leg_labels <- c(leg_labels, paste0(lev, " (AUC = ", auc_tr_str, ")"))
+                        
+                        p <- pROC::plot.roc(r_tr, col=cols[c],
+                            main=.("Combined ROC - Training"), cex.main=1.3,
+                            percent=is_pct,
+                            cex.lab=1.5, cex.axis=1.3, lwd=3,
+                            legacy.axes=legacy_axes,
+                            xlab=ifelse(is_pct, ifelse(legacy_axes, .("100 - Specificity (%)"), .("Specificity (%)")), ifelse(legacy_axes, .("1 - Specificity"), .("Specificity"))),
+                            ylab=ifelse(is_pct, .("Sensitivity (%)"), .("Sensitivity")),
+                            print.thres=TRUE,
+                            print.thres.col=cols[c],
+                            print.thres.pch=19, print.thres.cex=1.3,
+                            print.thres.best.method="youden",
+                            print.thres.pattern=thres_pattern,
+                            grid=(c == 1), add=(c > 1)
+                        )
+                    }
+                    
+                    legend("bottomright",
+                        cex=1.1, lwd=3, col=cols,
+                        bg="white", box.lwd=1,
+                        legend=leg_labels
+                    )
+                    
+                } else if (roc_data$type == "combined_validation") {
+                    # ----------------------------------------------------
+                    # Multiclass Combined Validation/CV Plotting Logic
+                    # ----------------------------------------------------
+                    val_prob <- roc_data$val_prob
+                    val_y <- roc_data$val_y
+                    cv_prob <- roc_data$cv_prob
+                    cv_y <- roc_data$cv_y
+                    y_levels <- roc_data$y_levels
+                    
+                    base_colors <- c("#3366B2", "#E54028", "#46B233", "#8A2BE2", "#FF8C00", "#C71585", "#008080", "#8B4513")
+                    if (self$options$palBrewer != "none") {
+                        max_n <- switch(self$options$palBrewer,
+                            "Accent" = 8, "Dark2" = 8, "Paired" = 12, "Pastel1" = 9,
+                            "Set1" = 9, "Set2" = 8, "Set3" = 12, 8)
+                        req_n <- max(3, min(C, max_n))
+                        base_colors <- RColorBrewer::brewer.pal(n=req_n, name=self$options$palBrewer)
+                        if (C > max_n) {
+                            base_colors <- grDevices::colorRampPalette(base_colors)(C)
+                        }
+                    }
+                    if (C > length(base_colors)) {
+                        cols <- grDevices::rainbow(C)
+                    } else {
+                        cols <- base_colors[1:C]
+                    }
+                    
+                    leg_labels <- c()
+                    thres_pattern <- ifelse(is_pct, "%.2f (%.1f%%, %.1f%%)", "%.2f (%.3f, %.3f)")
+                    plot_title <- if (partition == "kfold") .("Combined ROC - Cross-Validation") else .("Combined ROC - Validation")
+                    
+                    for (c in 1:C) {
+                        lev <- y_levels[c]
+                        if (partition == "holdout" && !is.null(val_prob)) {
+                            y_va_c <- as.numeric(val_y == c)
+                            prob_va_c <- val_prob[, c]
+                            r_va <- pROC::roc(y_va_c, prob_va_c, percent = is_pct, quiet = TRUE)
+                            auc_va <- as.numeric(pROC::auc(r_va))
+                            auc_va_str <- if (is_pct) paste0(round(auc_va, 1), "%") else round(auc_va, 3)
+                            leg_labels <- c(leg_labels, paste0(lev, " (AUC = ", auc_va_str, ")"))
+                            
+                            p <- pROC::plot.roc(r_va, col=cols[c],
+                                main=plot_title, cex.main=1.3,
+                                percent=is_pct,
+                                cex.lab=1.5, cex.axis=1.3, lwd=3,
+                                legacy.axes=legacy_axes,
+                                xlab=ifelse(is_pct, ifelse(legacy_axes, .("100 - Specificity (%)"), .("Specificity (%)")), ifelse(legacy_axes, .("1 - Specificity"), .("Specificity"))),
+                                ylab=ifelse(is_pct, .("Sensitivity (%)"), .("Sensitivity")),
+                                print.thres=TRUE,
+                                print.thres.col=cols[c],
+                                print.thres.pch=19, print.thres.cex=1.3,
+                                print.thres.best.method="youden",
+                                print.thres.pattern=thres_pattern,
+                                grid=(c == 1), add=(c > 1)
+                            )
+                        } else if (partition == "kfold" && !is.null(cv_prob)) {
+                            y_cv_c <- as.numeric(cv_y == c)
+                            prob_cv_c <- cv_prob[, c]
+                            r_cv <- pROC::roc(y_cv_c, prob_cv_c, percent = is_pct, quiet = TRUE)
+                            auc_cv <- as.numeric(pROC::auc(r_cv))
+                            auc_cv_str <- if (is_pct) paste0(round(auc_cv, 1), "%") else round(auc_cv, 3)
+                            leg_labels <- c(leg_labels, paste0(lev, " (AUC = ", auc_cv_str, ")"))
+                            
+                            p <- pROC::plot.roc(r_cv, col=cols[c],
+                                main=plot_title, cex.main=1.3,
+                                percent=is_pct,
+                                cex.lab=1.5, cex.axis=1.3, lwd=3, lty=2,
+                                legacy.axes=legacy_axes,
+                                xlab=ifelse(is_pct, ifelse(legacy_axes, .("100 - Specificity (%)"), .("Specificity (%)")), ifelse(legacy_axes, .("1 - Specificity"), .("Specificity"))),
+                                ylab=ifelse(is_pct, .("Sensitivity (%)"), .("Sensitivity")),
+                                print.thres=TRUE,
+                                print.thres.col=cols[c],
+                                print.thres.pch=19, print.thres.cex=1.3,
+                                print.thres.best.method="youden",
+                                print.thres.pattern=thres_pattern,
+                                grid=(c == 1), add=(c > 1)
+                            )
+                        }
+                    }
+                    
+                    legend("bottomright",
+                        cex=1.1, lwd=3, col=cols,
+                        lty=ifelse(partition == "kfold", 2, 1),
+                        bg="white", box.lwd=1,
+                        legend=leg_labels
+                    )
+                    
+                } else {
+                    # ----------------------------------------------------
+                    # Multiclass Separate Class Plotting Logic
+                    # ----------------------------------------------------
+                    class_name <- roc_data$class_name
+                    y_val_bin <- roc_data$train_y
+                    train_prob_bin <- roc_data$train_prob
+                    val_prob_bin <- roc_data$val_prob
+                    val_y_bin <- roc_data$val_y
+                    cv_prob_bin <- roc_data$cv_prob
+                    cv_y_bin <- roc_data$cv_y
+                    title_text <- jmvcore::format(.("ROC Analysis for {class}"), class = class_name)
+                    
+                    r_tr <- pROC::roc(y_val_bin, train_prob_bin, percent = is_pct, quiet = TRUE)
+                    cols <- c("#3366B2") # Training is always Blue
+                    if (self$options$palBrewer != "none") {
+                        cols <- RColorBrewer::brewer.pal(n=3, name=self$options$palBrewer)
+                    }
+                    active_cols <- c(cols[1])
+                    ltys <- c(1)         # Training is solid
+                    auc_tr_val <- as.numeric(pROC::auc(r_tr))
+                    auc_tr_str <- if (is_pct) paste0(round(auc_tr_val, 1), "%") else round(auc_tr_val, 3)
+                    leg_labels <- c(paste0(.("Training (AUC = "), auc_tr_str, ")"))
+                    
+                    thres_pattern <- ifelse(is_pct, "%.2f (%.1f%%, %.1f%%)", "%.2f (%.3f, %.3f)")
+                    
+                    p <- pROC::plot.roc(r_tr, col=cols[1],
+                        main=title_text, cex.main=1.3,
+                        percent=is_pct,
+                        cex.lab=1.5, cex.axis=1.3, lwd=3, lty=1,
+                        legacy.axes=legacy_axes,
+                        xlab=ifelse(is_pct, ifelse(legacy_axes, .("100 - Specificity (%)"), .("Specificity (%)")), ifelse(legacy_axes, .("1 - Specificity"), .("Specificity"))),
+                        ylab=ifelse(is_pct, .("Sensitivity (%)"), .("Sensitivity")),
+                        print.thres=TRUE,
+                        print.thres.col=cols[1],
+                        print.thres.pch=19, print.thres.cex=1.3,
+                        print.thres.best.method="youden",
+                        print.thres.pattern=thres_pattern,
+                        grid=TRUE, add=FALSE
+                    )
+                    
+                    if (partition == "holdout" && !is.null(val_prob_bin)) {
+                        r_va <- pROC::roc(val_y_bin, val_prob_bin, percent = is_pct, quiet = TRUE)
+                        if (self$options$palBrewer == "none") {
+                            cols <- c(cols, "#E54028") # Holdout is Red
+                        }
+                        active_cols <- c(active_cols, cols[2])
+                        ltys <- c(ltys, 1)         # Holdout is solid
+                        auc_va_val <- as.numeric(pROC::auc(r_va))
+                        auc_va_str <- if (is_pct) paste0(round(auc_va_val, 1), "%") else round(auc_va_val, 3)
+                        leg_labels <- c(leg_labels, paste0(.("Hold-out Validation (AUC = "), auc_va_str, ")"))
+                        
+                        pROC::plot.roc(r_va, col=cols[2],
+                            percent=is_pct,
+                            lwd=3, lty=1,
+                            legacy.axes=legacy_axes,
+                            print.thres=TRUE,
+                            print.thres.col=cols[2],
+                            print.thres.pch=19, print.thres.cex=1.3,
+                            print.thres.best.method="youden",
+                            print.thres.pattern=thres_pattern,
+                            add=TRUE
+                        )
+                    } else if (partition == "kfold" && !is.null(cv_prob_bin)) {
+                        r_cv <- pROC::roc(cv_y_bin, cv_prob_bin, percent = is_pct, quiet = TRUE)
+                        if (self$options$palBrewer == "none") {
+                            cols <- c(cols, "#46B233") # CV is Green
+                        }
+                        active_cols <- c(active_cols, cols[2])
+                        ltys <- c(ltys, 2)         # CV is dashed
+                        auc_cv_val <- as.numeric(pROC::auc(r_cv))
+                        auc_cv_str <- if (is_pct) paste0(round(auc_cv_val, 1), "%") else round(auc_cv_val, 3)
+                        leg_labels <- c(leg_labels, paste0(.("K-Fold Cross-Validation (AUC = "), auc_cv_str, ")"))
+                        
+                        pROC::plot.roc(r_cv, col=cols[2],
+                            percent=is_pct,
+                            lwd=3, lty=2,
+                            legacy.axes=legacy_axes,
+                            print.thres=TRUE,
+                            print.thres.col=cols[2],
+                            print.thres.pch=19, print.thres.cex=1.3,
+                            print.thres.best.method="youden",
+                            print.thres.pattern=thres_pattern,
+                            add=TRUE
+                        )
+                    }
+                    
+                    legend("bottomright",
+                        cex=1.1, lwd=3, col=active_cols,
+                        lty=ltys,
+                        bg="white", box.lwd=1,
+                        legend=leg_labels
+                    )
+                }
                 
-                colors_list <- c("#3366B2", "#E54028") # Blue and Red
-            } else if (partition == "kfold" && !is.null(roc_data$cv_prob)) {
-                r_cv <- pROC::roc(roc_data$y, roc_data$cv_prob, quiet = TRUE)
-                cv_df <- data.frame(
-                    sens = r_cv$sensitivities,
-                    spec = r_cv$specificities
-                )
-                auc_cv_val <- pROC::auc(r_cv)
-                auc_cv_str <- if (is_pct) paste0(round(auc_cv_val * 100, 1), "%") else round(auc_cv_val, 3)
-                cv_df$Dataset <- paste0(.("K-Fold Cross-Validation (AUC = "), auc_cv_str, ")")
-                df_all_list[[2]] <- cv_df
-                
-                opt_cv <- get_optimal(r_cv)
-                opt_cv$Dataset <- cv_df$Dataset[1]
-                df_opt_list[[2]] <- opt_cv
-                
-                colors_list <- c("#3366B2", "#46B233") # Blue and Green
-            }
-            
-            df_all <- do.call(rbind, df_all_list)
-            df_opt <- do.call(rbind, df_opt_list)
-            
-            # Scaling for axis choice and units
-            is_pct <- roc_unit == "percent"
-            mult <- ifelse(is_pct, 100, 1)
-            unit_label <- ifelse(is_pct, " (%)", "")
-            
-            if (roc_x == "1spec") {
-                df_all$x_val <- (1 - df_all$spec) * mult
-                df_opt$x_val <- (1 - df_opt$spec) * mult
-                x_title <- .("1 - Specificity")
-            } else {
-                df_all$x_val <- df_all$spec * mult
-                df_opt$x_val <- df_opt$spec * mult
-                x_title <- .("Specificity")
-            }
-            
-            df_all$y_val <- df_all$sens * mult
-            df_opt$y_val <- df_opt$sens * mult
-            
-            # Coordinates for optimal cutoff labels
-            df_opt$label <- paste0(
-                "Cut-off = ", round(df_opt$threshold, 2), "\n",
-                "Se = ", round(df_opt$sens * mult, 1), unit_label, "\n",
-                "Sp = ", round(df_opt$spec * mult, 1), unit_label
-            )
-            
-            # Create Plot
-            p <- ggplot2::ggplot(df_all, ggplot2::aes(x = x_val, y = y_val, color = Dataset)) +
-                ggplot2::geom_line(linewidth = 1.2) +
-                ggplot2::geom_point(data = df_opt, ggplot2::aes(x = x_val, y = y_val), size = 3, shape = 21, stroke = 1.5, bg = "white") +
-                ggrepel::geom_label_repel(
-                    data = df_opt, 
-                    ggplot2::aes(x = x_val, y = y_val, label = label),
-                    size = 3.2, 
-                    fontface = "bold", 
-                    show.legend = FALSE,
-                    box.padding = 0.5,
-                    max.overlaps = Inf
-                ) +
-                ggplot2::scale_color_manual(values = colors_list) +
-                ggplot2::labs(
-                    title = .("ROC Analysis Comparison"),
-                    x = paste0(x_title, unit_label),
-                    y = paste0(.("Sensitivity"), unit_label)
-                ) +
-                ggtheme +
-                ggplot2::theme(legend.position = "bottom") +
-                ggplot2::guides(color = ggplot2::guide_legend(ncol = 1, byrow = TRUE))
-                
-            # Formatting limits
-            if (is_pct) {
-                p <- p + ggplot2::xlim(ifelse(roc_x == "1spec", 0, 100), ifelse(roc_x == "1spec", 100, 0)) +
-                    ggplot2::ylim(0, 100)
-            } else {
-                p <- p + ggplot2::xlim(ifelse(roc_x == "1spec", 0, 1), ifelse(roc_x == "1spec", 1, 0)) +
-                    ggplot2::ylim(0, 1)
-            }
-            
-            # Draw diagonal chance line
-            if (roc_x == "1spec") {
-                p <- p + ggplot2::geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray60")
-            } else {
-                p <- p + ggplot2::geom_abline(slope = -1, intercept = mult, linetype = "dashed", color = "gray60")
-            }
-            
-            print(p)
-            return(TRUE)
+                print(p)
+                return(TRUE)
+            }, error = function(e) {
+                return(FALSE)
+            })
+            return(result)
         },
 
         .fit_mlp = function(X, y, hidden_sizes, hidden_activation, out_activation, decay, maxit, rang, lr = 0.01) {
             N <- nrow(X)
             D <- ncol(X)
             
-            layer_sizes <- c(D, hidden_sizes, 1)
+            C_out <- if (is.matrix(y)) ncol(y) else 1
+            layer_sizes <- c(D, hidden_sizes, C_out)
             L <- length(layer_sizes) - 1
             
             activations <- c(rep(hidden_activation, L-1), out_activation)
+            if (C_out > 1) {
+                activations[L] <- "softmax"
+            }
             
             set.seed(42)
             W <- list()
@@ -839,7 +1341,11 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 p_out <- A[[L+1]]
                 p_out <- pmin(pmax(p_out, 1e-15), 1 - 1e-15)
                 
-                bce_loss <- mean(- (y * log(p_out) + (1 - y) * log(1 - p_out)))
+                if (C_out > 1) {
+                    bce_loss <- mean(-rowSums(y * log(p_out)))
+                } else {
+                    bce_loss <- mean(- (y * log(p_out) + (1 - y) * log(1 - p_out)))
+                }
                 reg_loss <- 0
                 if (decay > 0) {
                     reg_loss <- (decay / (2 * N)) * sum(sapply(W, function(w) sum(w^2)))

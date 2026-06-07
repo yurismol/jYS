@@ -1,0 +1,152 @@
+---
+name:  mLR
+title: Logistic Regression
+jrs:   '1.1'
+refs: [jys, pROC, glmnet]
+
+items:
+    - name: text
+      title: Conditions & Diagnostics
+      type: Html
+      visible: false
+
+    - name: infoTable
+      title: Model Fit & Predictive Performance
+      type: Table
+      rows: 7
+      clearWith:
+          - dep
+          - covs
+          - factors
+          - method
+          - elastic_alpha
+          - lasso_penalty
+          - partition
+          - val_split
+          - cv_folds
+          - cv_repeats
+          - group
+          - selgroup
+      columns:
+          - name: metric
+            title: Metric
+            type: text
+          - name: value
+            title: Value
+            type: text
+
+    - name: coeffTable
+      title: Model Coefficients (Post-Selection / Refitted Model)
+      type: Table
+      clearWith:
+          - dep
+          - covs
+          - factors
+          - method
+          - elastic_alpha
+          - lasso_penalty
+          - group
+          - selgroup
+      columns:
+          - name: term
+            title: Predictor
+            type: text
+          - name: est
+            title: Estimate (B)
+            type: number
+          - name: se
+            title: Std. Error
+            type: number
+          - name: z
+            title: z-value
+            type: number
+          - name: p
+            title: p-value
+            type: number
+            format: pvalue
+          - name: or
+            title: Odds Ratio (OR)
+            type: number
+          - name: ciLower
+            title: 95% OR CI Lower
+            type: number
+          - name: ciUpper
+            title: 95% OR CI Upper
+            type: number
+          - name: stdBeta
+            title: Standardized Beta
+            type: number
+
+    - name: formulaHtml
+      title: Mathematical Model Formula
+      type: Html
+      visible: (show_formula)
+      clearWith:
+          - dep
+          - covs
+          - factors
+          - method
+          - elastic_alpha
+          - lasso_penalty
+          - group
+          - selgroup
+
+    - name: rocPlot
+      title: ROC Curve Comparison
+      type: Image
+      visible: (show_roc)
+      width:  500
+      height: 500
+      renderFun: .rocPlot
+      requiresData: true
+      clearWith:
+          - dep
+          - covs
+          - factors
+          - method
+          - elastic_alpha
+          - lasso_penalty
+          - partition
+          - val_split
+          - cv_folds
+          - cv_repeats
+          - roc_x
+          - roc_unit
+          - palBrewer
+          - group
+          - selgroup
+
+    - name: predClass
+      title: Predicted Class
+      type: Output
+      clearWith:
+          - dep
+          - covs
+          - factors
+          - method
+          - elastic_alpha
+          - lasso_penalty
+          - partition
+          - val_split
+          - cv_folds
+          - cv_repeats
+          - group
+          - selgroup
+
+    - name: predProb
+      title: Predicted Probability
+      type: Output
+      clearWith:
+          - dep
+          - covs
+          - factors
+          - method
+          - elastic_alpha
+          - lasso_penalty
+          - partition
+          - val_split
+          - cv_folds
+          - cv_repeats
+          - group
+          - selgroup
+...

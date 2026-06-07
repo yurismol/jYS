@@ -1,0 +1,200 @@
+---
+name:  mPCA
+title: PCA Submodule
+jrs:   '1.1'
+refs: [jys]
+
+items:
+    - name: text
+      title: Info
+      type: Html
+      clearWith:
+          - group
+          - selgroup
+
+    - name: varianceTable
+      title: Component Eigenvalues and Explained Variance
+      type: Table
+      rows: 0
+      clearWith:
+          - vars
+          - group
+          - selgroup
+      columns:
+          - name: comp
+            title: Component
+            type: text
+          - name: eigenvalue
+            title: Eigenvalue
+            type: number
+          - name: variance
+            title: '% of Variance'
+            type: number
+          - name: cumulative
+            title: 'Cumulative %'
+            type: number
+
+    - name: loadingsTable
+      title: Factor Loadings
+      type: Table
+      visible: (loadingsTable)
+      clearWith:
+          - vars
+          - group
+          - selgroup
+          - npc
+      columns:
+          - name: variable
+            title: Variable
+            type: text
+
+    - name: loadingsHeatmap
+      title: Factor Loadings Heatmap
+      type: Image
+      visible: (loadingsHeatmap)
+      width:  500
+      height: 500
+      renderFun: .loadingsHeatmap
+      requiresData: true
+      clearWith:
+          - vars
+          - group
+          - selgroup
+          - npc
+
+    - name: screePlot
+      title: Scree Plot with Parallel Analysis
+      type: Image
+      visible: (screePlot)
+      width:  600
+      height: 450
+      renderFun: .screePlot
+      requiresData: true
+      clearWith:
+          - vars
+          - group
+          - selgroup
+
+    - name: scorePlot
+      title: Object score distribution with 95% ellipses
+      type: Image
+      visible: (scorePlot)
+      width:  600
+      height: 500
+      renderFun: .scorePlot
+      requiresData: true
+      clearWith:
+          - vars
+          - group
+          - selgroup
+          - classVar
+          - pcX
+          - pcY
+
+    - name: biplot
+      title: Influence vectors (Biplot)
+      type: Image
+      visible: (biplot)
+      width:  600
+      height: 600
+      renderFun: .biplot
+      requiresData: true
+      clearWith:
+          - vars
+          - group
+          - selgroup
+          - pcX
+          - pcY
+
+    - name: cos2Table
+      title: Quality of representation (Cos²)
+      type: Table
+      visible: (cos2Table)
+      clearWith:
+          - vars
+          - group
+          - selgroup
+          - npc
+      columns:
+          - name: variable
+            title: Variable
+            type: text
+
+    - name: cos2Heatmap
+      title: Quality of representation (Cos²) Heatmap
+      type: Image
+      visible: (cos2Heatmap)
+      width:  500
+      height: 500
+      renderFun: .cos2Heatmap
+      requiresData: true
+      clearWith:
+          - vars
+          - group
+          - selgroup
+          - npc
+
+    - name: kmeansTable
+      title: K-Means «Blind» Clustering vs Real Groups
+      type: Table
+      visible: (kmeansTable)
+      clearWith:
+          - vars
+          - group
+          - selgroup
+          - classVar
+          - kMeansK
+      columns:
+          - name: metric
+            title: Metric / Cluster
+            type: text
+          - name: value
+            title: Value / Match count
+            type: text
+
+    - name: regTable
+      title: Regression Model Performance (K-fold Cross-Validation)
+      type: Table
+      visible: (regTable)
+      clearWith:
+          - vars
+          - group
+          - selgroup
+          - classVar
+          - npc
+          - regKFold
+      columns:
+          - name: fold
+            title: Fold
+            type: text
+          - name: accuracy
+            title: Accuracy
+            type: number
+          - name: sensitivity
+            title: Sensitivity
+            type: number
+          - name: specificity
+            title: Specificity
+            type: number
+          - name: auc
+            title: AUC
+            type: number
+
+    - name: rocPlot
+      title: Regression Model ROC Curve (Full Dataset)
+      type: Image
+      visible: (rocPlot)
+      width:  500
+      height: 500
+      renderFun: .rocPlot
+      requiresData: true
+      clearWith:
+          - vars
+          - group
+          - selgroup
+          - classVar
+          - npc
+          - roc_x
+          - roc_unit
+          - palBrewer
+...

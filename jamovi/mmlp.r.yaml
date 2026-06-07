@@ -13,7 +13,7 @@ items:
     - name: infoTable
       title: Model Information & Accuracy
       type: Table
-      rows: 1
+      rows: 6
       clearWith:
           - dep
           - covs
@@ -28,24 +28,12 @@ items:
           - val_split
           - cv_folds
       columns:
-          - name: size
-            title: Hidden Layers
+          - name: metric
+            title: Metric
             type: text
-          - name: decay
-            title: Weight Decay
-            type: number
-          - name: maxit
-            title: Max Iterations
-            type: integer
-          - name: trainAcc
-            title: Training Accuracy (%)
-            type: number
-          - name: valAcc
-            title: Hold-out Accuracy (%)
-            type: number
-          - name: cvAcc
-            title: K-Fold CV Accuracy (%)
-            type: number
+          - name: value
+            title: Value
+            type: text
 
     - name: importanceTable
       title: Predictor Importance
@@ -149,13 +137,13 @@ items:
           - cv_folds
       columns:
           - name: actual
-            title: Actual \ Predicted
+            title: Actual Class
             type: text
-          - name: pred_neg
-            title: Negative Class
-            type: integer
-          - name: pred_pos
-            title: Positive Class
+          - name: predicted
+            title: Predicted Class
+            type: text
+          - name: count
+            title: Count
             type: integer
 
     - name: statsTable
@@ -188,12 +176,14 @@ items:
 
     - name: rocPlot
       title: ROC Analysis Comparison
-      type: Image
+      type: Array
       visible: (show_roc)
-      width:  500
-      height: 500
-      renderFun: .rocPlot
-      requiresData: true
+      template:
+          type: Image
+          width:  500
+          height: 500
+          renderFun: .rocPlot
+          requiresData: true
       clearWith:
           - dep
           - covs
@@ -209,4 +199,40 @@ items:
           - cv_folds
           - roc_x
           - roc_unit
+          - multiclass_roc_type
+          - palBrewer
+
+    - name: predClass
+      title: Predicted Class
+      type: Output
+      clearWith:
+          - dep
+          - covs
+          - factors
+          - hidden_structure
+          - activation
+          - out_activation
+          - decay
+          - maxit
+          - rang
+          - partition
+          - val_split
+          - cv_folds
+
+    - name: predProb
+      title: Predicted Probability
+      type: Output
+      clearWith:
+          - dep
+          - covs
+          - factors
+          - hidden_structure
+          - activation
+          - out_activation
+          - decay
+          - maxit
+          - rang
+          - partition
+          - val_split
+          - cv_folds
 ...

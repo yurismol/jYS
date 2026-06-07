@@ -65,7 +65,7 @@ items:
           format: pvalue
           superTitle: User Defined
         - name: alpha
-          title: '&alpha;'
+          title: 'α'
           type: number
           format: pvalue
           superTitle: User Defined

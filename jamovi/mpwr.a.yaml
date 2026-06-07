@@ -79,7 +79,7 @@ options:
       default: "two.sided"
 
     - name: alpha
-      title: "&alpha; (type I error rate)"
+      title: "α (type I error rate)"
       type: Number
       min: 0
       default: 0.05

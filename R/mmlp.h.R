@@ -24,7 +24,9 @@ mMLPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             show_matrix = FALSE,
             show_roc = FALSE,
             roc_x = "1spec",
-            roc_unit = "percent", ...) {
+            roc_unit = "percent",
+            multiclass_roc_type = "combined",
+            palBrewer = "Dark2", ...) {
 
             super$initialize(
                 package="jYS",
@@ -145,6 +147,30 @@ mMLPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "decimal",
                     "percent"),
                 default="percent")
+            private$..multiclass_roc_type <- jmvcore::OptionList$new(
+                "multiclass_roc_type",
+                multiclass_roc_type,
+                options=list(
+                    "combined",
+                    "separate"),
+                default="combined")
+            private$..palBrewer <- jmvcore::OptionList$new(
+                "palBrewer",
+                palBrewer,
+                options=list(
+                    "none",
+                    "Accent",
+                    "Dark2",
+                    "Paired",
+                    "Pastel1",
+                    "Set1",
+                    "Set2",
+                    "Set3"),
+                default="Dark2")
+            private$..predClass <- jmvcore::OptionOutput$new(
+                "predClass")
+            private$..predProb <- jmvcore::OptionOutput$new(
+                "predProb")
 
             self$.addOption(private$..dep)
             self$.addOption(private$..covs)
@@ -165,6 +191,10 @@ mMLPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..show_roc)
             self$.addOption(private$..roc_x)
             self$.addOption(private$..roc_unit)
+            self$.addOption(private$..multiclass_roc_type)
+            self$.addOption(private$..palBrewer)
+            self$.addOption(private$..predClass)
+            self$.addOption(private$..predProb)
         }),
     active = list(
         dep = function() private$..dep$value,
@@ -185,7 +215,11 @@ mMLPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         show_matrix = function() private$..show_matrix$value,
         show_roc = function() private$..show_roc$value,
         roc_x = function() private$..roc_x$value,
-        roc_unit = function() private$..roc_unit$value),
+        roc_unit = function() private$..roc_unit$value,
+        multiclass_roc_type = function() private$..multiclass_roc_type$value,
+        palBrewer = function() private$..palBrewer$value,
+        predClass = function() private$..predClass$value,
+        predProb = function() private$..predProb$value),
     private = list(
         ..dep = NA,
         ..covs = NA,
@@ -205,7 +239,11 @@ mMLPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..show_matrix = NA,
         ..show_roc = NA,
         ..roc_x = NA,
-        ..roc_unit = NA)
+        ..roc_unit = NA,
+        ..multiclass_roc_type = NA,
+        ..palBrewer = NA,
+        ..predClass = NA,
+        ..predProb = NA)
 )
 
 mMLPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
@@ -220,7 +258,9 @@ mMLPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         curvePlot = function() private$.items[["curvePlot"]],
         matrixTable = function() private$.items[["matrixTable"]],
         statsTable = function() private$.items[["statsTable"]],
-        rocPlot = function() private$.items[["rocPlot"]]),
+        rocPlot = function() private$.items[["rocPlot"]],
+        predClass = function() private$.items[["predClass"]],
+        predProb = function() private$.items[["predProb"]]),
     private = list(),
     public=list(
         initialize=function(options) {
@@ -242,7 +282,7 @@ mMLPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 options=options,
                 name="infoTable",
                 title="Model Information & Accuracy",
-                rows=1,
+                rows=6,
                 clearWith=list(
                     "dep",
                     "covs",
@@ -258,29 +298,13 @@ mMLPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "cv_folds"),
                 columns=list(
                     list(
-                        `name`="size", 
-                        `title`="Hidden Layers", 
+                        `name`="metric", 
+                        `title`="Metric", 
                         `type`="text"),
                     list(
-                        `name`="decay", 
-                        `title`="Weight Decay", 
-                        `type`="number"),
-                    list(
-                        `name`="maxit", 
-                        `title`="Max Iterations", 
-                        `type`="integer"),
-                    list(
-                        `name`="trainAcc", 
-                        `title`="Training Accuracy (%)", 
-                        `type`="number"),
-                    list(
-                        `name`="valAcc", 
-                        `title`="Hold-out Accuracy (%)", 
-                        `type`="number"),
-                    list(
-                        `name`="cvAcc", 
-                        `title`="K-Fold CV Accuracy (%)", 
-                        `type`="number"))))
+                        `name`="value", 
+                        `title`="Value", 
+                        `type`="text"))))
             self$add(jmvcore::Table$new(
                 options=options,
                 name="importanceTable",
@@ -388,15 +412,15 @@ mMLPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 columns=list(
                     list(
                         `name`="actual", 
-                        `title`="Actual \\ Predicted", 
+                        `title`="Actual Class", 
                         `type`="text"),
                     list(
-                        `name`="pred_neg", 
-                        `title`="Negative Class", 
-                        `type`="integer"),
+                        `name`="predicted", 
+                        `title`="Predicted Class", 
+                        `type`="text"),
                     list(
-                        `name`="pred_pos", 
-                        `title`="Positive Class", 
+                        `name`="count", 
+                        `title`="Count", 
                         `type`="integer"))))
             self$add(jmvcore::Table$new(
                 options=options,
@@ -429,15 +453,17 @@ mMLPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `name`="cvVal", 
                         `title`="Validation", 
                         `type`="number"))))
-            self$add(jmvcore::Image$new(
+            self$add(jmvcore::Array$new(
                 options=options,
                 name="rocPlot",
                 title="ROC Analysis Comparison",
                 visible="(show_roc)",
-                width=500,
-                height=500,
-                renderFun=".rocPlot",
-                requiresData=TRUE,
+                template=jmvcore::Image$new(
+                    options=options,
+                    width=500,
+                    height=500,
+                    renderFun=".rocPlot",
+                    requiresData=TRUE),
                 clearWith=list(
                     "dep",
                     "covs",
@@ -452,7 +478,43 @@ mMLPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "val_split",
                     "cv_folds",
                     "roc_x",
-                    "roc_unit")))}))
+                    "roc_unit",
+                    "multiclass_roc_type",
+                    "palBrewer")))
+            self$add(jmvcore::Output$new(
+                options=options,
+                name="predClass",
+                title="Predicted Class",
+                clearWith=list(
+                    "dep",
+                    "covs",
+                    "factors",
+                    "hidden_structure",
+                    "activation",
+                    "out_activation",
+                    "decay",
+                    "maxit",
+                    "rang",
+                    "partition",
+                    "val_split",
+                    "cv_folds")))
+            self$add(jmvcore::Output$new(
+                options=options,
+                name="predProb",
+                title="Predicted Probability",
+                clearWith=list(
+                    "dep",
+                    "covs",
+                    "factors",
+                    "hidden_structure",
+                    "activation",
+                    "out_activation",
+                    "decay",
+                    "maxit",
+                    "rang",
+                    "partition",
+                    "val_split",
+                    "cv_folds")))}))
 
 mMLPBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "mMLPBase",
@@ -472,7 +534,7 @@ mMLPBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 pause = NULL,
                 completeWhenFilled = FALSE,
                 requiresMissings = FALSE,
-                weightsSupport = 'auto')
+                weightsSupport = 'none')
         }))
 
 #' MLP Classifier
@@ -498,6 +560,8 @@ mMLPBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param show_roc .
 #' @param roc_x .
 #' @param roc_unit .
+#' @param multiclass_roc_type .
+#' @param palBrewer .
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$text} \tab \tab \tab \tab \tab a html \cr
@@ -508,7 +572,9 @@ mMLPBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$curvePlot} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$matrixTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$statsTable} \tab \tab \tab \tab \tab a table \cr
-#'   \code{results$rocPlot} \tab \tab \tab \tab \tab an image \cr
+#'   \code{results$rocPlot} \tab \tab \tab \tab \tab an array of images \cr
+#'   \code{results$predClass} \tab \tab \tab \tab \tab an output \cr
+#'   \code{results$predProb} \tab \tab \tab \tab \tab an output \cr
 #' }
 #'
 #' Tables can be converted to data frames with \code{asDF} or \code{\link{as.data.frame}}. For example:
@@ -538,7 +604,9 @@ mMLP <- function(
     show_matrix = FALSE,
     show_roc = FALSE,
     roc_x = "1spec",
-    roc_unit = "percent") {
+    roc_unit = "percent",
+    multiclass_roc_type = "combined",
+    palBrewer = "Dark2") {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
         stop("mMLP requires jmvcore to be installed (restart may be required)")
@@ -575,7 +643,9 @@ mMLP <- function(
         show_matrix = show_matrix,
         show_roc = show_roc,
         roc_x = roc_x,
-        roc_unit = roc_unit)
+        roc_unit = roc_unit,
+        multiclass_roc_type = multiclass_roc_type,
+        palBrewer = palBrewer)
 
     analysis <- mMLPClass$new(
         options = options,

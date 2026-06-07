@@ -126,8 +126,6 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 	if (!is.null(self$options$group)) {
 	   subs <- paste(self$options$group, " == \"", self$options$selgroup,"\"", sep="")
            self$results$text$setContent(paste("<h2>", subs, "</h2>", sep=""))
-	   ###sub <- paste("`", self$options$group, "`==\"", self$options$selgroup,"\"", sep="")
-           ###dat <- subset(dat, eval(parse(text=sub)))
            dat <- dat[dat[[self$options$group]] == self$options$selgroup, , drop=FALSE]
         }
 

@@ -1,8 +1,8 @@
-title: MLP Classifier
-name: mMLP
+title: Logistic Regression
+name: mLR
 jus: '3.0'
 stage: 0
-compilerMode: tame
+compilerMode: wild
 children:
   - type: VariableSupplier
     persistentItems: false
@@ -27,41 +27,41 @@ children:
           - type: VariablesListBox
             name: factors
             isTarget: true
-
+      - type: TargetLayoutBox
+        label: Filter Variable
+        children:
+          - type: VariablesListBox
+            name: group
+            maxItemCount: 1
+            isTarget: true
+            fitToGrid: true
+          - type: LevelSelector
+            label: ''
+            name: selgroup
+            enable: ({return ui['group'].value()!==null;})
   - type: CollapseBox
-    label: Model Parameters
-    collapsed: true
+    label: Feature Selection Settings
+    collapsed: false
     children:
-      - name: hidden_structure
-        type: TextBox
-        label: Hidden Layer Structure (e.g., 8 or 10,5)
-        format: string
-      - name: activation
+      - name: method
         type: ComboBox
-        label: Hidden Activation Function
-      - name: out_activation
+        label: Feature Selection Method
+      - name: elastic_alpha
+        type: TextBox
+        label: ElasticNet Alpha (L1 Ratio, 0=Ridge, 1=LASSO)
+        format: number
+        enable: (method:elastic)
+      - name: lasso_penalty
         type: ComboBox
-        label: Output Activation Function
-      - name: decay
-        type: TextBox
-        label: Weight Decay (L2 Regularization)
-        format: number
-      - name: maxit
-        type: TextBox
-        label: Max Iterations (Epochs)
-        format: number
-      - name: rang
-        type: TextBox
-        label: Initial Weights Range
-        format: number
-
+        label: Regularization Penalty Optimization
+        enable: (method:lasso || method:elastic)
   - type: CollapseBox
     label: Validation Settings
     collapsed: true
     children:
       - name: partition
         type: ComboBox
-        label: Partition Method
+        label: Validation Method
       - name: val_split
         type: TextBox
         label: Hold-out Validation Split (%)
@@ -71,22 +71,22 @@ children:
         type: TextBox
         label: Cross-Validation Folds (K)
         format: number
-        enable: (partition:kfold)
-
+        enable: (partition:kfold || partition:repeated_kfold)
+      - name: cv_repeats
+        type: TextBox
+        label: Cross-Validation Repeats (R)
+        format: number
+        enable: (partition:repeated_kfold)
   - type: CollapseBox
     label: Outputs & Evaluation
     collapsed: false
     children:
-      - name: show_imp
+      - name: show_formula
         type: CheckBox
-      - name: show_topo
-        type: CheckBox
-      - name: show_curve
-        type: CheckBox
-      - name: show_matrix
-        type: CheckBox
+        label: Show Mathematical Model Formula
       - name: show_roc
         type: CheckBox
+        label: Show ROC Analysis curves
         children:
           - name: roc_x
             type: ComboBox
@@ -95,10 +95,6 @@ children:
           - name: roc_unit
             type: ComboBox
             label: Axis Units
-            enable: (show_roc)
-          - name: multiclass_roc_type
-            type: ComboBox
-            label: Multiclass ROC Layout
             enable: (show_roc)
           - name: palBrewer
             type: ComboBox
@@ -112,4 +108,3 @@ children:
         name: predClass
       - type: Output
         name: predProb
-...

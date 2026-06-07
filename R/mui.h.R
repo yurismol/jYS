@@ -230,7 +230,17 @@ mUIResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 list(
                                     `name`="int", 
                                     `title`="Intersection", 
-                                    `type`="number"))))
+                                    `type`="number"),
+                                list(
+                                    `name`="lth", 
+                                    `title`="Lower threshold", 
+                                    `type`="number", 
+                                    `visible`="(UImethod != \"noUI\")"),
+                                list(
+                                    `name`="uth", 
+                                    `title`="Upper threshold", 
+                                    `type`="number", 
+                                    `visible`="(UImethod != \"noUI\")"))))
                         self$add(jmvcore::Table$new(
                             options=options,
                             name="mcistat",
@@ -245,7 +255,55 @@ mUIResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                     `name`="var", 
                                     `title`="Predictor", 
                                     `type`="text", 
-                                    `content`="($key)"))))
+                                    `content`="($key)"),
+                                list(
+                                    `name`="C", 
+                                    `title`="Concordance", 
+                                    `type`="number"),
+                                list(
+                                    `name`="Se", 
+                                    `title`="Se", 
+                                    `type`="number"),
+                                list(
+                                    `name`="Sp", 
+                                    `title`="Sp", 
+                                    `type`="number"),
+                                list(
+                                    `name`="CCR", 
+                                    `title`="CCR", 
+                                    `type`="number"),
+                                list(
+                                    `name`="bal", 
+                                    `title`="Balance", 
+                                    `type`="number"),
+                                list(
+                                    `name`="NPV", 
+                                    `title`="NPV", 
+                                    `type`="number"),
+                                list(
+                                    `name`="PPV", 
+                                    `title`="PPV", 
+                                    `type`="number"),
+                                list(
+                                    `name`="SNPV", 
+                                    `title`="SNPV", 
+                                    `type`="number"),
+                                list(
+                                    `name`="SPPV", 
+                                    `title`="SPPV", 
+                                    `type`="number"),
+                                list(
+                                    `name`="LRm", 
+                                    `title`="LR-", 
+                                    `type`="number"),
+                                list(
+                                    `name`="LRp", 
+                                    `title`="LR+", 
+                                    `type`="number"),
+                                list(
+                                    `name`="Prevalence", 
+                                    `title`="Prevalence", 
+                                    `type`="number"))))
                         self$add(jmvcore::Table$new(
                             options=options,
                             name="intstat",

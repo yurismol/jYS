@@ -7,6 +7,38 @@ mOUTClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
         .init = function() {
           private$.initOutputs()
+
+          # Initialize columns for outstat
+          outable <- self$results$stat$outstat
+          
+          grp <- self$options$group
+          if (!is.null(grp)) outable$addColumn(name="grp", title=.("Group"), type='text')
+          
+          outable$addColumn(name="noutl", title=.("Outliers found"), type='integer')
+          
+          if (self$options$norm) outable$addColumn(name="psh", title=.("Normality p-value"), type='number')
+          
+          outlcheck <- self$options$outlcheck
+          if (outlcheck %in% c("ZS", "MAH")) {
+            outable$addColumn(name="m", title=.("Mean"), type='number')
+          } else {
+            outable$addColumn(name="m", title=.("Median"), type='number')
+          }
+          
+          outable$addColumn(name="lf",  title=.("Lower fence"), type='number')
+          outable$addColumn(name="uf",  title=.("Upper fence"), type='number')
+          
+          if (self$options$norm) outable$setNote('flag', .('*p<0.05 - The hypothesis of normal distribution was rejected by the Shapiro-Wilk test'))
+          
+          # Initialize columns for oind tables
+          oind <- self$results$oind
+          keys <- self$options$vars
+          for (key in keys) {
+            tab <- oind$get(key=key)
+            if (!is.null(grp)) tab$addColumn(name="grp",  title=.("Group"), type='text')
+            tab$addColumn(name="onum", title=.("Outliers found"), type='integer')
+            tab$addColumn(name="indx", title=.("Indices (Rows)"), type='text')
+          }
         },
 
         .run = function() {
@@ -227,21 +259,9 @@ mOUTClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
         .filltable=function() {
           outable <- self$results$stat$outstat
           oind    <- self$results$oind
-          #outable$addColumn(name="var", title="Variable", type='text')
-	  grp   <- self$options$group
-	  if (!is.null(grp)) outable$addColumn(name="grp", title=.("Group"), type='text')
-          outable$addColumn(name="noutl", title=.("Outliers found"), type='integer')
+          grp   <- self$options$group
           outlcheck <- self$options$outlcheck
           fence <- as.double(self$options$fence)
-          if (self$options$norm) outable$addColumn(name="psh", title=.("Normality p-value"), type='number')
-          if (outlcheck %in% c("ZS", "MAH")) {
-            outable$addColumn(name="m", title=.("Mean"), type='number')
-          } else {
-            outable$addColumn(name="m", title=.("Median"), type='number')
-          }
-          outable$addColumn(name="lf",  title=.("Lower fence"), type='number')
-          outable$addColumn(name="uf",  title=.("Upper fence"), type='number')
-          if (self$options$norm) outable$setNote('flag', .('*p<0.05 - The hypothesis of normal distribution was rejected by the Shapiro-Wilk test'))
 
           keys  <- self$options$vars
           dat   <- data.frame(self$data, check.names=FALSE)
@@ -266,9 +286,6 @@ mOUTClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             }
             nm <- names(outl)
             tab  <- oind$get(key=key)
-            if (!is.null(grp)) tab$addColumn(name="grp",  title=.("Group"), type='text')
-            tab$addColumn(name="onum", title=.("Outliers found"), type='integer')
-            tab$addColumn(name="indx", title=.("Indices (Rows)"), type='text')
             for (j in seq_along(outl)) {
               lst  <- unlist(outl[[j]])
               gr   <- nm[[j]]

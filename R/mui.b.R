@@ -17,7 +17,7 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                           .('Uncertain Interval is considered to be a range of test scores that is inconclusive and does not warrant a right decision.')))
             mcitable <- self$results$stat$mcistat
             mcitable$setNote('mci1', .('More Certain Interval (MCI) is interval outside the Uncertain Interval and divide into low and high parts.'))
-            mcitable$setNote('mci2', .('Concordance - C-Statistic or AUC. The probability that a random chosen patient with the condition is correctly ranked higher than a randomly chosen patient without the condition'))
+            mcitable$setNote('mci2', .('Concordance - C-Statistic or AUC. The probability that a randomly chosen subject with the condition is correctly ranked higher than a randomly chosen subject without the condition'))
             mcitable$setNote('mci3', .('Se - sensitivity of the positive and negative classifications TP/(TP+FN)'))
             mcitable$setNote('mci4', .('Sp - specificity of the positive and negative classifications TN/(TN+FN)'))
             mcitable$setNote('mci5', .('CCR - Correct Classification Rate or accuracy of the positive and negative classifications (TP+TN)/(TN+FP+FN+TP)'))
@@ -28,6 +28,33 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             mcitable$setNote('mciA', .('SPPV - standardized positive predictive value of the positive class'))
             mcitable$setNote('mciA', .('LR- - Negative Likelihood Ratio P(-|D+))/(P(-|D-)). The probability of a person with the condition receiving a negative classification / probability of a person without the condition receiving a negative classification'))
             mcitable$setNote('mciA', .('LR+ - Positive Likelihood Ratio (P(+|D+))/(P(+|D-)) The probability of a person with the condition receiving a positive classification / probability of a person without the condition receiving a positive classification'))
+
+            if (self$options$youden) {
+              uitable$getColumn('int')$setTitle(.("Threshold on Youden"))
+            } else {
+              uitable$getColumn('int')$setTitle(.("Intersection"))
+            }
+
+            if (self$options$isProp) {
+              ref0 <- self$options$refval
+              ref  <- self$options$ref
+              ref1 <- ""
+              if (length(self$data) > 0 && ref %in% names(self$data)) {
+                fct  <- self$data[[ref]]
+                lvl  <- levels(fct)
+                if (!is.null(lvl) && length(lvl) > 0) {
+                  ref1 <- toString(lvl[lvl!=ref0])
+                }
+              }
+
+              intable <- self$results$stat$intstat
+              intable$addColumn(name="norm", title=.("Normality p-value"), type="number", format='pvalue')
+              intable$addColumn(name="mciL", title=jmvcore::format(.("MCI=0 ({})"), ref0), type="integer")
+              intable$addColumn(name="ui",   title=.("UI"),    type="integer")
+              intable$addColumn(name="mciU", title=jmvcore::format(.("MCI=1 ({})"), ref1), type="integer")
+              intable$addColumn(name="sum",  title=.("Sum"),   type="integer")
+              intable$setNote('flag', .('*p<0.05 - The hypothesis of normal distribution was rejected by the Shapiro-Wilk test'))
+            }
         },
 
         .initOutputs=function() {
@@ -89,38 +116,10 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
             if (self$options$isProp) {
               intable <- self$results$stat$intstat
-              intable$addColumn(name="norm", title="Normality p-value", type="number", format='pvalue')
-              intable$addColumn(name="mciL", title=paste0(.("MCI=0 ("),ref0,")"), type="integer")
-              intable$addColumn(name="ui",   title=.("UI"),    type="integer")
-              intable$addColumn(name="mciU", title=paste0(.("MCI=1 ("),ref1,")"), type="integer")
-              intable$addColumn(name="sum",  title=.("Sum"),   type="integer")
-              intable$setNote('flag', .('*p<0.05 - The hypothesis of normal distribution was rejected by the Shapiro-Wilk test'))
             }
 
             uitable <- self$results$stat$uistat
-            if (self$options$youden) {
-              uitable$addColumn(name="int", title=.("Threshold on Youden"), type="number")
-            } else {
-              uitable$addColumn(name="int", title=.("Intersection"), type="number")
-            }
-
             mcitable <- self$results$stat$mcistat
-            mcitable$addColumn(name="C",    title=.("Concordance"), type="number")
-            mcitable$addColumn(name="Se",   title="Se",  type="number")
-            mcitable$addColumn(name="Sp",   title="Sp",  type="number")
-            mcitable$addColumn(name="CCR",  title="CCR", type="number")
-            mcitable$addColumn(name="bal",  title=.("Balance"), type="number")
-            mcitable$addColumn(name="NPV",  title="NPV", type="number")
-            mcitable$addColumn(name="PPV",  title="PPV", type="number")
-            mcitable$addColumn(name="SNPV", title="SNPV", type="number")
-            mcitable$addColumn(name="SPPV", title="SPPV", type="number")
-            mcitable$addColumn(name="LRm",  title="LR-",  type="number")
-            mcitable$addColumn(name="LRp",  title="LR+",  type="number")
-            mcitable$addColumn(name="Prevalence", title=.("Prevalence"), type="number")
-            if (self$options$UImethod!="noUI") {
-              uitable$addColumn(name="lth", title=.("Lower threshold"), type="number")
-              uitable$addColumn(name="uth", title=.("Upper threshold"), type="number")
-            }
 
             for (i in seq_along(test)) {
               var   <- test[[i]]

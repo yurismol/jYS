@@ -39,10 +39,24 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               contErr = .('PVU - proportion of variance unexplained 1-R\u00B2 (for Continuous variables);')
             }
             etable$setNote('obe', paste(
-                          .('N - number of imputted values;'),
+                          .('N - number of missing values;'),
                           .('PFC - proportion of falsely classified (for Nominal and Ordinal variables);'),
                           contErr
             ))
+
+            if (self$options$fullmars) {
+                tables <- self$results$estim$fMARtab
+                keys   <- self$options$imputevar
+                all_vars <- c(self$options$learnvar, keys)
+                for (tab in keys) {
+                    table <- tables$get(key=tab)
+                    other_vars <- all_vars
+                    for (v in other_vars) {
+                        rk <- gsub(" ", ".", v)
+                        table$addRow(rowKey=rk, list(exp=v))
+                    }
+                }
+            }
         },
 
         .run = function() {
@@ -214,7 +228,7 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             marp  <- mar$p_value;     names(marp) <- mar$missing
             mare  <- mar$explanatory; names(mare) <- mar$missing
             mctable<- self$results$estim$mcar
-            mctable$addRow(rowKey='MCAR',
+            mctable$setRow(rowNo=1,
 		list(pval=mcar$p_val,
 		     df=mcar$degrees_freedom,
 		     d2=round(mcar$statistic, 2),
@@ -232,10 +246,9 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 		    table <- tables$get(key=tab)
 		    tt <- gsub(" ", ".", tab)
 		    m  <- marc[[tt]]
-    		    m  <- m[order(unlist(m))]
 		    nm <- names(m)
 		    for (i in seq_along(m)) {
-		      table$addRow(rowKey=nm[i], list(exp=nm[i], pval=m[i]))
+		      table$setRow(rowKey=nm[i], list(pval=m[i]))
 		    }
 		  }
 		}

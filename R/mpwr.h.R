@@ -304,7 +304,7 @@ mPWRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `superTitle`="User Defined"),
                     list(
                         `name`="alpha", 
-                        `title`="&alpha;", 
+                        `title`="\u03B1", 
                         `type`="number", 
                         `format`="pvalue", 
                         `superTitle`="User Defined"),

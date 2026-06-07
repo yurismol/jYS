@@ -200,6 +200,7 @@ mMFResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             clearWith=list(
                                 "learnvar",
                                 "imputevar"),
+                            rows=1,
                             columns=list(
                                 list(
                                     `name`="name", 

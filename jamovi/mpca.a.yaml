@@ -1,0 +1,168 @@
+---
+name:  mPCA
+title: PCA Submodule
+menuGroup: jYS
+version: '1.0.0'
+jas: '1.2'
+
+options:
+    - name: data
+      type: Data
+
+    - name: vars
+      title: Variables
+      type: Variables
+      required: true
+      suggested:
+        - continuous
+      permitted:
+        - numeric
+
+    - name: group
+      title: Filter Variable
+      required: false
+      suggested:
+        - nominal
+        - ordinal
+      permitted:
+        - factor
+      type: Variable
+
+    - name: selgroup
+      title: Select group for filtering
+      type: Level
+      variable: (group)
+
+    - name: classVar
+      title: Grouping Variable
+      required: false
+      suggested:
+        - nominal
+        - ordinal
+      permitted:
+        - factor
+      type: Variable
+
+    - name: npc
+      title: Number of components to retain
+      type: Number
+      min: 1
+      default: 2
+
+    - name: pcX
+      title: PC for X axis
+      type: Number
+      min: 1
+      default: 1
+
+    - name: pcY
+      title: PC for Y axis
+      type: Number
+      min: 1
+      default: 2
+
+    - name: kMeansK
+      title: Number of clusters (K-Means)
+      type: Number
+      min: 2
+      default: 2
+
+    - name: regKFold
+      title: K-folds for CV
+      type: Number
+      min: 2
+      max: 20
+      default: 5
+
+    - name: screePlot
+      title: Scree plot with parallel analysis
+      type: Bool
+      default: true
+
+    - name: loadingsTable
+      title: Factor loadings table
+      type: Bool
+      default: true
+
+    - name: loadingsHeatmap
+      title: Factor loadings heatmap
+      type: Bool
+      default: true
+
+    - name: scorePlot
+      title: Object score distribution with 95% ellipses
+      type: Bool
+      default: true
+
+    - name: biplot
+      title: Influence vectors (Biplot)
+      type: Bool
+      default: true
+
+    - name: cos2Table
+      title: Quality of representation (Cos²) table
+      type: Bool
+      default: true
+
+    - name: cos2Heatmap
+      title: Quality of representation (Cos²) heatmap
+      type: Bool
+      default: true
+
+    - name: kmeansTable
+      title: K-Means contingency/ARI comparison
+      type: Bool
+      default: true
+
+    - name: regTable
+      title: Regression model quality with K-fold CV
+      type: Bool
+      default: true
+
+    - name: rocPlot
+      title: Regression ROC plot
+      type: Bool
+      default: true
+
+    - name: roc_x
+      title: ROC X-axis Coordinate
+      type: List
+      options:
+        - name: spec
+          title: Specificity
+        - name: 1spec
+          title: 1 - Specificity
+      default: 1spec
+
+    - name: roc_unit
+      title: ROC Axis Units
+      type: List
+      options:
+        - name: decimal
+          title: Decimal (0 to 1)
+        - name: percent
+          title: Percentage (%)
+      default: percent
+
+    - name: palBrewer
+      title: Brewer's qualitative palette
+      type: List
+      options:
+        - title: None
+          name:  none
+        - title: Accent
+          name:  Accent
+        - title: Dark2
+          name:  Dark2
+        - title: Paired
+          name:  Paired
+        - title: Pastel1
+          name:  Pastel1
+        - title: Set1
+          name:  Set1
+        - title: Set2
+          name:  Set2
+        - title: Set3
+          name:  Set3
+      default: Dark2
+...

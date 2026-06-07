@@ -12,7 +12,7 @@ description: >
   Graphic extensions of the functionality of popular data analysis methods:
   cluster tree of correlating variables, multifactor adaptive correlation
   matrix, multidimensional ROC classification curves, missing data estimation
-  and imputation, outliers identificatioon and removal etc.
+  and imputation, outliers identification and removal etc.
 datasets:
   - name: Correlation clustering
     path: COR_BLOOD.omv
@@ -47,6 +47,12 @@ datasets:
   - name: Neural Network Classification
     path: MLP.omv
     description: Neural Network Classifier (multilayer perceptron) demonstration
+  - name: PCA blood cells
+    path: PCA_BLOOD.omv
+    description: Principal Component Analysis (PCA) demonstration
+  - name: Logistic Regression blood cells
+    path: LR_BLOOD.omv
+    description: Logistic Regression demonstration
 analyses:
   - title: Correlation clustering
     name: mCOR
@@ -94,6 +100,18 @@ analyses:
     category: analyses
     menuGroup: jYS
     menuTitle: MLP Classifier
+  - title: Logistic Regression
+    name: mLR
+    ns: jYS
+    category: analyses
+    menuGroup: jYS
+    menuTitle: Logistic Regression
+  - title: PCA Submodule
+    name: mPCA
+    ns: jYS
+    category: analyses
+    menuGroup: jYS
+    menuTitle: PCA Submodule
 usesNative: true
 minApp: 1.0.8
 
