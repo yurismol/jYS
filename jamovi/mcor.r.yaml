@@ -208,6 +208,7 @@ items:
             - hclust
             - numClust
             - clustMet
+            - clustCol
             - clustMan
             - method
 ...

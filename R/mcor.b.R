@@ -387,7 +387,7 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 } else if (self$options$clustMan > "" && nVars > 2) {
                     vec <- as.numeric(strsplit(self$options$clustMan, ",")[[1]])
                     posClust <- c(1, vec, nVars)
-                    splAt  <- function(x, pos) unname(split(x, findInterval(x, pos)))
+                    splAt  <- function(x, pos) unname(split(x, findInterval(seq_along(x), pos)))
                     clust_nodes <- splAt(vars, posClust)
                     clusters <- clust_nodes
                 }
@@ -670,21 +670,23 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
           if (is.null(image$state)) return(FALSE)
           
           pcor <- image$state$pcor
-          vars <- image$state$vars
+          vars <- as.character(image$state$vars)
           subs <- image$state$subs
           
           if (!requireNamespace("qgraph", quietly = TRUE)) {
               return(FALSE)
           }
           
-          posCol <- "#2166AC"
-          negCol <- "#B2182B"
+          posCol <- "#B2182B"
+          negCol <- "#2166AC"
           
           groups <- NULL
           nodeCols <- NULL
           
-          if (!is.null(image$state$clusters)) {
-              groups <- image$state$clusters
+          if (self$options$clustCol && !is.null(image$state$clusters)) {
+              groups <- lapply(image$state$clusters, function(cluster_vars) {
+                  match(as.character(cluster_vars), vars)
+              })
               nClust <- length(groups)
               nodeCols <- jmvcore::colorPalette(n = nClust, theme$palette, type = "fill")
           }
@@ -694,7 +696,15 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               vsize <- c(8, 18)
           }
 
-          par(mar=c(2, 2, 3, 2))
+          hasGroups <- !is.null(groups) && length(groups) > 0
+          
+          if (hasGroups) {
+              par(mar = c(6, 2, 3, 2))
+              qmar <- c(7, 3, 3, 3)
+          } else {
+              par(mar = c(2, 2, 3, 2))
+              qmar <- c(3, 3, 3, 3)
+          }
           
           qgraph::qgraph(
               pcor,
@@ -705,7 +715,7 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               negCol = negCol,
               groups = groups,
               color = nodeCols,
-              legend = !is.null(groups),
+              legend = FALSE,
               title = if (subs > "") paste0(.("Network ("), subs, ")") else .("Partial Correlation Network (GLASSO)"),
               title.cex = 1.2,
               vsize = vsize,
@@ -714,8 +724,24 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               legend.cex = 1.0,
               edge.width = 2,
               fade = FALSE,
-              doPlot = TRUE
+              doPlot = TRUE,
+              mar = qmar
           )
+          
+          if (hasGroups) {
+              legend(
+                  x = 0,
+                  y = -1.4,
+                  xjust = 0.5,
+                  yjust = 0.5,
+                  legend = names(groups),
+                  fill = nodeCols,
+                  horiz = TRUE,
+                  bty = "n",
+                  cex = 1.0,
+                  xpd = TRUE
+              )
+          }
           
           return(TRUE)
       }

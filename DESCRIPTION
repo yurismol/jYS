@@ -15,5 +15,5 @@ Imports: jmvcore (>= 0.8.5), R6, dendextend, corrplot, pROC,
          RColorBrewer, missForest, missRanger, ggmice,
          car, ggrepel, glmnet, ggplot2, glasso, qgraph, reshape2
 Remotes: NoahHellen/missr, HansLandsheer/UncertainInterval, metinbulus/pwrss
-Suggests: shiny
+Suggests: shiny, testthat
 

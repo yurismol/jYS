@@ -594,6 +594,7 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 "hclust",
                                 "numClust",
                                 "clustMet",
+                                "clustCol",
                                 "clustMan",
                                 "method")))}))$new(options=options))}))
 

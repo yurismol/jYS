@@ -132,9 +132,10 @@ children:
               - type: CheckBox
                 name: glassoPlot
                 enable: (glasso)
-              - type: CheckBox
-                name: glassoPlotScale
-                enable: (glasso && glassoPlot)
+                children:
+                  - type: CheckBox
+                    name: glassoPlotScale
+                    enable: (glassoPlot)
               - type: ComboBox
                 name: glassoType
                 enable: (glasso)
