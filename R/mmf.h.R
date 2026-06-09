@@ -20,7 +20,7 @@ mMFOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             maxiter = 10,
             ntree = 500,
             setseed = FALSE,
-            seed = 123,
+            seed = 42,
             pmmk = 0, ...) {
 
             super$initialize(
@@ -93,7 +93,7 @@ mMFOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             private$..seed <- jmvcore::OptionNumber$new(
                 "seed",
                 seed,
-                default=123)
+                default=42)
             private$..pmmk <- jmvcore::OptionNumber$new(
                 "pmmk",
                 pmmk,
@@ -415,7 +415,7 @@ mMF <- function(
     maxiter = 10,
     ntree = 500,
     setseed = FALSE,
-    seed = 123,
+    seed = 42,
     pmmk = 0) {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))

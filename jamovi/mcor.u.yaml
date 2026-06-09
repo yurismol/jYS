@@ -15,7 +15,7 @@ children:
             name: vars
             isTarget: true
       - type: TargetLayoutBox
-        label: Grouping Variable
+        label: Filtering Variable
         children:
           - type: VariablesListBox
             name: group
@@ -112,3 +112,37 @@ children:
               - type: ComboBox
                 name: clPos
                 enable: (plots)
+  - type: CollapseBox
+    label: Graphical Lasso (GLASSO)
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: LayoutBox
+        margin: large
+        children:
+          - type: CheckBox
+            name: glasso
+            children:
+              - type: CheckBox
+                name: glassoTable
+                enable: (glasso)
+              - type: CheckBox
+                name: glassoHub
+                enable: (glasso)
+              - type: CheckBox
+                name: glassoPlot
+                enable: (glasso)
+              - type: CheckBox
+                name: glassoPlotScale
+                enable: (glasso && glassoPlot)
+              - type: ComboBox
+                name: glassoType
+                enable: (glasso)
+              - type: TextBox
+                name: glassoGamma
+                format: number
+                enable: (glasso && {return ui['glassoType'].value() == 'ebic';})
+              - type: TextBox
+                name: glassoRho
+                format: number
+                enable: (glasso && {return ui['glassoType'].value() == 'manual';})

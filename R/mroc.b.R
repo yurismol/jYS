@@ -84,12 +84,12 @@ mROCClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                   kk <- ""
                   dd <- dat
                   pair <- TRUE
-                  frm <- stats::as.formula(jmvcore:::composeFormula(self$options$class, var))
+                  frm <- stats::as.formula(jmvcore::composeFormula(self$options$class, var))
                 } else if (!is.na(key)) {
                   kk  <- self$options$groups
                   dd <- dat[dat[[self$options$groups]] == var, , drop=FALSE]
                   pair <- FALSE
-                  frm <- stats::as.formula(jmvcore:::composeFormula(self$options$class, image$key))
+                  frm <- stats::as.formula(jmvcore::composeFormula(self$options$class, image$key))
                 }
 
                 roc <- pROC::roc(frm, data=dd, percent=self$options$perc)
@@ -117,7 +117,7 @@ mROCClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                       z <- (roc$auc - null_auc) / sqrt(variance)
                       pval <- 2 * stats::pnorm(-abs(z))
                     }
-                    pv <- jmvcore:::formatElement(pval, p=TRUE, zto=FALSE, sf=3, dp=3)
+                    pv <- private$.formatElement(pval)
                     pv <- gsub(" ", "0", pv)
                     if (self$options$mAst)
                       TR <- rbind(TR, paste(" ",private$.asterisk(pval)))
@@ -129,7 +129,7 @@ mROCClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                   } else if (add) {
                     rt <- pROC::roc.test(roc, oROC, paired=pair,
                             parallel=TRUE, method="d", alternative="two.sided")
-                    pv <- jmvcore:::formatElement(rt$p.value, p=TRUE, zto=FALSE, sf=3, dp=3)
+                    pv <- private$.formatElement(rt$p.value)
                     pv <- gsub(" ", "0", pv)
                     if (self$options$mAst)
                       TR <- rbind(TR, paste(" ",private$.asterisk(rt$p.value)))
@@ -146,7 +146,7 @@ mROCClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 } else TR <- ""
                 fmt  <- ifelse(self$options$perc,'%#.1f%%','%#.3f')
 
-                fauc <- paste("AUC ", fmt)
+                fauc <- paste(.("AUC "), fmt)
                 if (self$options$ciAUC)
                     fauc <- paste(fauc, " [",  sprintf(gsub("%%","",fmt), AUC[,1]),
                     "-",  sprintf(gsub("%%","",fmt), AUC[,3]), "]", sep="")
@@ -196,7 +196,7 @@ mROCClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                   au <- sprintf(AUC[,2], fmt=fmt)
                   ci <- paste(sprintf(AUC[,1], fmt=fmt), "-", sprintf(AUC[,3], fmt=fmt), sep="")
                   if (self$options$ciAUC) au <- paste(au, " [", ci, "]", sep="")
-                  tit <- paste(kk," (AUC", 
+                  tit <- paste(kk, .(" (AUC"), 
                     ifelse(self$options$ciAUC, jmvcore::format(.(" [{prc}% CI]"), prc=self$options$ciWidth),""),
                     ifelse(self$options$perc, "%",""), ")", sep="")
                   if (self$options$perc) au <- paste(au, "%", sep="")
@@ -239,6 +239,12 @@ mROCClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 	if (pval < .001)     return("***")
 	else if (pval < .01) return("**")
 	else if (pval < .05) return("*")
+      },
+
+      .formatElement = function(val) {
+          if (is.na(val)) return("")
+          if (val < 0.001) return("< .001")
+          return(sprintf("%.3f", val))
       }
     )
 )

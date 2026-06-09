@@ -2,7 +2,7 @@
 name:  mCOR
 title: Correlation clustering
 menuGroup: jYS
-version: '1.0.11'
+version: '1.1.1'
 jas: '1.2'
 
 options:
@@ -19,7 +19,7 @@ options:
         - numeric
 
     - name: group
-      title: Grouping Variable
+      title: Filtering Variable
       required: false
       suggested:
         - nominal
@@ -264,6 +264,55 @@ options:
 
     - name: clustMat
       title: Intercluster Matrices
+      type: Bool
+      default: false
+
+    - name: glasso
+      title: Graphical Lasso (GLASSO)
+      type: Bool
+      default: false
+
+    - name: glassoTable
+      title: Partial correlation matrix
+      type: Bool
+      default: false
+
+    - name: glassoPlot
+      title: Network plot
+      type: Bool
+      default: true
+
+    - name: glassoType
+      title: Tuning parameter
+      type: List
+      options:
+        - title: EBIC
+          name: ebic
+        - title: Manual penalty
+          name: manual
+      default: ebic
+
+    - name: glassoGamma
+      title: EBIC gamma
+      type: Number
+      min: 0
+      max: 1
+      default: 0.5
+
+    - name: glassoRho
+      title: Manual penalty (rho)
+      type: Number
+      min: 0
+      max: 10
+      default: 0.1
+
+    - name: glassoHub
+      title: Hub markers table
+      type: Bool
+      default: false
+
+    - name: glassoPlotScale
+      title: Scale node size by centrality
       type: Bool
       default: false
 

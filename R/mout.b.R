@@ -228,9 +228,9 @@ mOUTClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             dat   <- data.frame(self$data, check.names=FALSE)
 	    grp   <- self$options$group
 	    if (is.null(grp)) {
-	      frm <- stats::as.formula(jmvcore:::composeFormula(NULL, key))
+	      frm <- stats::as.formula(jmvcore::composeFormula(NULL, key))
 	    } else {
-	      frm <- stats::as.formula(jmvcore:::composeFormula(key, grp))
+	      frm <- stats::as.formula(jmvcore::composeFormula(key, grp))
 	    }
             p <- car::Boxplot(frm, data=dat, range=range)
 	    print(p)

@@ -55,6 +55,10 @@ children:
             name: pcY
             format: number
             label: PC for Y axis (Plot)
+          - type: TextBox
+            name: seed
+            format: number
+            label: Seed number
 
   - type: CollapseBox
     label: Tables and Visualizations

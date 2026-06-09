@@ -29,7 +29,15 @@ mCOROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             clPos = "b",
             clustCol = FALSE,
             clustMan = "",
-            clustMat = FALSE, ...) {
+            clustMat = FALSE,
+            glasso = FALSE,
+            glassoTable = FALSE,
+            glassoPlot = TRUE,
+            glassoType = "ebic",
+            glassoGamma = 0.5,
+            glassoRho = 0.1,
+            glassoHub = FALSE,
+            glassoPlotScale = FALSE, ...) {
 
             super$initialize(
                 package="jYS",
@@ -203,6 +211,45 @@ mCOROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "clustMat",
                 clustMat,
                 default=FALSE)
+            private$..glasso <- jmvcore::OptionBool$new(
+                "glasso",
+                glasso,
+                default=FALSE)
+            private$..glassoTable <- jmvcore::OptionBool$new(
+                "glassoTable",
+                glassoTable,
+                default=FALSE)
+            private$..glassoPlot <- jmvcore::OptionBool$new(
+                "glassoPlot",
+                glassoPlot,
+                default=TRUE)
+            private$..glassoType <- jmvcore::OptionList$new(
+                "glassoType",
+                glassoType,
+                options=list(
+                    "ebic",
+                    "manual"),
+                default="ebic")
+            private$..glassoGamma <- jmvcore::OptionNumber$new(
+                "glassoGamma",
+                glassoGamma,
+                min=0,
+                max=1,
+                default=0.5)
+            private$..glassoRho <- jmvcore::OptionNumber$new(
+                "glassoRho",
+                glassoRho,
+                min=0,
+                max=10,
+                default=0.1)
+            private$..glassoHub <- jmvcore::OptionBool$new(
+                "glassoHub",
+                glassoHub,
+                default=FALSE)
+            private$..glassoPlotScale <- jmvcore::OptionBool$new(
+                "glassoPlotScale",
+                glassoPlotScale,
+                default=FALSE)
 
             self$.addOption(private$..vars)
             self$.addOption(private$..group)
@@ -228,6 +275,14 @@ mCOROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..clustCol)
             self$.addOption(private$..clustMan)
             self$.addOption(private$..clustMat)
+            self$.addOption(private$..glasso)
+            self$.addOption(private$..glassoTable)
+            self$.addOption(private$..glassoPlot)
+            self$.addOption(private$..glassoType)
+            self$.addOption(private$..glassoGamma)
+            self$.addOption(private$..glassoRho)
+            self$.addOption(private$..glassoHub)
+            self$.addOption(private$..glassoPlotScale)
         }),
     active = list(
         vars = function() private$..vars$value,
@@ -253,7 +308,15 @@ mCOROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         clPos = function() private$..clPos$value,
         clustCol = function() private$..clustCol$value,
         clustMan = function() private$..clustMan$value,
-        clustMat = function() private$..clustMat$value),
+        clustMat = function() private$..clustMat$value,
+        glasso = function() private$..glasso$value,
+        glassoTable = function() private$..glassoTable$value,
+        glassoPlot = function() private$..glassoPlot$value,
+        glassoType = function() private$..glassoType$value,
+        glassoGamma = function() private$..glassoGamma$value,
+        glassoRho = function() private$..glassoRho$value,
+        glassoHub = function() private$..glassoHub$value,
+        glassoPlotScale = function() private$..glassoPlotScale$value),
     private = list(
         ..vars = NA,
         ..group = NA,
@@ -278,7 +341,15 @@ mCOROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..clPos = NA,
         ..clustCol = NA,
         ..clustMan = NA,
-        ..clustMat = NA)
+        ..clustMat = NA,
+        ..glasso = NA,
+        ..glassoTable = NA,
+        ..glassoPlot = NA,
+        ..glassoType = NA,
+        ..glassoGamma = NA,
+        ..glassoRho = NA,
+        ..glassoHub = NA,
+        ..glassoPlotScale = NA)
 )
 
 mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
@@ -289,7 +360,8 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         matrix = function() private$.items[["matrix"]],
         treeplot = function() private$.items[["treeplot"]],
         plot = function() private$.items[["plot"]],
-        rplots = function() private$.items[["rplots"]]),
+        rplots = function() private$.items[["rplots"]],
+        glassoGroup = function() private$.items[["glassoGroup"]]),
     private = list(),
     public=list(
         initialize=function(options) {
@@ -325,10 +397,10 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `visible`="(method==\"pearson\")"),
                     list(
                         `name`=".stat[r]", 
-                        `title`="Pearson's r", 
+                        `title`="", 
                         `type`="text", 
-                        `content`="Pearson's r", 
-                        `visible`="(method==\"pearson\")"),
+                        `content`="r", 
+                        `visible`="(method==\"pearson\" && (ci || pval || n))"),
                     list(
                         `name`=".name[rho]", 
                         `title`="", 
@@ -338,10 +410,10 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `visible`="(method==\"spearman\")"),
                     list(
                         `name`=".stat[rho]", 
-                        `title`="Spearman's Rho", 
+                        `title`="", 
                         `type`="text", 
-                        `content`="Spearman's Rho", 
-                        `visible`="(method==\"spearman\")"),
+                        `content`="\u03C1", 
+                        `visible`="(method==\"spearman\" && (pval || n))"),
                     list(
                         `name`=".name[tau]", 
                         `title`="", 
@@ -351,10 +423,10 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `visible`="(method==\"kendall\")"),
                     list(
                         `name`=".stat[tau]", 
-                        `title`="Kendall Tau", 
+                        `title`="", 
                         `type`="text", 
-                        `content`="Kendall Tau", 
-                        `visible`="(method==\"kendall\")"),
+                        `content`="\u03C4", 
+                        `visible`="(method==\"kendall\" && (pval || n))"),
                     list(
                         `name`=".name[cil]", 
                         `title`="", 
@@ -413,6 +485,8 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 name="treeplot",
                 title="Hierarchical clustering tree",
                 visible="(hclust)",
+                width=500,
+                height=400,
                 renderFun=".treeplot",
                 requiresData=TRUE))
             self$add(jmvcore::Image$new(
@@ -432,7 +506,96 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 template=jmvcore::Image$new(
                     options=options,
                     renderFun=".rplot",
-                    requiresData=TRUE)))}))
+                    requiresData=TRUE)))
+            self$add(R6::R6Class(
+                inherit = jmvcore::Group,
+                active = list(
+                    glassoTable = function() private$.items[["glassoTable"]],
+                    glassoHubTable = function() private$.items[["glassoHubTable"]],
+                    glassoPlot = function() private$.items[["glassoPlot"]]),
+                private = list(),
+                public=list(
+                    initialize=function(options) {
+                        super$initialize(
+                            options=options,
+                            name="glassoGroup",
+                            title="Graphical Lasso (GLASSO) Partial Correlation Network")
+                        self$add(jmvcore::Table$new(
+                            options=options,
+                            name="glassoTable",
+                            title="Partial correlation matrix",
+                            visible="(glasso && glassoTable)",
+                            rows="(vars)",
+                            clearWith=list(
+                                "glassoType",
+                                "glassoGamma",
+                                "glassoRho",
+                                "vars",
+                                "group",
+                                "selgroup",
+                                "method"),
+                            columns=list(
+                                list(
+                                    `name`=".name", 
+                                    `title`="", 
+                                    `type`="text", 
+                                    `content`="($key)"))))
+                        self$add(jmvcore::Table$new(
+                            options=options,
+                            name="glassoHubTable",
+                            title="Centrality metrics (hub markers)",
+                            visible="(glasso && glassoHub)",
+                            clearWith=list(
+                                "glassoType",
+                                "glassoGamma",
+                                "glassoRho",
+                                "vars",
+                                "group",
+                                "selgroup",
+                                "method"),
+                            columns=list(
+                                list(
+                                    `name`="var", 
+                                    `title`="Variable", 
+                                    `type`="text"),
+                                list(
+                                    `name`="strength", 
+                                    `title`="Strength", 
+                                    `type`="number"),
+                                list(
+                                    `name`="closeness", 
+                                    `title`="Closeness", 
+                                    `type`="number"),
+                                list(
+                                    `name`="betweenness", 
+                                    `title`="Betweenness", 
+                                    `type`="number"),
+                                list(
+                                    `name`="influence", 
+                                    `title`="Expected Influence", 
+                                    `type`="number"))))
+                        self$add(jmvcore::Image$new(
+                            options=options,
+                            name="glassoPlot",
+                            title="Network plot",
+                            visible="(glasso && glassoPlot)",
+                            width=500,
+                            height=500,
+                            renderFun=".glassoPlot",
+                            requiresData=TRUE,
+                            clearWith=list(
+                                "glassoType",
+                                "glassoGamma",
+                                "glassoRho",
+                                "vars",
+                                "group",
+                                "selgroup",
+                                "glassoPlotScale",
+                                "hclust",
+                                "numClust",
+                                "clustMet",
+                                "clustMan",
+                                "method")))}))$new(options=options))}))
 
 mCORBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "mCORBase",
@@ -442,7 +605,7 @@ mCORBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             super$initialize(
                 package = "jYS",
                 name = "mCOR",
-                version = c(1,0,11),
+                version = c(1,1,1),
                 options = options,
                 results = mCORResults$new(options=options),
                 data = data,
@@ -484,6 +647,14 @@ mCORBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param clustCol .
 #' @param clustMan .
 #' @param clustMat .
+#' @param glasso .
+#' @param glassoTable .
+#' @param glassoPlot .
+#' @param glassoType .
+#' @param glassoGamma .
+#' @param glassoRho .
+#' @param glassoHub .
+#' @param glassoPlotScale .
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$text} \tab \tab \tab \tab \tab a html \cr
@@ -491,6 +662,9 @@ mCORBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$treeplot} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$plot} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$rplots} \tab \tab \tab \tab \tab an array of images \cr
+#'   \code{results$glassoGroup$glassoTable} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$glassoGroup$glassoHubTable} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$glassoGroup$glassoPlot} \tab \tab \tab \tab \tab an image \cr
 #' }
 #'
 #' Tables can be converted to data frames with \code{asDF} or \code{\link{as.data.frame}}. For example:
@@ -525,7 +699,15 @@ mCOR <- function(
     clPos = "b",
     clustCol = FALSE,
     clustMan = "",
-    clustMat = FALSE) {
+    clustMat = FALSE,
+    glasso = FALSE,
+    glassoTable = FALSE,
+    glassoPlot = TRUE,
+    glassoType = "ebic",
+    glassoGamma = 0.5,
+    glassoRho = 0.1,
+    glassoHub = FALSE,
+    glassoPlotScale = FALSE) {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
         stop("mCOR requires jmvcore to be installed (restart may be required)")
@@ -564,7 +746,15 @@ mCOR <- function(
         clPos = clPos,
         clustCol = clustCol,
         clustMan = clustMan,
-        clustMat = clustMat)
+        clustMat = clustMat,
+        glasso = glasso,
+        glassoTable = glassoTable,
+        glassoPlot = glassoPlot,
+        glassoType = glassoType,
+        glassoGamma = glassoGamma,
+        glassoRho = glassoRho,
+        glassoHub = glassoHub,
+        glassoPlotScale = glassoPlotScale)
 
     analysis <- mCORClass$new(
         options = options,

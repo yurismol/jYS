@@ -32,10 +32,10 @@ items:
             combineBelow: true
             visible: (method=="pearson")
           - name: .stat[r]
-            title: Pearson's r
+            title: ""
             type: text
-            content: Pearson's r
-            visible: (method=="pearson")
+            content: r
+            visible: (method=="pearson" && (ci || pval || n))
 
           - name: .name[rho]
             title: ""
@@ -44,10 +44,10 @@ items:
             combineBelow: true
             visible: (method=="spearman")
           - name: .stat[rho]
-            title: Spearman's Rho
+            title: ""
             type: text
-            content: Spearman's Rho
-            visible: (method=="spearman")
+            content: ρ
+            visible: (method=="spearman" && (pval || n))
 
           - name: .name[tau]
             title: ""
@@ -56,10 +56,10 @@ items:
             combineBelow: true
             visible: (method=="kendall")
           - name: .stat[tau]
-            title: Kendall Tau
+            title: ""
             type: text
-            content: Kendall Tau
-            visible: (method=="kendall")
+            content: τ
+            visible: (method=="kendall" && (pval || n))
 
           - name: .name[cil]
             title: ""
@@ -113,10 +113,9 @@ items:
     - name: treeplot
       title: Hierarchical clustering tree
       type: Image
-      #visible: ({ return ui['vars'].value()?.length > 2; })
       visible: (hclust)
-      #width:  500
-      #height: 500
+      width:  500
+      height: 400
       renderFun: .treeplot
       requiresData: true
 
@@ -137,4 +136,78 @@ items:
           type: Image
           renderFun: .rplot
           requiresData: true
+
+    - name: glassoGroup
+      title: Graphical Lasso (GLASSO) Partial Correlation Network
+      type: Group
+      visible: (glasso)
+      items:
+        - name: glassoTable
+          title: Partial correlation matrix
+          type: Table
+          visible: (glasso && glassoTable)
+          rows: (vars)
+          clearWith:
+            - glassoType
+            - glassoGamma
+            - glassoRho
+            - vars
+            - group
+            - selgroup
+            - method
+          columns:
+            - name: .name
+              title: ""
+              type: text
+              content: ($key)
+        - name: glassoHubTable
+          title: Centrality metrics (hub markers)
+          type: Table
+          visible: (glasso && glassoHub)
+          clearWith:
+            - glassoType
+            - glassoGamma
+            - glassoRho
+            - vars
+            - group
+            - selgroup
+            - method
+          columns:
+            - name: var
+              title: "Variable"
+              type: text
+            - name: strength
+              title: "Strength"
+              type: number
+            - name: closeness
+              title: "Closeness"
+              type: number
+            - name: betweenness
+              title: "Betweenness"
+              type: number
+            - name: influence
+              title: "Expected Influence"
+              type: number
+
+        - name: glassoPlot
+          title: Network plot
+          type: Image
+          visible: (glasso && glassoPlot)
+          width: 500
+          height: 500
+          renderFun: .glassoPlot
+          requiresData: true
+          clearWith:
+            - glassoType
+            - glassoGamma
+            - glassoRho
+            - vars
+            - group
+            - selgroup
+            - glassoPlotScale
+            - hclust
+            - numClust
+            - clustMet
+            - clustMan
+            - method
 ...

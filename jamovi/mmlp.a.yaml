@@ -3,6 +3,8 @@ name:  mMLP
 title: MLP Classifier
 menuGroup: jYS
 menuTitle: MLP Classifier
+description:
+    main: MLP Neural Network Classifier. Note that weight initialization and data partitioning use a hardcoded random seed (42) for reproducibility.
 version: '1.1.0'
 jas: '1.2'
 
@@ -186,6 +188,11 @@ options:
         - title: Set3
           name:  Set3
       default: Dark2
+
+    - name: seed
+      title: Seed number
+      type: Integer
+      default: 42
 
     - name: predClass
       title: Predicted Class

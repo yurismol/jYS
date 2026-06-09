@@ -32,10 +32,10 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             ))
  
             if (self$options$alg=="mF") {
-              etable$addColumn(name="err", title="MSE", type='number')
+              etable$addColumn(name="err", title=.("MSE"), type='number')
               contErr = .('MSE - mean squared error (for Continuous variables);')
             } else {
-              etable$addColumn(name="err", title="PVU", type='number')
+              etable$addColumn(name="err", title=.("PVU"), type='number')
               contErr = .('PVU - proportion of variance unexplained 1-R\u00B2 (for Continuous variables);')
             }
             etable$setNote('obe', paste(

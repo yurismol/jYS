@@ -2,6 +2,8 @@
 name:  mPCA
 title: PCA Submodule
 menuGroup: jYS
+description:
+    main: Principal Component Analysis (PCA) submodule. Note that parallel analysis and cross-validation use a hardcoded random seed (42) for reproducibility.
 version: '1.0.0'
 jas: '1.2'
 
@@ -165,4 +167,9 @@ options:
         - title: Set3
           name:  Set3
       default: Dark2
+
+    - name: seed
+      title: Seed number
+      type: Integer
+      default: 42
 ...

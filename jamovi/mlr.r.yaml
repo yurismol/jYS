@@ -2,7 +2,7 @@
 name:  mLR
 title: Logistic Regression
 jrs:   '1.1'
-refs: [jys, pROC, glmnet]
+refs: [jys, roc, glmnet]
 
 items:
     - name: text

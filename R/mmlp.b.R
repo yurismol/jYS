@@ -86,7 +86,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             }
 
             # Use composeFormula to build formula and model matrix safely
-            formula_str <- jmvcore:::composeFormula(NULL, c(covs, factors))
+            formula_str <- jmvcore::composeFormula(NULL, c(covs, factors))
             X_matrix <- model.matrix(as.formula(formula_str), data = clean_data)
             X_matrix <- X_matrix[, -1, drop = FALSE] # Drop intercept column
             colnames(X_matrix) <- gsub("^`|`$", "", colnames(X_matrix))
@@ -170,7 +170,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             cv_errors <- 0
 
             # 2. Hold-out Validation Split (Stratified)
-            set.seed(42)
+            set.seed(self$options$seed)
             test_idx_list <- list()
             for (c_idx in seq_along(y_levels)) {
                 idx_c <- which(as.integer(y) == c_idx)
@@ -1254,7 +1254,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 activations[L] <- "softmax"
             }
             
-            set.seed(42)
+            set.seed(self$options$seed)
             W <- list()
             b <- list()
             

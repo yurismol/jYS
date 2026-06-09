@@ -26,7 +26,8 @@ mMLPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             roc_x = "1spec",
             roc_unit = "percent",
             multiclass_roc_type = "combined",
-            palBrewer = "Dark2", ...) {
+            palBrewer = "Dark2",
+            seed = 42, ...) {
 
             super$initialize(
                 package="jYS",
@@ -167,6 +168,10 @@ mMLPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "Set2",
                     "Set3"),
                 default="Dark2")
+            private$..seed <- jmvcore::OptionInteger$new(
+                "seed",
+                seed,
+                default=42)
             private$..predClass <- jmvcore::OptionOutput$new(
                 "predClass")
             private$..predProb <- jmvcore::OptionOutput$new(
@@ -193,6 +198,7 @@ mMLPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..roc_unit)
             self$.addOption(private$..multiclass_roc_type)
             self$.addOption(private$..palBrewer)
+            self$.addOption(private$..seed)
             self$.addOption(private$..predClass)
             self$.addOption(private$..predProb)
         }),
@@ -218,6 +224,7 @@ mMLPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         roc_unit = function() private$..roc_unit$value,
         multiclass_roc_type = function() private$..multiclass_roc_type$value,
         palBrewer = function() private$..palBrewer$value,
+        seed = function() private$..seed$value,
         predClass = function() private$..predClass$value,
         predProb = function() private$..predProb$value),
     private = list(
@@ -242,6 +249,7 @@ mMLPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..roc_unit = NA,
         ..multiclass_roc_type = NA,
         ..palBrewer = NA,
+        ..seed = NA,
         ..predClass = NA,
         ..predProb = NA)
 )
@@ -539,7 +547,8 @@ mMLPBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 
 #' MLP Classifier
 #'
-#' 
+#' MLP Neural Network Classifier. Note that weight initialization and data 
+#' partitioning use a hardcoded random seed (42) for reproducibility.
 #' @param data .
 #' @param dep .
 #' @param covs .
@@ -562,6 +571,7 @@ mMLPBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param roc_unit .
 #' @param multiclass_roc_type .
 #' @param palBrewer .
+#' @param seed .
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$text} \tab \tab \tab \tab \tab a html \cr
@@ -606,7 +616,8 @@ mMLP <- function(
     roc_x = "1spec",
     roc_unit = "percent",
     multiclass_roc_type = "combined",
-    palBrewer = "Dark2") {
+    palBrewer = "Dark2",
+    seed = 42) {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
         stop("mMLP requires jmvcore to be installed (restart may be required)")
@@ -645,7 +656,8 @@ mMLP <- function(
         roc_x = roc_x,
         roc_unit = roc_unit,
         multiclass_roc_type = multiclass_roc_type,
-        palBrewer = palBrewer)
+        palBrewer = palBrewer,
+        seed = seed)
 
     analysis <- mMLPClass$new(
         options = options,

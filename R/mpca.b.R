@@ -19,15 +19,15 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             cos2Table <- self$results$cos2Table
             
             for (i in 1:length(vars)) {
-                loadingsTable$addColumn(name=paste0("pc", i), title=paste0("PC", i), type="number")
-                cos2Table$addColumn(name=paste0("pc", i), title=paste0("PC", i), type="number")
+                loadingsTable$addColumn(name=paste0("pc", i), title=paste0(.("PC"), i), type="number")
+                cos2Table$addColumn(name=paste0("pc", i), title=paste0(.("PC"), i), type="number")
             }
         },
 
         .run = function() {
             vars <- self$options$vars
             if (is.null(vars) || length(vars) < 2) {
-                self$results$text$setContent("Please select at least 2 variables for PCA.")
+                self$results$text$setContent(.("Please select at least 2 variables for PCA."))
                 return()
             }
             
@@ -53,7 +53,7 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             # Omit rows with missing values
             dat_clean <- na.omit(dat[, select_cols, drop=FALSE])
             if (nrow(dat_clean) < 5) {
-                self$results$text$setContent("Too few observations after removing missing values (minimum 5 required).")
+                self$results$text$setContent(.("Too few observations after removing missing values (minimum 5 required)."))
                 return()
             }
             
@@ -66,7 +66,7 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             # 2. Perform PCA
             pca_res <- try(prcomp(pca_data, scale. = TRUE, center = TRUE), silent = TRUE)
             if (inherits(pca_res, "try-error")) {
-                self$results$text$setContent("Error occurred while calculating PCA. Please check your variables.")
+                self$results$text$setContent(.("Error occurred while calculating PCA. Please check your variables."))
                 return()
             }
             
@@ -81,7 +81,7 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
                 old_seed <- get(".Random.seed", envir = .GlobalEnv, inherits = FALSE)
             }
-            set.seed(42)
+            set.seed(self$options$seed)
             
             n <- nrow(pca_data)
             p <- ncol(pca_data)
@@ -121,7 +121,7 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             varTable$deleteRows()
             for (i in 1:length(eigenvalues)) {
                 varTable$addRow(rowKey=i, values=list(
-                    comp = paste0("PC", i),
+                    comp = paste0(.("PC"), i),
                     eigenvalue = eigenvalues[i],
                     variance = explained_var[i],
                     cumulative = cum_var[i]
@@ -132,7 +132,7 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             # Factor Loading = Correlation between variable and PC
             loadings_matrix <- pca_res$rotation %*% diag(pca_res$sdev)
             rownames(loadings_matrix) <- vars
-            colnames(loadings_matrix) <- paste0("PC", 1:length(eigenvalues))
+            colnames(loadings_matrix) <- paste0(.("PC"), 1:length(eigenvalues))
             
             # Populate Loadings Table
             loadTable <- self$results$loadingsTable
@@ -247,11 +247,11 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     kmTable$deleteRows()
                     
                     # Show contingency table in results
-                    kmTable$addRow(rowKey="header", values=list(metric="Contingency Matrix (Clusters vs Groups):", value=""))
+                    kmTable$addRow(rowKey="header", values=list(metric=.("Contingency Matrix (Clusters vs Groups):"), value=""))
                     for (cl in 1:k_val) {
                         matches <- paste(sapply(colnames(tbl), function(cn) paste0(cn, ": ", tbl[cl, cn])), collapse=" | ")
                         kmTable$addRow(rowKey=paste0("cl_", cl), values=list(
-                            metric = paste0("K-Means Cluster ", cl),
+                            metric = paste0(.("K-Means Cluster "), cl),
                             value = matches
                         ))
                     }
@@ -270,7 +270,7 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     ari_val <- calc_ari(tbl)
                     kmTable$addRow(rowKey="blank", values=list(metric="", value=""))
                     kmTable$addRow(rowKey="ari", values=list(
-                        metric = "Adjusted Rand Index (ARI)",
+                        metric = .("Adjusted Rand Index (ARI)"),
                         value = sprintf("%.4f", ari_val)
                     ))
                 }
@@ -296,7 +296,7 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         
                         # K-fold Cross-Validation
                         k_folds <- self$options$regKFold
-                        set.seed(42)
+                        set.seed(self$options$seed)
                         folds <- sample(cut(seq(1, nrow(scores_df)), breaks=k_folds, labels=FALSE))
                         
                         cv_acc <- numeric(k_folds)
@@ -346,7 +346,7 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                             cv_auc[fold_idx] <- if (inherits(roc_fold, "try-error")) NA else as.numeric(roc_fold$auc)
                             
                             regTable$addRow(rowKey=fold_idx, values=list(
-                                fold = paste0("Fold ", fold_idx),
+                                fold = paste0(.("Fold "), fold_idx),
                                 accuracy = cv_acc[fold_idx],
                                 sensitivity = cv_sens[fold_idx],
                                 specificity = cv_spec[fold_idx],
@@ -356,7 +356,7 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         
                         # Add Mean row
                         regTable$addRow(rowKey="mean", values=list(
-                            fold = "Average (Mean)",
+                            fold = .("Average (Mean)"),
                             accuracy = mean(cv_acc, na.rm=TRUE),
                             sensitivity = mean(cv_sens, na.rm=TRUE),
                             specificity = mean(cv_spec, na.rm=TRUE),
@@ -382,7 +382,7 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         regTable <- self$results$regTable
                         regTable$deleteRows()
                         regTable$addRow(rowKey="warn", values=list(
-                            fold = "Warning: Grouping variable must have at least 2 levels.",
+                            fold = .("Warning: Grouping variable must have at least 2 levels."),
                             accuracy = NaN, sensitivity = NaN, specificity = NaN, auc = NaN
                         ))
                     }
@@ -404,21 +404,24 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 Noise = sim_eigenvalues
             )
             
+            lbl_obs <- .("Observed Data")
+            lbl_noise <- .("Noise (95th percentile)")
+            
             p <- ggplot2::ggplot(df, ggplot2::aes(x = Component)) +
                 ggplot2::geom_col(ggplot2::aes(y = Eigenvalue), fill = "dodgerblue", alpha = 0.5) +
-                ggplot2::geom_line(ggplot2::aes(y = Eigenvalue, color = "Реальные данные"), size = 1.2) +
-                ggplot2::geom_point(ggplot2::aes(y = Eigenvalue, color = "Реальные данные"), size = 3) +
-                ggplot2::geom_line(ggplot2::aes(y = Noise, color = "Шум (95-й перцентиль)"), linetype = "dashed", size = 1) +
-                ggplot2::geom_point(ggplot2::aes(y = Noise, color = "Шум (95-й перцентиль)"), size = 2) +
+                ggplot2::geom_line(ggplot2::aes(y = Eigenvalue, color = lbl_obs), size = 1.2) +
+                ggplot2::geom_point(ggplot2::aes(y = Eigenvalue, color = lbl_obs), size = 3) +
+                ggplot2::geom_line(ggplot2::aes(y = Noise, color = lbl_noise), linetype = "dashed", size = 1) +
+                ggplot2::geom_point(ggplot2::aes(y = Noise, color = lbl_noise), size = 2) +
                 ggplot2::geom_vline(xintercept = optimal, color = "red", linetype = "dotted", size = 1.2) +
                 ggplot2::annotate("text", x = optimal + 0.15, y = max(df$Eigenvalue) * 0.9, 
-                         label = paste0("Порог (K = ", optimal, " комп.)"), color = "red", fontface = "bold", hjust=0) +
-                ggplot2::scale_color_manual(values = c("Реальные данные" = "blue", "Шум (95-й перцентиль)" = "red")) +
+                         label = paste0(.("Threshold (K = "), optimal, .(" comp.)")), color = "red", fontface = "bold", hjust=0) +
+                ggplot2::scale_color_manual(values = stats::setNames(c("blue", "red"), c(lbl_obs, lbl_noise))) +
                 ggplot2::labs(
-                    title = "Собственные значения и параллельный анализ",
-                    x = "Номер компоненты",
-                    y = "Собственное значение (Eigenvalue)",
-                    color = "Источник"
+                    title = .("Eigenvalues and Parallel Analysis"),
+                    x = .("Component Number"),
+                    y = .("Eigenvalue"),
+                    color = .("Source")
                 ) +
                 ggplot2::theme_bw() +
                 ggplot2::theme(
@@ -451,10 +454,10 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 ggplot2::geom_tile(color = "white", size = 0.5) +
                 ggplot2::geom_text(ggplot2::aes(label = sprintf("%.2f", Loading)), color = "black", fontface = "bold", size = 5) +
                 ggplot2::labs(
-                    title = "Матрица факторных нагрузок",
-                    x = "Главная компонента",
-                    y = "Признак",
-                    fill = "Нагрузка"
+                    title = .("Factor Loadings Matrix"),
+                    x = .("Principal Component"),
+                    y = .("Variable"),
+                    fill = .("Loading")
                 ) +
                 ggplot2::theme_bw() +
                 ggplot2::theme(
@@ -487,10 +490,10 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 ggplot2::geom_tile(color = "white", size = 0.5) +
                 ggplot2::geom_text(ggplot2::aes(label = sprintf("%.2f", Cos2)), color = "black", fontface = "bold", size = 5) +
                 ggplot2::labs(
-                    title = "Качество репрезентации признаков (Cos²)",
-                    x = "Главная компонента",
-                    y = "Признак",
-                    fill = "Cos²"
+                    title = .("Representation Quality (Cos\u00B2)"),
+                    x = .("Principal Component"),
+                    y = .("Variable"),
+                    fill = .("Cos\u00B2")
                 ) +
                 ggplot2::theme_bw() +
                 ggplot2::theme(
@@ -541,13 +544,13 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             
             p <- p +
                 ggplot2::labs(
-                    title = "Проекция групп в пространстве PCA",
+                    title = .("Group Projection in PCA Space"),
                     subtitle = if (!is.null(p_val)) {
                         p_text <- if (p_val < 0.001) "p < 0.001" else paste0("p = ", sprintf("%.3f", p_val))
-                        paste0("Группа: ", groupName, " (Permutation ", p_text, ")")
+                        paste0(.("Group: "), groupName, .(" (Permutation "), p_text, ")")
                     } else "",
-                    x = paste0("Главная компонента ", pcX, " (PC", pcX, ") - ", sprintf("%.1f", (pca$sdev[pcX]^2/sum(pca$sdev^2))*100), "% дисперсии"),
-                    y = paste0("Главная компонента ", pcY, " (PC", pcY, ") - ", sprintf("%.1f", (pca$sdev[pcY]^2/sum(pca$sdev^2))*100), "% дисперсии"),
+                    x = paste0(.("Principal Component "), pcX, " (PC", pcX, ") - ", sprintf("%.1f", (pca$sdev[pcX]^2/sum(pca$sdev^2))*100), .("% of variance")),
+                    y = paste0(.("Principal Component "), pcY, " (PC", pcY, ") - ", sprintf("%.1f", (pca$sdev[pcY]^2/sum(pca$sdev^2))*100), .("% of variance")),
                     color = NULL,
                     fill = NULL
                 ) +
@@ -635,9 +638,9 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                          color = "black", fontface = "bold", box.padding = 0.3,
                                          bg.color = "white", bg.r = 0.15) +
                 ggplot2::labs(
-                    title = "Двумерная проекция признаков (Biplot)",
-                    x = paste0("Главная компонента ", pcX, " (PC", pcX, ") - ", sprintf("%.1f", (pca$sdev[pcX]^2/sum(pca$sdev^2))*100), "% дисперсии"),
-                    y = paste0("Главная компонента ", pcY, " (PC", pcY, ") - ", sprintf("%.1f", (pca$sdev[pcY]^2/sum(pca$sdev^2))*100), "% дисперсии")
+                    title = .("Two-dimensional Variable Projection (Biplot)"),
+                    x = paste0(.("Principal Component "), pcX, " (PC", pcX, ") - ", sprintf("%.1f", (pca$sdev[pcX]^2/sum(pca$sdev^2))*100), .("% of variance")),
+                    y = paste0(.("Principal Component "), pcY, " (PC", pcY, ") - ", sprintf("%.1f", (pca$sdev[pcY]^2/sum(pca$sdev^2))*100), .("% of variance"))
                 ) +
                 ggplot2::theme_bw() +
                 ggplot2::theme(

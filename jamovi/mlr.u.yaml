@@ -77,6 +77,10 @@ children:
         label: Cross-Validation Repeats (R)
         format: number
         enable: (partition:repeated_kfold)
+      - name: seed
+        type: TextBox
+        label: Seed number
+        format: number
   - type: CollapseBox
     label: Outputs & Evaluation
     collapsed: false

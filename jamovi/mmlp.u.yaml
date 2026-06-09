@@ -72,6 +72,10 @@ children:
         label: Cross-Validation Folds (K)
         format: number
         enable: (partition:kfold)
+      - name: seed
+        type: TextBox
+        label: Seed number
+        format: number
 
   - type: CollapseBox
     label: Outputs & Evaluation

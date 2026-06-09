@@ -86,6 +86,12 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             matrix$setNote("adjust", jmvcore::format(.("Simultaneous multiple correlation comparisons using {n} method"), n=self$options$adjust))
         }
 
+        method_title <- switch(self$options$method,
+                               pearson = .("Pearson's r"),
+                               spearman = .("Spearman's Rho"),
+                               kendall = .("Kendall Tau"))
+        matrix$setNote("method", jmvcore::format(.("Correlation method: {method}"), method=method_title))
+
          images <- self$results$get('rplots')
          nc <- 0
          if (self$options$hclust && nVars>2) {
@@ -101,6 +107,22 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
              key   <- paste(cm[1], cm[2], sep="_")
              image <- images$addItem(key)
            }
+         }
+
+         # GLASSO table initialization
+         glassoTable <- self$results$glassoGroup$glassoTable
+         for (i in seq_along(vars)) {
+             var <- vars[[i]]
+             glassoTable$addColumn(name=var, title=var, type='number', format='zto')
+         }
+         for (i in seq_along(vars)) {
+             var <- vars[[i]]
+             values <- list()
+             for (j in seq_along(vars)) {
+                 values[[vars[[j]]]] <- ''
+             }
+             values[[var]] <- '\u2014'
+             glassoTable$setRow(rowKey=var, values)
          }
      },
 
@@ -222,6 +244,165 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             }
             image <- self$results$plot
             image$setState(cor)
+
+            if (self$options$glasso) {
+                if ( ! (requireNamespace("glasso", quietly = TRUE) && requireNamespace("qgraph", quietly = TRUE))) {
+                    jmvcore::reject(.("Packages 'glasso' and 'qgraph' are required for this analysis. Please install them."), code='')
+                }
+                
+                if (any(is.na(corr))) {
+                    jmvcore::reject(.("Correlation matrix contains missing values. Cannot compute Graphical Lasso."), code='')
+                }
+                
+                n <- sum(complete.cases(dat[, vars, drop=FALSE]))
+                if (n < 4) {
+                    jmvcore::reject(.("Sample size is too small to compute Graphical Lasso."), code='')
+                }
+                
+                pcor <- tryCatch({
+                    if (self$options$glassoType == "ebic") {
+                        gamma <- self$options$glassoGamma
+                        res <- qgraph::EBICglasso(corr, n = n, gamma = gamma, penalize.diagonal = FALSE)
+                        res
+                    } else {
+                        rho <- self$options$glassoRho
+                        gl <- glasso::glasso(corr, rho = rho, penalize.diagonal = FALSE)
+                        wi <- gl$wi
+                        d <- diag(wi)
+                        if (any(d <= 0)) {
+                            stop(.("Precision matrix diagonal elements are not all positive."))
+                        }
+                        pcor_mat <- -wi / (sqrt(d) %*% t(sqrt(d)))
+                        diag(pcor_mat) <- 0
+                        pcor_mat
+                    }
+                }, error = function(e) {
+                    jmvcore::reject(jmvcore::format(.("Error in Graphical Lasso calculation: {}"), e$message), code='')
+                })
+                
+                colnames(pcor) <- vars
+                rownames(pcor) <- vars
+                
+                # Fill table
+                glassoTable <- self$results$glassoGroup$glassoTable
+                for (i in seq_along(vars)) {
+                    rowVarName <- vars[[i]]
+                    values <- list()
+                    for (j in seq_along(vars)) {
+                        colVarName <- vars[[j]]
+                        if (i == j) {
+                            values[[colVarName]] <- '\u2014'
+                        } else if (j > i) {
+                            values[[colVarName]] <- ''
+                        } else {
+                            values[[colVarName]] <- pcor[i, j]
+                        }
+                    }
+                    glassoTable$setRow(rowKey=rowVarName, values)
+                }
+
+                # Calculate Centrality
+                node_cent <- NULL
+                if (self$options$glassoHub || self$options$glassoPlotScale) {
+                    cent <- qgraph::centrality_auto(pcor)
+                    node_cent <- cent$node.centrality
+                }
+
+                # Fill Hub markers table
+                if (self$options$glassoHub && !is.null(node_cent)) {
+                    hubTable <- self$results$glassoGroup$glassoHubTable
+                    hubTable$deleteRows()
+                    
+                    hub_data <- list()
+                    for (i in seq_along(vars)) {
+                        varName <- vars[[i]]
+                        
+                        # Robustly extract metrics based on available columns in node_cent
+                        strength <- 0
+                        if ("Strength" %in% colnames(node_cent)) {
+                            strength <- node_cent[i, "Strength"]
+                        } else if ("strength" %in% colnames(node_cent)) {
+                            strength <- node_cent[i, "strength"]
+                        } else if ("Degree" %in% colnames(node_cent)) {
+                            strength <- node_cent[i, "Degree"]
+                        } else if ("degree" %in% colnames(node_cent)) {
+                            strength <- node_cent[i, "degree"]
+                        }
+                        
+                        closeness <- 0
+                        if ("Closeness" %in% colnames(node_cent)) {
+                            closeness <- node_cent[i, "Closeness"]
+                        } else if ("closeness" %in% colnames(node_cent)) {
+                            closeness <- node_cent[i, "closeness"]
+                        }
+                        
+                        betweenness <- 0
+                        if ("Betweenness" %in% colnames(node_cent)) {
+                            betweenness <- node_cent[i, "Betweenness"]
+                        } else if ("betweenness" %in% colnames(node_cent)) {
+                            betweenness <- node_cent[i, "betweenness"]
+                        }
+                        
+                        influence <- 0
+                        if ("ExpectedInfluence" %in% colnames(node_cent)) {
+                            influence <- node_cent[i, "ExpectedInfluence"]
+                        } else if ("expectedinfluence" %in% colnames(node_cent)) {
+                            influence <- node_cent[i, "expectedinfluence"]
+                        } else {
+                            influence <- sum(pcor[varName, ])
+                        }
+                        
+                        hub_data[[i]] <- list(
+                            var = varName,
+                            strength = strength,
+                            closeness = closeness,
+                            betweenness = betweenness,
+                            influence = influence
+                        )
+                    }
+                    
+                    # Sort the collected rows by strength in descending order
+                    strengths <- sapply(hub_data, function(x) x$strength)
+                    sorted_indices <- order(strengths, decreasing = TRUE)
+                    sorted_hub_data <- hub_data[sorted_indices]
+                    
+                    for (row in sorted_hub_data) {
+                        hubTable$addRow(rowKey = row$var, values = list(
+                            var = row$var,
+                            strength = row$strength,
+                            closeness = row$closeness,
+                            betweenness = row$betweenness,
+                            influence = row$influence
+                        ))
+                    }
+                }
+                
+                # Determine clusters if any
+                clusters <- NULL
+                if (self$options$hclust && nVars > 2) {
+                    nClust <- ifelse(self$options$numClust > nVars, nVars, self$options$numClust)
+                    hc <- hclust(dist(corr, method="euclidean"), method=self$options$clustMet)
+                    ct <- cutree(hc, k=nClust)
+                    clusters <- split(names(ct), ct)
+                } else if (self$options$clustMan > "" && nVars > 2) {
+                    vec <- as.numeric(strsplit(self$options$clustMan, ",")[[1]])
+                    posClust <- c(1, vec, nVars)
+                    splAt  <- function(x, pos) unname(split(x, findInterval(x, pos)))
+                    clust_nodes <- splAt(vars, posClust)
+                    clusters <- clust_nodes
+                }
+
+                if (!is.null(clusters)) {
+                    if (is.null(names(clusters))) {
+                        names(clusters) <- seq_along(clusters)
+                    }
+                    names(clusters) <- sapply(names(clusters), function(name) jmvcore::format(.("Cluster {i}"), i=name))
+                }
+                
+                # Set plot state
+                gplot <- self$results$glassoGroup$glassoPlot
+                gplot$setState(list(pcor = pcor, vars = vars, subs = subs, clusters = clusters, centrality = node_cent))
+            }
          }
 
        },
@@ -483,5 +664,59 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
 	  print(p)
 	  return(TRUE)
+      },
+
+      .glassoPlot=function(image, ggtheme, theme, ...) {
+          if (is.null(image$state)) return(FALSE)
+          
+          pcor <- image$state$pcor
+          vars <- image$state$vars
+          subs <- image$state$subs
+          
+          if (!requireNamespace("qgraph", quietly = TRUE)) {
+              return(FALSE)
+          }
+          
+          posCol <- "#2166AC"
+          negCol <- "#B2182B"
+          
+          groups <- NULL
+          nodeCols <- NULL
+          
+          if (!is.null(image$state$clusters)) {
+              groups <- image$state$clusters
+              nClust <- length(groups)
+              nodeCols <- jmvcore::colorPalette(n = nClust, theme$palette, type = "fill")
+          }
+          
+          vsize <- 12
+          if (self$options$glassoPlotScale) {
+              vsize <- c(8, 18)
+          }
+
+          par(mar=c(2, 2, 3, 2))
+          
+          qgraph::qgraph(
+              pcor,
+              layout = "spring",
+              labels = vars,
+              theme = "classic",
+              posCol = posCol,
+              negCol = negCol,
+              groups = groups,
+              color = nodeCols,
+              legend = !is.null(groups),
+              title = if (subs > "") paste0(.("Network ("), subs, ")") else .("Partial Correlation Network (GLASSO)"),
+              title.cex = 1.2,
+              vsize = vsize,
+              label.cex = 1.0,
+              label.color = "black",
+              legend.cex = 1.0,
+              edge.width = 2,
+              fade = FALSE,
+              doPlot = TRUE
+          )
+          
+          return(TRUE)
       }
 ))

@@ -27,7 +27,8 @@ mPCAOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             rocPlot = TRUE,
             roc_x = "1spec",
             roc_unit = "percent",
-            palBrewer = "Dark2", ...) {
+            palBrewer = "Dark2",
+            seed = 42, ...) {
 
             super$initialize(
                 package="jYS",
@@ -158,6 +159,10 @@ mPCAOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "Set2",
                     "Set3"),
                 default="Dark2")
+            private$..seed <- jmvcore::OptionInteger$new(
+                "seed",
+                seed,
+                default=42)
 
             self$.addOption(private$..vars)
             self$.addOption(private$..group)
@@ -181,6 +186,7 @@ mPCAOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..roc_x)
             self$.addOption(private$..roc_unit)
             self$.addOption(private$..palBrewer)
+            self$.addOption(private$..seed)
         }),
     active = list(
         vars = function() private$..vars$value,
@@ -204,7 +210,8 @@ mPCAOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         rocPlot = function() private$..rocPlot$value,
         roc_x = function() private$..roc_x$value,
         roc_unit = function() private$..roc_unit$value,
-        palBrewer = function() private$..palBrewer$value),
+        palBrewer = function() private$..palBrewer$value,
+        seed = function() private$..seed$value),
     private = list(
         ..vars = NA,
         ..group = NA,
@@ -227,7 +234,8 @@ mPCAOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..rocPlot = NA,
         ..roc_x = NA,
         ..roc_unit = NA,
-        ..palBrewer = NA)
+        ..palBrewer = NA,
+        ..seed = NA)
 )
 
 mPCAResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
@@ -485,7 +493,8 @@ mPCABase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 
 #' PCA Submodule
 #'
-#' 
+#' Principal Component Analysis (PCA) submodule. Note that parallel analysis 
+#' and cross-validation use a hardcoded random seed (42) for reproducibility.
 #' @param data .
 #' @param vars .
 #' @param group .
@@ -509,6 +518,7 @@ mPCABase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param roc_x .
 #' @param roc_unit .
 #' @param palBrewer .
+#' @param seed .
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$text} \tab \tab \tab \tab \tab a html \cr
@@ -555,7 +565,8 @@ mPCA <- function(
     rocPlot = TRUE,
     roc_x = "1spec",
     roc_unit = "percent",
-    palBrewer = "Dark2") {
+    palBrewer = "Dark2",
+    seed = 42) {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
         stop("mPCA requires jmvcore to be installed (restart may be required)")
@@ -595,7 +606,8 @@ mPCA <- function(
         rocPlot = rocPlot,
         roc_x = roc_x,
         roc_unit = roc_unit,
-        palBrewer = palBrewer)
+        palBrewer = palBrewer,
+        seed = seed)
 
     analysis <- mPCAClass$new(
         options = options,

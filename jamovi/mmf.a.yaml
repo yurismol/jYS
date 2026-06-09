@@ -90,9 +90,9 @@ options:
       default: false
 
     - name: seed
-      title: RNG seed value
+      title: Seed number
       type: Number
-      default: 123
+      default: 42
 
     - name: pmmk
       title: Predictive Mean Matching (PMM) steps

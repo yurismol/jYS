@@ -1,7 +1,7 @@
 ---
 title: jYS Extended Functions
 name: jYS
-version: 1.1.0
+version: 1.1.1
 jms: '1.0'
 authors:
   - Yuri Smolyakov
@@ -100,18 +100,27 @@ analyses:
     category: analyses
     menuGroup: jYS
     menuTitle: MLP Classifier
+    description: >-
+      MLP Neural Network Classifier. Note that weight initialization and data
+      partitioning use a hardcoded random seed (42) for reproducibility.
   - title: Logistic Regression
     name: mLR
     ns: jYS
     category: analyses
     menuGroup: jYS
     menuTitle: Logistic Regression
+    description: >-
+      Logistic Regression with feature selection. Note that cross-validation
+      fold partitioning uses a hardcoded random seed (42) for reproducibility.
   - title: PCA Submodule
     name: mPCA
     ns: jYS
     category: analyses
     menuGroup: jYS
     menuTitle: PCA Submodule
+    description: >-
+      Principal Component Analysis (PCA) submodule. Note that parallel analysis
+      and cross-validation use a hardcoded random seed (42) for reproducibility.
 usesNative: true
 minApp: 1.0.8
 

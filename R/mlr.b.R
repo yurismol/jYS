@@ -66,7 +66,7 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             y_num <- ifelse(y == pos_class_label, 1, 0)
             
             # Build full model matrix X (intercept column dropped)
-            formula_str <- jmvcore:::composeFormula(NULL, c(covs, factors))
+            formula_str <- jmvcore::composeFormula(NULL, c(covs, factors))
             X_all <- model.matrix(as.formula(formula_str), data = clean_data)
             X_all <- X_all[, -1, drop = FALSE] # Drop intercept
             colnames(X_all) <- gsub("^`|`$", "", colnames(X_all)) # Clean backticks
@@ -138,7 +138,7 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             cv_prob <- NULL
             cv_y <- NULL
             
-            set.seed(42)
+            set.seed(self$options$seed)
             
             if (partition == "holdout") {
                 # Stratified Train-Test Split (Hold-out)
@@ -388,8 +388,8 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             if (method %in% c("forward", "backward")) {
                 # Formula-based Stepwise Selection
                 pred_terms <- c(covs, factors)
-                null_formula <- as.formula(paste(jmvcore:::composeFormula(dep, character(0)), "1"))
-                full_formula <- as.formula(jmvcore:::composeFormula(dep, pred_terms))
+                null_formula <- as.formula(paste(jmvcore::composeFormula(dep, character(0)), "1"))
+                full_formula <- as.formula(jmvcore::composeFormula(dep, pred_terms))
 
                 
                 # Fit temporary models
@@ -482,10 +482,10 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             
             if (ncol(X_selected) == 0) {
                 # Intercept-only null model formula using composeFormula
-                formula_str <- paste(jmvcore:::composeFormula("y_num", character(0)), "1")
+                formula_str <- paste(jmvcore::composeFormula("y_num", character(0)), "1")
             } else {
                 # Standard refitted model formula using composeFormula
-                formula_str <- jmvcore:::composeFormula("y_num", colnames(X_selected))
+                formula_str <- jmvcore::composeFormula("y_num", colnames(X_selected))
             }
             
             fit <- glm(as.formula(formula_str), data = df_fit, family = binomial)
@@ -717,14 +717,14 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 "<div style='font-family: system-ui, -apple-system, sans-serif; padding: 12px; background-color: #F8FAFC; border: 1px solid #E2E8F0; border-left: 5px solid #2563EB; border-radius: 6px; margin-top: 15px;'>",
                 "  <div style='color: #1E293B; font-weight: bold; font-size: 14px; margin-bottom: 8px;'>",
                 "    <b style='background-color: #2563EB; color: white; padding: 1px 6px; border-radius: 3px; font-size: 10px; margin-right: 6px; text-transform: uppercase;'>Logit</b>",
-                "    Модель логистической регрессии (Log-odds)",
+                "    ", .("Logistic Regression Model (Log-odds)"),
                 "  </div>",
                 "  <div style='font-family: monospace; font-size: 13px; color: #334155; background-color: #FFFFFF; padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 4px; line-height: 1.4; word-wrap: break-word; white-space: pre-wrap;'>",
                 "    <span style='color: #0F172A; font-weight: 600;'>ln( P / (1 - P) )</span> = ", logit_formula, "",
                 "  </div>",
                 "  <div style='color: #1E293B; font-weight: bold; font-size: 14px; margin-top: 14px; margin-bottom: 8px;'>",
                 "    <b style='background-color: #10B981; color: white; padding: 1px 6px; border-radius: 3px; font-size: 10px; margin-right: 6px; text-transform: uppercase;'>Probability</b>",
-                "    Вероятностная модель",
+                "    ", .("Probability Model"),
                 "  </div>",
                 "  <div style='font-family: monospace; font-size: 13px; color: #334155; background-color: #FFFFFF; padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 4px; line-height: 1.4; word-wrap: break-word; white-space: pre-wrap;'>",
                 "    <span style='color: #0F172A; font-weight: 600;'>P( Y = '<span style='color: #059669;'>", target_level, "</span>' )</span> = 1 / ( 1 + exp[ -( ", logit_formula, " ) ] )",

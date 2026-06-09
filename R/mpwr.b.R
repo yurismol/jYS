@@ -27,130 +27,12 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             is_spearman  <- design == "onecor_np"
             are_spearman <- 0.912 # Asymptotic Relative Efficiency for Spearman
             
-            arg_d     <- if (calc == "es") NULL else es
-            arg_power <- if (calc == "power") NULL else power
-            
-            es_arg <- "d"
-            n_arg  <- "n2"
-            
-            if (is_cor) {
-                n_mult <- 1
-                args_list <- list(
-                    rho         = arg_d,
-                    null.rho    = 0,
-                    power       = arg_power,
-                    alpha       = alpha,
-                    alternative = alt,
-                    verbose     = FALSE
-                )
-                eff_n <- if (is_spearman) max(4, round(n_g1 * are_spearman)) else max(4, n_g1)
-                args_list$n <- if (calc == "n") NULL else eff_n
-                func_to_call <- pwrss::power.z.onecor
-                es_arg <- "rho"
-                n_arg  <- "n"
-            } else if (design == "linear") {
-                n_mult <- 1
-                args_list <- list(
-                    r.squared.change = arg_d,
-                    k.total          = self$options$k_total,
-                    k.tested         = self$options$k_tested,
-                    power            = arg_power,
-                    alpha            = alpha,
-                    verbose          = FALSE
-                )
-                args_list$n <- if (calc == "n") NULL else max(4, n_g1)
-                func_to_call <- pwrss::power.f.regression
-                es_arg <- "r.squared.change"
-                n_arg  <- "n"
-            } else if (design == "logistic") {
-                n_mult <- 1
-                args_list <- list(
-                    odds.ratio          = arg_d,
-                    base.prob           = self$options$base_prob,
-                    r.squared.predictor = self$options$r2_predictor,
-                    power               = arg_power,
-                    alpha               = alpha,
-                    alternative         = alt,
-                    verbose             = FALSE
-                )
-                args_list$n <- if (calc == "n") NULL else max(4, n_g1)
-                func_to_call <- pwrss::power.z.logistic
-                es_arg <- "odds.ratio"
-                n_arg  <- "n"
-            } else if (design == "chisq") {
-                n_mult <- 1
-                args_list <- list(
-                    w       = arg_d,
-                    df      = self$options$df_chisq,
-                    power   = arg_power,
-                    alpha   = alpha,
-                    verbose = FALSE
-                )
-                args_list$n <- if (calc == "n") NULL else max(4, n_g1)
-                func_to_call <- pwrss::power.chisq.gof
-                es_arg <- "w"
-                n_arg  <- "n"
-            } else if (design == "anova") {
-                n_mult <- 1
-                args_list <- list(
-                    eta.squared   = arg_d,
-                    factor.levels = self$options$factor_levels,
-                    k.covariates  = self$options$k_covariates,
-                    power         = arg_power,
-                    alpha         = alpha,
-                    verbose       = FALSE
-                )
-                args_list$n.total <- if (calc == "n") NULL else max(4, n_g1)
-                func_to_call <- pwrss::power.f.ancova
-                es_arg <- "eta.squared"
-                n_arg  <- "n.total"
-            } else {
-                args_list <- list(
-                    d           = arg_d,
-                    power       = arg_power,
-                    alpha       = alpha,
-                    alternative = alt,
-                    verbose     = FALSE
-                )
-                
-                if (design == "independent") {
-                    n_mult <- if (n_ratio > 0) n_ratio else 1
-                    args_list$n2 <- if (calc == "n") NULL else max(2, round(n_g1 * n_mult))
-                    args_list$n.ratio <- if (n_ratio > 0) 1 / n_ratio else 1
-                    args_list$design <- "independent"
-                    func_to_call <- pwrss::power.t.student
-                } else if (design == "welch") {
-                    n_mult <- if (n_ratio > 0) n_ratio else 1
-                    args_list$n2 <- if (calc == "n") NULL else max(2, round(n_g1 * n_mult))
-                    args_list$n.ratio <- if (n_ratio > 0) 1 / n_ratio else 1
-                    args_list$var.ratio <- var_ratio
-                    func_to_call <- pwrss::power.t.welch
-                } else if (design == "independent_np") {
-                    n_mult <- if (n_ratio > 0) n_ratio else 1
-                    args_list$n2 <- if (calc == "n") NULL else max(2, round(n_g1 * n_mult))
-                    args_list$n.ratio <- if (n_ratio > 0) 1 / n_ratio else 1
-                    args_list$design <- "independent"
-                    func_to_call <- pwrss::power.np.wilcoxon
-                } else if (design == "paired_np") {
-                    n_mult <- 1
-                    args_list$n2 <- if (calc == "n") NULL else max(2, n_g1)
-                    args_list$n.ratio <- 1
-                    args_list$design <- "paired"
-                    func_to_call <- pwrss::power.np.wilcoxon
-                } else if (design == "one.sample_np") {
-                    n_mult <- 1
-                    args_list$n2 <- if (calc == "n") NULL else max(2, n_g1)
-                    args_list$n.ratio <- 1
-                    args_list$design <- "one.sample"
-                    func_to_call <- pwrss::power.np.wilcoxon
-                } else {
-                    n_mult <- 1
-                    args_list$n2 <- if (calc == "n") NULL else max(2, n_g1)
-                    args_list$n.ratio <- 1
-                    args_list$design <- design
-                    func_to_call <- pwrss::power.t.student
-                }
-            }
+            built_args <- private$.buildArgs(calc, design, es, power, n_g1, alt, alpha, n_ratio, var_ratio, include_n_es_power = TRUE)
+            args_list <- built_args$args_list
+            func_to_call <- built_args$func_to_call
+            es_arg <- built_args$es_arg
+            n_arg <- built_args$n_arg
+            n_mult <- built_args$n_mult
 
             if (calc == "es") {
                 get_pwr <- function(d_val) {
@@ -335,130 +217,12 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             is_spearman  <- design == "onecor_np"
             are_spearman <- 0.912
             
-            arg_d     <- if (calc == "es") NULL else es
-            arg_power <- if (calc == "power") NULL else power
-            
-            es_arg <- "d"
-            n_arg  <- "n2"
-            
-            if (is_cor) {
-                n_mult <- 1
-                args_list <- list(
-                    rho         = arg_d,
-                    null.rho    = 0,
-                    power       = arg_power,
-                    alpha       = alpha,
-                    alternative = alt,
-                    verbose     = FALSE
-                )
-                eff_n <- if (is_spearman) max(4, round(n_g1 * are_spearman)) else max(4, n_g1)
-                args_list$n <- if (calc == "n") NULL else eff_n
-                func_to_call <- pwrss::power.z.onecor
-                es_arg <- "rho"
-                n_arg  <- "n"
-            } else if (design == "linear") {
-                n_mult <- 1
-                args_list <- list(
-                    r.squared.change = arg_d,
-                    k.total          = self$options$k_total,
-                    k.tested         = self$options$k_tested,
-                    power            = arg_power,
-                    alpha            = alpha,
-                    verbose          = FALSE
-                )
-                args_list$n <- if (calc == "n") NULL else max(4, n_g1)
-                func_to_call <- pwrss::power.f.regression
-                es_arg <- "r.squared.change"
-                n_arg  <- "n"
-            } else if (design == "logistic") {
-                n_mult <- 1
-                args_list <- list(
-                    odds.ratio          = arg_d,
-                    base.prob           = self$options$base_prob,
-                    r.squared.predictor = self$options$r2_predictor,
-                    power               = arg_power,
-                    alpha               = alpha,
-                    alternative         = alt,
-                    verbose             = FALSE
-                )
-                args_list$n <- if (calc == "n") NULL else max(4, n_g1)
-                func_to_call <- pwrss::power.z.logistic
-                es_arg <- "odds.ratio"
-                n_arg  <- "n"
-            } else if (design == "chisq") {
-                n_mult <- 1
-                args_list <- list(
-                    w       = arg_d,
-                    df      = self$options$df_chisq,
-                    power   = arg_power,
-                    alpha   = alpha,
-                    verbose = FALSE
-                )
-                args_list$n <- if (calc == "n") NULL else max(4, n_g1)
-                func_to_call <- pwrss::power.chisq.gof
-                es_arg <- "w"
-                n_arg  <- "n"
-            } else if (design == "anova") {
-                n_mult <- 1
-                args_list <- list(
-                    eta.squared   = arg_d,
-                    factor.levels = self$options$factor_levels,
-                    k.covariates  = self$options$k_covariates,
-                    power         = arg_power,
-                    alpha         = alpha,
-                    verbose       = FALSE
-                )
-                args_list$n.total <- if (calc == "n") NULL else max(4, n_g1)
-                func_to_call <- pwrss::power.f.ancova
-                es_arg <- "eta.squared"
-                n_arg  <- "n.total"
-            } else {
-                args_list <- list(
-                    d           = arg_d,
-                    power       = arg_power,
-                    alpha       = alpha,
-                    alternative = alt,
-                    verbose     = FALSE
-                )
-                
-                if (design == "independent") {
-                    n_mult <- if (n_ratio > 0) n_ratio else 1
-                    args_list$n2 <- if (calc == "n") NULL else max(2, round(n_g1 * n_mult))
-                    args_list$n.ratio <- if (n_ratio > 0) 1 / n_ratio else 1
-                    args_list$design <- "independent"
-                    func_to_call <- pwrss::power.t.student
-                } else if (design == "welch") {
-                    n_mult <- if (n_ratio > 0) n_ratio else 1
-                    args_list$n2 <- if (calc == "n") NULL else max(2, round(n_g1 * n_mult))
-                    args_list$n.ratio <- if (n_ratio > 0) 1 / n_ratio else 1
-                    args_list$var.ratio <- var_ratio
-                    func_to_call <- pwrss::power.t.welch
-                } else if (design == "independent_np") {
-                    n_mult <- if (n_ratio > 0) n_ratio else 1
-                    args_list$n2 <- if (calc == "n") NULL else max(2, round(n_g1 * n_mult))
-                    args_list$n.ratio <- if (n_ratio > 0) 1 / n_ratio else 1
-                    args_list$design <- "independent"
-                    func_to_call <- pwrss::power.np.wilcoxon
-                } else if (design == "paired_np") {
-                    n_mult <- 1
-                    args_list$n2 <- if (calc == "n") NULL else max(2, n_g1)
-                    args_list$n.ratio <- 1
-                    args_list$design <- "paired"
-                    func_to_call <- pwrss::power.np.wilcoxon
-                } else if (design == "one.sample_np") {
-                    n_mult <- 1
-                    args_list$n2 <- if (calc == "n") NULL else max(2, n_g1)
-                    args_list$n.ratio <- 1
-                    args_list$design <- "one.sample"
-                    func_to_call <- pwrss::power.np.wilcoxon
-                } else {
-                    n_mult <- 1
-                    args_list$n2 <- if (calc == "n") NULL else max(2, n_g1)
-                    args_list$n.ratio <- 1
-                    args_list$design <- design
-                    func_to_call <- pwrss::power.t.student
-                }
-            }
+            built_args <- private$.buildArgs(calc, design, es, power, n_g1, alt, alpha, n_ratio, var_ratio, include_n_es_power = TRUE)
+            args_list <- built_args$args_list
+            func_to_call <- built_args$func_to_call
+            es_arg <- built_args$es_arg
+            n_arg <- built_args$n_arg
+            n_mult <- built_args$n_mult
 
             if (calc == "es") {
                 get_pwr <- function(d_val) {
@@ -590,74 +354,12 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             is_spearman  <- design == "onecor_np"
             are_spearman <- 0.912
             
-            args_list <- list(alpha = alpha, alternative = alt, verbose = FALSE)
-
-            es_arg <- "d"
-            n_arg  <- "n2"
-
-            if (is_cor) {
-                n_mult <- 1
-                args_list$null.rho <- 0
-                func_to_call <- pwrss::power.z.onecor
-                es_arg <- "rho"
-                n_arg  <- "n"
-            } else if (design == "linear") {
-                n_mult <- 1
-                args_list$k.total  <- self$options$k_total
-                args_list$k.tested <- self$options$k_tested
-                func_to_call <- pwrss::power.f.regression
-                es_arg <- "r.squared.change"
-                n_arg  <- "n"
-            } else if (design == "logistic") {
-                n_mult <- 1
-                args_list$base.prob           <- self$options$base_prob
-                args_list$r.squared.predictor <- self$options$r2_predictor
-                func_to_call <- pwrss::power.z.logistic
-                es_arg <- "odds.ratio"
-                n_arg  <- "n"
-            } else if (design == "chisq") {
-                n_mult <- 1
-                args_list$df <- self$options$df_chisq
-                func_to_call <- pwrss::power.chisq.gof
-                es_arg <- "w"
-                n_arg  <- "n"
-            } else if (design == "anova") {
-                n_mult <- 1
-                args_list$factor.levels <- self$options$factor_levels
-                args_list$k.covariates  <- self$options$k_covariates
-                func_to_call <- pwrss::power.f.ancova
-                es_arg <- "eta.squared"
-                n_arg  <- "n.total"
-            } else if (design == "independent") {
-                n_mult <- if (n_ratio > 0) n_ratio else 1
-                args_list$n.ratio <- if (n_ratio > 0) 1 / n_ratio else 1
-                args_list$design <- "independent"
-                func_to_call <- pwrss::power.t.student
-            } else if (design == "welch") {
-                n_mult <- if (n_ratio > 0) n_ratio else 1
-                args_list$n.ratio <- if (n_ratio > 0) 1 / n_ratio else 1
-                args_list$var.ratio <- var_ratio
-                func_to_call <- pwrss::power.t.welch
-            } else if (design == "independent_np") {
-                n_mult <- if (n_ratio > 0) n_ratio else 1
-                args_list$n.ratio <- if (n_ratio > 0) 1 / n_ratio else 1
-                args_list$design <- "independent"
-                func_to_call <- pwrss::power.np.wilcoxon
-            } else if (design %in% c("paired_np", "one.sample_np")) {
-                n_mult <- 1
-                args_list$n.ratio <- 1
-                args_list$design <- if(design == "paired_np") "paired" else "one.sample"
-                func_to_call <- pwrss::power.np.wilcoxon
-            } else {
-                n_mult <- 1
-                args_list$n.ratio <- 1
-                args_list$design <- design
-                func_to_call <- pwrss::power.t.student
-            }
-
-            if (design %in% c("linear", "chisq", "anova")) {
-                args_list$alternative <- NULL
-            }
+            built_args <- private$.buildArgs(calc, design, es, power_val, n_g1, alt, alpha, n_ratio, var_ratio, include_n_es_power = FALSE)
+            args_list <- built_args$args_list
+            func_to_call <- built_args$func_to_call
+            es_arg <- built_args$es_arg
+            n_arg <- built_args$n_arg
+            n_mult <- built_args$n_mult
 
             if (calc == "es") {
                 get_pwr <- function(d_val) {
@@ -787,74 +489,12 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             is_spearman  <- design == "onecor_np"
             are_spearman <- 0.912
             
-            args_list <- list(alpha = alpha, alternative = alt, verbose = FALSE)
-
-            es_arg <- "d"
-            n_arg  <- "n2"
-
-            if (is_cor) {
-                n_mult <- 1
-                args_list$null.rho <- 0
-                func_to_call <- pwrss::power.z.onecor
-                es_arg <- "rho"
-                n_arg  <- "n"
-            } else if (design == "linear") {
-                n_mult <- 1
-                args_list$k.total  <- self$options$k_total
-                args_list$k.tested <- self$options$k_tested
-                func_to_call <- pwrss::power.f.regression
-                es_arg <- "r.squared.change"
-                n_arg  <- "n"
-            } else if (design == "logistic") {
-                n_mult <- 1
-                args_list$base.prob           <- self$options$base_prob
-                args_list$r.squared.predictor <- self$options$r2_predictor
-                func_to_call <- pwrss::power.z.logistic
-                es_arg <- "odds.ratio"
-                n_arg  <- "n"
-            } else if (design == "chisq") {
-                n_mult <- 1
-                args_list$df <- self$options$df_chisq
-                func_to_call <- pwrss::power.chisq.gof
-                es_arg <- "w"
-                n_arg  <- "n"
-            } else if (design == "anova") {
-                n_mult <- 1
-                args_list$factor.levels <- self$options$factor_levels
-                args_list$k.covariates  <- self$options$k_covariates
-                func_to_call <- pwrss::power.f.ancova
-                es_arg <- "eta.squared"
-                n_arg  <- "n.total"
-            } else if (design == "independent") {
-                n_mult <- if (n_ratio > 0) n_ratio else 1
-                args_list$n.ratio <- if (n_ratio > 0) 1 / n_ratio else 1
-                args_list$design <- "independent"
-                func_to_call <- pwrss::power.t.student
-            } else if (design == "welch") {
-                n_mult <- if (n_ratio > 0) n_ratio else 1
-                args_list$n.ratio <- if (n_ratio > 0) 1 / n_ratio else 1
-                args_list$var.ratio <- var_ratio
-                func_to_call <- pwrss::power.t.welch
-            } else if (design == "independent_np") {
-                n_mult <- if (n_ratio > 0) n_ratio else 1
-                args_list$n.ratio <- if (n_ratio > 0) 1 / n_ratio else 1
-                args_list$design <- "independent"
-                func_to_call <- pwrss::power.np.wilcoxon
-            } else if (design %in% c("paired_np", "one.sample_np")) {
-                n_mult <- 1
-                args_list$n.ratio <- 1
-                args_list$design <- if(design == "paired_np") "paired" else "one.sample"
-                func_to_call <- pwrss::power.np.wilcoxon
-            } else {
-                n_mult <- 1
-                args_list$n.ratio <- 1
-                args_list$design <- design
-                func_to_call <- pwrss::power.t.student
-            }
-
-            if (design %in% c("linear", "chisq", "anova")) {
-                args_list$alternative <- NULL
-            }
+            built_args <- private$.buildArgs(calc, design, es, power_val, n_g1, alt, alpha, n_ratio, var_ratio, include_n_es_power = FALSE)
+            args_list <- built_args$args_list
+            func_to_call <- built_args$func_to_call
+            es_arg <- built_args$es_arg
+            n_arg <- built_args$n_arg
+            n_mult <- built_args$n_mult
 
             if (calc == "es") {
                 get_pwr <- function(d_val) {
@@ -990,74 +630,12 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             is_spearman  <- design == "onecor_np"
             are_spearman <- 0.912
             
-            args_list <- list(alpha = alpha, alternative = alt, verbose = FALSE)
-
-            es_arg <- "d"
-            n_arg  <- "n2"
-
-            if (is_cor) {
-                n_mult <- 1
-                args_list$null.rho <- 0
-                func_to_call <- pwrss::power.z.onecor
-                es_arg <- "rho"
-                n_arg  <- "n"
-            } else if (design == "linear") {
-                n_mult <- 1
-                args_list$k.total  <- self$options$k_total
-                args_list$k.tested <- self$options$k_tested
-                func_to_call <- pwrss::power.f.regression
-                es_arg <- "r.squared.change"
-                n_arg  <- "n"
-            } else if (design == "logistic") {
-                n_mult <- 1
-                args_list$base.prob           <- self$options$base_prob
-                args_list$r.squared.predictor <- self$options$r2_predictor
-                func_to_call <- pwrss::power.z.logistic
-                es_arg <- "odds.ratio"
-                n_arg  <- "n"
-            } else if (design == "chisq") {
-                n_mult <- 1
-                args_list$df <- self$options$df_chisq
-                func_to_call <- pwrss::power.chisq.gof
-                es_arg <- "w"
-                n_arg  <- "n"
-            } else if (design == "anova") {
-                n_mult <- 1
-                args_list$factor.levels <- self$options$factor_levels
-                args_list$k.covariates  <- self$options$k_covariates
-                func_to_call <- pwrss::power.f.ancova
-                es_arg <- "eta.squared"
-                n_arg  <- "n.total"
-            } else if (design == "independent") {
-                n_mult <- if (n_ratio > 0) n_ratio else 1
-                args_list$n.ratio <- if (n_ratio > 0) 1 / n_ratio else 1
-                args_list$design <- "independent"
-                func_to_call <- pwrss::power.t.student
-            } else if (design == "welch") {
-                n_mult <- if (n_ratio > 0) n_ratio else 1
-                args_list$n.ratio <- if (n_ratio > 0) 1 / n_ratio else 1
-                args_list$var.ratio <- var_ratio
-                func_to_call <- pwrss::power.t.welch
-            } else if (design == "independent_np") {
-                n_mult <- if (n_ratio > 0) n_ratio else 1
-                args_list$n.ratio <- if (n_ratio > 0) 1 / n_ratio else 1
-                args_list$design <- "independent"
-                func_to_call <- pwrss::power.np.wilcoxon
-            } else if (design %in% c("paired_np", "one.sample_np")) {
-                n_mult <- 1
-                args_list$n.ratio <- 1
-                args_list$design <- if(design == "paired_np") "paired" else "one.sample"
-                func_to_call <- pwrss::power.np.wilcoxon
-            } else {
-                n_mult <- 1
-                args_list$n.ratio <- 1
-                args_list$design <- design
-                func_to_call <- pwrss::power.t.student
-            }
-
-            if (design %in% c("linear", "chisq", "anova")) {
-                args_list$alternative <- NULL
-            }
+            built_args <- private$.buildArgs(calc, design, es, power_val, n_g1, alt, alpha, n_ratio, var_ratio, include_n_es_power = FALSE)
+            args_list <- built_args$args_list
+            func_to_call <- built_args$func_to_call
+            es_arg <- built_args$es_arg
+            n_arg <- built_args$n_arg
+            n_mult <- built_args$n_mult
 
             if (calc == "es") {
                 get_pwr <- function(d_val) {
@@ -1195,6 +773,136 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             
             print(p)
             return(TRUE)
+        },
+        
+        .buildArgs = function(calc, design, es, power, n_g1, alt, alpha, n_ratio, var_ratio, include_n_es_power = TRUE) {
+            is_cor       <- design %in% c("onecor", "onecor_np")
+            is_spearman  <- design == "onecor_np"
+            are_spearman <- 0.912
+            
+            arg_d     <- if (calc == "es") NULL else es
+            arg_power <- if (calc == "power") NULL else power
+            
+            es_arg <- "d"
+            n_arg  <- "n2"
+            
+            args_list <- list(
+                alpha       = alpha,
+                alternative = alt,
+                verbose     = FALSE
+            )
+            
+            if (include_n_es_power) {
+                args_list$power <- arg_power
+            }
+            
+            if (is_cor) {
+                n_mult <- 1
+                if (include_n_es_power) args_list$rho <- arg_d
+                args_list$null.rho <- 0
+                func_to_call <- pwrss::power.z.onecor
+                es_arg <- "rho"
+                n_arg  <- "n"
+                if (include_n_es_power) {
+                    eff_n <- if (is_spearman) max(4, round(n_g1 * are_spearman)) else max(4, n_g1)
+                    args_list$n <- if (calc == "n") NULL else eff_n
+                }
+            } else if (design == "linear") {
+                n_mult <- 1
+                if (include_n_es_power) args_list$r.squared.change <- arg_d
+                args_list$k.total  <- self$options$k_total
+                args_list$k.tested <- self$options$k_tested
+                func_to_call <- pwrss::power.f.regression
+                es_arg <- "r.squared.change"
+                n_arg  <- "n"
+                if (include_n_es_power) {
+                    args_list$n <- if (calc == "n") NULL else max(4, n_g1)
+                }
+            } else if (design == "logistic") {
+                n_mult <- 1
+                if (include_n_es_power) args_list$odds.ratio <- arg_d
+                args_list$base.prob           <- self$options$base_prob
+                args_list$r.squared.predictor <- self$options$r2_predictor
+                func_to_call <- pwrss::power.z.logistic
+                es_arg <- "odds.ratio"
+                n_arg  <- "n"
+                if (include_n_es_power) {
+                    args_list$n <- if (calc == "n") NULL else max(4, n_g1)
+                }
+            } else if (design == "chisq") {
+                n_mult <- 1
+                if (include_n_es_power) args_list$w <- arg_d
+                args_list$df      <- self$options$df_chisq
+                func_to_call <- pwrss::power.chisq.gof
+                es_arg <- "w"
+                n_arg  <- "n"
+                if (include_n_es_power) {
+                    args_list$n <- if (calc == "n") NULL else max(4, n_g1)
+                }
+            } else if (design == "anova") {
+                n_mult <- 1
+                if (include_n_es_power) args_list$eta.squared <- arg_d
+                args_list$factor.levels <- self$options$factor_levels
+                args_list$k.covariates  <- self$options$k_covariates
+                func_to_call <- pwrss::power.f.ancova
+                es_arg <- "eta.squared"
+                n_arg  <- "n.total"
+                if (include_n_es_power) {
+                    args_list$n.total <- if (calc == "n") NULL else max(4, n_g1)
+                }
+            } else {
+                if (include_n_es_power) args_list$d <- arg_d
+                
+                if (design == "independent") {
+                    n_mult <- if (n_ratio > 0) n_ratio else 1
+                    if (include_n_es_power) args_list$n2 <- if (calc == "n") NULL else max(2, round(n_g1 * n_mult))
+                    args_list$n.ratio <- if (n_ratio > 0) 1 / n_ratio else 1
+                    args_list$design <- "independent"
+                    func_to_call <- pwrss::power.t.student
+                } else if (design == "welch") {
+                    n_mult <- if (n_ratio > 0) n_ratio else 1
+                    if (include_n_es_power) args_list$n2 <- if (calc == "n") NULL else max(2, round(n_g1 * n_mult))
+                    args_list$n.ratio <- if (n_ratio > 0) 1 / n_ratio else 1
+                    args_list$var.ratio <- var_ratio
+                    func_to_call <- pwrss::power.t.welch
+                } else if (design == "independent_np") {
+                    n_mult <- if (n_ratio > 0) n_ratio else 1
+                    if (include_n_es_power) args_list$n2 <- if (calc == "n") NULL else max(2, round(n_g1 * n_mult))
+                    args_list$n.ratio <- if (n_ratio > 0) 1 / n_ratio else 1
+                    args_list$design <- "independent"
+                    func_to_call <- pwrss::power.np.wilcoxon
+                } else if (design == "paired_np") {
+                    n_mult <- 1
+                    if (include_n_es_power) args_list$n2 <- if (calc == "n") NULL else max(2, n_g1)
+                    args_list$n.ratio <- 1
+                    args_list$design <- "paired"
+                    func_to_call <- pwrss::power.np.wilcoxon
+                } else if (design == "one.sample_np") {
+                    n_mult <- 1
+                    if (include_n_es_power) args_list$n2 <- if (calc == "n") NULL else max(2, n_g1)
+                    args_list$n.ratio <- 1
+                    args_list$design <- "one.sample"
+                    func_to_call <- pwrss::power.np.wilcoxon
+                } else {
+                    n_mult <- 1
+                    if (include_n_es_power) args_list$n2 <- if (calc == "n") NULL else max(2, n_g1)
+                    args_list$n.ratio <- 1
+                    args_list$design <- design
+                    func_to_call <- pwrss::power.t.student
+                }
+            }
+            
+            if (design %in% c("linear", "chisq", "anova")) {
+                args_list$alternative <- NULL
+            }
+            
+            return(list(
+                args_list    = args_list,
+                func_to_call = func_to_call,
+                es_arg       = es_arg,
+                n_arg        = n_arg,
+                n_mult       = n_mult
+            ))
         }
     )
 )
