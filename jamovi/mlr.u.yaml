@@ -105,7 +105,7 @@ children:
             label: Brewer's qualitative palette
             enable: (show_roc)
   - type: CollapseBox
-    label: Сохранить
+    label: Save
     collapsed: true
     children:
       - type: Output

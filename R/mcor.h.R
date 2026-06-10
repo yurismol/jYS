@@ -37,7 +37,8 @@ mCOROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             glassoGamma = 0.5,
             glassoRho = 0.1,
             glassoHub = FALSE,
-            glassoPlotScale = FALSE, ...) {
+            glassoPlotScale = FALSE,
+            glassoLabels = FALSE, ...) {
 
             super$initialize(
                 package="jYS",
@@ -250,6 +251,10 @@ mCOROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "glassoPlotScale",
                 glassoPlotScale,
                 default=FALSE)
+            private$..glassoLabels <- jmvcore::OptionBool$new(
+                "glassoLabels",
+                glassoLabels,
+                default=FALSE)
 
             self$.addOption(private$..vars)
             self$.addOption(private$..group)
@@ -283,6 +288,7 @@ mCOROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..glassoRho)
             self$.addOption(private$..glassoHub)
             self$.addOption(private$..glassoPlotScale)
+            self$.addOption(private$..glassoLabels)
         }),
     active = list(
         vars = function() private$..vars$value,
@@ -316,7 +322,8 @@ mCOROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         glassoGamma = function() private$..glassoGamma$value,
         glassoRho = function() private$..glassoRho$value,
         glassoHub = function() private$..glassoHub$value,
-        glassoPlotScale = function() private$..glassoPlotScale$value),
+        glassoPlotScale = function() private$..glassoPlotScale$value,
+        glassoLabels = function() private$..glassoLabels$value),
     private = list(
         ..vars = NA,
         ..group = NA,
@@ -349,7 +356,8 @@ mCOROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..glassoGamma = NA,
         ..glassoRho = NA,
         ..glassoHub = NA,
-        ..glassoPlotScale = NA)
+        ..glassoPlotScale = NA,
+        ..glassoLabels = NA)
 )
 
 mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
@@ -519,7 +527,10 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         super$initialize(
                             options=options,
                             name="glassoGroup",
-                            title="Graphical Lasso (GLASSO) Partial Correlation Network")
+                            title="Graphical Lasso (GLASSO) Partial Correlation Network",
+                            refs=list(
+                    "glasso",
+                    "qgraph"))
                         self$add(jmvcore::Table$new(
                             options=options,
                             name="glassoTable",
@@ -591,6 +602,7 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 "group",
                                 "selgroup",
                                 "glassoPlotScale",
+                                "glassoLabels",
                                 "hclust",
                                 "numClust",
                                 "clustMet",
@@ -656,6 +668,7 @@ mCORBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param glassoRho .
 #' @param glassoHub .
 #' @param glassoPlotScale .
+#' @param glassoLabels .
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$text} \tab \tab \tab \tab \tab a html \cr
@@ -708,7 +721,8 @@ mCOR <- function(
     glassoGamma = 0.5,
     glassoRho = 0.1,
     glassoHub = FALSE,
-    glassoPlotScale = FALSE) {
+    glassoPlotScale = FALSE,
+    glassoLabels = FALSE) {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
         stop("mCOR requires jmvcore to be installed (restart may be required)")
@@ -755,7 +769,8 @@ mCOR <- function(
         glassoGamma = glassoGamma,
         glassoRho = glassoRho,
         glassoHub = glassoHub,
-        glassoPlotScale = glassoPlotScale)
+        glassoPlotScale = glassoPlotScale,
+        glassoLabels = glassoLabels)
 
     analysis <- mCORClass$new(
         options = options,

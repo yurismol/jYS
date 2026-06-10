@@ -640,9 +640,9 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
           main <- image$state$s
           if (self$options$clustCol) {
             hd <- as.dendrogram(hc)
-            cols <- jmvcore::colorPalette(n=nVars, theme$palette, type="fill")
-            hd <- dendextend::color_branches(hd, k=nClust)#, col=cols)
-            hd <- dendextend::color_labels(hd, k=nClust)	#, col=cols)
+            cols <- jmvcore::colorPalette(n=nClust, theme$palette, type="fill")
+            hd <- dendextend::color_branches(hd, k=nClust, col=cols)
+            hd <- dendextend::color_labels(hd, k=nClust, col=cols)
             hd <- dendextend::set(hd, "branches_lwd", 3)
             hd <- dendextend::set(hd, "labels_cex", 1.5)
             if (main>"") opar <- par(mar=c(10,0,1,0))
@@ -706,6 +706,11 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               qmar <- c(3, 3, 3, 3)
           }
           
+          edge.labels <- FALSE
+          if (self$options$glassoLabels) {
+              edge.labels <- round(pcor, 2)
+          }
+
           qgraph::qgraph(
               pcor,
               layout = "spring",
@@ -723,6 +728,7 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               label.color = "black",
               legend.cex = 1.0,
               edge.width = 2,
+              edge.labels = edge.labels,
               fade = FALSE,
               doPlot = TRUE,
               mar = qmar

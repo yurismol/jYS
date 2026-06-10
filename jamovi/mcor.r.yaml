@@ -141,6 +141,7 @@ items:
       title: Graphical Lasso (GLASSO) Partial Correlation Network
       type: Group
       visible: (glasso)
+      refs: [glasso, qgraph]
       items:
         - name: glassoTable
           title: Partial correlation matrix
@@ -205,6 +206,7 @@ items:
             - group
             - selgroup
             - glassoPlotScale
+            - glassoLabels
             - hclust
             - numClust
             - clustMet

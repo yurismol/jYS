@@ -316,4 +316,10 @@ options:
       type: Bool
       default: false
 
+    - name: glassoLabels
+      title: Show edge labels
+      type: Bool
+      default: false
+
+
 ...
