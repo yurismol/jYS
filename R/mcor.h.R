@@ -535,7 +535,7 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             options=options,
                             name="glassoTable",
                             title="Partial correlation matrix",
-                            visible="(glasso && glassoTable)",
+                            visible="(glassoTable)",
                             rows="(vars)",
                             clearWith=list(
                                 "glassoType",
@@ -544,13 +544,36 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 "vars",
                                 "group",
                                 "selgroup",
-                                "method"),
+                                "method",
+                                "pval",
+                                "flag"),
                             columns=list(
                                 list(
-                                    `name`=".name", 
+                                    `name`=".name[r]", 
                                     `title`="", 
                                     `type`="text", 
-                                    `content`="($key)"))))
+                                    `content`="($key)", 
+                                    `combineBelow`=TRUE),
+                                list(
+                                    `name`=".stat[r]", 
+                                    `title`="", 
+                                    `type`="text", 
+                                    `content`="r", 
+                                    `visible`="(pval)"),
+                                list(
+                                    `name`=".name[p]", 
+                                    `title`="", 
+                                    `type`="text", 
+                                    `content`="($key)", 
+                                    `combineBelow`=TRUE, 
+                                    `visible`="(pval)"),
+                                list(
+                                    `name`=".stat[p]", 
+                                    `title`="", 
+                                    `type`="text", 
+                                    `content`="p-value", 
+                                    `format`="zto,pvalue", 
+                                    `visible`="(pval)"))))
                         self$add(jmvcore::Table$new(
                             options=options,
                             name="glassoHubTable",

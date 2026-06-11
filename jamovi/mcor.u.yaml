@@ -65,6 +65,8 @@ children:
                     enable: >-
                       (ci && tables && {return
                       ui['method'].value()=="pearson";})
+          - type: CheckBox
+            name: glassoTable
   - type: CollapseBox
     label: Plots
     collapsed: false
@@ -119,9 +121,6 @@ children:
         name: glasso
         children:
           - type: CheckBox
-            name: glassoTable
-            enable: (glasso)
-          - type: CheckBox
             name: glassoHub
             enable: (glasso)
           - type: CheckBox
@@ -136,12 +135,12 @@ children:
                 enable: (glassoPlot)
           - type: ComboBox
             name: glassoType
-            enable: (glasso)
+            enable: (glasso || glassoTable)
           - type: TextBox
             name: glassoGamma
             format: number
-            enable: (glasso && {return ui['glassoType'].value() == 'ebic';})
+            enable: ((glasso || glassoTable) && {return ui['glassoType'].value() == 'ebic';})
           - type: TextBox
             name: glassoRho
             format: number
-            enable: (glasso && {return ui['glassoType'].value() == 'manual';})
+            enable: ((glasso || glassoTable) && {return ui['glassoType'].value() == 'manual';})

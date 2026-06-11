@@ -109,21 +109,24 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
            }
          }
 
-         # GLASSO table initialization
-         glassoTable <- self$results$glassoGroup$glassoTable
-         for (i in seq_along(vars)) {
-             var <- vars[[i]]
-             glassoTable$addColumn(name=var, title=var, type='number', format='zto')
-         }
-         for (i in seq_along(vars)) {
-             var <- vars[[i]]
-             values <- list()
-             for (j in seq_along(vars)) {
-                 values[[vars[[j]]]] <- ''
-             }
-             values[[var]] <- '\u2014'
-             glassoTable$setRow(rowKey=var, values)
-         }
+          # GLASSO table initialization
+          glassoTable <- self$results$glassoGroup$glassoTable
+          for (i in seq_along(vars)) {
+              var <- vars[[i]]
+              glassoTable$addColumn(name=paste0(var, '[r]'), title=var, type='number', format='zto')
+              glassoTable$addColumn(name=paste0(var, '[p]'), title=var, type='number', format='zto,pvalue', visible='(pval)')
+          }
+          for (i in seq_along(vars)) {
+              var <- vars[[i]]
+              values <- list()
+              for (j in seq_along(vars)) {
+                  values[[paste0(vars[[j]], '[r]')]] <- ''
+                  values[[paste0(vars[[j]], '[p]')]] <- ''
+              }
+              values[[paste0(var, '[r]')]] <- '\u2014'
+              values[[paste0(var, '[p]')]] <- '\u2014'
+              glassoTable$setRow(rowKey=var, values)
+          }
      },
 
      .run = function() {
@@ -162,7 +165,7 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 else mtord <- FALSE
                 result <- private$.test(rowVar, colVar, hyp, mtord)
                 corr[i, j] <- corr[j, i] <- result$r
-                corp[i, j] <- corr[j, i] <- result$p
+                corp[i, j] <- corp[j, i] <- result$p
               }
             }
             #if (self$options$hclust) {
@@ -217,14 +220,17 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         matrix$addFootnote(rowNo=i, paste0(colVarName, '[r]'), .('Pearson correlation cannot be calculated for non-numeric values'))
                     flag <- self$options$get('flag')
                     if (flag) {
+                        p_val <- corp[i, j]
                         if (mtord)
                             {}  # do nothing
-                        else if (result$p < .001)
-                            matrix$addSymbol(rowNo=i, paste0(colVarName, '[r]'), '***')
-                        else if (result$p < .01)
-                            matrix$addSymbol(rowNo=i, paste0(colVarName, '[r]'), '**')
-                        else if (result$p < .05)
-                            matrix$addSymbol(rowNo=i, paste0(colVarName, '[r]'), '*')
+                        else if (!is.na(p_val)) {
+                            if (p_val < .001)
+                                matrix$addSymbol(rowNo=i, paste0(colVarName, '[r]'), '***')
+                            else if (p_val < .01)
+                                matrix$addSymbol(rowNo=i, paste0(colVarName, '[r]'), '**')
+                            else if (p_val < .05)
+                                matrix$addSymbol(rowNo=i, paste0(colVarName, '[r]'), '*')
+                        }
                     }
                }
             }
@@ -245,7 +251,7 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             image <- self$results$plot
             image$setState(cor)
 
-            if (self$options$glasso) {
+            if (self$options$glasso || self$options$glassoTable) {
                 if ( ! (requireNamespace("glasso", quietly = TRUE) && requireNamespace("qgraph", quietly = TRUE))) {
                     jmvcore::reject(.("Packages 'glasso' and 'qgraph' are required for this analysis. Please install them."), code='')
                 }
@@ -283,6 +289,25 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 colnames(pcor) <- vars
                 rownames(pcor) <- vars
                 
+                # Calculate p-values for partial correlations
+                df_glasso <- n - length(vars)
+                corp_glasso <- matrix(NA, nrow=length(vars), ncol=length(vars))
+                if (df_glasso > 0) {
+                    t_val <- ifelse(abs(pcor) < 1, pcor * sqrt(df_glasso / (1 - pcor^2)), Inf)
+                    corp_glasso <- 2 * pt(abs(t_val), df = df_glasso, lower.tail = FALSE)
+                    diag(corp_glasso) <- 0
+                    
+                    if (self$options$adjust != 'none') {
+                        pp_glasso <- corp_glasso[lower.tri(corp_glasso, diag = FALSE)]
+                        pp_glasso <- p.adjust(pp_glasso, self$options$adjust)
+                        corp_glasso[lower.tri(corp_glasso, diag = FALSE)] <- pp_glasso
+                        
+                        pp_glasso <- corp_glasso[upper.tri(corp_glasso, diag = FALSE)]
+                        pp_glasso <- p.adjust(pp_glasso, self$options$adjust)
+                        corp_glasso[upper.tri(corp_glasso, diag = FALSE)] <- pp_glasso
+                    }
+                }
+                
                 # Fill table
                 glassoTable <- self$results$glassoGroup$glassoTable
                 for (i in seq_along(vars)) {
@@ -291,14 +316,35 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     for (j in seq_along(vars)) {
                         colVarName <- vars[[j]]
                         if (i == j) {
-                            values[[colVarName]] <- '\u2014'
+                            values[[paste0(colVarName, '[r]')]] <- '\u2014'
+                            values[[paste0(colVarName, '[p]')]] <- '\u2014'
                         } else if (j > i) {
-                            values[[colVarName]] <- ''
+                            values[[paste0(colVarName, '[r]')]] <- ''
+                            values[[paste0(colVarName, '[p]')]] <- ''
                         } else {
-                            values[[colVarName]] <- pcor[i, j]
+                            values[[paste0(colVarName, '[r]')]] <- pcor[i, j]
+                            values[[paste0(colVarName, '[p]')]] <- corp_glasso[i, j]
                         }
                     }
                     glassoTable$setRow(rowKey=rowVarName, values)
+                    
+                    if (self$options$flag && df_glasso > 0) {
+                        for (j in seq_along(vars)) {
+                            colVarName <- vars[[j]]
+                            if (j < i) {
+                                p_val <- corp_glasso[i, j]
+                                if (!is.na(p_val)) {
+                                    if (p_val < .001) {
+                                        glassoTable$addSymbol(rowKey=rowVarName, paste0(colVarName, '[r]'), '***')
+                                    } else if (p_val < .01) {
+                                        glassoTable$addSymbol(rowKey=rowVarName, paste0(colVarName, '[r]'), '**')
+                                    } else if (p_val < .05) {
+                                        glassoTable$addSymbol(rowKey=rowVarName, paste0(colVarName, '[r]'), '*')
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
 
                 # Calculate Centrality

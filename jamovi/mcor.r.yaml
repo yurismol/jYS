@@ -140,13 +140,13 @@ items:
     - name: glassoGroup
       title: Graphical Lasso (GLASSO) Partial Correlation Network
       type: Group
-      visible: (glasso)
+      visible: (glasso || glassoTable)
       refs: [glasso, qgraph]
       items:
         - name: glassoTable
           title: Partial correlation matrix
           type: Table
-          visible: (glasso && glassoTable)
+          visible: (glassoTable)
           rows: (vars)
           clearWith:
             - glassoType
@@ -156,11 +156,31 @@ items:
             - group
             - selgroup
             - method
+            - pval
+            - flag
           columns:
-            - name: .name
+            - name: .name[r]
               title: ""
               type: text
               content: ($key)
+              combineBelow: true
+            - name: .stat[r]
+              title: ""
+              type: text
+              content: r
+              visible: (pval)
+            - name: .name[p]
+              title: ""
+              type: text
+              content: ($key)
+              combineBelow: true
+              visible: (pval)
+            - name: .stat[p]
+              title: ""
+              type: text
+              content: p-value
+              format: zto,pvalue
+              visible: (pval)
         - name: glassoHubTable
           title: Centrality metrics (hub markers)
           type: Table
