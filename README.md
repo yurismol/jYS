@@ -3,20 +3,21 @@ jYS
 Some usefull [Jamovi](https://www.jamovi.org/) procedures for researchers
 
 - Correlation Clastering
-  - corrplot (Taiyun Wei et al)
+  - corrplot (Taiyun Wei et al.)
+  - glasso (Jerome Friedman et al.)
 
 - Multi ROC Classification
-  - pROC (Xavier Robin et al)
+  - pROC (Xavier Robin et al.)
 
 - Missing Values Imputation (using the prediction power of Random Forests)
-  - missForest (Daniel J. Stekhoven), randomForest (Leo Breiman et al)
-  - missRanger (Michael Mayer), ranger (Marvin N. Wright et al)
+  - missForest (Daniel J. Stekhoven), randomForest (Leo Breiman et al.)
+  - missRanger (Michael Mayer), ranger (Marvin N. Wright et al.)
 
 - Classify missing data as missing completely at random (MCAR), missing at random (MAR) and missing not at random (MNAR)
   - missr (Noah Hellen)
 
 - Visualizations for incomplete data
-  - ggmice (Hanne Oberman et al)
+  - ggmice (Hanne Oberman et al.)
 
 - Outliers identification and removal
 
@@ -27,5 +28,9 @@ Some usefull [Jamovi](https://www.jamovi.org/) procedures for researchers
   - pwrss (Metin Bulus, Sebastian Jentschke)
 
 - MLP Classifier
+
+- Binomial Logistic Regression with LASSO L1 & L2 regularization and K-Fold cross-validation
+
+- PCA Principal Component Analysis
 
 Author: [Yuri Smolyakov](https://t.me/jYSmol)
