@@ -2,6 +2,7 @@
 name:  mUI
 title: Uncertain Interval (UI)
 menuGroup: jYS
+menuSubgroup: Diagnostics & ROC Analysis
 version: '1.0.11'
 jas: '1.2'
 

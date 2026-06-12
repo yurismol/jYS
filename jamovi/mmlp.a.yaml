@@ -2,6 +2,7 @@
 name:  mMLP
 title: MLP Classifier
 menuGroup: jYS
+menuSubgroup: Regression & Classification
 menuTitle: MLP Classifier
 description:
     main: MLP Neural Network Classifier. Note that weight initialization and data partitioning use a hardcoded random seed (42) for reproducibility.

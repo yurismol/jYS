@@ -2,6 +2,7 @@
 name:  mPCA
 title: PCA Submodule
 menuGroup: jYS
+menuSubgroup: Exploratory & Factor Analysis
 description:
     main: Principal Component Analysis (PCA) submodule. Note that parallel analysis and cross-validation use a hardcoded random seed (42) for reproducibility.
 version: '1.0.0'
