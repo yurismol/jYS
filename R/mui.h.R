@@ -17,6 +17,8 @@ mUIOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             uiSe = 55,
             uiSp = 55,
             isROC = FALSE,
+            show_roc_cut = TRUE,
+            show_roc_table = FALSE,
             isTGR = TRUE,
             isMD = TRUE,
             youden = FALSE,
@@ -93,6 +95,14 @@ mUIOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "isROC",
                 isROC,
                 default=FALSE)
+            private$..show_roc_cut <- jmvcore::OptionBool$new(
+                "show_roc_cut",
+                show_roc_cut,
+                default=TRUE)
+            private$..show_roc_table <- jmvcore::OptionBool$new(
+                "show_roc_table",
+                show_roc_table,
+                default=FALSE)
             private$..isTGR <- jmvcore::OptionBool$new(
                 "isTGR",
                 isTGR,
@@ -130,6 +140,8 @@ mUIOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..uiSe)
             self$.addOption(private$..uiSp)
             self$.addOption(private$..isROC)
+            self$.addOption(private$..show_roc_cut)
+            self$.addOption(private$..show_roc_table)
             self$.addOption(private$..isTGR)
             self$.addOption(private$..isMD)
             self$.addOption(private$..youden)
@@ -149,6 +161,8 @@ mUIOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         uiSe = function() private$..uiSe$value,
         uiSp = function() private$..uiSp$value,
         isROC = function() private$..isROC$value,
+        show_roc_cut = function() private$..show_roc_cut$value,
+        show_roc_table = function() private$..show_roc_table$value,
         isTGR = function() private$..isTGR$value,
         isMD = function() private$..isMD$value,
         youden = function() private$..youden$value,
@@ -167,6 +181,8 @@ mUIOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..uiSe = NA,
         ..uiSp = NA,
         ..isROC = NA,
+        ..show_roc_cut = NA,
+        ..show_roc_table = NA,
         ..isTGR = NA,
         ..isMD = NA,
         ..youden = NA,
@@ -201,7 +217,8 @@ mUIResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 active = list(
                     uistat = function() private$.items[["uistat"]],
                     mcistat = function() private$.items[["mcistat"]],
-                    intstat = function() private$.items[["intstat"]]),
+                    intstat = function() private$.items[["intstat"]],
+                    rocTable = function() private$.items[["rocTable"]]),
                 private = list(),
                 public=list(
                     initialize=function(options) {
@@ -320,6 +337,44 @@ mUIResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 list(
                                     `name`="lev", 
                                     `title`="Level", 
+                                    `type`="text"))))
+                        self$add(jmvcore::Table$new(
+                            options=options,
+                            name="rocTable",
+                            title="ROC Quantitative Evaluation",
+                            clearWith=list(
+                                "ref",
+                                "test",
+                                "UImethod",
+                                "show_roc_cut",
+                                "show_roc_table"),
+                            rows="(test)",
+                            visible="(isROC && show_roc_table)",
+                            columns=list(
+                                list(
+                                    `name`="var", 
+                                    `title`="Predictor", 
+                                    `type`="text", 
+                                    `content`="($key)"),
+                                list(
+                                    `name`="auc", 
+                                    `title`="AUC", 
+                                    `type`="number"),
+                                list(
+                                    `name`="cutoff", 
+                                    `title`="Cut-off", 
+                                    `type`="number"),
+                                list(
+                                    `name`="se", 
+                                    `title`="Sensitivity (Se)", 
+                                    `type`="number"),
+                                list(
+                                    `name`="sp", 
+                                    `title`="Specificity (Sp)", 
+                                    `type`="number"),
+                                list(
+                                    `name`="direction", 
+                                    `title`="Direction", 
                                     `type`="text"))))}))$new(options=options))
             self$add(jmvcore::Array$new(
                 options=options,
@@ -359,7 +414,12 @@ mUIResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     width=500,
                     height=500,
                     renderFun=".plotROC",
-                    requiresData=TRUE)))
+                    requiresData=TRUE),
+                clearWith=list(
+                    "ref",
+                    "test",
+                    "UImethod",
+                    "show_roc_cut")))
             self$add(jmvcore::Output$new(
                 options=options,
                 name="decision",
@@ -401,6 +461,8 @@ mUIBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param uiSe .
 #' @param uiSp .
 #' @param isROC .
+#' @param show_roc_cut .
+#' @param show_roc_table .
 #' @param isTGR .
 #' @param isMD .
 #' @param youden .
@@ -411,6 +473,7 @@ mUIBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$stat$uistat} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$stat$mcistat} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$stat$intstat} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$stat$rocTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$plotsTGR} \tab \tab \tab \tab \tab an array of images \cr
 #'   \code{results$plotsMD} \tab \tab \tab \tab \tab an array of images \cr
 #'   \code{results$plotsROC} \tab \tab \tab \tab \tab an array of images \cr
@@ -431,6 +494,8 @@ mUI <- function(
     uiSe = 55,
     uiSp = 55,
     isROC = FALSE,
+    show_roc_cut = TRUE,
+    show_roc_table = FALSE,
     isTGR = TRUE,
     isMD = TRUE,
     youden = FALSE,
@@ -462,6 +527,8 @@ mUI <- function(
         uiSe = uiSe,
         uiSp = uiSp,
         isROC = isROC,
+        show_roc_cut = show_roc_cut,
+        show_roc_table = show_roc_table,
         isTGR = isTGR,
         isMD = isMD,
         youden = youden,

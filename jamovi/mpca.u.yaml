@@ -1,4 +1,4 @@
-title: PCA Submodule
+title: Principal Component Analysis
 name: mPCA
 jus: '3.0'
 stage: 0
@@ -113,6 +113,14 @@ children:
             name: rocPlot
             enable: ({return ui['classVar'].value()!==null;})
             children:
+              - name: show_roc_cut
+                type: CheckBox
+                label: Show Cut-off Thresholds
+                enable: (rocPlot)
+              - name: show_roc_table
+                type: CheckBox
+                label: Show ROC Table
+                enable: (rocPlot)
               - name: roc_x
                 type: ComboBox
                 label: X-axis Coordinate

@@ -376,8 +376,75 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                             cv_prob = cv_prob,
                             partition = "kfold",
                             roc_x = self$options$roc_x,
-                            roc_unit = self$options$roc_unit
+                            roc_unit = self$options$roc_unit,
+                            show_roc_cut = self$options$show_roc_cut
                         ))
+                        
+                        # Populate ROC Table
+                        if (self$options$show_roc_table && requireNamespace("pROC", quietly = TRUE)) {
+                            rocTable <- self$results$rocTable
+                            rocTable$deleteRows()
+                            
+                            is_pct <- self$options$roc_unit == "percent"
+                            mult <- if (is_pct) 100 else 1
+                            
+                            add_roc_row <- function(row_name, y_true, y_prob) {
+                                tryCatch({
+                                    if (is.null(y_true) || is.null(y_prob)) return()
+                                    
+                                    # Aggressively coerce to plain numeric vector
+                                    y_true <- as.double(as.vector(drop(unlist(y_true))))
+                                    y_prob <- as.double(as.vector(drop(unlist(y_prob))))
+                                    
+                                    if (length(y_true) != length(y_prob)) return()
+                                    complete_idx <- !is.na(y_true) & !is.na(y_prob)
+                                    if (sum(complete_idx) < 2) return()
+                                    y_t <- y_true[complete_idx]
+                                    y_p <- y_prob[complete_idx]
+                                    
+                                    r <- try(pROC::roc(y_t, y_p, quiet = TRUE), silent = TRUE)
+                                    if (inherits(r, "try-error")) return()
+                                    
+                                    auc_val <- as.numeric(pROC::auc(r)) * mult
+                                    
+                                    coords <- try(pROC::coords(r, x="best", best.method="youden", ret=c("threshold", "specificity", "sensitivity")), silent=TRUE)
+                                    if (inherits(coords, "try-error")) return()
+                                    
+                                    # pROC::coords returns data.frame in newer versions, matrix in older
+                                    if (is.data.frame(coords)) {
+                                        cutoff <- as.numeric(coords[1, "threshold"])
+                                        sp     <- as.numeric(coords[1, "specificity"]) * mult
+                                        se     <- as.numeric(coords[1, "sensitivity"]) * mult
+                                    } else {
+                                        if (is.matrix(coords)) {
+                                            coords <- coords[1, ]
+                                        }
+                                        cutoff <- as.numeric(coords["threshold"])
+                                        sp     <- as.numeric(coords["specificity"]) * mult
+                                        se     <- as.numeric(coords["sensitivity"]) * mult
+                                    }
+                                    
+                                    direction <- as.character(r$direction)
+                                    auc_val <- as.numeric(auc_val)
+                                    
+                                    rocTable$addRow(rowKey = row_name, values = list(
+                                        part = as.character(row_name),
+                                        auc = auc_val,
+                                        cutoff = cutoff,
+                                        se = se,
+                                        sp = sp,
+                                        direction = direction
+                                    ))
+                                }, error = function(e) {
+                                    # Silently skip if ROC table row fails
+                                })
+                            }
+                            
+                            add_roc_row(.("Training"), target_numeric, full_preds)
+                            add_roc_row(.("K-Fold CV"), target_numeric, cv_prob)
+                        } else {
+                            self$results$rocTable$deleteRows()
+                        }
                     } else {
                         regTable <- self$results$regTable
                         regTable$deleteRows()
@@ -679,6 +746,7 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 partition <- roc_data$partition
                 is_pct <- roc_unit == "percent"
                 legacy_axes <- (roc_x == "1spec")
+                show_roc_cut <- isTRUE(roc_data$show_roc_cut)
                 
                 # Fetch raw prediction data from state
                 y_num <- roc_data$y_num
@@ -714,7 +782,7 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     legacy.axes=legacy_axes,
                     xlab=ifelse(is_pct, ifelse(legacy_axes, .("100 - Specificity (%)"), .("Specificity (%)")), ifelse(legacy_axes, .("1 - Specificity"), .("Specificity"))),
                     ylab=ifelse(is_pct, .("Sensitivity (%)"), .("Sensitivity")),
-                    print.thres=TRUE,
+                    print.thres=show_roc_cut,
                     print.thres.col=cols[1],
                     print.thres.pch=19, print.thres.cex=1.3,
                     print.thres.best.method="youden",
@@ -738,7 +806,7 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         percent=is_pct,
                         lwd=3, lty=1,
                         legacy.axes=legacy_axes,
-                        print.thres=TRUE,
+                        print.thres=show_roc_cut,
                         print.thres.col=cols[2],
                         print.thres.pch=19, print.thres.cex=1.3,
                         print.thres.best.method="youden",
@@ -761,7 +829,7 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         percent=is_pct,
                         lwd=3, lty=2,
                         legacy.axes=legacy_axes,
-                        print.thres=TRUE,
+                        print.thres=show_roc_cut,
                         print.thres.col=cols[2],
                         print.thres.pch=19, print.thres.cex=1.3,
                         print.thres.best.method="youden",

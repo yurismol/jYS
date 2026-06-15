@@ -39,6 +39,14 @@ children:
             name: sepROC
             enable: (!splitROC && {return ui['groups'].value()!==null;})
   - type: CollapseBox
+    label: ROC Tables
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: CheckBox
+        name: showTable
+        label: ROC Tables
+  - type: CollapseBox
     label: ROC graphs
     collapsed: false
     stretchFactor: 1

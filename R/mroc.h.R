@@ -26,6 +26,7 @@ mROCOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             legBox = FALSE,
             sepROC = FALSE,
             splitROC = FALSE,
+            showTable = FALSE,
             palBrewer = "Dark2", ...) {
 
             super$initialize(
@@ -143,6 +144,10 @@ mROCOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "splitROC",
                 splitROC,
                 default=FALSE)
+            private$..showTable <- jmvcore::OptionBool$new(
+                "showTable",
+                showTable,
+                default=FALSE)
             private$..palBrewer <- jmvcore::OptionList$new(
                 "palBrewer",
                 palBrewer,
@@ -177,6 +182,7 @@ mROCOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..legBox)
             self$.addOption(private$..sepROC)
             self$.addOption(private$..splitROC)
+            self$.addOption(private$..showTable)
             self$.addOption(private$..palBrewer)
         }),
     active = list(
@@ -200,6 +206,7 @@ mROCOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         legBox = function() private$..legBox$value,
         sepROC = function() private$..sepROC$value,
         splitROC = function() private$..splitROC$value,
+        showTable = function() private$..showTable$value,
         palBrewer = function() private$..palBrewer$value),
     private = list(
         ..vars = NA,
@@ -222,6 +229,7 @@ mROCOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..legBox = NA,
         ..sepROC = NA,
         ..splitROC = NA,
+        ..showTable = NA,
         ..palBrewer = NA)
 )
 
@@ -230,6 +238,7 @@ mROCResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     inherit = jmvcore::Group,
     active = list(
         text = function() private$.items[["text"]],
+        rocTable = function() private$.items[["rocTable"]],
         plot = function() private$.items[["plot"]],
         plots = function() private$.items[["plots"]],
         splots = function() private$.items[["splots"]]),
@@ -249,6 +258,59 @@ mROCResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 title="Conditions",
                 clearWith=list(
                     "groups")))
+            self$add(jmvcore::Table$new(
+                options=options,
+                name="rocTable",
+                title="ROC Results",
+                visible="(showTable)",
+                clearWith=list(
+                    "vars",
+                    "class",
+                    "groups",
+                    "selgroup",
+                    "theBest",
+                    "cmpDeLong",
+                    "ciAUC",
+                    "ciWidth",
+                    "perc",
+                    "direction",
+                    "sepROC",
+                    "splitROC"),
+                columns=list(
+                    list(
+                        `name`="var", 
+                        `title`="Predictor", 
+                        `type`="text"),
+                    list(
+                        `name`="auc", 
+                        `title`="AUC", 
+                        `type`="number"),
+                    list(
+                        `name`="auc_ci", 
+                        `title`="CI", 
+                        `type`="text", 
+                        `visible`="(ciAUC)"),
+                    list(
+                        `name`="cutoff", 
+                        `title`="Cut-off", 
+                        `type`="number"),
+                    list(
+                        `name`="se", 
+                        `title`="Se", 
+                        `type`="number"),
+                    list(
+                        `name`="sp", 
+                        `title`="Sp", 
+                        `type`="number"),
+                    list(
+                        `name`="direction", 
+                        `title`="Direction", 
+                        `type`="text", 
+                        `visible`="(direction)"),
+                    list(
+                        `name`="pval", 
+                        `title`="p (DeLong)", 
+                        `type`="text"))))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot",
@@ -329,14 +391,22 @@ mROCBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param legBox .
 #' @param sepROC .
 #' @param splitROC .
+#' @param showTable .
 #' @param palBrewer .
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$text} \tab \tab \tab \tab \tab a html \cr
+#'   \code{results$rocTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$plot} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$plots} \tab \tab \tab \tab \tab an array of images \cr
 #'   \code{results$splots} \tab \tab \tab \tab \tab an array of images \cr
 #' }
+#'
+#' Tables can be converted to data frames with \code{asDF} or \code{\link{as.data.frame}}. For example:
+#'
+#' \code{results$rocTable$asDF}
+#'
+#' \code{as.data.frame(results$rocTable)}
 #'
 #' @export
 mROC <- function(
@@ -361,6 +431,7 @@ mROC <- function(
     legBox = FALSE,
     sepROC = FALSE,
     splitROC = FALSE,
+    showTable = FALSE,
     palBrewer = "Dark2") {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
@@ -400,6 +471,7 @@ mROC <- function(
         legBox = legBox,
         sepROC = sepROC,
         splitROC = splitROC,
+        showTable = showTable,
         palBrewer = palBrewer)
 
     analysis <- mROCClass$new(

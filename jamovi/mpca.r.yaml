@@ -1,6 +1,6 @@
 ---
 name:  mPCA
-title: PCA Submodule
+title: Principal Component Analysis
 jrs:   '1.1'
 refs: [jys]
 
@@ -180,6 +180,41 @@ items:
             title: AUC
             type: number
 
+    - name: rocTable
+      title: ROC Quantitative Evaluation
+      type: Table
+      visible: (rocPlot && show_roc_table)
+      clearWith:
+          - vars
+          - group
+          - selgroup
+          - classVar
+          - npc
+          - roc_x
+          - roc_unit
+          - palBrewer
+          - show_roc_cut
+          - show_roc_table
+      columns:
+          - name: part
+            title: Curve
+            type: text
+          - name: auc
+            title: AUC
+            type: number
+          - name: cutoff
+            title: Cut-off
+            type: number
+          - name: se
+            title: Sensitivity (Se)
+            type: number
+          - name: sp
+            title: Specificity (Sp)
+            type: number
+          - name: direction
+            title: Direction
+            type: text
+
     - name: rocPlot
       title: Regression Model ROC Curve (Full Dataset)
       type: Image
@@ -197,4 +232,6 @@ items:
           - roc_x
           - roc_unit
           - palBrewer
+          - show_roc_cut
+          - show_roc_table
 ...

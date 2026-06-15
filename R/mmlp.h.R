@@ -23,6 +23,8 @@ mMLPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             show_curve = FALSE,
             show_matrix = FALSE,
             show_roc = FALSE,
+            show_roc_cut = TRUE,
+            show_roc_table = FALSE,
             roc_x = "1spec",
             roc_unit = "percent",
             multiclass_roc_type = "combined",
@@ -134,6 +136,14 @@ mMLPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "show_roc",
                 show_roc,
                 default=FALSE)
+            private$..show_roc_cut <- jmvcore::OptionBool$new(
+                "show_roc_cut",
+                show_roc_cut,
+                default=TRUE)
+            private$..show_roc_table <- jmvcore::OptionBool$new(
+                "show_roc_table",
+                show_roc_table,
+                default=FALSE)
             private$..roc_x <- jmvcore::OptionList$new(
                 "roc_x",
                 roc_x,
@@ -194,6 +204,8 @@ mMLPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..show_curve)
             self$.addOption(private$..show_matrix)
             self$.addOption(private$..show_roc)
+            self$.addOption(private$..show_roc_cut)
+            self$.addOption(private$..show_roc_table)
             self$.addOption(private$..roc_x)
             self$.addOption(private$..roc_unit)
             self$.addOption(private$..multiclass_roc_type)
@@ -220,6 +232,8 @@ mMLPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         show_curve = function() private$..show_curve$value,
         show_matrix = function() private$..show_matrix$value,
         show_roc = function() private$..show_roc$value,
+        show_roc_cut = function() private$..show_roc_cut$value,
+        show_roc_table = function() private$..show_roc_table$value,
         roc_x = function() private$..roc_x$value,
         roc_unit = function() private$..roc_unit$value,
         multiclass_roc_type = function() private$..multiclass_roc_type$value,
@@ -245,6 +259,8 @@ mMLPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..show_curve = NA,
         ..show_matrix = NA,
         ..show_roc = NA,
+        ..show_roc_cut = NA,
+        ..show_roc_table = NA,
         ..roc_x = NA,
         ..roc_unit = NA,
         ..multiclass_roc_type = NA,
@@ -266,6 +282,7 @@ mMLPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         curvePlot = function() private$.items[["curvePlot"]],
         matrixTable = function() private$.items[["matrixTable"]],
         statsTable = function() private$.items[["statsTable"]],
+        rocTable = function() private$.items[["rocTable"]],
         rocPlot = function() private$.items[["rocPlot"]],
         predClass = function() private$.items[["predClass"]],
         predProb = function() private$.items[["predProb"]]),
@@ -461,6 +478,55 @@ mMLPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `name`="cvVal", 
                         `title`="Validation", 
                         `type`="number"))))
+            self$add(jmvcore::Table$new(
+                options=options,
+                name="rocTable",
+                title="ROC Quantitative Evaluation",
+                visible="(show_roc && show_roc_table)",
+                clearWith=list(
+                    "dep",
+                    "covs",
+                    "factors",
+                    "hidden_structure",
+                    "activation",
+                    "out_activation",
+                    "decay",
+                    "maxit",
+                    "rang",
+                    "partition",
+                    "val_split",
+                    "cv_folds",
+                    "roc_x",
+                    "roc_unit",
+                    "multiclass_roc_type",
+                    "palBrewer",
+                    "show_roc_cut",
+                    "show_roc_table"),
+                columns=list(
+                    list(
+                        `name`="part", 
+                        `title`="Curve", 
+                        `type`="text"),
+                    list(
+                        `name`="auc", 
+                        `title`="AUC", 
+                        `type`="number"),
+                    list(
+                        `name`="cutoff", 
+                        `title`="Cut-off", 
+                        `type`="number"),
+                    list(
+                        `name`="se", 
+                        `title`="Sensitivity (Se)", 
+                        `type`="number"),
+                    list(
+                        `name`="sp", 
+                        `title`="Specificity (Sp)", 
+                        `type`="number"),
+                    list(
+                        `name`="direction", 
+                        `title`="Direction", 
+                        `type`="text"))))
             self$add(jmvcore::Array$new(
                 options=options,
                 name="rocPlot",
@@ -488,7 +554,9 @@ mMLPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "roc_x",
                     "roc_unit",
                     "multiclass_roc_type",
-                    "palBrewer")))
+                    "palBrewer",
+                    "show_roc_cut",
+                    "show_roc_table")))
             self$add(jmvcore::Output$new(
                 options=options,
                 name="predClass",
@@ -567,6 +635,8 @@ mMLPBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param show_curve .
 #' @param show_matrix .
 #' @param show_roc .
+#' @param show_roc_cut .
+#' @param show_roc_table .
 #' @param roc_x .
 #' @param roc_unit .
 #' @param multiclass_roc_type .
@@ -582,6 +652,7 @@ mMLPBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$curvePlot} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$matrixTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$statsTable} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$rocTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$rocPlot} \tab \tab \tab \tab \tab an array of images \cr
 #'   \code{results$predClass} \tab \tab \tab \tab \tab an output \cr
 #'   \code{results$predProb} \tab \tab \tab \tab \tab an output \cr
@@ -613,6 +684,8 @@ mMLP <- function(
     show_curve = FALSE,
     show_matrix = FALSE,
     show_roc = FALSE,
+    show_roc_cut = TRUE,
+    show_roc_table = FALSE,
     roc_x = "1spec",
     roc_unit = "percent",
     multiclass_roc_type = "combined",
@@ -653,6 +726,8 @@ mMLP <- function(
         show_curve = show_curve,
         show_matrix = show_matrix,
         show_roc = show_roc,
+        show_roc_cut = show_roc_cut,
+        show_roc_table = show_roc_table,
         roc_x = roc_x,
         roc_unit = roc_unit,
         multiclass_roc_type = multiclass_roc_type,

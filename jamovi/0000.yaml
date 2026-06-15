@@ -66,7 +66,7 @@ analyses:
     name: mROC
     ns: jYS
     menuGroup: jYS
-    menuSubgroup: Diagnostics & ROC Analysis
+    menuSubgroup: Regression & Classification
     menuTitle: ROC classification
     ribbon: analyses
     category: analyses
@@ -90,7 +90,7 @@ analyses:
     ns: jYS
     category: analyses
     menuGroup: jYS
-    menuSubgroup: Diagnostics & ROC Analysis
+    menuSubgroup: Diagnostics
     menuTitle: Uncertain Interval (UI)
   - title: A Priori Power Analysis
     name: mPWR
@@ -119,16 +119,16 @@ analyses:
     description: >-
       Logistic Regression with feature selection. Note that cross-validation
       fold partitioning uses a hardcoded random seed (42) for reproducibility.
-  - title: PCA Submodule
+  - title: Principal Component Analysis
     name: mPCA
     ns: jYS
     category: analyses
     menuGroup: jYS
     menuSubgroup: Exploratory & Factor Analysis
-    menuTitle: PCA Submodule
+    menuTitle: Principal Component Analysis
     description: >-
-      Principal Component Analysis (PCA) submodule. Note that parallel analysis
-      and cross-validation use a hardcoded random seed (42) for reproducibility.
+      Principal Component Analysis (PCA). Note that parallel analysis and
+      cross-validation use a hardcoded random seed (42) for reproducibility.
 usesNative: true
 minApp: 1.0.8
 

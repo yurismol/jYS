@@ -15,6 +15,10 @@ children:
             name: dep
             maxItemCount: 1
             isTarget: true
+          - type: LevelSelector
+            name: refLevel
+            label: Reference level
+            enable: ({return ui['dep'].value()!==null;})
       - type: TargetLayoutBox
         label: Covariates (Continuous Predictors)
         children:
@@ -48,7 +52,7 @@ children:
         label: Feature Selection Method
       - name: elastic_alpha
         type: TextBox
-        label: ElasticNet Alpha (L1 Ratio, 0=Ridge, 1=LASSO)
+        label: ElasticNet Alpha (0=Ridge, 1=LASSO)
         format: number
         enable: (method:elastic)
       - name: lasso_penalty
@@ -92,6 +96,18 @@ children:
         type: CheckBox
         label: Show ROC Analysis curves
         children:
+          - name: show_roc_cut
+            type: CheckBox
+            label: Show Cut-off Thresholds
+            enable: (show_roc)
+          - name: show_roc_table
+            type: CheckBox
+            label: Show ROC Table
+            enable: (show_roc)
+          - name: multiclass_roc_type
+            type: ComboBox
+            label: Multiclass ROC Layout
+            enable: (show_roc)
           - name: roc_x
             type: ComboBox
             label: X-axis Coordinate

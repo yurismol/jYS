@@ -15,6 +15,51 @@ items:
       clearWith:
           - groups
 
+    - name: rocTable
+      title: ROC Results
+      type: Table
+      visible: (showTable)
+      clearWith:
+          - vars
+          - class
+          - groups
+          - selgroup
+          - theBest
+          - cmpDeLong
+          - ciAUC
+          - ciWidth
+          - perc
+          - direction
+          - sepROC
+          - splitROC
+      columns:
+          - name: var
+            title: Predictor
+            type: text
+          - name: auc
+            title: AUC
+            type: number
+          - name: auc_ci
+            title: CI
+            type: text
+            visible: (ciAUC)
+          - name: cutoff
+            title: Cut-off
+            type: number
+          - name: se
+            title: Se
+            type: number
+          - name: sp
+            title: Sp
+            type: number
+          - name: direction
+            title: Direction
+            type: text
+            visible: (direction)
+          - name: pval
+            title: p (DeLong)
+            type: text
+
     - name: plot
       title: ROC by predictors
       type: Image

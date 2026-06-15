@@ -1,10 +1,10 @@
 ---
 name:  mPCA
-title: PCA Submodule
+title: Principal Component Analysis
 menuGroup: jYS
 menuSubgroup: Exploratory & Factor Analysis
 description:
-    main: Principal Component Analysis (PCA) submodule. Note that parallel analysis and cross-validation use a hardcoded random seed (42) for reproducibility.
+    main: Principal Component Analysis (PCA). Note that parallel analysis and cross-validation use a hardcoded random seed (42) for reproducibility.
 version: '1.0.0'
 jas: '1.2'
 
@@ -126,6 +126,16 @@ options:
       title: Regression ROC plot
       type: Bool
       default: true
+
+    - name: show_roc_cut
+      title: Show Cut-off Thresholds
+      type: Bool
+      default: true
+
+    - name: show_roc_table
+      title: Show ROC Table
+      type: Bool
+      default: false
 
     - name: roc_x
       title: ROC X-axis Coordinate

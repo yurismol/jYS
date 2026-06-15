@@ -108,6 +108,38 @@ items:
                 title: Level
                 type: text
 
+        - name: rocTable
+          title: ROC Quantitative Evaluation
+          type: Table
+          clearWith:
+              - ref
+              - test
+              - UImethod
+              - show_roc_cut
+              - show_roc_table
+          rows: (test)
+          visible: (isROC && show_roc_table)
+          columns:
+              - name: var
+                title: Predictor
+                type: text
+                content: ($key)
+              - name: auc
+                title: AUC
+                type: number
+              - name: cutoff
+                title: Cut-off
+                type: number
+              - name: se
+                title: Sensitivity (Se)
+                type: number
+              - name: sp
+                title: Specificity (Sp)
+                type: number
+              - name: direction
+                title: Direction
+                type: text
+
     - name: plotsTGR
       title: Two-graph ROC curves
       type: Array
@@ -147,6 +179,11 @@ items:
           height: 500
           renderFun: .plotROC
           requiresData: true
+      clearWith:
+          - ref
+          - test
+          - UImethod
+          - show_roc_cut
 
     - name: decision
       title: Proposed decision

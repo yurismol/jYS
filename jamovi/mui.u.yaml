@@ -102,6 +102,13 @@ children:
             enable: (isMD || isTGR)
           - type: CheckBox
             name: isROC
+            children:
+              - type: CheckBox
+                name: show_roc_cut
+                enable: (isROC)
+              - type: CheckBox
+                name: show_roc_table
+                enable: (isROC)
   - type: CollapseBox
     label: Save
     collapsed: false

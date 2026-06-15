@@ -24,9 +24,144 @@ mROCClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
           image <- self$results$plot
           image$setState(list(data=dat))
 	  #if (self$options$sepROC) image$visible=FALSE
-          # `self$data` contains the data
-          # `self$options` contains the options
-          # `self$results` contains the results object (to populate)
+
+          # Populate the ROC results table
+          if (self$options$showTable)
+            private$.populateTable(dat)
+      },
+
+      .populateTable = function(dat) {
+          rocTable <- self$results$rocTable
+          rocTable$deleteRows()
+
+          vars  <- self$options$vars
+          nVars <- length(vars)
+          perc  <- self$options$perc
+          dL    <- self$options$cmpDeLong
+          mult  <- ifelse(perc, 1, 1)
+          fmt   <- ifelse(perc, '%#.1f', '%#.3f')
+
+          # data subset for non-sep mode
+          if (!is.null(self$options$groups) && !self$options$sepROC) {
+            dat <- dat[dat[[self$options$groups]] == self$options$selgroup, , drop=FALSE]
+          }
+
+          cls  <- jmvcore::select(dat, self$options$class)
+          lev  <- base::levels(cls[!is.na(cls[[self$options$class]]), self$options$class])
+
+          # Determine iteration mode
+          if (self$options$sepROC && !is.null(self$options$groups)) {
+            # sepROC: for each var, iterate over group levels
+            for (var in vars) {
+              grp   <- self$options$groups
+              grps  <- jmvcore::select(dat, grp)
+              glevs <- base::levels(grps[!is.na(grps[[grp]]), grp])
+
+              oROC <- NULL
+              for (gl in glevs) {
+                dd  <- dat[dat[[grp]] == gl, , drop=FALSE]
+                frm <- stats::as.formula(jmvcore::composeFormula(self$options$class, var))
+                roc <- tryCatch(pROC::roc(frm, data=dd, percent=perc, quiet=TRUE),
+                                error=function(e) NULL)
+                if (is.null(roc)) next
+
+                row_name <- paste0(var, " : ", gl)
+                private$.addTableRow(rocTable, roc, row_name, lev, dL, oROC, paired=FALSE, fmt=fmt)
+                if (dL != "wcontr" || is.null(oROC)) oROC <- roc
+              }
+            }
+          } else {
+            # Main mode: iterate over vars
+            oROC <- NULL
+            for (var in vars) {
+              frm <- stats::as.formula(jmvcore::composeFormula(self$options$class, var))
+              roc <- tryCatch(pROC::roc(frm, data=dat, percent=perc, quiet=TRUE),
+                              error=function(e) NULL)
+              if (is.null(roc)) next
+
+              private$.addTableRow(rocTable, roc, var, lev, dL, oROC, paired=TRUE, fmt=fmt)
+              if (dL != "wcontr" || is.null(oROC)) oROC <- roc
+            }
+          }
+      },
+
+      .addTableRow = function(rocTable, roc, label, lev, dL, oROC, paired, fmt) {
+          perc <- self$options$perc
+
+          # AUC + CI
+          rci     <- pROC::ci(roc, conf.level=self$options$ciWidth/100)
+          auc_val <- as.numeric(rci[2])
+
+          # CI string
+          ci_fmt  <- gsub("%%", "", fmt)
+          auc_ci  <- paste0(sprintf(ci_fmt, rci[1]), " - ", sprintf(ci_fmt, rci[3]))
+          if (perc) auc_ci <- paste0(auc_ci, "%")
+
+          # Best point (cutoff, Se, Sp)
+          bss    <- ifelse(self$options$theBest %in% c("bestY","bssY"), "youden", "closest.topleft")
+          coords <- tryCatch(
+            pROC::coords(roc, "best", best.method=bss,
+                         ret=c("threshold","sensitivity","specificity")),
+            error=function(e) NULL)
+
+          cutoff <- NA; se <- NA; sp <- NA
+          if (!is.null(coords)) {
+            if (is.data.frame(coords)) {
+              cutoff <- as.numeric(coords[1, "threshold"])
+              se     <- as.numeric(coords[1, "sensitivity"])
+              sp     <- as.numeric(coords[1, "specificity"])
+            } else if (is.matrix(coords)) {
+              cutoff <- as.numeric(coords[1, "threshold"])
+              se     <- as.numeric(coords[1, "sensitivity"])
+              sp     <- as.numeric(coords[1, "specificity"])
+            } else {
+              cutoff <- as.numeric(coords["threshold"])
+              se     <- as.numeric(coords["sensitivity"])
+              sp     <- as.numeric(coords["specificity"])
+            }
+          }
+
+          # Direction
+          l1 <- substr(lev[1],1,1); l2 <- substr(lev[2],1,1)
+          if (l1 == l2) { l1 <- substr(lev[1],1,2); l2 <- substr(lev[2],1,2) }
+          dir_str <- paste0(l1, roc$direction, l2)
+
+          # DeLong p-value
+          pval_str <- ""
+          if (dL != "none") {
+            if (dL == "w05") {
+              null_auc <- ifelse(perc, 50, 0.5)
+              variance <- pROC::var(roc, method="delong")
+              if (variance <= 0) {
+                pval <- ifelse(roc$auc == null_auc, 1.0, 0.0001)
+              } else {
+                z    <- (roc$auc - null_auc) / sqrt(variance)
+                pval <- 2 * stats::pnorm(-abs(z))
+              }
+              pval_str <- private$.formatElement(pval)
+              pval_str <- gsub(" ", "0", pval_str)
+            } else if (!is.null(oROC)) {
+              rt <- tryCatch(
+                pROC::roc.test(roc, oROC, paired=paired,
+                               parallel=TRUE, method="d", alternative="two.sided"),
+                error=function(e) NULL)
+              if (!is.null(rt)) {
+                pval_str <- private$.formatElement(rt$p.value)
+                pval_str <- gsub(" ", "0", pval_str)
+              }
+            }
+          }
+
+          rocTable$addRow(rowKey=label, values=list(
+            var       = label,
+            auc       = auc_val,
+            auc_ci    = auc_ci,
+            cutoff    = cutoff,
+            se        = se,
+            sp        = sp,
+            direction = dir_str,
+            pval      = pval_str
+          ))
       },
 
       .plot=function(image, ggtheme, theme, ...) {

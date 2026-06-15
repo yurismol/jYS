@@ -48,6 +48,9 @@ items:
           - group
           - selgroup
       columns:
+          - name: level
+            title: Comparison Level
+            type: text
           - name: term
             title: Predictor
             type: text
@@ -91,14 +94,56 @@ items:
           - group
           - selgroup
 
+    - name: rocTable
+      title: ROC Quantitative Evaluation
+      type: Table
+      visible: (show_roc && show_roc_table)
+      clearWith:
+          - dep
+          - covs
+          - factors
+          - method
+          - elastic_alpha
+          - lasso_penalty
+          - partition
+          - val_split
+          - cv_folds
+          - cv_repeats
+          - group
+          - selgroup
+          - show_roc_cut
+          - show_roc_table
+          - multiclass_roc_type
+      columns:
+          - name: part
+            title: Curve
+            type: text
+          - name: auc
+            title: AUC
+            type: number
+          - name: cutoff
+            title: Cut-off
+            type: number
+          - name: se
+            title: Sensitivity (Se)
+            type: number
+          - name: sp
+            title: Specificity (Sp)
+            type: number
+          - name: direction
+            title: Direction
+            type: text
+
     - name: rocPlot
       title: ROC Curve Comparison
-      type: Image
+      type: Array
       visible: (show_roc)
-      width:  500
-      height: 500
-      renderFun: .rocPlot
-      requiresData: true
+      template:
+          type: Image
+          width:  500
+          height: 500
+          renderFun: .rocPlot
+          requiresData: true
       clearWith:
           - dep
           - covs
@@ -115,6 +160,9 @@ items:
           - palBrewer
           - group
           - selgroup
+          - show_roc_cut
+          - show_roc_table
+          - multiclass_roc_type
 
     - name: predClass
       title: Predicted Class

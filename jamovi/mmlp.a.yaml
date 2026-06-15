@@ -138,6 +138,16 @@ options:
       type: Bool
       default: false
 
+    - name: show_roc_cut
+      title: Show Cut-off Thresholds
+      type: Bool
+      default: true
+
+    - name: show_roc_table
+      title: Show ROC Table
+      type: Bool
+      default: false
+
     - name: roc_x
       title: ROC X-axis Coordinate
       type: List

@@ -584,7 +584,8 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                             cv_prob = cv_pred_probs,
                             partition = partition,
                             roc_x = self$options$roc_x,
-                            roc_unit = self$options$roc_unit
+                            roc_unit = self$options$roc_unit,
+                            show_roc_cut = self$options$show_roc_cut
                         )
                         image_roc$addItem(key = "binary")
                         image_item <- image_roc$get(key = "binary")
@@ -604,7 +605,8 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                             train_prob = train_prob,
                             partition = partition,
                             roc_x = self$options$roc_x,
-                            roc_unit = self$options$roc_unit
+                            roc_unit = self$options$roc_unit,
+                            show_roc_cut = self$options$show_roc_cut
                         )
                         image_roc$addItem(key = "combined_training")
                         image_item_tr <- image_roc$get(key = "combined_training")
@@ -623,7 +625,8 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                             cv_y = as.integer(y),
                             partition = partition,
                             roc_x = self$options$roc_x,
-                            roc_unit = self$options$roc_unit
+                            roc_unit = self$options$roc_unit,
+                            show_roc_cut = self$options$show_roc_cut
                         )
                         image_roc$addItem(key = "combined_validation")
                         image_item_va <- image_roc$get(key = "combined_validation")
@@ -648,7 +651,8 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                 cv_prob = if (is.null(cv_pred_probs)) NULL else cv_pred_probs[, c],
                                 partition = partition,
                                 roc_x = self$options$roc_x,
-                                roc_unit = self$options$roc_unit
+                                roc_unit = self$options$roc_unit,
+                                show_roc_cut = self$options$show_roc_cut
                             )
                             image_roc$addItem(key = lev)
                             image_item <- image_roc$get(key = lev)
@@ -658,9 +662,111 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         }
                     }
                     image_roc$setState(parent_state)
+                    
+                    # Populate ROC Table
+                    if (self$options$show_roc_table && requireNamespace("pROC", quietly = TRUE)) {
+                        rocTable <- self$results$rocTable
+                        rocTable$deleteRows()
+                        
+                        is_pct <- self$options$roc_unit == "percent"
+                        mult <- if (is_pct) 100 else 1
+                        
+                        add_roc_row <- function(row_name, y_true, y_prob) {
+                            tryCatch({
+                                if (is.null(y_true) || is.null(y_prob)) return()
+                                
+                                # Aggressively coerce to plain numeric vector
+                                y_true <- as.double(as.vector(drop(unlist(y_true))))
+                                y_prob <- as.double(as.vector(drop(unlist(y_prob))))
+                                
+                                if (length(y_true) != length(y_prob)) return()
+                                complete_idx <- !is.na(y_true) & !is.na(y_prob)
+                                if (sum(complete_idx) < 2) return()
+                                y_t <- y_true[complete_idx]
+                                y_p <- y_prob[complete_idx]
+                                
+                                r <- try(pROC::roc(y_t, y_p, quiet = TRUE), silent = TRUE)
+                                if (inherits(r, "try-error")) return()
+                                
+                                auc_val <- as.numeric(pROC::auc(r)) * mult
+                                
+                                coords <- try(pROC::coords(r, x="best", best.method="youden", ret=c("threshold", "specificity", "sensitivity")), silent=TRUE)
+                                if (inherits(coords, "try-error")) return()
+                                
+                                # pROC::coords returns data.frame in newer versions, matrix in older
+                                if (is.data.frame(coords)) {
+                                    cutoff <- as.numeric(coords[1, "threshold"])
+                                    sp     <- as.numeric(coords[1, "specificity"]) * mult
+                                    se     <- as.numeric(coords[1, "sensitivity"]) * mult
+                                } else {
+                                    if (is.matrix(coords)) {
+                                        coords <- coords[1, ]
+                                    }
+                                    cutoff <- as.numeric(coords["threshold"])
+                                    sp     <- as.numeric(coords["specificity"]) * mult
+                                    se     <- as.numeric(coords["sensitivity"]) * mult
+                                }
+                                
+                                direction <- as.character(r$direction)
+                                auc_val <- as.numeric(auc_val)
+                                
+                                rocTable$addRow(rowKey = row_name, values = list(
+                                    part = as.character(row_name),
+                                    auc = auc_val,
+                                    cutoff = cutoff,
+                                    se = se,
+                                    sp = sp,
+                                    direction = direction
+                                ))
+                            }, error = function(e) {
+                                # Silently skip if ROC table row fails
+                            })
+                        }
+                        
+                        if (C == 2) {
+                            add_roc_row(.("Training"), y_num, train_prob)
+                            if (partition == "holdout" && !is.null(val_prob)) {
+                                add_roc_row(.("Hold-out Validation"), y_num[test_idx], val_prob)
+                            } else if (partition == "kfold" && !is.null(cv_pred_probs)) {
+                                add_roc_row(.("K-Fold Cross-Validation"), y_num, cv_pred_probs)
+                            }
+                        } else {
+                            multiclass_roc_type <- self$options$multiclass_roc_type
+                            if (multiclass_roc_type == "combined") {
+                                for (c in 1:C) {
+                                    lev <- y_levels[c]
+                                    add_roc_row(paste0(lev, " - ", .("Train")), as.numeric(as.integer(y) == c), train_prob[, c])
+                                }
+                                if (partition == "holdout" && !is.null(val_prob)) {
+                                    for (c in 1:C) {
+                                        lev <- y_levels[c]
+                                        add_roc_row(paste0(lev, " - ", .("Val")), as.numeric(as.integer(y)[test_idx] == c), val_prob[, c])
+                                    }
+                                } else if (partition == "kfold" && !is.null(cv_pred_probs)) {
+                                    for (c in 1:C) {
+                                        lev <- y_levels[c]
+                                        add_roc_row(paste0(lev, " - ", .("CV")), as.numeric(as.integer(y) == c), cv_pred_probs[, c])
+                                    }
+                                }
+                            } else {
+                                for (c in 1:C) {
+                                    lev <- y_levels[c]
+                                    add_roc_row(paste0(lev, " - ", .("Train")), as.numeric(as.integer(y) == c), train_prob[, c])
+                                    if (partition == "holdout" && !is.null(val_prob)) {
+                                        add_roc_row(paste0(lev, " - ", .("Val")), as.numeric(as.integer(y)[test_idx] == c), val_prob[, c])
+                                    } else if (partition == "kfold" && !is.null(cv_pred_probs)) {
+                                        add_roc_row(paste0(lev, " - ", .("CV")), as.numeric(as.integer(y) == c), cv_pred_probs[, c])
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        self$results$rocTable$deleteRows()
+                    }
                 }
             } else {
                 self$results$rocPlot$clear()
+                self$results$rocTable$deleteRows()
             }
 
             # 9. Save Predictions on Demand
@@ -899,6 +1005,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 is_pct <- roc_unit == "percent"
                 legacy_axes <- (roc_x == "1spec")
                 C <- roc_data$C
+                show_roc_cut <- isTRUE(roc_data$show_roc_cut)
                 
                 if (roc_data$type == "binary") {
                     # ----------------------------------------------------
@@ -931,7 +1038,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         legacy.axes=legacy_axes,
                         xlab=ifelse(is_pct, ifelse(legacy_axes, .("100 - Specificity (%)"), .("Specificity (%)")), ifelse(legacy_axes, .("1 - Specificity"), .("Specificity"))),
                         ylab=ifelse(is_pct, .("Sensitivity (%)"), .("Sensitivity")),
-                        print.thres=TRUE,
+                        print.thres=show_roc_cut,
                         print.thres.col=cols[1],
                         print.thres.pch=19, print.thres.cex=1.3,
                         print.thres.best.method="youden",
@@ -954,7 +1061,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                             percent=is_pct,
                             lwd=3, lty=1,
                             legacy.axes=legacy_axes,
-                            print.thres=TRUE,
+                            print.thres=show_roc_cut,
                             print.thres.col=cols[2],
                             print.thres.pch=19, print.thres.cex=1.3,
                             print.thres.best.method="youden",
@@ -976,7 +1083,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                             percent=is_pct,
                             lwd=3, lty=2,
                             legacy.axes=legacy_axes,
-                            print.thres=TRUE,
+                            print.thres=show_roc_cut,
                             print.thres.col=cols[2],
                             print.thres.pch=19, print.thres.cex=1.3,
                             print.thres.best.method="youden",
@@ -1036,7 +1143,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                             legacy.axes=legacy_axes,
                             xlab=ifelse(is_pct, ifelse(legacy_axes, .("100 - Specificity (%)"), .("Specificity (%)")), ifelse(legacy_axes, .("1 - Specificity"), .("Specificity"))),
                             ylab=ifelse(is_pct, .("Sensitivity (%)"), .("Sensitivity")),
-                            print.thres=TRUE,
+                            print.thres=show_roc_cut,
                             print.thres.col=cols[c],
                             print.thres.pch=19, print.thres.cex=1.3,
                             print.thres.best.method="youden",
@@ -1099,7 +1206,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                 legacy.axes=legacy_axes,
                                 xlab=ifelse(is_pct, ifelse(legacy_axes, .("100 - Specificity (%)"), .("Specificity (%)")), ifelse(legacy_axes, .("1 - Specificity"), .("Specificity"))),
                                 ylab=ifelse(is_pct, .("Sensitivity (%)"), .("Sensitivity")),
-                                print.thres=TRUE,
+                                print.thres=show_roc_cut,
                                 print.thres.col=cols[c],
                                 print.thres.pch=19, print.thres.cex=1.3,
                                 print.thres.best.method="youden",
@@ -1121,7 +1228,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                 legacy.axes=legacy_axes,
                                 xlab=ifelse(is_pct, ifelse(legacy_axes, .("100 - Specificity (%)"), .("Specificity (%)")), ifelse(legacy_axes, .("1 - Specificity"), .("Specificity"))),
                                 ylab=ifelse(is_pct, .("Sensitivity (%)"), .("Sensitivity")),
-                                print.thres=TRUE,
+                                print.thres=show_roc_cut,
                                 print.thres.col=cols[c],
                                 print.thres.pch=19, print.thres.cex=1.3,
                                 print.thres.best.method="youden",
@@ -1171,7 +1278,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         legacy.axes=legacy_axes,
                         xlab=ifelse(is_pct, ifelse(legacy_axes, .("100 - Specificity (%)"), .("Specificity (%)")), ifelse(legacy_axes, .("1 - Specificity"), .("Specificity"))),
                         ylab=ifelse(is_pct, .("Sensitivity (%)"), .("Sensitivity")),
-                        print.thres=TRUE,
+                        print.thres=show_roc_cut,
                         print.thres.col=cols[1],
                         print.thres.pch=19, print.thres.cex=1.3,
                         print.thres.best.method="youden",
@@ -1194,7 +1301,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                             percent=is_pct,
                             lwd=3, lty=1,
                             legacy.axes=legacy_axes,
-                            print.thres=TRUE,
+                            print.thres=show_roc_cut,
                             print.thres.col=cols[2],
                             print.thres.pch=19, print.thres.cex=1.3,
                             print.thres.best.method="youden",
@@ -1216,7 +1323,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                             percent=is_pct,
                             lwd=3, lty=2,
                             legacy.axes=legacy_axes,
-                            print.thres=TRUE,
+                            print.thres=show_roc_cut,
                             print.thres.col=cols[2],
                             print.thres.pch=19, print.thres.cex=1.3,
                             print.thres.best.method="youden",

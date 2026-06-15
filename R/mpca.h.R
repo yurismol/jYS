@@ -25,6 +25,8 @@ mPCAOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             kmeansTable = TRUE,
             regTable = TRUE,
             rocPlot = TRUE,
+            show_roc_cut = TRUE,
+            show_roc_table = FALSE,
             roc_x = "1spec",
             roc_unit = "percent",
             palBrewer = "Dark2",
@@ -132,6 +134,14 @@ mPCAOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "rocPlot",
                 rocPlot,
                 default=TRUE)
+            private$..show_roc_cut <- jmvcore::OptionBool$new(
+                "show_roc_cut",
+                show_roc_cut,
+                default=TRUE)
+            private$..show_roc_table <- jmvcore::OptionBool$new(
+                "show_roc_table",
+                show_roc_table,
+                default=FALSE)
             private$..roc_x <- jmvcore::OptionList$new(
                 "roc_x",
                 roc_x,
@@ -183,6 +193,8 @@ mPCAOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..kmeansTable)
             self$.addOption(private$..regTable)
             self$.addOption(private$..rocPlot)
+            self$.addOption(private$..show_roc_cut)
+            self$.addOption(private$..show_roc_table)
             self$.addOption(private$..roc_x)
             self$.addOption(private$..roc_unit)
             self$.addOption(private$..palBrewer)
@@ -208,6 +220,8 @@ mPCAOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         kmeansTable = function() private$..kmeansTable$value,
         regTable = function() private$..regTable$value,
         rocPlot = function() private$..rocPlot$value,
+        show_roc_cut = function() private$..show_roc_cut$value,
+        show_roc_table = function() private$..show_roc_table$value,
         roc_x = function() private$..roc_x$value,
         roc_unit = function() private$..roc_unit$value,
         palBrewer = function() private$..palBrewer$value,
@@ -232,6 +246,8 @@ mPCAOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..kmeansTable = NA,
         ..regTable = NA,
         ..rocPlot = NA,
+        ..show_roc_cut = NA,
+        ..show_roc_table = NA,
         ..roc_x = NA,
         ..roc_unit = NA,
         ..palBrewer = NA,
@@ -253,6 +269,7 @@ mPCAResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         cos2Heatmap = function() private$.items[["cos2Heatmap"]],
         kmeansTable = function() private$.items[["kmeansTable"]],
         regTable = function() private$.items[["regTable"]],
+        rocTable = function() private$.items[["rocTable"]],
         rocPlot = function() private$.items[["rocPlot"]]),
     private = list(),
     public=list(
@@ -260,7 +277,7 @@ mPCAResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             super$initialize(
                 options=options,
                 name="",
-                title="PCA Submodule",
+                title="Principal Component Analysis",
                 refs=list(
                     "jys"))
             self$add(jmvcore::Html$new(
@@ -451,6 +468,47 @@ mPCAResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `name`="auc", 
                         `title`="AUC", 
                         `type`="number"))))
+            self$add(jmvcore::Table$new(
+                options=options,
+                name="rocTable",
+                title="ROC Quantitative Evaluation",
+                visible="(rocPlot && show_roc_table)",
+                clearWith=list(
+                    "vars",
+                    "group",
+                    "selgroup",
+                    "classVar",
+                    "npc",
+                    "roc_x",
+                    "roc_unit",
+                    "palBrewer",
+                    "show_roc_cut",
+                    "show_roc_table"),
+                columns=list(
+                    list(
+                        `name`="part", 
+                        `title`="Curve", 
+                        `type`="text"),
+                    list(
+                        `name`="auc", 
+                        `title`="AUC", 
+                        `type`="number"),
+                    list(
+                        `name`="cutoff", 
+                        `title`="Cut-off", 
+                        `type`="number"),
+                    list(
+                        `name`="se", 
+                        `title`="Sensitivity (Se)", 
+                        `type`="number"),
+                    list(
+                        `name`="sp", 
+                        `title`="Specificity (Sp)", 
+                        `type`="number"),
+                    list(
+                        `name`="direction", 
+                        `title`="Direction", 
+                        `type`="text"))))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="rocPlot",
@@ -468,7 +526,9 @@ mPCAResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "npc",
                     "roc_x",
                     "roc_unit",
-                    "palBrewer")))}))
+                    "palBrewer",
+                    "show_roc_cut",
+                    "show_roc_table")))}))
 
 mPCABase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "mPCABase",
@@ -491,10 +551,10 @@ mPCABase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 weightsSupport = 'auto')
         }))
 
-#' PCA Submodule
+#' Principal Component Analysis
 #'
-#' Principal Component Analysis (PCA) submodule. Note that parallel analysis 
-#' and cross-validation use a hardcoded random seed (42) for reproducibility.
+#' Principal Component Analysis (PCA). Note that parallel analysis and 
+#' cross-validation use a hardcoded random seed (42) for reproducibility.
 #' @param data .
 #' @param vars .
 #' @param group .
@@ -515,6 +575,8 @@ mPCABase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param kmeansTable .
 #' @param regTable .
 #' @param rocPlot .
+#' @param show_roc_cut .
+#' @param show_roc_table .
 #' @param roc_x .
 #' @param roc_unit .
 #' @param palBrewer .
@@ -532,6 +594,7 @@ mPCABase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$cos2Heatmap} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$kmeansTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$regTable} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$rocTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$rocPlot} \tab \tab \tab \tab \tab an image \cr
 #' }
 #'
@@ -563,6 +626,8 @@ mPCA <- function(
     kmeansTable = TRUE,
     regTable = TRUE,
     rocPlot = TRUE,
+    show_roc_cut = TRUE,
+    show_roc_table = FALSE,
     roc_x = "1spec",
     roc_unit = "percent",
     palBrewer = "Dark2",
@@ -604,6 +669,8 @@ mPCA <- function(
         kmeansTable = kmeansTable,
         regTable = regTable,
         rocPlot = rocPlot,
+        show_roc_cut = show_roc_cut,
+        show_roc_table = show_roc_table,
         roc_x = roc_x,
         roc_unit = roc_unit,
         palBrewer = palBrewer,

@@ -7,6 +7,7 @@ mLROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     public = list(
         initialize = function(
             dep = NULL,
+            refLevel = NULL,
             covs = NULL,
             factors = NULL,
             group = NULL,
@@ -20,6 +21,9 @@ mLROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             cv_repeats = 3,
             show_formula = TRUE,
             show_roc = FALSE,
+            show_roc_cut = TRUE,
+            show_roc_table = FALSE,
+            multiclass_roc_type = "combined",
             roc_x = "1spec",
             roc_unit = "percent",
             palBrewer = "Dark2",
@@ -40,6 +44,10 @@ mLROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 permitted=list(
                     "factor"),
                 required=TRUE)
+            private$..refLevel <- jmvcore::OptionLevel$new(
+                "refLevel",
+                refLevel,
+                variable="(dep)")
             private$..covs <- jmvcore::OptionVariables$new(
                 "covs",
                 covs,
@@ -125,6 +133,21 @@ mLROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "show_roc",
                 show_roc,
                 default=FALSE)
+            private$..show_roc_cut <- jmvcore::OptionBool$new(
+                "show_roc_cut",
+                show_roc_cut,
+                default=TRUE)
+            private$..show_roc_table <- jmvcore::OptionBool$new(
+                "show_roc_table",
+                show_roc_table,
+                default=FALSE)
+            private$..multiclass_roc_type <- jmvcore::OptionList$new(
+                "multiclass_roc_type",
+                multiclass_roc_type,
+                options=list(
+                    "combined",
+                    "separate"),
+                default="combined")
             private$..roc_x <- jmvcore::OptionList$new(
                 "roc_x",
                 roc_x,
@@ -162,6 +185,7 @@ mLROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "predProb")
 
             self$.addOption(private$..dep)
+            self$.addOption(private$..refLevel)
             self$.addOption(private$..covs)
             self$.addOption(private$..factors)
             self$.addOption(private$..group)
@@ -175,6 +199,9 @@ mLROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..cv_repeats)
             self$.addOption(private$..show_formula)
             self$.addOption(private$..show_roc)
+            self$.addOption(private$..show_roc_cut)
+            self$.addOption(private$..show_roc_table)
+            self$.addOption(private$..multiclass_roc_type)
             self$.addOption(private$..roc_x)
             self$.addOption(private$..roc_unit)
             self$.addOption(private$..palBrewer)
@@ -184,6 +211,7 @@ mLROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         }),
     active = list(
         dep = function() private$..dep$value,
+        refLevel = function() private$..refLevel$value,
         covs = function() private$..covs$value,
         factors = function() private$..factors$value,
         group = function() private$..group$value,
@@ -197,6 +225,9 @@ mLROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         cv_repeats = function() private$..cv_repeats$value,
         show_formula = function() private$..show_formula$value,
         show_roc = function() private$..show_roc$value,
+        show_roc_cut = function() private$..show_roc_cut$value,
+        show_roc_table = function() private$..show_roc_table$value,
+        multiclass_roc_type = function() private$..multiclass_roc_type$value,
         roc_x = function() private$..roc_x$value,
         roc_unit = function() private$..roc_unit$value,
         palBrewer = function() private$..palBrewer$value,
@@ -205,6 +236,7 @@ mLROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         predProb = function() private$..predProb$value),
     private = list(
         ..dep = NA,
+        ..refLevel = NA,
         ..covs = NA,
         ..factors = NA,
         ..group = NA,
@@ -218,6 +250,9 @@ mLROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..cv_repeats = NA,
         ..show_formula = NA,
         ..show_roc = NA,
+        ..show_roc_cut = NA,
+        ..show_roc_table = NA,
+        ..multiclass_roc_type = NA,
         ..roc_x = NA,
         ..roc_unit = NA,
         ..palBrewer = NA,
@@ -234,6 +269,7 @@ mLRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         infoTable = function() private$.items[["infoTable"]],
         coeffTable = function() private$.items[["coeffTable"]],
         formulaHtml = function() private$.items[["formulaHtml"]],
+        rocTable = function() private$.items[["rocTable"]],
         rocPlot = function() private$.items[["rocPlot"]],
         predClass = function() private$.items[["predClass"]],
         predProb = function() private$.items[["predProb"]]),
@@ -295,6 +331,10 @@ mLRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "selgroup"),
                 columns=list(
                     list(
+                        `name`="level", 
+                        `title`="Comparison Level", 
+                        `type`="text"),
+                    list(
                         `name`="term", 
                         `title`="Predictor", 
                         `type`="text"),
@@ -345,15 +385,63 @@ mLRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "lasso_penalty",
                     "group",
                     "selgroup")))
-            self$add(jmvcore::Image$new(
+            self$add(jmvcore::Table$new(
+                options=options,
+                name="rocTable",
+                title="ROC Quantitative Evaluation",
+                visible="(show_roc && show_roc_table)",
+                clearWith=list(
+                    "dep",
+                    "covs",
+                    "factors",
+                    "method",
+                    "elastic_alpha",
+                    "lasso_penalty",
+                    "partition",
+                    "val_split",
+                    "cv_folds",
+                    "cv_repeats",
+                    "group",
+                    "selgroup",
+                    "show_roc_cut",
+                    "show_roc_table",
+                    "multiclass_roc_type"),
+                columns=list(
+                    list(
+                        `name`="part", 
+                        `title`="Curve", 
+                        `type`="text"),
+                    list(
+                        `name`="auc", 
+                        `title`="AUC", 
+                        `type`="number"),
+                    list(
+                        `name`="cutoff", 
+                        `title`="Cut-off", 
+                        `type`="number"),
+                    list(
+                        `name`="se", 
+                        `title`="Sensitivity (Se)", 
+                        `type`="number"),
+                    list(
+                        `name`="sp", 
+                        `title`="Specificity (Sp)", 
+                        `type`="number"),
+                    list(
+                        `name`="direction", 
+                        `title`="Direction", 
+                        `type`="text"))))
+            self$add(jmvcore::Array$new(
                 options=options,
                 name="rocPlot",
                 title="ROC Curve Comparison",
                 visible="(show_roc)",
-                width=500,
-                height=500,
-                renderFun=".rocPlot",
-                requiresData=TRUE,
+                template=jmvcore::Image$new(
+                    options=options,
+                    width=500,
+                    height=500,
+                    renderFun=".rocPlot",
+                    requiresData=TRUE),
                 clearWith=list(
                     "dep",
                     "covs",
@@ -369,7 +457,10 @@ mLRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "roc_unit",
                     "palBrewer",
                     "group",
-                    "selgroup")))
+                    "selgroup",
+                    "show_roc_cut",
+                    "show_roc_table",
+                    "multiclass_roc_type")))
             self$add(jmvcore::Output$new(
                 options=options,
                 name="predClass",
@@ -432,6 +523,7 @@ mLRBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' partitioning uses a hardcoded random seed (42) for reproducibility.
 #' @param data .
 #' @param dep .
+#' @param refLevel .
 #' @param covs .
 #' @param factors .
 #' @param group .
@@ -445,6 +537,9 @@ mLRBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param cv_repeats .
 #' @param show_formula .
 #' @param show_roc .
+#' @param show_roc_cut .
+#' @param show_roc_table .
+#' @param multiclass_roc_type .
 #' @param roc_x .
 #' @param roc_unit .
 #' @param palBrewer .
@@ -455,7 +550,8 @@ mLRBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$infoTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$coeffTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$formulaHtml} \tab \tab \tab \tab \tab a html \cr
-#'   \code{results$rocPlot} \tab \tab \tab \tab \tab an image \cr
+#'   \code{results$rocTable} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$rocPlot} \tab \tab \tab \tab \tab an array of images \cr
 #'   \code{results$predClass} \tab \tab \tab \tab \tab an output \cr
 #'   \code{results$predProb} \tab \tab \tab \tab \tab an output \cr
 #' }
@@ -470,6 +566,7 @@ mLRBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 mLR <- function(
     data,
     dep,
+    refLevel,
     covs,
     factors,
     group,
@@ -483,6 +580,9 @@ mLR <- function(
     cv_repeats = 3,
     show_formula = TRUE,
     show_roc = FALSE,
+    show_roc_cut = TRUE,
+    show_roc_table = FALSE,
+    multiclass_roc_type = "combined",
     roc_x = "1spec",
     roc_unit = "percent",
     palBrewer = "Dark2",
@@ -509,6 +609,7 @@ mLR <- function(
 
     options <- mLROptions$new(
         dep = dep,
+        refLevel = refLevel,
         covs = covs,
         factors = factors,
         group = group,
@@ -522,6 +623,9 @@ mLR <- function(
         cv_repeats = cv_repeats,
         show_formula = show_formula,
         show_roc = show_roc,
+        show_roc_cut = show_roc_cut,
+        show_roc_table = show_roc_table,
+        multiclass_roc_type = multiclass_roc_type,
         roc_x = roc_x,
         roc_unit = roc_unit,
         palBrewer = palBrewer,

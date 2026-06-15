@@ -23,6 +23,11 @@ options:
         - factor
       required: true
 
+    - name: refLevel
+      title: Reference level
+      type: Level
+      variable: (dep)
+
     - name: covs
       title: Covariates (Continuous Predictors)
       type: Variables
@@ -130,6 +135,26 @@ options:
       title: ROC Analysis
       type: Bool
       default: false
+
+    - name: show_roc_cut
+      title: Show Cut-off Thresholds
+      type: Bool
+      default: true
+
+    - name: show_roc_table
+      title: Show ROC Table
+      type: Bool
+      default: false
+
+    - name: multiclass_roc_type
+      title: Multiclass ROC Layout
+      type: List
+      options:
+        - name: combined
+          title: Combined
+        - name: separate
+          title: Separate
+      default: combined
 
     - name: roc_x
       title: ROC X-axis Coordinate

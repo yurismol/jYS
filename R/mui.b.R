@@ -218,6 +218,38 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               image <- self$results$plotsMD$get(key=var)
               image$setState(list(lth=lth, uth=uth))
 
+              if (self$options$show_roc_table) {
+                r <- try(pROC::roc(Vref, Vtest, quiet=TRUE), silent=TRUE)
+                if (!inherits(r, "try-error")) {
+                  auc_val <- as.numeric(pROC::auc(r))
+                  coords <- try(pROC::coords(r, x="best", best.method="youden", ret=c("threshold", "specificity", "sensitivity")), silent=TRUE)
+                  if (!inherits(coords, "try-error")) {
+                    # pROC::coords returns data.frame in newer versions, matrix in older
+                    if (is.data.frame(coords)) {
+                      cutoff <- as.numeric(coords[1, "threshold"])
+                      sp     <- as.numeric(coords[1, "specificity"])
+                      se     <- as.numeric(coords[1, "sensitivity"])
+                    } else {
+                      if (is.matrix(coords)) {
+                        coords <- coords[1, ]
+                      }
+                      cutoff <- as.numeric(coords["threshold"])
+                      sp <- as.numeric(coords["specificity"])
+                      se <- as.numeric(coords["sensitivity"])
+                    }
+                    direction <- as.character(r$direction)
+                    
+                    self$results$stat$rocTable$setRow(rowKey=var, list(
+                      auc = auc_val,
+                      cutoff = cutoff,
+                      se = se,
+                      sp = sp,
+                      direction = direction
+                    ))
+                  }
+                }
+              }
+
               if (self$options$decision && self$results$decision$isNotFilled()) {
                 dt  <- rep(NA, times=length(dat[[var]]))
                 if (statMCI$direction=="<") {
@@ -283,9 +315,10 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             cols <- RColorBrewer::brewer.pal(n=8, name="Dark2")
             col  <- cols[which(test==key)]
             #self$results$text$setContent(dat[[ref]])
+            show_roc_cut <- self$options$show_roc_cut
 	    p <- pROC::plot.roc(dat[[ref]], dat[[key]], col=col,
                  legacy.axes=FALSE, thresholds="best",
-                 print.thres=TRUE, print.thres.col=col, print.auc=TRUE, print.thres.pch=19,
+                 print.thres=show_roc_cut, print.thres.col=col, print.auc=TRUE, print.thres.pch=19,
                  ci=TRUE, ci.col=col, ci.type=c("bars", "shape", "no")[2],
                  xlab=.("Specificity"), ylab=.("Sensitivity"),
                  print.thres.best.method="youden")

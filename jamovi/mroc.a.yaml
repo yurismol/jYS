@@ -2,7 +2,7 @@
 name:  mROC
 title: ROC classification
 menuGroup: jYS
-menuSubgroup: Diagnostics & ROC Analysis
+menuSubgroup: Regression & Classification
 version: '1.0.11'
 jas: '1.2'
 
@@ -146,6 +146,11 @@ options:
 
     - name: splitROC
       title: Split curves
+      type: Bool
+      default: false
+
+    - name: showTable
+      title: ROC Tables
       type: Bool
       default: false
 
