@@ -28,7 +28,7 @@ mOUTClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
           outable$addColumn(name="lf",  title=.("Lower fence"), type='number')
           outable$addColumn(name="uf",  title=.("Upper fence"), type='number')
           
-          if (self$options$norm) outable$setNote('flag', .('*p<0.05 - The hypothesis of normal distribution was rejected by the Shapiro-Wilk test'))
+          if (self$options$norm) outable$setNote('flag', .('<b>*p<0.05</b> - The hypothesis of normal distribution was rejected by the Shapiro-Wilk test'))
           
           # Initialize columns for oind tables
           oind <- self$results$oind

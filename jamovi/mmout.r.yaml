@@ -1,0 +1,95 @@
+---
+name:  mMOUT
+title: Multivariate outliers identification and removal
+jrs:   '1.1'
+refs: [jys]
+
+items:
+    - name: outDist
+      title: Saved Mahalanobis distances
+      type: Output
+
+    - name: outFlag
+      title: Saved outlier flags
+      type: Output
+
+    - name: remOut
+      title: Remove outliers
+      type: Output
+
+    - name: stat
+      title: Outliers summary
+      type: Table
+      clearWith:
+          - vars
+          - group
+          - method
+          - alpha
+      columns:
+          - name: grp
+            title: Group
+            type: text
+            visible: (group)
+          - name: n
+            title: N
+            type: integer
+          - name: noutl
+            title: Outliers found
+            type: integer
+          - name: pct
+            title: '% Outliers'
+            type: number
+            format: pc
+          - name: cutoff
+            title: Chi-Square Cut-off
+            type: number
+
+    - name: oind
+      title: Outliers indices (Rows)
+      type: Table
+      visible: (outind)
+      clearWith:
+          - vars
+          - group
+          - method
+          - alpha
+      columns:
+          - name: grp
+            title: Group
+            type: text
+            visible: (group)
+          - name: count
+            title: Outliers found
+            type: integer
+          - name: indices
+            title: Indices
+            type: text
+
+    - name: ddplot
+      title: Distance-Distance Plot
+      type: Image
+      width:  550
+      height: 450
+      renderFun: .plotDD
+      requiresData: true
+      visible: (showPlots && (plotType == "dd" || plotType == "both"))
+      clearWith:
+          - vars
+          - group
+          - method
+          - alpha
+
+    - name: qqplot
+      title: Chi-Square Q-Q Plot
+      type: Image
+      width:  550
+      height: 450
+      renderFun: .plotQQ
+      requiresData: true
+      visible: (showPlots && (plotType == "qq" || plotType == "both"))
+      clearWith:
+          - vars
+          - group
+          - method
+          - alpha
+...

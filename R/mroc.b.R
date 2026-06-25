@@ -127,27 +127,24 @@ mROCClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
           dir_str <- paste0(l1, roc$direction, l2)
 
           # DeLong p-value
-          pval_str <- ""
+          pval_val <- ''
           if (dL != "none") {
             if (dL == "w05") {
               null_auc <- ifelse(perc, 50, 0.5)
               variance <- pROC::var(roc, method="delong")
               if (variance <= 0) {
-                pval <- ifelse(roc$auc == null_auc, 1.0, 0.0001)
+                pval_val <- ifelse(roc$auc == null_auc, 1.0, 0.0001)
               } else {
                 z    <- (roc$auc - null_auc) / sqrt(variance)
-                pval <- 2 * stats::pnorm(-abs(z))
+                pval_val <- 2 * stats::pnorm(-abs(z))
               }
-              pval_str <- private$.formatElement(pval)
-              pval_str <- gsub(" ", "0", pval_str)
             } else if (!is.null(oROC)) {
               rt <- tryCatch(
                 pROC::roc.test(roc, oROC, paired=paired,
                                parallel=TRUE, method="d", alternative="two.sided"),
                 error=function(e) NULL)
               if (!is.null(rt)) {
-                pval_str <- private$.formatElement(rt$p.value)
-                pval_str <- gsub(" ", "0", pval_str)
+                pval_val <- rt$p.value
               }
             }
           }
@@ -160,7 +157,7 @@ mROCClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             se        = se,
             sp        = sp,
             direction = dir_str,
-            pval      = pval_str
+            pval      = pval_val
           ))
       },
 

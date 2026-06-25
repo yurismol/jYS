@@ -13,21 +13,21 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             private$.initOutputs()
             uitable  <- self$results$stat$uistat
             uitable$setNote('ui', paste(
-                          .('Uncertain Interval (UI) is placed around the point of intersection between the two distributions with and without the targeted state.'),
-                          .('Uncertain Interval is considered to be a range of test scores that is inconclusive and does not warrant a right decision.')))
+                          .('<b>Uncertain Interval (UI)</b> is placed around the point of intersection between the two distributions with and without the targeted state.'),
+                          .('<b>Uncertain Interval</b> is considered to be a range of test scores that is inconclusive and does not warrant a right decision.')))
             mcitable <- self$results$stat$mcistat
-            mcitable$setNote('mci1', .('More Certain Interval (MCI) is interval outside the Uncertain Interval and divide into low and high parts.'))
-            mcitable$setNote('mci2', .('Concordance - C-Statistic or AUC. The probability that a randomly chosen subject with the condition is correctly ranked higher than a randomly chosen subject without the condition'))
-            mcitable$setNote('mci3', .('Se - sensitivity of the positive and negative classifications TP/(TP+FN)'))
-            mcitable$setNote('mci4', .('Sp - specificity of the positive and negative classifications TN/(TN+FN)'))
-            mcitable$setNote('mci5', .('CCR - Correct Classification Rate or accuracy of the positive and negative classifications (TP+TN)/(TN+FP+FN+TP)'))
-            mcitable$setNote('mci6', .('Balance - balance between correct and incorrect classified (TP+TN)/(FP+FN)'))
-            mcitable$setNote('mci7', .('NPV - Negative Predictive Value of the negative class TN/(TN+FN)'))
-            mcitable$setNote('mci8', .('PPV - Positive Predictive Value of the positive class TP/(TN+FN)'))
-            mcitable$setNote('mci9', .('SNPV - standardized negative predictive value of the negative class'))
-            mcitable$setNote('mciA', .('SPPV - standardized positive predictive value of the positive class'))
-            mcitable$setNote('mciA', .('LR- - Negative Likelihood Ratio P(-|D+))/(P(-|D-)). The probability of a person with the condition receiving a negative classification / probability of a person without the condition receiving a negative classification'))
-            mcitable$setNote('mciA', .('LR+ - Positive Likelihood Ratio (P(+|D+))/(P(+|D-)) The probability of a person with the condition receiving a positive classification / probability of a person without the condition receiving a positive classification'))
+            mcitable$setNote('mci1', .('<b>More Certain Interval (MCI)</b> is interval outside the Uncertain Interval and divide into low and high parts.'))
+            mcitable$setNote('mci2', .('<b>Concordance</b> - C-Statistic or AUC. The probability that a randomly chosen subject with the condition is correctly ranked higher than a randomly chosen subject without the condition'))
+            mcitable$setNote('mci3', .('<b>Se</b> - sensitivity of the positive and negative classifications TP/(TP+FN)'))
+            mcitable$setNote('mci4', .('<b>Sp</b> - specificity of the positive and negative classifications TN/(TN+FN)'))
+            mcitable$setNote('mci5', .('<b>CCR</b> - Correct Classification Rate or accuracy of the positive and negative classifications (TP+TN)/(TN+FP+FN+TP)'))
+            mcitable$setNote('mci6', .('<b>Balance</b> - balance between correct and incorrect classified (TP+TN)/(FP+FN)'))
+            mcitable$setNote('mci7', .('<b>NPV</b> - Negative Predictive Value of the negative class TN/(TN+FN)'))
+            mcitable$setNote('mci8', .('<b>PPV</b> - Positive Predictive Value of the positive class TP/(TN+FN)'))
+            mcitable$setNote('mci9', .('<b>SNPV</b> - standardized negative predictive value of the negative class'))
+            mcitable$setNote('mciA', .('<b>SPPV</b> - standardized positive predictive value of the positive class'))
+            mcitable$setNote('mciA', .('<b>LR-</b> - Negative Likelihood Ratio P(-|D+))/(P(-|D-)). The probability of a person with the condition receiving a negative classification / probability of a person without the condition receiving a negative classification'))
+            mcitable$setNote('mciA', .('<b>LR+</b> - Positive Likelihood Ratio (P(+|D+))/(P(+|D-)) The probability of a person with the condition receiving a positive classification / probability of a person without the condition receiving a positive classification'))
 
             if (self$options$youden) {
               uitable$getColumn('int')$setTitle(.("Threshold on Youden"))
@@ -53,7 +53,7 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               intable$addColumn(name="ui",   title=.("UI"),    type="integer")
               intable$addColumn(name="mciU", title=jmvcore::format(.("MCI=1 ({})"), ref1), type="integer")
               intable$addColumn(name="sum",  title=.("Sum"),   type="integer")
-              intable$setNote('flag', .('*p<0.05 - The hypothesis of normal distribution was rejected by the Shapiro-Wilk test'))
+              intable$setNote('flag', .('<b>*p<0.05</b> - The hypothesis of normal distribution was rejected by the Shapiro-Wilk test'))
             }
         },
 

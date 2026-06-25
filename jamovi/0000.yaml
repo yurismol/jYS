@@ -85,6 +85,13 @@ analyses:
     menuGroup: jYS
     menuSubgroup: Data Preprocessing
     menuTitle: Univariate outliers identification and removal
+  - title: Multivariate outliers identification and removal
+    name: mMOUT
+    ns: jYS
+    category: analyses
+    menuGroup: jYS
+    menuSubgroup: Data Preprocessing
+    menuTitle: Multivariate outliers identification and removal
   - title: Uncertain Interval (UI)
     name: mUI
     ns: jYS

@@ -1,0 +1,87 @@
+---
+name:  mMOUT
+title: Multivariate outliers identification and removal
+menuGroup: jYS
+menuSubgroup: Data Preprocessing
+version: '1.0.0'
+jas: '1.2'
+
+options:
+    - name: data
+      type: Data
+
+    - name: vars
+      title: Variables
+      type: Variables
+      required: true
+      suggested:
+        - continuous
+      permitted:
+        - numeric
+
+    - name: group
+      title: Grouping Variable
+      required: false
+      suggested:
+        - nominal
+        - ordinal
+      permitted:
+        - factor
+      type: Variable
+
+    - name: method
+      title: Outlier identifying method
+      type: List
+      options:
+        - title: Classical Mahalanobis distance
+          name: classic
+        - title: Robust Mahalanobis distance (MCD)
+          name: robust
+      default: robust
+
+    - name: alpha
+      title: Significance level (alpha)
+      type: List
+      options:
+        - title: "0.05"
+          name: "0.05"
+        - title: "0.01 (standard)"
+          name: "0.01"
+        - title: "0.001"
+          name: "0.001"
+      default: "0.01"
+
+    - name: showPlots
+      title: Plots
+      type: Bool
+      default: true
+
+    - name: plotType
+      title: Plot type
+      type: List
+      options:
+        - title: Distance-Distance Plot
+          name: dd
+        - title: Chi-Square Q-Q Plot
+          name: qq
+        - title: Both Plots
+          name: both
+      default: both
+
+    - name: outind
+      title: Show outliers indices table
+      type: Bool
+      default: true
+
+    - name: outDist
+      title: Saved Mahalanobis distances
+      type: Output
+
+    - name: outFlag
+      title: Saved outlier flags
+      type: Output
+
+    - name: remOut
+      title: Remove outliers
+      type: Output
+...

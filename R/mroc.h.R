@@ -310,7 +310,8 @@ mROCResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     list(
                         `name`="pval", 
                         `title`="p (DeLong)", 
-                        `type`="text"))))
+                        `type`="number", 
+                        `format`="zto,pvalue"))))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot",

@@ -292,17 +292,17 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 ))
             }
             
-            info_table$setNote("n1", .("Hidden Layers: network architecture (hidden layer sizes, hidden / output activation functions)"))
-            info_table$setNote("n2", .("Weight Decay: L2 regularization penalty parameter."))
-            info_table$setNote("n3", .("Max Iterations: maximum number of training epochs."))
-            info_table$setNote("n4", .("Training Accuracy: classification accuracy on the training dataset."))
+            info_table$setNote("n1", .("<b>Hidden Layers</b>: network architecture (hidden layer sizes, hidden / output activation functions)"))
+            info_table$setNote("n2", .("<b>Weight Decay</b>: L2 regularization penalty parameter."))
+            info_table$setNote("n3", .("<b>Max Iterations</b>: maximum number of training epochs."))
+            info_table$setNote("n4", .("<b>Training Accuracy</b>: classification accuracy on the training dataset."))
             if (partition == "holdout") {
-                info_table$setNote("n5", .("Hold-out Accuracy: classification accuracy on the hold-out validation dataset."))
+                info_table$setNote("n5", .("<b>Hold-out Accuracy</b>: classification accuracy on the hold-out validation dataset."))
             } else {
                 info_table$setNote("n5", NULL)
             }
             if (partition == "kfold") {
-                info_table$setNote("n6", .("K-Fold CV Accuracy: average classification accuracy across cross-validation folds."))
+                info_table$setNote("n6", .("<b>K-Fold CV Accuracy</b>: average classification accuracy across cross-validation folds."))
             } else {
                 info_table$setNote("n6", NULL)
             }

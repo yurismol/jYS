@@ -58,7 +58,8 @@ items:
             visible: (direction)
           - name: pval
             title: p (DeLong)
-            type: text
+            type: number
+            format: zto,pvalue
 
     - name: plot
       title: ROC by predictors

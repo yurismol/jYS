@@ -67,12 +67,12 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
         sign <- '* p < .05, ** p < .01, *** p < .001'
         if (self$options$decSymbol==",") sign <- '* p < ,05; ** p < ,01; *** p < ,001'
         if (hyp=='pos') {
-            matrix$setNote('hyp', .('H\u2090 is positive correlation'))
+            matrix$setNote('hyp', .('<b>H\u2090</b> is positive correlation'))
             hyp <- 'greater'
             if (flag)
                 matrix$setNote('flag', paste0(sign, ', ', .('one-tailed')))
         } else if (hyp=='neg') {
-            matrix$setNote('hyp', .('H\u2090 is negative correlation'))
+            matrix$setNote('hyp', .('<b>H\u2090</b> is negative correlation'))
             hyp <- 'less'
             if (flag)
                 matrix$setNote('flag', paste0(sign, ', ', .('one-tailed')))
@@ -88,9 +88,9 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
         method_title <- switch(self$options$method,
                                pearson = .("Pearson's r"),
-                               spearman = .("Spearman's Rho"),
+                               spearman = .("Spearman's ρ"),
                                kendall = .("Kendall Tau"))
-        matrix$setNote("method", jmvcore::format(.("Correlation method: {method}"), method=method_title))
+        matrix$setNote("method", jmvcore::format(.("<b>Correlation method</b>: {method}"), method=method_title))
 
          images <- self$results$get('rplots')
          nc <- 0
@@ -115,6 +115,7 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               var <- vars[[i]]
               glassoTable$addColumn(name=paste0(var, '[r]'), title=var, type='number', format='zto')
               glassoTable$addColumn(name=paste0(var, '[p]'), title=var, type='number', format='zto,pvalue', visible='(pval)')
+              glassoTable$addColumn(name=paste0(var, '[n]'), title=var, type='integer', visible='(n)')
           }
           for (i in seq_along(vars)) {
               var <- vars[[i]]
@@ -122,9 +123,11 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               for (j in seq_along(vars)) {
                   values[[paste0(vars[[j]], '[r]')]] <- ''
                   values[[paste0(vars[[j]], '[p]')]] <- ''
+                  values[[paste0(vars[[j]], '[n]')]] <- ''
               }
               values[[paste0(var, '[r]')]] <- '\u2014'
               values[[paste0(var, '[p]')]] <- '\u2014'
+              values[[paste0(var, '[n]')]] <- '\u2014'
               glassoTable$setRow(rowKey=var, values)
           }
      },
@@ -240,6 +243,9 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             cor$s <- subs
             image <- self$results$treeplot
             if (self$options$hclust && nVars>2) {
+              if (any(is.na(cor$r))) {
+                  jmvcore::reject(.("Hierarchical clustering cannot be computed because the correlation matrix contains missing (NA/NaN) values."), code='')
+              }
               hc <- hclust(dist(cor$r, method="euclidean"), method=self$options$clustMet)
               cor$hc <- hc
               cor$r <- cor$r[hc$order, hc$order]
@@ -251,7 +257,7 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             image <- self$results$plot
             image$setState(cor)
 
-            if (self$options$glasso || self$options$glassoTable) {
+            if (self$options$glasso) {
                 if ( ! (requireNamespace("glasso", quietly = TRUE) && requireNamespace("qgraph", quietly = TRUE))) {
                     jmvcore::reject(.("Packages 'glasso' and 'qgraph' are required for this analysis. Please install them."), code='')
                 }
@@ -263,6 +269,21 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 n <- sum(complete.cases(dat[, vars, drop=FALSE]))
                 if (n < 4) {
                     jmvcore::reject(.("Sample size is too small to compute Graphical Lasso."), code='')
+                }
+                
+                # Check if corr is positive definite. If not, try to make it positive definite.
+                pd_adjusted <- FALSE
+                ev <- eigen(corr, symmetric = TRUE, only.values = TRUE)$values
+                if (any(ev <= 1e-8)) {
+                    if (requireNamespace("Matrix", quietly = TRUE)) {
+                        c_names <- colnames(corr)
+                        r_names <- rownames(corr)
+                        npd <- Matrix::nearPD(corr, corr = TRUE)
+                        corr <- as.matrix(npd$mat)
+                        colnames(corr) <- c_names
+                        rownames(corr) <- r_names
+                        pd_adjusted <- TRUE
+                    }
                 }
                 
                 pcor <- tryCatch({
@@ -280,6 +301,7 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         }
                         pcor_mat <- -wi / (sqrt(d) %*% t(sqrt(d)))
                         diag(pcor_mat) <- 0
+                        pcor_mat <- (pcor_mat + t(pcor_mat)) / 2
                         pcor_mat
                     }
                 }, error = function(e) {
@@ -318,12 +340,15 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         if (i == j) {
                             values[[paste0(colVarName, '[r]')]] <- '\u2014'
                             values[[paste0(colVarName, '[p]')]] <- '\u2014'
+                            values[[paste0(colVarName, '[n]')]] <- '\u2014'
                         } else if (j > i) {
                             values[[paste0(colVarName, '[r]')]] <- ''
                             values[[paste0(colVarName, '[p]')]] <- ''
+                            values[[paste0(colVarName, '[n]')]] <- ''
                         } else {
                             values[[paste0(colVarName, '[r]')]] <- pcor[i, j]
                             values[[paste0(colVarName, '[p]')]] <- corp_glasso[i, j]
+                            values[[paste0(colVarName, '[n]')]] <- n
                         }
                     }
                     glassoTable$setRow(rowKey=rowVarName, values)
@@ -346,6 +371,33 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         }
                     }
                 }
+                
+                 # Set notes for glassoTable
+                 if (pd_adjusted) {
+                     glassoTable$setNote('pd_warning', .("The correlation matrix was not positive definite and was adjusted to the nearest positive definite matrix to calculate Graphical Lasso."))
+                 } else {
+                     glassoTable$setNote('pd_warning', NULL)
+                 }
+
+                 if (self$options$flag) {
+                     sign <- '* p < .05, ** p < .01, *** p < .001'
+                     if (self$options$decSymbol == ",") sign <- '* p < ,05; ** p < ,01; *** p < ,001'
+                     glassoTable$setNote('flag', sign)
+                 } else {
+                     glassoTable$setNote('flag', NULL)
+                 }
+                
+                if (self$options$adjust != 'none') {
+                    glassoTable$setNote('adjust', jmvcore::format(.("Simultaneous multiple correlation comparisons using {n} method"), n=self$options$adjust))
+                } else {
+                    glassoTable$setNote('adjust', NULL)
+                }
+                
+                if (self$options$glassoType == "ebic") {
+                    glassoTable$setNote('glasso_tuning', jmvcore::format(.("<b>Tuning parameter selection</b>: Extended Bayesian Information Criterion (EBIC) with gamma = {gamma}"), gamma=self$options$glassoGamma))
+                } else {
+                    glassoTable$setNote('glasso_tuning', jmvcore::format(.("<b>Tuning parameter selection</b>: Manual penalty (ρ) = {rho}"), rho=self$options$glassoRho))
+                }
 
                 # Calculate Centrality
                 node_cent <- NULL
@@ -358,6 +410,16 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 if (self$options$glassoHub && !is.null(node_cent)) {
                     hubTable <- self$results$glassoGroup$glassoHubTable
                     hubTable$deleteRows()
+                    hubTable$setNote('cent_intro', .("<b>Centrality metrics</b> (different measures of a node's importance in the network)."))
+                    hubTable$setNote('cent_strength', .("<b>STRENGTH</b>: sum of absolute weights of connected edges; shows how strongly a node is directly connected to its neighbors."))
+                    hubTable$setNote('cent_closeness', .("<b>CLOSENESS</b>: inverse of the sum of shortest path lengths to all other nodes; shows how central a node is in terms of distance."))
+                    hubTable$setNote('cent_betweenness', .("<b>BETWEENNESS</b>: number of shortest paths between all pairs of nodes that pass through this node; shows its importance as a \"bridge\" or transit point."))
+                    hubTable$setNote('cent_influence', .("<b>EXPECTED INFLUENCE</b>: sum of signed weights of connected edges; shows the node's net impact on the network, considering positive and negative relations."))
+                    if (self$options$glassoType == "ebic") {
+                        hubTable$setNote('glasso_tuning', jmvcore::format(.("<b>Tuning parameter selection</b>: Extended Bayesian Information Criterion (EBIC) with gamma = {gamma}"), gamma=self$options$glassoGamma))
+                    } else {
+                        hubTable$setNote('glasso_tuning', jmvcore::format(.("<b>Tuning parameter selection</b>: Manual penalty (ρ) = {rho}"), rho=self$options$glassoRho))
+                    }
                     
                     hub_data <- list()
                     for (i in seq_along(vars)) {
@@ -458,10 +520,10 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
         results <- list()
         suppressWarnings({
             if (mtord) {
-                results$r <- NaN
-                results$rp <- NaN
-                results$rciu <- NaN
-                results$rcil <- NaN
+                results$r   <- NaN
+                results$p   <- NaN
+                results$ciu <- NaN
+                results$cil <- NaN
             } else {
                 ciw <- self$options$ciWidth / 100
                 res <- try(cor.test(as.numeric(var1), as.numeric(var2),
@@ -475,7 +537,7 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 }
                 else {
                     results$r   <- NaN
-                    results$rp  <- NaN
+                    results$p   <- NaN
                     results$cil <- NaN
                     results$ciu <- NaN
                 }
@@ -753,11 +815,8 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
           }
           
           edge.labels <- FALSE
-          if (self$options$glassoLabels) {
-              edge.labels <- round(pcor, 2)
-          }
 
-          qgraph::qgraph(
+          q_obj <- qgraph::qgraph(
               pcor,
               layout = "spring",
               labels = vars,
@@ -774,11 +833,42 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               label.color = "black",
               legend.cex = 1.0,
               edge.width = 2,
-              edge.labels = edge.labels,
+              edge.labels = FALSE,
               fade = FALSE,
               doPlot = TRUE,
               mar = qmar
           )
+
+          if (self$options$glassoLabels) {
+              layout <- q_obj$layout
+              n <- nrow(pcor)
+              for (i in 1:(n - 1)) {
+                  for (j in (i + 1):n) {
+                      val <- pcor[i, j]
+                      if (abs(val) > 1e-8) {
+                          x1 <- layout[i, 1]
+                          y1 <- layout[i, 2]
+                          x2 <- layout[j, 1]
+                          y2 <- layout[j, 2]
+                          
+                          x_mid <- (x1 + x2) / 2
+                          y_mid <- (y1 + y2) / 2
+                          
+                          lbl <- sprintf("%.2f", val)
+                          
+                          sw <- strwidth(lbl, cex = 0.8)
+                          sh <- strheight(lbl, cex = 0.8)
+                          
+                          rect(x_mid - sw/2 - 0.015, y_mid - sh/2 - 0.015,
+                               x_mid + sw/2 + 0.015, y_mid + sh/2 + 0.015,
+                               col = "white", border = "lightgray", lwd = 0.5)
+                          
+                          lbl_col <- ifelse(val > 0, posCol, negCol)
+                          text(x_mid, y_mid, lbl, cex = 0.8, col = lbl_col)
+                      }
+                  }
+              }
+          }
           
           if (hasGroups) {
               legend(

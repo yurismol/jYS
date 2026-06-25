@@ -140,13 +140,13 @@ items:
     - name: glassoGroup
       title: Graphical Lasso (GLASSO) Partial Correlation Network
       type: Group
-      visible: (glasso || glassoTable)
+      visible: (glasso)
       refs: [glasso, qgraph]
       items:
         - name: glassoTable
           title: Partial correlation matrix
           type: Table
-          visible: (glassoTable)
+          visible: (glasso && glassoTable)
           rows: (vars)
           clearWith:
             - glassoType
@@ -158,17 +158,41 @@ items:
             - method
             - pval
             - flag
+            - n
           columns:
             - name: .name[r]
               title: ""
               type: text
               content: ($key)
               combineBelow: true
+              visible: (method=="pearson")
             - name: .stat[r]
               title: ""
               type: text
               content: r
-              visible: (pval)
+              visible: (method=="pearson" && (pval || n))
+            - name: .name[rho]
+              title: ""
+              type: text
+              content: ($key)
+              combineBelow: true
+              visible: (method=="spearman")
+            - name: .stat[rho]
+              title: ""
+              type: text
+              content: ρ
+              visible: (method=="spearman" && (pval || n))
+            - name: .name[tau]
+              title: ""
+              type: text
+              content: ($key)
+              combineBelow: true
+              visible: (method=="kendall")
+            - name: .stat[tau]
+              title: ""
+              type: text
+              content: τ
+              visible: (method=="kendall" && (pval || n))
             - name: .name[p]
               title: ""
               type: text
@@ -181,6 +205,17 @@ items:
               content: p-value
               format: zto,pvalue
               visible: (pval)
+            - name: .name[n]
+              title: ""
+              type: text
+              content: ($key)
+              combineBelow: true
+              visible: (n)
+            - name: .stat[n]
+              title: ""
+              type: text
+              content: N
+              visible: (n)
         - name: glassoHubTable
           title: Centrality metrics (hub markers)
           type: Table

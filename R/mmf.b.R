@@ -20,12 +20,12 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             mtable <- self$results$estim$mars
             etable <- self$results$imput$errors
             mctable$setNote('mcar', paste(
-                          .('MCAR - missing completely at random (if the p<sub>value</sub> is not significant, there is evidence the data is MCAR).')
+                          .('<b>MCAR</b> - missing completely at random (if the p<sub>value</sub> is not significant, there is evidence the data is MCAR).')
             ))
             mtable$setNote('mar', paste(
-                          .('N - number of missing values;'),
-                          .('MAR - missing at random (if each p<sub>value</sub> is significant, there is evidence the data is MAR);'),
-                          .('Explanatory - variable corresponding to MAR with minimal p<sub>value</sub>.')
+                          .('<b>N</b> - number of missing values;'),
+                          .('<b>MAR</b> - missing at random (if each p<sub>value</sub> is significant, there is evidence the data is MAR);'),
+                          .('<b>Explanatory</b> - variable corresponding to MAR with minimal p<sub>value</sub>.')
             ))
             mtable$setNote('mcar_mar', paste(
                           .('If at least one p<sub>value</sub> MAR is not significant, and the p<sub>value</sub> in MCAR is significant then the data is MNAR (Missing Not At Random).')
@@ -33,14 +33,14 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
  
             if (self$options$alg=="mF") {
               etable$addColumn(name="err", title=.("MSE"), type='number')
-              contErr = .('MSE - mean squared error (for Continuous variables);')
+              contErr = .('<b>MSE</b> - mean squared error (for Continuous variables);')
             } else {
               etable$addColumn(name="err", title=.("PVU"), type='number')
-              contErr = .('PVU - proportion of variance unexplained 1-R\u00B2 (for Continuous variables);')
+              contErr = .('<b>PVU</b> - proportion of variance unexplained 1-R\u00B2 (for Continuous variables);')
             }
             etable$setNote('obe', paste(
-                          .('N - number of missing values;'),
-                          .('PFC - proportion of falsely classified (for Nominal and Ordinal variables);'),
+                          .('<b>N</b> - number of missing values;'),
+                          .('<b>PFC</b> - proportion of falsely classified (for Nominal and Ordinal variables);'),
                           contErr
             ))
 

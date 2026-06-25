@@ -179,16 +179,16 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     anova = .("ANOVA / ANCOVA (F-Test)")
                 )
                 
-                table$setNote("calc_note", paste0(.("Calculated parameter: "), calc_map[[calc]]))
-                table$setNote("design_note", paste0(.("Design: "), design_text))
+                table$setNote("calc_note", paste0(.("<b>Calculated parameter</b>: "), calc_map[[calc]]))
+                table$setNote("design_note", paste0(.("<b>Design</b>: "), design_text))
                 
                 es_measure_text <- switch(es_arg,
-                    d = .("Effect size measure: Cohen's d"),
-                    rho = .("Effect size measure: correlation coefficient (r)"),
-                    r.squared.change = .("Effect size measure: R-squared change (f\u00B2)"),
-                    odds.ratio = .("Effect size measure: Odds Ratio"),
-                    w = .("Effect size measure: Cohen's w"),
-                    eta.squared = .("Effect size measure: Eta-squared (\u03B7\u00B2)")
+                    d = .("<b>Effect size measure</b>: Cohen's d"),
+                    rho = .("<b>Effect size measure</b>: correlation coefficient (r)"),
+                    r.squared.change = .("<b>Effect size measure</b>: R-squared change (f\u00B2)"),
+                    odds.ratio = .("<b>Effect size measure</b>: Odds Ratio"),
+                    w = .("<b>Effect size measure</b>: Cohen's w"),
+                    eta.squared = .("<b>Effect size measure</b>: Eta-squared (\u03B7\u00B2)")
                 )
                 table$setNote("es_measure_note", es_measure_text)
                 

@@ -37,8 +37,8 @@ mCOROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             glassoGamma = 0.5,
             glassoRho = 0.1,
             glassoHub = FALSE,
-            glassoPlotScale = FALSE,
-            glassoLabels = FALSE, ...) {
+            glassoPlotScale = TRUE,
+            glassoLabels = TRUE, ...) {
 
             super$initialize(
                 package="jYS",
@@ -250,11 +250,11 @@ mCOROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             private$..glassoPlotScale <- jmvcore::OptionBool$new(
                 "glassoPlotScale",
                 glassoPlotScale,
-                default=FALSE)
+                default=TRUE)
             private$..glassoLabels <- jmvcore::OptionBool$new(
                 "glassoLabels",
                 glassoLabels,
-                default=FALSE)
+                default=TRUE)
 
             self$.addOption(private$..vars)
             self$.addOption(private$..group)
@@ -535,7 +535,7 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             options=options,
                             name="glassoTable",
                             title="Partial correlation matrix",
-                            visible="(glassoTable)",
+                            visible="(glasso && glassoTable)",
                             rows="(vars)",
                             clearWith=list(
                                 "glassoType",
@@ -546,20 +546,48 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 "selgroup",
                                 "method",
                                 "pval",
-                                "flag"),
+                                "flag",
+                                "n"),
                             columns=list(
                                 list(
                                     `name`=".name[r]", 
                                     `title`="", 
                                     `type`="text", 
                                     `content`="($key)", 
-                                    `combineBelow`=TRUE),
+                                    `combineBelow`=TRUE, 
+                                    `visible`="(method==\"pearson\")"),
                                 list(
                                     `name`=".stat[r]", 
                                     `title`="", 
                                     `type`="text", 
                                     `content`="r", 
-                                    `visible`="(pval)"),
+                                    `visible`="(method==\"pearson\" && (pval || n))"),
+                                list(
+                                    `name`=".name[rho]", 
+                                    `title`="", 
+                                    `type`="text", 
+                                    `content`="($key)", 
+                                    `combineBelow`=TRUE, 
+                                    `visible`="(method==\"spearman\")"),
+                                list(
+                                    `name`=".stat[rho]", 
+                                    `title`="", 
+                                    `type`="text", 
+                                    `content`="\u03C1", 
+                                    `visible`="(method==\"spearman\" && (pval || n))"),
+                                list(
+                                    `name`=".name[tau]", 
+                                    `title`="", 
+                                    `type`="text", 
+                                    `content`="($key)", 
+                                    `combineBelow`=TRUE, 
+                                    `visible`="(method==\"kendall\")"),
+                                list(
+                                    `name`=".stat[tau]", 
+                                    `title`="", 
+                                    `type`="text", 
+                                    `content`="\u03C4", 
+                                    `visible`="(method==\"kendall\" && (pval || n))"),
                                 list(
                                     `name`=".name[p]", 
                                     `title`="", 
@@ -573,7 +601,20 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                     `type`="text", 
                                     `content`="p-value", 
                                     `format`="zto,pvalue", 
-                                    `visible`="(pval)"))))
+                                    `visible`="(pval)"),
+                                list(
+                                    `name`=".name[n]", 
+                                    `title`="", 
+                                    `type`="text", 
+                                    `content`="($key)", 
+                                    `combineBelow`=TRUE, 
+                                    `visible`="(n)"),
+                                list(
+                                    `name`=".stat[n]", 
+                                    `title`="", 
+                                    `type`="text", 
+                                    `content`="N", 
+                                    `visible`="(n)"))))
                         self$add(jmvcore::Table$new(
                             options=options,
                             name="glassoHubTable",
@@ -744,8 +785,8 @@ mCOR <- function(
     glassoGamma = 0.5,
     glassoRho = 0.1,
     glassoHub = FALSE,
-    glassoPlotScale = FALSE,
-    glassoLabels = FALSE) {
+    glassoPlotScale = TRUE,
+    glassoLabels = TRUE) {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
         stop("mCOR requires jmvcore to be installed (restart may be required)")

@@ -301,7 +301,7 @@ options:
       default: 0.5
 
     - name: glassoRho
-      title: Manual penalty (rho)
+      title: Manual penalty (ρ)
       type: Number
       min: 0
       max: 10
@@ -315,12 +315,12 @@ options:
     - name: glassoPlotScale
       title: Scale node size by centrality
       type: Bool
-      default: false
+      default: true
 
     - name: glassoLabels
       title: Show edge labels
       type: Bool
-      default: false
+      default: true
 
 
 ...
