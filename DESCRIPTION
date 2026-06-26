@@ -13,7 +13,8 @@ Encoding: UTF-8
 LazyData: true
 Imports: jmvcore (>= 0.8.5), R6, dendextend, corrplot, pROC,
          RColorBrewer, missForest, missRanger, ggmice,
-         car, ggrepel, glmnet, ggplot2, glasso, qgraph, reshape2
+         car, ggrepel, glmnet, ggplot2, glasso, qgraph, reshape2,
+         survival, survminer, ggsurvfit
 Remotes: NoahHellen/missr, HansLandsheer/UncertainInterval, metinbulus/pwrss
 Suggests: shiny, testthat
 

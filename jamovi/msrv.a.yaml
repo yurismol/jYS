@@ -1,0 +1,168 @@
+---
+name:  mSRV
+title: Survival Analysis
+menuGroup: jYS
+menuSubgroup: Regression & Classification
+version: '1.0.0'
+jas: '1.2'
+
+options:
+    - name: data
+      type: Data
+
+    - name: elapsed
+      title: Time Variable (elapsed time)
+      type: Variable
+      required: true
+      suggested:
+        - continuous
+      permitted:
+        - numeric
+
+    - name: status
+      title: Status / Event Variable
+      type: Variable
+      required: true
+      suggested:
+        - nominal
+        - ordinal
+        - continuous
+      permitted:
+        - factor
+        - numeric
+
+    - name: statusEvent
+      title: Level
+      type: Level
+      variable: (status)
+
+    - name: group
+      title: Grouping Variable
+      type: Variable
+      required: false
+      suggested:
+        - nominal
+        - ordinal
+      permitted:
+        - factor
+
+    - name: covariates
+      title: Covariates (Cox regression)
+      type: Variables
+      required: false
+      suggested:
+        - continuous
+        - nominal
+        - ordinal
+      permitted:
+        - numeric
+        - factor
+
+    - name: showKm
+      title: Kaplan-Meier Survival Curves
+      type: Bool
+      default: true
+
+    - name: kmCI
+      title: Confidence Intervals (KM)
+      type: Bool
+      default: true
+
+    - name: kmTable
+      title: Risk-at-time Table
+      type: Bool
+      default: false
+
+    - name: kmType
+      title: Plot Type
+      type: List
+      options:
+        - title: Survival probability
+          name: survival
+        - title: Cumulative hazard
+          name: hazard
+      default: survival
+
+    - name: showLogRank
+      title: Log-rank Test for Group Comparison
+      type: Bool
+      default: true
+
+    - name: showCox
+      title: Cox Proportional Hazards Regression
+      type: Bool
+      default: true
+
+    - name: coxForest
+      title: Forest Plot of Hazard Ratios
+      type: Bool
+      default: false
+
+    - name: coxAssump
+      title: Test Proportional Hazards Assumption
+      type: Bool
+      default: false
+
+    - name: showSchoenfeldPlot
+      title: Schoenfeld Residuals Plot
+      type: Bool
+      default: false
+
+    - name: showRoc
+      title: Time-dependent ROC Analysis
+      type: Bool
+      default: false
+
+    - name: rocPredictors
+      title: Predictors (ROC)
+      type: Variables
+      required: false
+      suggested:
+        - continuous
+      permitted:
+        - numeric
+
+    - name: rocTime
+      title: Analysis Time Point t
+      type: Number
+      default: 12
+
+    - name: rocCI
+      title: Confidence Interval (ROC)
+      type: Bool
+      default: true
+
+    - name: rocWidth
+      title: CI Width
+      type: Number
+      min: 50
+      max: 99.9
+      default: 95
+
+    - name: rocPlot
+      title: ROC Plot
+      type: Bool
+      default: false
+
+    - name: palBrewer
+      title: Qualitative Palette
+      type: List
+      options:
+        - title: None
+          name:  none
+        - title: Accent
+          name:  Accent
+        - title: Dark2
+          name:  Dark2
+        - title: Paired
+          name:  Paired
+        - title: Pastel1
+          name:  Pastel1
+        - title: Set1
+          name:  Set1
+        - title: Set2
+          name:  Set2
+        - title: Set3
+          name:  Set3
+      default: Dark2
+...

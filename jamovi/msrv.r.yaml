@@ -1,0 +1,292 @@
+---
+name:  mSRV
+title: Survival Analysis
+jrs:   '1.1'
+
+items:
+  - name: kmSection
+    title: Kaplan-Meier Survival Analysis
+    type: Group
+    visible: (showKm)
+    refs: [jys, survival, survminer, ggsurvfit, kaplan1958]
+    items:
+      - name: kmSummaryTable
+        title: Kaplan-Meier Survival Summary
+        type: Table
+        visible: (showKm)
+        clearWith:
+          - elapsed
+          - status
+          - statusEvent
+          - group
+        columns:
+          - name: group
+            title: Group
+            type: text
+          - name: n
+            title: N
+            type: integer
+          - name: events
+            title: Events
+            type: integer
+          - name: median
+            title: Median Survival
+            type: number
+          - name: lower
+            title: Lower 95% CI
+            type: number
+          - name: upper
+            title: Upper 95% CI
+            type: number
+
+      - name: kmRiskTable
+        title: Kaplan-Meier Risk-at-time Table
+        type: Table
+        visible: (showKm && kmTable)
+        clearWith:
+          - elapsed
+          - status
+          - statusEvent
+          - group
+        columns:
+          - name: group
+            title: Group
+            type: text
+          - name: time
+            title: Time
+            type: number
+          - name: nAtRisk
+            title: N at Risk
+            type: integer
+          - name: nEvent
+            title: N Events
+            type: integer
+
+      - name: kmPlot
+        title: Kaplan-Meier Curve
+        type: Image
+        width: 600
+        height: 450
+        renderFun: .kmPlot
+        visible: (showKm)
+        requiresData: true
+        clearWith:
+          - elapsed
+          - status
+          - statusEvent
+          - group
+          - kmCI
+          - kmTable
+          - kmType
+          - palBrewer
+
+  - name: logRankTable
+    title: Log-rank Test (Group Comparison)
+    type: Table
+    visible: (showLogRank)
+    refs: [survival]
+    clearWith:
+      - elapsed
+      - status
+      - statusEvent
+      - group
+    columns:
+      - name: chisq
+        title: Chi-Square
+        type: number
+      - name: df
+        title: df
+        type: integer
+      - name: p
+        title: p
+        type: number
+        format: zto,pvalue
+
+  - name: coxSection
+    title: Cox Proportional Hazards Regression
+    type: Group
+    visible: (showCox)
+    refs: [survival, cox1972, harrell2015]
+    items:
+      - name: coxFitTable
+        title: Cox Model Fit Statistics
+        type: Table
+        clearWith:
+          - elapsed
+          - status
+          - statusEvent
+          - group
+          - covariates
+        columns:
+          - name: test
+            title: Test
+            type: text
+          - name: stat
+            title: Statistic
+            type: number
+          - name: df
+            title: df
+            type: integer
+          - name: p
+            title: p
+            type: number
+            format: zto,pvalue
+
+      - name: coxCoefTable
+        title: Cox Regression Coefficients
+        type: Table
+        clearWith:
+          - elapsed
+          - status
+          - statusEvent
+          - group
+          - covariates
+        columns:
+          - name: var
+            title: Variable
+            type: text
+          - name: coef
+            title: Coefficient (Estimate)
+            type: number
+          - name: se
+            title: SE
+            type: number
+          - name: z
+            title: z
+            type: number
+          - name: p
+            title: p
+            type: number
+            format: zto,pvalue
+          - name: hr
+            title: Hazard Ratio (HR)
+            type: number
+          - name: hrLower
+            title: Lower 95% CI
+            type: number
+          - name: hrUpper
+            title: Upper 95% CI
+            type: number
+
+      - name: coxForestPlot
+        title: Cox Hazard Ratios Forest Plot
+        type: Image
+        width: 500
+        height: 400
+        renderFun: .coxForestPlot
+        visible: (coxForest)
+        requiresData: true
+        clearWith:
+          - elapsed
+          - status
+          - statusEvent
+          - group
+          - covariates
+
+      - name: coxAssumpTable
+        title: Proportional Hazards Assumption (Schoenfeld Residuals Test)
+        type: Table
+        visible: (coxAssump)
+        clearWith:
+          - elapsed
+          - status
+          - statusEvent
+          - group
+          - covariates
+        columns:
+          - name: var
+            title: Variable
+            type: text
+          - name: chisq
+            title: Chi-Square
+            type: number
+          - name: df
+            title: df
+            type: integer
+          - name: p
+            title: p
+            type: number
+            format: zto,pvalue
+
+      - name: schoenfeldPlots
+        title: Schoenfeld Residuals Plots
+        type: Array
+        visible: (showSchoenfeldPlot)
+        clearWith:
+          - elapsed
+          - status
+          - statusEvent
+          - group
+          - covariates
+        template:
+          title: $key
+          type: Image
+          width: 500
+          height: 400
+          renderFun: .schoenfeldPlot
+          requiresData: true
+
+  - name: rocSection
+    title: Time-dependent ROC Analysis
+    type: Group
+    visible: (showRoc)
+    refs: [heagerty2000]
+    items:
+      - name: rocTable
+        title: Time-dependent ROC Results
+        type: Table
+        visible: (showRoc)
+        clearWith:
+          - elapsed
+          - status
+          - statusEvent
+          - rocPredictors
+          - rocTime
+          - rocCI
+          - rocWidth
+        columns:
+          - name: predictor
+            title: Predictor
+            type: text
+          - name: time
+            title: Time Point t
+            type: number
+          - name: auc
+            title: AUC
+            type: number
+          - name: aucLower
+            title: Lower CI
+            type: number
+            visible: (rocCI)
+          - name: aucUpper
+            title: Upper CI
+            type: number
+            visible: (rocCI)
+          - name: cutoff
+            title: Cut-off
+            type: number
+          - name: se
+            title: Sensitivity
+            type: number
+          - name: sp
+            title: Specificity
+            type: number
+
+      - name: rocPlot
+        title: Time-dependent ROC Curves
+        type: Image
+        width: 500
+        height: 500
+        renderFun: .rocPlot
+        visible: (showRoc && rocPlot)
+        requiresData: true
+        clearWith:
+          - elapsed
+          - status
+          - statusEvent
+          - rocPredictors
+          - rocTime
+          - rocCI
+          - rocWidth
+          - palBrewer
+...

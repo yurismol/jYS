@@ -53,6 +53,9 @@ datasets:
   - name: Logistic Regression blood cells
     path: LR_BLOOD.omv
     description: Logistic Regression demonstration
+  - name: Survival Analysis Kaggle
+    path: SRV_Kaggle.omv
+    description: Survival Analysis (Kaplan-Meier and Cox regression) demonstration
 analyses:
   - title: Correlation clustering
     name: mCOR
@@ -126,6 +129,16 @@ analyses:
     description: >-
       Logistic Regression with feature selection. Note that cross-validation
       fold partitioning uses a hardcoded random seed (42) for reproducibility.
+  - title: Survival Analysis
+    name: mSRV
+    ns: jYS
+    category: analyses
+    menuGroup: jYS
+    menuSubgroup: Regression & Classification
+    menuTitle: Survival Analysis
+    description: >-
+      Survival Analysis including Kaplan-Meier curves, log-rank tests, Cox
+      proportional hazards regression, and time-dependent ROC curves.
   - title: Principal Component Analysis
     name: mPCA
     ns: jYS

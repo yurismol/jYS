@@ -1,0 +1,128 @@
+title: Survival Analysis
+name: mSRV
+jus: '3.0'
+stage: 0
+compilerMode: tame
+children:
+  - type: VariableSupplier
+    persistentItems: false
+    stretchFactor: 1
+    children:
+      - type: TargetLayoutBox
+        label: Time Variable (elapsed time)
+        children:
+          - type: VariablesListBox
+            name: elapsed
+            maxItemCount: 1
+            isTarget: true
+      - type: TargetLayoutBox
+        label: Status / Event Variable
+        children:
+          - type: VariablesListBox
+            name: status
+            maxItemCount: 1
+            isTarget: true
+          - type: LevelSelector
+            name: statusEvent
+            label: Level
+            enable: ({return ui['status'].value()!==null;})
+      - type: TargetLayoutBox
+        label: Grouping Variable
+        children:
+          - type: VariablesListBox
+            name: group
+            maxItemCount: 1
+            isTarget: true
+      - type: TargetLayoutBox
+        label: Covariates (Cox regression)
+        children:
+          - type: VariablesListBox
+            name: covariates
+            isTarget: true
+            height: small
+
+  - type: VariableSupplier
+    persistentItems: false
+    stretchFactor: 1
+    children:
+      - type: TargetLayoutBox
+        label: Predictors (ROC)
+        children:
+          - type: VariablesListBox
+            name: rocPredictors
+            isTarget: true
+            height: small
+
+
+  - type: CollapseBox
+    label: Kaplan-Meier Curves & Estimation
+    collapsed: false
+    stretchFactor: 1
+    children:
+      - type: CheckBox
+        name: showKm
+        children:
+          - type: CheckBox
+            name: kmCI
+            enable: (showKm)
+          - type: CheckBox
+            name: kmTable
+            enable: (showKm)
+          - type: ComboBox
+            name: kmType
+            enable: (showKm)
+
+  - type: CollapseBox
+    label: Group Comparison
+    collapsed: false
+    stretchFactor: 1
+    children:
+      - type: CheckBox
+        name: showLogRank
+
+  - type: CollapseBox
+    label: Cox Proportional Hazards Regression
+    collapsed: false
+    stretchFactor: 1
+    children:
+      - type: CheckBox
+        name: showCox
+        children:
+          - type: CheckBox
+            name: coxForest
+            enable: (showCox)
+          - type: CheckBox
+            name: coxAssump
+            enable: (showCox)
+          - type: CheckBox
+            name: showSchoenfeldPlot
+            enable: (showCox && coxAssump)
+
+  - type: CollapseBox
+    label: Time-dependent ROC Analysis
+    collapsed: false
+    stretchFactor: 1
+    children:
+      - type: CheckBox
+        name: showRoc
+        children:
+          - type: TextBox
+            name: rocTime
+            format: number
+            enable: (showRoc)
+          - type: CheckBox
+            name: rocCI
+            enable: (showRoc)
+            children:
+              - type: TextBox
+                name: rocWidth
+                label: Interval
+                suffix: '%'
+                format: number
+                enable: (showRoc && rocCI)
+          - type: CheckBox
+            name: rocPlot
+            enable: (showRoc)
+          - type: ComboBox
+            name: palBrewer
+            enable: (rocPlot)
