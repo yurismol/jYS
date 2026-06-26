@@ -92,6 +92,23 @@ children:
       - name: show_formula
         type: CheckBox
         label: Show Mathematical Model Formula
+      - name: showForest
+        type: CheckBox
+        label: Forest plot of Odds Ratios
+        children:
+          - name: forestLog
+            type: CheckBox
+            label: Log scale
+            enable: (showForest)
+          - name: forestClip
+            type: CheckBox
+            label: Clip very large Odds Ratios
+            enable: (showForest && !forestLog)
+          - name: forestClipThreshold
+            type: TextBox
+            label: Clipping threshold
+            format: number
+            enable: (showForest && !forestLog && forestClip)
       - name: show_roc
         type: CheckBox
         label: Show ROC Analysis curves

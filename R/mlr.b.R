@@ -114,6 +114,12 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             # Populate Model Coefficients Table
             private$.populate_coefficients_table(fit_full, X_selected, is_multinomial, y_levels)
             
+            # Generate Forest Plot data if requested
+            if (self$options$showForest) {
+                forest_data <- private$.prepare_forest_data(fit_full, X_selected, is_multinomial, y_levels)
+                self$results$forestPlot$setState(forest_data)
+            }
+            
             # Generate and render mathematical formula
             if (self$options$show_formula) {
                 formula_html <- private$.generate_formula_html(fit_full, is_multinomial, y_levels)
@@ -1680,6 +1686,251 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 return(FALSE)
             })
             return(result)
+        },
+        
+        .forestPlot = function(image, ggtheme, theme, ...) {
+            forest_list <- image$state
+            if (is.null(forest_list) || length(forest_list) == 0) return(FALSE)
+            
+            df <- do.call(rbind, lapply(forest_list, as.data.frame))
+            if (nrow(df) == 0) return(FALSE)
+            
+            if ("level" %in% colnames(df) && !all(is.na(df$level))) {
+                df$term_label <- paste0(df$level, ": ", df$term)
+                df$Group <- as.factor(df$level)
+            } else {
+                df$term_label <- df$term
+                df$Group <- "Predictor"
+            }
+            
+            df$term_label <- factor(df$term_label, levels = rev(df$term_label))
+            
+            # Setup plot coordinates/clipping
+            df$lower_plot <- df$lower
+            df$upper_plot <- df$upper
+            df$or_plot <- df$or
+            df$clip_upper <- FALSE
+            df$clip_lower <- FALSE
+            
+            show_forest_log <- isTRUE(self$options$forestLog)
+            show_forest_clip <- FALSE
+            if ("forestClip" %in% names(self$options)) {
+                show_forest_clip <- isTRUE(self$options$forestClip)
+            }
+            
+            clip_threshold <- 10
+            if ("forestClipThreshold" %in% names(self$options)) {
+                clip_threshold <- self$options$forestClipThreshold
+                if (is.null(clip_threshold) || is.na(clip_threshold)) {
+                    clip_threshold <- 10
+                }
+            }
+            
+            if (show_forest_clip && !show_forest_log) {
+                lower_threshold <- 1 / clip_threshold
+                
+                df$clip_upper <- df$upper > clip_threshold
+                df$clip_lower <- df$lower < lower_threshold
+                
+                df$upper_plot <- ifelse(df$clip_upper, clip_threshold, df$upper)
+                df$lower_plot <- ifelse(df$clip_lower, lower_threshold, df$lower)
+                
+                # Make sure the point estimate itself is clipped if it goes outside the bounds
+                df$or_plot <- ifelse(df$or_plot > clip_threshold, clip_threshold, df$or_plot)
+                df$or_plot <- ifelse(df$or_plot < lower_threshold, lower_threshold, df$or_plot)
+            }
+            
+            p <- ggplot2::ggplot(df, ggplot2::aes(x = term_label, y = or_plot)) +
+                ggplot2::geom_hline(yintercept = 1, linetype = "dashed", color = "#E54028", linewidth = 0.8)
+                
+            df_unclipped <- df[!df$clip_lower & !df$clip_upper, ]
+            df_clip_up <- df[!df$clip_lower & df$clip_upper, ]
+            df_clip_low <- df[df$clip_lower & !df$clip_upper, ]
+            df_clip_both <- df[df$clip_lower & df$clip_upper, ]
+            
+            # 1. Unclipped
+            if (nrow(df_unclipped) > 0) {
+                p <- p + ggplot2::geom_errorbar(
+                    data = df_unclipped,
+                    ggplot2::aes(ymin = lower_plot, ymax = upper_plot, color = Group),
+                    width = 0.2,
+                    linewidth = 0.8
+                )
+            }
+            
+            # 2. Clipped at upper end only (arrow on the right, cap on the left)
+            if (nrow(df_clip_up) > 0) {
+                p <- p + ggplot2::geom_segment(
+                    data = df_clip_up,
+                    ggplot2::aes(x = term_label, xend = term_label, y = lower_plot, yend = upper_plot, color = Group),
+                    arrow = ggplot2::arrow(length = ggplot2::unit(0.12, "inches"), ends = "last", type = "closed"),
+                    linewidth = 0.8
+                )
+                p <- p + ggplot2::geom_segment(
+                    data = df_clip_up,
+                    ggplot2::aes(
+                        x = as.numeric(term_label) - 0.1,
+                        xend = as.numeric(term_label) + 0.1,
+                        y = lower_plot,
+                        yend = lower_plot,
+                        color = Group
+                    ),
+                    linewidth = 0.8
+                )
+            }
+            
+            # 3. Clipped at lower end only (arrow on the left, cap on the right)
+            if (nrow(df_clip_low) > 0) {
+                p <- p + ggplot2::geom_segment(
+                    data = df_clip_low,
+                    ggplot2::aes(x = term_label, xend = term_label, y = lower_plot, yend = upper_plot, color = Group),
+                    arrow = ggplot2::arrow(length = ggplot2::unit(0.12, "inches"), ends = "first", type = "closed"),
+                    linewidth = 0.8
+                )
+                p <- p + ggplot2::geom_segment(
+                    data = df_clip_low,
+                    ggplot2::aes(
+                        x = as.numeric(term_label) - 0.1,
+                        xend = as.numeric(term_label) + 0.1,
+                        y = upper_plot,
+                        yend = upper_plot,
+                        color = Group
+                    ),
+                    linewidth = 0.8
+                )
+            }
+            
+            # 4. Clipped at both ends (arrows on both sides)
+            if (nrow(df_clip_both) > 0) {
+                p <- p + ggplot2::geom_segment(
+                    data = df_clip_both,
+                    ggplot2::aes(x = term_label, xend = term_label, y = lower_plot, yend = upper_plot, color = Group),
+                    arrow = ggplot2::arrow(length = ggplot2::unit(0.12, "inches"), ends = "both", type = "closed"),
+                    linewidth = 0.8
+                )
+            }
+            
+            p <- p + ggplot2::geom_point(ggplot2::aes(fill = Group), color = "white", shape = 21, size = 4, stroke = 0.5) +
+                ggplot2::coord_flip()
+                
+            # Set axis labels and title with logarithmic indicator if applicable
+            y_label <- if (show_forest_log) {
+                .("Log(OR)")
+            } else {
+                .("Odds Ratio (OR)")
+            }
+            
+            p <- p + ggplot2::labs(
+                    x = "",
+                    y = y_label,
+                    title = .("Forest Plot of Odds Ratios")
+                ) +
+                ggplot2::theme_bw() +
+                ggplot2::theme(
+                    plot.title = ggplot2::element_text(face = "bold", size = 16, hjust = 0.5),
+                    axis.title = ggplot2::element_text(size = 14),
+                    axis.text = ggplot2::element_text(size = 12),
+                    legend.text = ggplot2::element_text(size = 12),
+                    panel.grid.major = ggplot2::element_line(linetype = "dashed", color = "#e0e0e0"),
+                    panel.grid.minor = ggplot2::element_blank()
+                )
+            
+            if (show_forest_log) {
+                p <- p + ggplot2::scale_y_log10(labels = function(x) sprintf("%g", x))
+            } else {
+                p <- p + ggplot2::scale_y_continuous(labels = function(x) sprintf("%g", x))
+            }
+            
+            n_groups <- length(unique(df$Group))
+            pal <- self$options$palBrewer
+            if (n_groups > 1) {
+                if (pal != "none") {
+                    cols <- try(RColorBrewer::brewer.pal(n = max(3, n_groups), name = pal)[1:n_groups], silent = TRUE)
+                    if (!inherits(cols, "try-error") && !any(is.na(cols))) {
+                        p <- p + ggplot2::scale_color_manual(values = cols) + ggplot2::scale_fill_manual(values = cols)
+                    }
+                }
+                p <- p + ggplot2::theme(legend.position = "bottom", legend.title = ggplot2::element_blank())
+            } else {
+                p <- p + ggplot2::scale_color_manual(values = "#3366B2") + ggplot2::scale_fill_manual(values = "#3366B2") +
+                    ggplot2::theme(legend.position = "none")
+            }
+            
+            print(p)
+            return(TRUE)
+        },
+        
+        .prepare_forest_data = function(fit, X_selected, is_multinomial, y_levels) {
+            forest_list <- list()
+            
+            if (is_multinomial) {
+                sum_fit <- summary(fit)
+                coef_matrix <- sum_fit$coefficients
+                se_matrix <- sum_fit$standard.errors
+                
+                comparison_levels <- rownames(coef_matrix)
+                terms <- colnames(coef_matrix)
+                
+                for (level in comparison_levels) {
+                    for (term in terms) {
+                        if (term == "(Intercept)") next
+                        
+                        est <- coef_matrix[level, term]
+                        se <- se_matrix[level, term]
+                        
+                        odds_ratio <- exp(est)
+                        ci_lower <- exp(est - 1.96 * se)
+                        ci_upper <- exp(est + 1.96 * se)
+                        
+                        clean_col_name <- gsub("^`|`$", "", term)
+                        if (clean_col_name %in% colnames(X_selected)) {
+                            disp_name <- clean_col_name
+                        } else {
+                            disp_name <- term
+                        }
+                        
+                        forest_list[[length(forest_list) + 1]] <- list(
+                            level = level,
+                            term = disp_name,
+                            or = odds_ratio,
+                            lower = ci_lower,
+                            upper = ci_upper
+                        )
+                    }
+                }
+            } else {
+                sum_fit <- summary(fit)
+                coef_matrix <- sum_fit$coefficients
+                terms <- rownames(coef_matrix)
+                
+                for (i in seq_along(terms)) {
+                    term_name <- terms[i]
+                    if (term_name == "(Intercept)") next
+                    
+                    est <- coef_matrix[term_name, "Estimate"]
+                    se <- coef_matrix[term_name, "Std. Error"]
+                    
+                    odds_ratio <- exp(est)
+                    ci_lower <- exp(est - 1.96 * se)
+                    ci_upper <- exp(est + 1.96 * se)
+                    
+                    clean_col_name <- gsub("^`|`$", "", term_name)
+                    if (clean_col_name %in% colnames(X_selected)) {
+                        disp_name <- clean_col_name
+                    } else {
+                        disp_name <- term_name
+                    }
+                    
+                    forest_list[[length(forest_list) + 1]] <- list(
+                        level = NA,
+                        term = disp_name,
+                        or = odds_ratio,
+                        lower = ci_lower,
+                        upper = ci_upper
+                    )
+                }
+            }
+            return(forest_list)
         }
     )
 )

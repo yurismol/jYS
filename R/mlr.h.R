@@ -27,6 +27,10 @@ mLROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             roc_x = "1spec",
             roc_unit = "percent",
             palBrewer = "Dark2",
+            showForest = FALSE,
+            forestLog = FALSE,
+            forestClip = FALSE,
+            forestClipThreshold = 10,
             seed = 42, ...) {
 
             super$initialize(
@@ -175,6 +179,22 @@ mLROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "Set2",
                     "Set3"),
                 default="Dark2")
+            private$..showForest <- jmvcore::OptionBool$new(
+                "showForest",
+                showForest,
+                default=FALSE)
+            private$..forestLog <- jmvcore::OptionBool$new(
+                "forestLog",
+                forestLog,
+                default=FALSE)
+            private$..forestClip <- jmvcore::OptionBool$new(
+                "forestClip",
+                forestClip,
+                default=FALSE)
+            private$..forestClipThreshold <- jmvcore::OptionNumber$new(
+                "forestClipThreshold",
+                forestClipThreshold,
+                default=10)
             private$..seed <- jmvcore::OptionInteger$new(
                 "seed",
                 seed,
@@ -205,6 +225,10 @@ mLROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..roc_x)
             self$.addOption(private$..roc_unit)
             self$.addOption(private$..palBrewer)
+            self$.addOption(private$..showForest)
+            self$.addOption(private$..forestLog)
+            self$.addOption(private$..forestClip)
+            self$.addOption(private$..forestClipThreshold)
             self$.addOption(private$..seed)
             self$.addOption(private$..predClass)
             self$.addOption(private$..predProb)
@@ -231,6 +255,10 @@ mLROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         roc_x = function() private$..roc_x$value,
         roc_unit = function() private$..roc_unit$value,
         palBrewer = function() private$..palBrewer$value,
+        showForest = function() private$..showForest$value,
+        forestLog = function() private$..forestLog$value,
+        forestClip = function() private$..forestClip$value,
+        forestClipThreshold = function() private$..forestClipThreshold$value,
         seed = function() private$..seed$value,
         predClass = function() private$..predClass$value,
         predProb = function() private$..predProb$value),
@@ -256,6 +284,10 @@ mLROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..roc_x = NA,
         ..roc_unit = NA,
         ..palBrewer = NA,
+        ..showForest = NA,
+        ..forestLog = NA,
+        ..forestClip = NA,
+        ..forestClipThreshold = NA,
         ..seed = NA,
         ..predClass = NA,
         ..predProb = NA)
@@ -269,6 +301,7 @@ mLRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         infoTable = function() private$.items[["infoTable"]],
         coeffTable = function() private$.items[["coeffTable"]],
         formulaHtml = function() private$.items[["formulaHtml"]],
+        forestPlot = function() private$.items[["forestPlot"]],
         rocTable = function() private$.items[["rocTable"]],
         rocPlot = function() private$.items[["rocPlot"]],
         predClass = function() private$.items[["predClass"]],
@@ -385,6 +418,27 @@ mLRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "lasso_penalty",
                     "group",
                     "selgroup")))
+            self$add(jmvcore::Image$new(
+                options=options,
+                name="forestPlot",
+                title="Forest Plot of Odds Ratios",
+                width=500,
+                height=400,
+                renderFun=".forestPlot",
+                visible="(showForest)",
+                requiresData=TRUE,
+                clearWith=list(
+                    "dep",
+                    "covs",
+                    "factors",
+                    "method",
+                    "elastic_alpha",
+                    "lasso_penalty",
+                    "group",
+                    "selgroup",
+                    "forestLog",
+                    "forestClip",
+                    "forestClipThreshold")))
             self$add(jmvcore::Table$new(
                 options=options,
                 name="rocTable",
@@ -543,6 +597,10 @@ mLRBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param roc_x .
 #' @param roc_unit .
 #' @param palBrewer .
+#' @param showForest .
+#' @param forestLog .
+#' @param forestClip .
+#' @param forestClipThreshold .
 #' @param seed .
 #' @return A results object containing:
 #' \tabular{llllll}{
@@ -550,6 +608,7 @@ mLRBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$infoTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$coeffTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$formulaHtml} \tab \tab \tab \tab \tab a html \cr
+#'   \code{results$forestPlot} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$rocTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$rocPlot} \tab \tab \tab \tab \tab an array of images \cr
 #'   \code{results$predClass} \tab \tab \tab \tab \tab an output \cr
@@ -586,6 +645,10 @@ mLR <- function(
     roc_x = "1spec",
     roc_unit = "percent",
     palBrewer = "Dark2",
+    showForest = FALSE,
+    forestLog = FALSE,
+    forestClip = FALSE,
+    forestClipThreshold = 10,
     seed = 42) {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
@@ -629,6 +692,10 @@ mLR <- function(
         roc_x = roc_x,
         roc_unit = roc_unit,
         palBrewer = palBrewer,
+        showForest = showForest,
+        forestLog = forestLog,
+        forestClip = forestClip,
+        forestClipThreshold = forestClipThreshold,
         seed = seed)
 
     analysis <- mLRClass$new(

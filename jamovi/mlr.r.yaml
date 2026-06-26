@@ -94,6 +94,27 @@ items:
           - group
           - selgroup
 
+    - name: forestPlot
+      title: Forest Plot of Odds Ratios
+      type: Image
+      width: 500
+      height: 400
+      renderFun: .forestPlot
+      visible: (showForest)
+      requiresData: true
+      clearWith:
+          - dep
+          - covs
+          - factors
+          - method
+          - elastic_alpha
+          - lasso_penalty
+          - group
+          - selgroup
+          - forestLog
+          - forestClip
+          - forestClipThreshold
+
     - name: rocTable
       title: ROC Quantitative Evaluation
       type: Table

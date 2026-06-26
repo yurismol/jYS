@@ -198,6 +198,26 @@ options:
           name:  Set3
       default: Dark2
 
+    - name: showForest
+      title: Forest plot of Odds Ratios
+      type: Bool
+      default: false
+
+    - name: forestLog
+      title: Log scale for Odds Ratios
+      type: Bool
+      default: false
+
+    - name: forestClip
+      title: Clip very large Odds Ratios
+      type: Bool
+      default: false
+
+    - name: forestClipThreshold
+      title: Clipping threshold
+      type: Number
+      default: 10
+
     - name: seed
       title: Seed number
       type: Integer
