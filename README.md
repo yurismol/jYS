@@ -2,9 +2,11 @@ jYS
 =============
 Some usefull [Jamovi](https://www.jamovi.org/) procedures for researchers
 
-- Correlation Clastering
+- Correlation Clustering
   - corrplot (Taiyun Wei et al.)
-  - glasso (Jerome Friedman et al.)
+  - Partial & Semi-Partial Correlations: ppcor (Seongho Kim)
+  - Graphical Lasso (GLASSO): glasso (Jerome Friedman et al.)
+  - Network visualizations & layouts: qgraph (Sacha Epskamp et al.)
 
 - Multi ROC Classification
   - pROC (Xavier Robin et al.)

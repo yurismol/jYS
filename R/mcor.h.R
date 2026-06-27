@@ -31,6 +31,8 @@ mCOROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             clustMan = "",
             clustMat = FALSE,
             glasso = FALSE,
+            netMethod = "glasso",
+            glassoLayout = "spring",
             glassoTable = FALSE,
             glassoPlot = TRUE,
             glassoType = "ebic",
@@ -216,6 +218,22 @@ mCOROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "glasso",
                 glasso,
                 default=FALSE)
+            private$..netMethod <- jmvcore::OptionList$new(
+                "netMethod",
+                netMethod,
+                options=list(
+                    "glasso",
+                    "classic",
+                    "semiclassic"),
+                default="glasso")
+            private$..glassoLayout <- jmvcore::OptionList$new(
+                "glassoLayout",
+                glassoLayout,
+                options=list(
+                    "spring",
+                    "circle",
+                    "groups"),
+                default="spring")
             private$..glassoTable <- jmvcore::OptionBool$new(
                 "glassoTable",
                 glassoTable,
@@ -281,6 +299,8 @@ mCOROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..clustMan)
             self$.addOption(private$..clustMat)
             self$.addOption(private$..glasso)
+            self$.addOption(private$..netMethod)
+            self$.addOption(private$..glassoLayout)
             self$.addOption(private$..glassoTable)
             self$.addOption(private$..glassoPlot)
             self$.addOption(private$..glassoType)
@@ -316,6 +336,8 @@ mCOROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         clustMan = function() private$..clustMan$value,
         clustMat = function() private$..clustMat$value,
         glasso = function() private$..glasso$value,
+        netMethod = function() private$..netMethod$value,
+        glassoLayout = function() private$..glassoLayout$value,
         glassoTable = function() private$..glassoTable$value,
         glassoPlot = function() private$..glassoPlot$value,
         glassoType = function() private$..glassoType$value,
@@ -350,6 +372,8 @@ mCOROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..clustMan = NA,
         ..clustMat = NA,
         ..glasso = NA,
+        ..netMethod = NA,
+        ..glassoLayout = NA,
         ..glassoTable = NA,
         ..glassoPlot = NA,
         ..glassoType = NA,
@@ -527,7 +551,7 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         super$initialize(
                             options=options,
                             name="glassoGroup",
-                            title="Graphical Lasso (GLASSO) Partial Correlation Network",
+                            title="Partial Correlation Network",
                             refs=list(
                     "glasso",
                     "qgraph"))
@@ -538,6 +562,7 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             visible="(glasso && glassoTable)",
                             rows="(vars)",
                             clearWith=list(
+                                "netMethod",
                                 "glassoType",
                                 "glassoGamma",
                                 "glassoRho",
@@ -621,6 +646,7 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             title="Centrality metrics (hub markers)",
                             visible="(glasso && glassoHub)",
                             clearWith=list(
+                                "netMethod",
                                 "glassoType",
                                 "glassoGamma",
                                 "glassoRho",
@@ -659,6 +685,8 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             renderFun=".glassoPlot",
                             requiresData=TRUE,
                             clearWith=list(
+                                "netMethod",
+                                "glassoLayout",
                                 "glassoType",
                                 "glassoGamma",
                                 "glassoRho",
@@ -682,7 +710,7 @@ mCORBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             super$initialize(
                 package = "jYS",
                 name = "mCOR",
-                version = c(1,1,1),
+                version = c(1,1,3),
                 options = options,
                 results = mCORResults$new(options=options),
                 data = data,
@@ -725,6 +753,8 @@ mCORBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param clustMan .
 #' @param clustMat .
 #' @param glasso .
+#' @param netMethod .
+#' @param glassoLayout .
 #' @param glassoTable .
 #' @param glassoPlot .
 #' @param glassoType .
@@ -779,6 +809,8 @@ mCOR <- function(
     clustMan = "",
     clustMat = FALSE,
     glasso = FALSE,
+    netMethod = "glasso",
+    glassoLayout = "spring",
     glassoTable = FALSE,
     glassoPlot = TRUE,
     glassoType = "ebic",
@@ -827,6 +859,8 @@ mCOR <- function(
         clustMan = clustMan,
         clustMat = clustMat,
         glasso = glasso,
+        netMethod = netMethod,
+        glassoLayout = glassoLayout,
         glassoTable = glassoTable,
         glassoPlot = glassoPlot,
         glassoType = glassoType,

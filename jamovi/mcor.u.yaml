@@ -74,19 +74,6 @@ children:
         margin: large
         children:
           - type: CheckBox
-            name: hclust
-            children:
-              - type: ComboBox
-                name: clustMet
-                enable: (hclust)
-              - type: TextBox
-                name: numClust
-                format: number
-                enable: (hclust)
-              - type: CheckBox
-                name: clustCol
-                enable: (hclust)
-          - type: CheckBox
             name: plots
             children:
               - type: ComboBox
@@ -112,12 +99,31 @@ children:
               - type: ComboBox
                 name: clPos
                 enable: (plots)
+          - type: CheckBox
+            name: hclust
+            children:
+              - type: ComboBox
+                name: clustMet
+                enable: (hclust)
+              - type: TextBox
+                name: numClust
+                format: number
+                enable: (hclust)
+              - type: CheckBox
+                name: clustCol
+                enable: (hclust)
   - type: LayoutBox
     margin: large
     children:
       - type: CheckBox
         name: glasso
         children:
+          - type: CheckBox
+            name: glassoTable
+            enable: (glasso)
+          - type: CheckBox
+            name: glassoHub
+            enable: (glasso)
           - type: CheckBox
             name: glassoPlot
             enable: (glasso)
@@ -127,20 +133,20 @@ children:
           - type: CheckBox
             name: glassoLabels
             enable: (glasso)
-          - type: CheckBox
-            name: glassoTable
+          - type: ComboBox
+            name: netMethod
             enable: (glasso)
-          - type: CheckBox
-            name: glassoHub
+          - type: ComboBox
+            name: glassoLayout
             enable: (glasso)
           - type: ComboBox
             name: glassoType
-            enable: (glasso)
+            enable: (glasso && {return ui['netMethod'].value() == 'glasso';})
           - type: TextBox
             name: glassoGamma
             format: number
-            enable: (glasso && {return ui['glassoType'].value() == 'ebic';})
+            enable: (glasso && {return ui['netMethod'].value() == 'glasso' && ui['glassoType'].value() == 'ebic';})
           - type: TextBox
             name: glassoRho
             format: number
-            enable: (glasso && {return ui['glassoType'].value() == 'manual';})
+            enable: (glasso && {return ui['netMethod'].value() == 'glasso' && ui['glassoType'].value() == 'manual';})

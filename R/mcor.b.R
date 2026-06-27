@@ -258,67 +258,110 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             image$setState(cor)
 
             if (self$options$glasso) {
-                if ( ! (requireNamespace("glasso", quietly = TRUE) && requireNamespace("qgraph", quietly = TRUE))) {
-                    jmvcore::reject(.("Packages 'glasso' and 'qgraph' are required for this analysis. Please install them."), code='')
-                }
+                netMethod <- self$options$netMethod
                 
-                if (any(is.na(corr))) {
-                    jmvcore::reject(.("Correlation matrix contains missing values. Cannot compute Graphical Lasso."), code='')
-                }
-                
-                n <- sum(complete.cases(dat[, vars, drop=FALSE]))
-                if (n < 4) {
-                    jmvcore::reject(.("Sample size is too small to compute Graphical Lasso."), code='')
-                }
-                
-                # Check if corr is positive definite. If not, try to make it positive definite.
-                pd_adjusted <- FALSE
-                ev <- eigen(corr, symmetric = TRUE, only.values = TRUE)$values
-                if (any(ev <= 1e-8)) {
-                    if (requireNamespace("Matrix", quietly = TRUE)) {
-                        c_names <- colnames(corr)
-                        r_names <- rownames(corr)
-                        npd <- Matrix::nearPD(corr, corr = TRUE)
-                        corr <- as.matrix(npd$mat)
-                        colnames(corr) <- c_names
-                        rownames(corr) <- r_names
-                        pd_adjusted <- TRUE
+                if (netMethod == "glasso") {
+                    if ( ! (requireNamespace("glasso", quietly = TRUE) && requireNamespace("qgraph", quietly = TRUE))) {
+                        jmvcore::reject(.("Packages 'glasso' and 'qgraph' are required for this analysis. Please install them."), code='')
                     }
-                }
-                
-                pcor <- tryCatch({
-                    if (self$options$glassoType == "ebic") {
-                        gamma <- self$options$glassoGamma
-                        res <- qgraph::EBICglasso(corr, n = n, gamma = gamma, penalize.diagonal = FALSE)
-                        res
-                    } else {
-                        rho <- self$options$glassoRho
-                        gl <- glasso::glasso(corr, rho = rho, penalize.diagonal = FALSE)
-                        wi <- gl$wi
-                        d <- diag(wi)
-                        if (any(d <= 0)) {
-                            stop(.("Precision matrix diagonal elements are not all positive."))
-                        }
-                        pcor_mat <- -wi / (sqrt(d) %*% t(sqrt(d)))
-                        diag(pcor_mat) <- 0
-                        pcor_mat <- (pcor_mat + t(pcor_mat)) / 2
-                        pcor_mat
-                    }
-                }, error = function(e) {
-                    jmvcore::reject(jmvcore::format(.("Error in Graphical Lasso calculation: {}"), e$message), code='')
-                })
-                
-                colnames(pcor) <- vars
-                rownames(pcor) <- vars
-                
-                # Calculate p-values for partial correlations
-                df_glasso <- n - length(vars)
-                corp_glasso <- matrix(NA, nrow=length(vars), ncol=length(vars))
-                if (df_glasso > 0) {
-                    t_val <- ifelse(abs(pcor) < 1, pcor * sqrt(df_glasso / (1 - pcor^2)), Inf)
-                    corp_glasso <- 2 * pt(abs(t_val), df = df_glasso, lower.tail = FALSE)
-                    diag(corp_glasso) <- 0
                     
+                    if (any(is.na(corr))) {
+                        jmvcore::reject(.("Correlation matrix contains missing values. Cannot compute Graphical Lasso."), code='')
+                    }
+                    
+                    n <- sum(complete.cases(dat[, vars, drop=FALSE]))
+                    if (n < 4) {
+                        jmvcore::reject(.("Sample size is too small to compute Graphical Lasso."), code='')
+                    }
+                    
+                    # Check if corr is positive definite. If not, try to make it positive definite.
+                    pd_adjusted <- FALSE
+                    ev <- eigen(corr, symmetric = TRUE, only.values = TRUE)$values
+                    if (any(ev <= 1e-8)) {
+                        if (requireNamespace("Matrix", quietly = TRUE)) {
+                            c_names <- colnames(corr)
+                            r_names <- rownames(corr)
+                            npd <- Matrix::nearPD(corr, corr = TRUE)
+                            corr <- as.matrix(npd$mat)
+                            colnames(corr) <- c_names
+                            rownames(corr) <- r_names
+                            pd_adjusted <- TRUE
+                        }
+                    }
+                    
+                    pcor <- tryCatch({
+                        if (self$options$glassoType == "ebic") {
+                            gamma <- self$options$glassoGamma
+                            res <- qgraph::EBICglasso(corr, n = n, gamma = gamma, penalize.diagonal = FALSE)
+                            res
+                        } else {
+                            rho <- self$options$glassoRho
+                            gl <- glasso::glasso(corr, rho = rho, penalize.diagonal = FALSE)
+                            wi <- gl$wi
+                            d <- diag(wi)
+                            if (any(d <= 0)) {
+                                stop(.("Precision matrix diagonal elements are not all positive."))
+                            }
+                            pcor_mat <- -wi / (sqrt(d) %*% t(sqrt(d)))
+                            diag(pcor_mat) <- 0
+                            pcor_mat <- (pcor_mat + t(pcor_mat)) / 2
+                            pcor_mat
+                        }
+                    }, error = function(e) {
+                        jmvcore::reject(jmvcore::format(.("Error in Graphical Lasso calculation: {}"), e$message), code='')
+                    })
+                    
+                    colnames(pcor) <- vars
+                    rownames(pcor) <- vars
+                    
+                    # Calculate p-values for partial correlations
+                    df_glasso <- n - length(vars)
+                    corp_glasso <- matrix(NA, nrow=length(vars), ncol=length(vars))
+                    if (df_glasso > 0) {
+                        t_val <- ifelse(abs(pcor) < 1, pcor * sqrt(df_glasso / (1 - pcor^2)), Inf)
+                        corp_glasso <- 2 * pt(abs(t_val), df = df_glasso, lower.tail = FALSE)
+                        diag(corp_glasso) <- 0
+                        
+                        if (self$options$adjust != 'none') {
+                            pp_glasso <- corp_glasso[lower.tri(corp_glasso, diag = FALSE)]
+                            pp_glasso <- p.adjust(pp_glasso, self$options$adjust)
+                            corp_glasso[lower.tri(corp_glasso, diag = FALSE)] <- pp_glasso
+                            
+                            pp_glasso <- corp_glasso[upper.tri(corp_glasso, diag = FALSE)]
+                            pp_glasso <- p.adjust(pp_glasso, self$options$adjust)
+                            corp_glasso[upper.tri(corp_glasso, diag = FALSE)] <- pp_glasso
+                        }
+                    }
+                } else if (netMethod == "classic") {
+                    # Classic partial correlation using ppcor
+                    if ( ! (requireNamespace("ppcor", quietly = TRUE) && requireNamespace("qgraph", quietly = TRUE))) {
+                        jmvcore::reject(.("Packages 'ppcor' and 'qgraph' are required for this analysis. Please install them."), code='')
+                    }
+                    
+                    # Prepare data: convert variables to numeric and omit NA
+                    c_dat <- dat[, vars, drop=FALSE]
+                    for (v in vars) {
+                        c_dat[[v]] <- jmvcore::toNumeric(c_dat[[v]])
+                    }
+                    c_dat <- c_dat[complete.cases(c_dat), , drop=FALSE]
+                    n <- nrow(c_dat)
+                    
+                    if (n < 4) {
+                        jmvcore::reject(.("Sample size is too small to compute Classical Partial Correlation."), code='')
+                    }
+                    
+                    pd_adjusted <- FALSE
+                    res_pcor <- tryCatch({
+                        ppcor::pcor(c_dat, method = self$options$method)
+                    }, error = function(e) {
+                        jmvcore::reject(jmvcore::format(.("Error in Classical Partial Correlation calculation: {}"), e$message), code='')
+                    })
+                    
+                    pcor <- res_pcor$estimate
+                    corp_glasso <- res_pcor$p.value
+                    df_glasso <- n - length(vars)
+                    
+                    # Apply multiple comparison adjustment to classic partial correlation p-values
                     if (self$options$adjust != 'none') {
                         pp_glasso <- corp_glasso[lower.tri(corp_glasso, diag = FALSE)]
                         pp_glasso <- p.adjust(pp_glasso, self$options$adjust)
@@ -327,6 +370,42 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         pp_glasso <- corp_glasso[upper.tri(corp_glasso, diag = FALSE)]
                         pp_glasso <- p.adjust(pp_glasso, self$options$adjust)
                         corp_glasso[upper.tri(corp_glasso, diag = FALSE)] <- pp_glasso
+                    }
+                } else {
+                    # Classic semi-partial correlation using ppcor
+                    if ( ! (requireNamespace("ppcor", quietly = TRUE) && requireNamespace("qgraph", quietly = TRUE))) {
+                        jmvcore::reject(.("Packages 'ppcor' and 'qgraph' are required for this analysis. Please install them."), code='')
+                    }
+                    
+                    # Prepare data: convert variables to numeric and omit NA
+                    c_dat <- dat[, vars, drop=FALSE]
+                    for (v in vars) {
+                        c_dat[[v]] <- jmvcore::toNumeric(c_dat[[v]])
+                    }
+                    c_dat <- c_dat[complete.cases(c_dat), , drop=FALSE]
+                    n <- nrow(c_dat)
+                    
+                    if (n < 4) {
+                        jmvcore::reject(.("Sample size is too small to compute Classical Semi-Partial Correlation."), code='')
+                    }
+                    
+                    pd_adjusted <- FALSE
+                    res_spcor <- tryCatch({
+                        ppcor::spcor(c_dat, method = self$options$method)
+                    }, error = function(e) {
+                        jmvcore::reject(jmvcore::format(.("Error in Classical Semi-Partial Correlation calculation: {}"), e$message), code='')
+                    })
+                    
+                    pcor <- res_spcor$estimate
+                    corp_glasso <- res_spcor$p.value
+                    df_glasso <- n - length(vars)
+                    
+                    # Apply multiple comparison adjustment to classic semi-partial correlation p-values
+                    if (self$options$adjust != 'none') {
+                        diag_mask <- diag(nrow(corp_glasso)) == 1
+                        p_vals <- corp_glasso[!diag_mask]
+                        p_vals <- p.adjust(p_vals, self$options$adjust)
+                        corp_glasso[!diag_mask] <- p_vals
                     }
                 }
                 
@@ -341,7 +420,7 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                             values[[paste0(colVarName, '[r]')]] <- '\u2014'
                             values[[paste0(colVarName, '[p]')]] <- '\u2014'
                             values[[paste0(colVarName, '[n]')]] <- '\u2014'
-                        } else if (j > i) {
+                        } else if (j > i && netMethod != "semiclassic") {
                             values[[paste0(colVarName, '[r]')]] <- ''
                             values[[paste0(colVarName, '[p]')]] <- ''
                             values[[paste0(colVarName, '[n]')]] <- ''
@@ -356,7 +435,7 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     if (self$options$flag && df_glasso > 0) {
                         for (j in seq_along(vars)) {
                             colVarName <- vars[[j]]
-                            if (j < i) {
+                            if (j != i && (j < i || netMethod == "semiclassic")) {
                                 p_val <- corp_glasso[i, j]
                                 if (!is.na(p_val)) {
                                     if (p_val < .001) {
@@ -393,10 +472,16 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     glassoTable$setNote('adjust', NULL)
                 }
                 
-                if (self$options$glassoType == "ebic") {
-                    glassoTable$setNote('glasso_tuning', jmvcore::format(.("<b>Tuning parameter selection</b>: Extended Bayesian Information Criterion (EBIC) with gamma = {gamma}"), gamma=self$options$glassoGamma))
+                if (netMethod == "glasso") {
+                    if (self$options$glassoType == "ebic") {
+                        glassoTable$setNote('glasso_tuning', jmvcore::format(.("<b>Method</b>: Graphical Lasso (GLASSO) with Extended Bayesian Information Criterion (EBIC) tuning parameter selection (gamma = {gamma}). GLASSO uses L1 regularization to shrink weak partial correlations to exactly zero, producing a sparse network."), gamma=self$options$glassoGamma))
+                    } else {
+                        glassoTable$setNote('glasso_tuning', jmvcore::format(.("<b>Method</b>: Graphical Lasso (GLASSO) with a manual penalty parameter (rho = {rho}). GLASSO uses L1 regularization to shrink weak partial correlations to exactly zero, producing a sparse network."), rho=self$options$glassoRho))
+                    }
+                } else if (netMethod == "classic") {
+                    glassoTable$setNote('glasso_tuning', .("<b>Method</b>: Classical Partial Correlation (no regularization/L1 penalty). Computes the linear association between each pair of variables while controlling for all other variables in the dataset, producing a fully connected network."))
                 } else {
-                    glassoTable$setNote('glasso_tuning', jmvcore::format(.("<b>Tuning parameter selection</b>: Manual penalty (ρ) = {rho}"), rho=self$options$glassoRho))
+                    glassoTable$setNote('glasso_tuning', .("<b>Method</b>: Classical Semi-Partial Correlation (no regularization/L1 penalty). Computes the linear association between each pair of variables while controlling for all other variables in the dataset from only the second variable, yielding an asymmetric network."))
                 }
 
                 # Calculate Centrality
@@ -415,11 +500,6 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     hubTable$setNote('cent_closeness', .("<b>CLOSENESS</b>: inverse of the sum of shortest path lengths to all other nodes; shows how central a node is in terms of distance."))
                     hubTable$setNote('cent_betweenness', .("<b>BETWEENNESS</b>: number of shortest paths between all pairs of nodes that pass through this node; shows its importance as a \"bridge\" or transit point."))
                     hubTable$setNote('cent_influence', .("<b>EXPECTED INFLUENCE</b>: sum of signed weights of connected edges; shows the node's net impact on the network, considering positive and negative relations."))
-                    if (self$options$glassoType == "ebic") {
-                        hubTable$setNote('glasso_tuning', jmvcore::format(.("<b>Tuning parameter selection</b>: Extended Bayesian Information Criterion (EBIC) with gamma = {gamma}"), gamma=self$options$glassoGamma))
-                    } else {
-                        hubTable$setNote('glasso_tuning', jmvcore::format(.("<b>Tuning parameter selection</b>: Manual penalty (ρ) = {rho}"), rho=self$options$glassoRho))
-                    }
                     
                     hub_data <- list()
                     for (i in seq_along(vars)) {
@@ -799,6 +879,11 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               nodeCols <- jmvcore::colorPalette(n = nClust, theme$palette, type = "fill")
           }
           
+          layout <- self$options$glassoLayout
+          if (layout == "groups" && is.null(groups)) {
+              layout <- "spring"
+          }
+          
           vsize <- 12
           if (self$options$glassoPlotScale) {
               vsize <- c(8, 18)
@@ -816,9 +901,20 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
           
           edge.labels <- FALSE
 
+          # Determine title based on method
+          plot_title <- if (subs > "") {
+              paste0(.("Network ("), subs, ")")
+          } else if (self$options$netMethod == "glasso") {
+              .("Partial Correlation Network (GLASSO)")
+          } else if (self$options$netMethod == "classic") {
+              .("Classical Partial Correlation Network")
+          } else {
+              .("Classical Semi-Partial Correlation Network")
+          }
+
           q_obj <- qgraph::qgraph(
               pcor,
-              layout = "spring",
+              layout = layout,
               labels = vars,
               theme = "classic",
               posCol = posCol,
@@ -826,7 +922,7 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               groups = groups,
               color = nodeCols,
               legend = FALSE,
-              title = if (subs > "") paste0(.("Network ("), subs, ")") else .("Partial Correlation Network (GLASSO)"),
+              title = plot_title,
               title.cex = 1.2,
               vsize = vsize,
               label.cex = 1.0,

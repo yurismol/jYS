@@ -1,7 +1,7 @@
 Package: jYS
 Type: Package
 Title: jYS Extended Functions
-Version: 1.1.1
+Version: 1.1.2
 Author: Yuri Smolyakov
 Maintainer: Yuri Smolyakov <smolyakov@rambler.ru>
 Description: Graphic extensions of the functionality of popular data analysis methods:
@@ -14,7 +14,7 @@ LazyData: true
 Imports: jmvcore (>= 0.8.5), R6, dendextend, corrplot, pROC,
          RColorBrewer, missForest, missRanger, ggmice,
          car, ggrepel, glmnet, ggplot2, glasso, qgraph, reshape2,
-         survival, survminer, ggsurvfit
+         survival, survminer, ggsurvfit, ppcor
 Remotes: NoahHellen/missr, HansLandsheer/UncertainInterval, metinbulus/pwrss
 Suggests: shiny, testthat
 

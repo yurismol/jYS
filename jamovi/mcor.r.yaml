@@ -138,7 +138,7 @@ items:
           requiresData: true
 
     - name: glassoGroup
-      title: Graphical Lasso (GLASSO) Partial Correlation Network
+      title: Partial Correlation Network
       type: Group
       visible: (glasso)
       refs: [glasso, qgraph]
@@ -149,6 +149,7 @@ items:
           visible: (glasso && glassoTable)
           rows: (vars)
           clearWith:
+            - netMethod
             - glassoType
             - glassoGamma
             - glassoRho
@@ -221,6 +222,7 @@ items:
           type: Table
           visible: (glasso && glassoHub)
           clearWith:
+            - netMethod
             - glassoType
             - glassoGamma
             - glassoRho
@@ -254,6 +256,8 @@ items:
           renderFun: .glassoPlot
           requiresData: true
           clearWith:
+            - netMethod
+            - glassoLayout
             - glassoType
             - glassoGamma
             - glassoRho
