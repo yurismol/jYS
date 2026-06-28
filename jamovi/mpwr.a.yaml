@@ -49,6 +49,8 @@ options:
           title: "Chi-square Goodness-of-Fit / Independence (Chi-square Test)"
         - name: anova
           title: "ANOVA / ANCOVA (F-Test)"
+        - name: survival
+          title: "Survival / Log-Rank Test"
       default: independent
 
     - name: es
@@ -76,6 +78,9 @@ options:
       options:
         - "two.sided"
         - "one.sided"
+        - "equivalent"
+        - "non-inferior"
+        - "superior"
       default: "two.sided"
 
     - name: alpha
@@ -173,4 +178,33 @@ options:
       type: Integer
       min: 0
       default: 0
+
+    - name: margin
+      title: "Equivalence / Non-Inferiority / Superiority margin"
+      type: Number
+      default: 0
+
+
+    - name: crt
+      title: "Cluster / Multilevel Randomized Trial (CRT/MST)"
+      type: Bool
+      default: false
+
+    - name: cluster_size
+      title: "Average cluster size (m)"
+      type: Integer
+      min: 1
+      default: 10
+
+    - name: icc
+      title: "Intraclass correlation (ICC)"
+      type: Number
+      min: 0
+      max: 1
+      default: 0.05
+
+    - name: power_es_alpha_curve
+      title: "Power by Effect Size and Alpha Curve"
+      type: Bool
+      default: false
 ...

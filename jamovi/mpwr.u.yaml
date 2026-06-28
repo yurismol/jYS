@@ -92,6 +92,31 @@ children:
             name: two.sided
           - title: one-tailed
             name: one.sided
+          - title: equivalence
+            name: equivalent
+          - title: non-inferiority
+            name: non-inferior
+          - title: superiority
+            name: superior
+      - name: margin
+        type: TextBox
+        label: "Equivalence / Non-Inferiority / Superiority margin"
+        format: number
+        enable: (alt:equivalent || alt:non-inferior || alt:superior)
+      - name: crt
+        type: CheckBox
+        label: "Cluster / Multilevel Randomized Trial (CRT/MST)"
+        enable: (design:independent || design:welch || design:paired || design:one.sample)
+      - name: cluster_size
+        type: TextBox
+        label: "Average cluster size (m)"
+        format: number
+        enable: ((design:independent || design:welch || design:paired || design:one.sample) && crt)
+      - name: icc
+        type: TextBox
+        label: "Intraclass correlation (ICC)"
+        format: number
+        enable: ((design:independent || design:welch || design:paired || design:one.sample) && crt)
   - type: CollapseBox
     label: Plots
     collapsed: false
@@ -104,3 +129,6 @@ children:
         type: CheckBox
       - name: n_es_curve
         type: CheckBox
+      - name: power_es_alpha_curve
+        type: CheckBox
+

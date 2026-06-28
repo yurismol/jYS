@@ -33,6 +33,10 @@ items:
         - df_chisq
         - factor_levels
         - k_covariates
+        - margin
+        - crt
+        - cluster_size
+        - icc
       columns:
         - name: n1
           title: N1
@@ -40,6 +44,14 @@ items:
         - name: n2
           title: N2
           type: integer
+        - name: k1
+          title: Clusters 1
+          type: integer
+          visible: (crt && (design:independent || design:welch || design:paired || design:one.sample))
+        - name: k2
+          title: Clusters 2
+          type: integer
+          visible: (crt && (design:independent || design:welch || design:paired || design:one.sample))
         - name: power
           title: Power
           type: number
@@ -98,6 +110,10 @@ items:
         - df_chisq
         - factor_levels
         - k_covariates
+        - margin
+        - crt
+        - cluster_size
+        - icc
 
     - name:  powerCurve
       title: Power Curve
@@ -123,6 +139,10 @@ items:
         - df_chisq
         - factor_levels
         - k_covariates
+        - margin
+        - crt
+        - cluster_size
+        - icc
 
     - name:  powerEsCurve
       title: Power by Effect Size
@@ -148,6 +168,10 @@ items:
         - df_chisq
         - factor_levels
         - k_covariates
+        - margin
+        - crt
+        - cluster_size
+        - icc
 
     - name:  nEsCurve
       title: N by Effect Size
@@ -173,6 +197,39 @@ items:
         - df_chisq
         - factor_levels
         - k_covariates
+        - margin
+        - crt
+        - cluster_size
+        - icc
+
+    - name:  powerEsAlphaCurve
+      title: Power by Effect Size and Alpha
+      type:  Image
+      width: 500
+      height: 400
+      renderFun: .powerEsAlphaCurve
+      visible: (power_es_alpha_curve)
+      clearWith:
+        - calc
+        - design
+        - es
+        - power
+        - n
+        - alt
+        - alpha
+        - n_ratio
+        - var_ratio
+        - k_total
+        - k_tested
+        - base_prob
+        - r2_predictor
+        - df_chisq
+        - factor_levels
+        - k_covariates
+        - margin
+        - crt
+        - cluster_size
+        - icc
 
     - name:  text
       title: Log / Errors
