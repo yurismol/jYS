@@ -282,8 +282,8 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     survival = .("Survival / Log-Rank Test")
                 )
                 
-                table$setNote("calc_note", paste0(.("<b>Calculated parameter</b>: "), calc_map[[calc]]))
-                table$setNote("design_note", paste0(.("<b>Design</b>: "), design_text))
+                table$setNote("calc_note", paste0(.("<b>Calculated parameter</b>:"), " ", calc_map[[calc]]))
+                table$setNote("design_note", paste0(.("<b>Design</b>:"), " ", design_text))
                 
                 es_measure_text <- switch(es_arg,
                     d = .("<b>Effect size measure</b>: Cohen's d"),

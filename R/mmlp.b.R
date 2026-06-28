@@ -125,7 +125,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
             if (inherits(fit_full, "try-error")) {
                 self$results$text$setVisible(TRUE)
-                self$results$text$setContent(paste0(.("Error during neural network fitting: "), fit_full))
+                self$results$text$setContent(paste0(.("Error during neural network fitting:"), " ", fit_full))
                 return()
             }
 
@@ -1027,7 +1027,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     ltys <- c(1)         # Training is solid
                     auc_tr_val <- as.numeric(pROC::auc(r_tr))
                     auc_tr_str <- if (is_pct) paste0(round(auc_tr_val, 1), "%") else round(auc_tr_val, 3)
-                    leg_labels <- c(paste0(.("Training (AUC = "), auc_tr_str, ")"))
+                    leg_labels <- c(paste0(.("Training (AUC ="), " ", auc_tr_str, ")"))
                     
                     thres_pattern <- ifelse(is_pct, "%.2f (%.1f%%, %.1f%%)", "%.2f (%.3f, %.3f)")
                     
@@ -1055,7 +1055,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         ltys <- c(ltys, 1)         # Holdout is solid
                         auc_va_val <- as.numeric(pROC::auc(r_va))
                         auc_va_str <- if (is_pct) paste0(round(auc_va_val, 1), "%") else round(auc_va_val, 3)
-                        leg_labels <- c(leg_labels, paste0(.("Hold-out Validation (AUC = "), auc_va_str, ")"))
+                        leg_labels <- c(leg_labels, paste0(.("Hold-out Validation (AUC ="), " ", auc_va_str, ")"))
                         
                         pROC::plot.roc(r_va, col=cols[2],
                             percent=is_pct,
@@ -1077,7 +1077,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         ltys <- c(ltys, 2)         # CV is dashed
                         auc_cv_val <- as.numeric(pROC::auc(r_cv))
                         auc_cv_str <- if (is_pct) paste0(round(auc_cv_val, 1), "%") else round(auc_cv_val, 3)
-                        leg_labels <- c(leg_labels, paste0(.("K-Fold Cross-Validation (AUC = "), auc_cv_str, ")"))
+                        leg_labels <- c(leg_labels, paste0(.("K-Fold Cross-Validation (AUC ="), " ", auc_cv_str, ")"))
                         
                         pROC::plot.roc(r_cv, col=cols[2],
                             percent=is_pct,
@@ -1267,7 +1267,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     ltys <- c(1)         # Training is solid
                     auc_tr_val <- as.numeric(pROC::auc(r_tr))
                     auc_tr_str <- if (is_pct) paste0(round(auc_tr_val, 1), "%") else round(auc_tr_val, 3)
-                    leg_labels <- c(paste0(.("Training (AUC = "), auc_tr_str, ")"))
+                    leg_labels <- c(paste0(.("Training (AUC ="), " ", auc_tr_str, ")"))
                     
                     thres_pattern <- ifelse(is_pct, "%.2f (%.1f%%, %.1f%%)", "%.2f (%.3f, %.3f)")
                     
@@ -1295,7 +1295,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         ltys <- c(ltys, 1)         # Holdout is solid
                         auc_va_val <- as.numeric(pROC::auc(r_va))
                         auc_va_str <- if (is_pct) paste0(round(auc_va_val, 1), "%") else round(auc_va_val, 3)
-                        leg_labels <- c(leg_labels, paste0(.("Hold-out Validation (AUC = "), auc_va_str, ")"))
+                        leg_labels <- c(leg_labels, paste0(.("Hold-out Validation (AUC ="), " ", auc_va_str, ")"))
                         
                         pROC::plot.roc(r_va, col=cols[2],
                             percent=is_pct,
@@ -1317,7 +1317,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         ltys <- c(ltys, 2)         # CV is dashed
                         auc_cv_val <- as.numeric(pROC::auc(r_cv))
                         auc_cv_str <- if (is_pct) paste0(round(auc_cv_val, 1), "%") else round(auc_cv_val, 3)
-                        leg_labels <- c(leg_labels, paste0(.("K-Fold Cross-Validation (AUC = "), auc_cv_str, ")"))
+                        leg_labels <- c(leg_labels, paste0(.("K-Fold Cross-Validation (AUC ="), " ", auc_cv_str, ")"))
                         
                         pROC::plot.roc(r_cv, col=cols[2],
                             percent=is_pct,

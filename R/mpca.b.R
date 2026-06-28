@@ -37,7 +37,7 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             subs <- ""
             if (!is.null(self$options$group) && !is.null(self$options$selgroup) && self$options$selgroup != "") {
                 subs <- paste(self$options$group, " == \"", self$options$selgroup, "\"", sep="")
-                self$results$text$setContent(paste0("<h4>", jmvcore::.("Dataset restricted to group: "), subs, "</h4>"))
+                self$results$text$setContent(paste0("<h4>", jmvcore::.("Dataset restricted to group:"), " ", subs, "</h4>"))
                 dat <- dat[dat[[self$options$group]] == self$options$selgroup, , drop=FALSE]
             } else {
                 self$results$text$setContent(paste0("<h4>", jmvcore::.("Full dataset used in analysis"), "</h4>"))
@@ -251,7 +251,7 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     for (cl in 1:k_val) {
                         matches <- paste(sapply(colnames(tbl), function(cn) paste0(cn, ": ", tbl[cl, cn])), collapse=" | ")
                         kmTable$addRow(rowKey=paste0("cl_", cl), values=list(
-                            metric = paste0(.("K-Means Cluster "), cl),
+                            metric = paste0(.("K-Means Cluster"), " ", cl),
                             value = matches
                         ))
                     }
@@ -346,7 +346,7 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                             cv_auc[fold_idx] <- if (inherits(roc_fold, "try-error")) NA else as.numeric(roc_fold$auc)
                             
                             regTable$addRow(rowKey=fold_idx, values=list(
-                                fold = paste0(.("Fold "), fold_idx),
+                                fold = paste0(.("Fold"), " ", fold_idx),
                                 accuracy = cv_acc[fold_idx],
                                 sensitivity = cv_sens[fold_idx],
                                 specificity = cv_spec[fold_idx],
@@ -482,7 +482,7 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 ggplot2::geom_point(ggplot2::aes(y = Noise, color = lbl_noise), size = 2) +
                 ggplot2::geom_vline(xintercept = optimal, color = "red", linetype = "dotted", size = 1.2) +
                 ggplot2::annotate("text", x = optimal + 0.15, y = max(df$Eigenvalue) * 0.9, 
-                         label = paste0(.("Threshold (K = "), optimal, .(" comp.)")), color = "red", fontface = "bold", hjust=0) +
+                         label = paste0(.("Threshold (K ="), " ", optimal, " ", .("comp.)")), color = "red", fontface = "bold", hjust=0) +
                 ggplot2::scale_color_manual(values = stats::setNames(c("blue", "red"), c(lbl_obs, lbl_noise))) +
                 ggplot2::labs(
                     title = .("Eigenvalues and Parallel Analysis"),
@@ -614,10 +614,10 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     title = .("Group Projection in PCA Space"),
                     subtitle = if (!is.null(p_val)) {
                         p_text <- if (p_val < 0.001) "p < 0.001" else paste0("p = ", sprintf("%.3f", p_val))
-                        paste0(.("Group: "), groupName, .(" (Permutation "), p_text, ")")
+                        paste0(.("Group:"), " ", groupName, " (", .("Permutation"), " ", p_text, ")")
                     } else "",
-                    x = paste0(.("Principal Component "), pcX, " (PC", pcX, ") - ", sprintf("%.1f", (pca$sdev[pcX]^2/sum(pca$sdev^2))*100), .("% of variance")),
-                    y = paste0(.("Principal Component "), pcY, " (PC", pcY, ") - ", sprintf("%.1f", (pca$sdev[pcY]^2/sum(pca$sdev^2))*100), .("% of variance")),
+                    x = paste0(.("Principal Component"), " ", pcX, " (PC", pcX, ") - ", sprintf("%.1f", (pca$sdev[pcX]^2/sum(pca$sdev^2))*100), .("% of variance")),
+                    y = paste0(.("Principal Component"), " ", pcY, " (PC", pcY, ") - ", sprintf("%.1f", (pca$sdev[pcY]^2/sum(pca$sdev^2))*100), .("% of variance")),
                     color = NULL,
                     fill = NULL
                 ) +
@@ -706,8 +706,8 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                          bg.color = "white", bg.r = 0.15) +
                 ggplot2::labs(
                     title = .("Two-dimensional Variable Projection (Biplot)"),
-                    x = paste0(.("Principal Component "), pcX, " (PC", pcX, ") - ", sprintf("%.1f", (pca$sdev[pcX]^2/sum(pca$sdev^2))*100), .("% of variance")),
-                    y = paste0(.("Principal Component "), pcY, " (PC", pcY, ") - ", sprintf("%.1f", (pca$sdev[pcY]^2/sum(pca$sdev^2))*100), .("% of variance"))
+                    x = paste0(.("Principal Component"), " ", pcX, " (PC", pcX, ") - ", sprintf("%.1f", (pca$sdev[pcX]^2/sum(pca$sdev^2))*100), .("% of variance")),
+                    y = paste0(.("Principal Component"), " ", pcY, " (PC", pcY, ") - ", sprintf("%.1f", (pca$sdev[pcY]^2/sum(pca$sdev^2))*100), .("% of variance"))
                 ) +
                 ggplot2::theme_bw() +
                 ggplot2::theme(
@@ -769,7 +769,7 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 ltys <- c(1)         # Training is solid
                 auc_tr_val <- as.numeric(pROC::auc(r_tr))
                 auc_tr_str <- if (is_pct) paste0(round(auc_tr_val, 1), "%") else round(auc_tr_val, 3)
-                leg_labels <- c(paste0(.("Training (AUC = "), auc_tr_str, ")"))
+                leg_labels <- c(paste0(.("Training (AUC ="), " ", auc_tr_str, ")"))
                 
                 # Format threshold pattern
                 thres_pattern <- ifelse(is_pct, "%.2f (%.1f%%, %.1f%%)", "%.2f (%.3f, %.3f)")
@@ -800,7 +800,7 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     ltys <- c(ltys, 1)         # Holdout is solid
                     auc_va_val <- as.numeric(pROC::auc(r_va))
                     auc_va_str <- if (is_pct) paste0(round(auc_va_val, 1), "%") else round(auc_va_val, 3)
-                    leg_labels <- c(leg_labels, paste0(.("Hold-out Validation (AUC = "), auc_va_str, ")"))
+                    leg_labels <- c(leg_labels, paste0(.("Hold-out Validation (AUC ="), " ", auc_va_str, ")"))
                     
                     pROC::plot.roc(r_va, col=cols[2],
                         percent=is_pct,
@@ -822,8 +822,8 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     ltys <- c(ltys, 2)         # CV is dashed
                     auc_cv_val <- as.numeric(pROC::auc(r_cv))
                     auc_cv_str <- if (is_pct) paste0(round(auc_cv_val, 1), "%") else round(auc_cv_val, 3)
-                    lbl <- if (partition == "kfold") .("K-Fold CV (AUC = ") else .("Repeated Stratified CV (AUC = ")
-                    leg_labels <- c(leg_labels, paste0(lbl, auc_cv_str, ")"))
+                    lbl <- if (partition == "kfold") .("K-Fold CV (AUC =") else .("Repeated Stratified CV (AUC =")
+                    leg_labels <- c(leg_labels, paste0(lbl, " ", auc_cv_str, ")"))
                     
                     pROC::plot.roc(r_cv, col=cols[2],
                         percent=is_pct,

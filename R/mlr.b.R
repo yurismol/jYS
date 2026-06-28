@@ -34,7 +34,7 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             subs <- ""
             if (!is.null(self$options$group) && !is.null(self$options$selgroup) && self$options$selgroup != "") {
                 subs <- paste(self$options$group, " == \"", self$options$selgroup, "\"", sep="")
-                self$results$text$setContent(paste0("<h4>", jmvcore::.("Dataset restricted to group: "), subs, "</h4>"))
+                self$results$text$setContent(paste0("<h4>", jmvcore::.("Dataset restricted to group:"), " ", subs, "</h4>"))
                 self$results$text$setVisible(TRUE)
                 dat <- dat[dat[[self$options$group]] == self$options$selgroup, , drop=FALSE]
             } else {
@@ -1365,7 +1365,7 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     ltys <- c(1)         # Training is solid
                     auc_tr_val <- as.numeric(pROC::auc(r_tr))
                     auc_tr_str <- if (is_pct) paste0(round(auc_tr_val, 1), "%") else round(auc_tr_val, 3)
-                    leg_labels <- c(paste0(.("Training (AUC = "), auc_tr_str, ")"))
+                    leg_labels <- c(paste0(.("Training (AUC ="), " ", auc_tr_str, ")"))
                     
                     thres_pattern <- ifelse(is_pct, "%.2f (%.1f%%, %.1f%%)", "%.2f (%.3f, %.3f)")
                     
@@ -1393,7 +1393,7 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         ltys <- c(ltys, 1)         # Holdout is solid
                         auc_va_val <- as.numeric(pROC::auc(r_va))
                         auc_va_str <- if (is_pct) paste0(round(auc_va_val, 1), "%") else round(auc_va_val, 3)
-                        leg_labels <- c(leg_labels, paste0(.("Hold-out Validation (AUC = "), auc_va_str, ")"))
+                        leg_labels <- c(leg_labels, paste0(.("Hold-out Validation (AUC ="), " ", auc_va_str, ")"))
                         
                         pROC::plot.roc(r_va, col=cols[2],
                             percent=is_pct,
@@ -1415,8 +1415,8 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         ltys <- c(ltys, 2)         # CV is dashed
                         auc_cv_val <- as.numeric(pROC::auc(r_cv))
                         auc_cv_str <- if (is_pct) paste0(round(auc_cv_val, 1), "%") else round(auc_cv_val, 3)
-                        lbl <- if (partition == "kfold") .("K-Fold CV (AUC = ") else .("Repeated Stratified CV (AUC = ")
-                        leg_labels <- c(leg_labels, paste0(lbl, auc_cv_str, ")"))
+                        lbl <- if (partition == "kfold") .("K-Fold CV (AUC =") else .("Repeated Stratified CV (AUC =")
+                        leg_labels <- c(leg_labels, paste0(lbl, " ", auc_cv_str, ")"))
                         
                         pROC::plot.roc(r_cv, col=cols[2],
                             percent=is_pct,
@@ -1604,7 +1604,7 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     ltys <- c(1)         # Training is solid
                     auc_tr_val <- as.numeric(pROC::auc(r_tr))
                     auc_tr_str <- if (is_pct) paste0(round(auc_tr_val, 1), "%") else round(auc_tr_val, 3)
-                    leg_labels <- c(paste0(.("Training (AUC = "), auc_tr_str, ")"))
+                    leg_labels <- c(paste0(.("Training (AUC ="), " ", auc_tr_str, ")"))
                     
                     thres_pattern <- ifelse(is_pct, "%.2f (%.1f%%, %.1f%%)", "%.2f (%.3f, %.3f)")
                     
@@ -1632,7 +1632,7 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         ltys <- c(ltys, 1)         # Holdout is solid
                         auc_va_val <- as.numeric(pROC::auc(r_va))
                         auc_va_str <- if (is_pct) paste0(round(auc_va_val, 1), "%") else round(auc_va_val, 3)
-                        leg_labels <- c(leg_labels, paste0(.("Hold-out Validation (AUC = "), auc_va_str, ")"))
+                        leg_labels <- c(leg_labels, paste0(.("Hold-out Validation (AUC ="), " ", auc_va_str, ")"))
                         
                         pROC::plot.roc(r_va, col=cols[2],
                             percent=is_pct,
@@ -1654,8 +1654,8 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         ltys <- c(ltys, 2)         # CV is dashed
                         auc_cv_val <- as.numeric(pROC::auc(r_cv))
                         auc_cv_str <- if (is_pct) paste0(round(auc_cv_val, 1), "%") else round(auc_cv_val, 3)
-                        lbl <- if (partition == "kfold") .("K-Fold CV (AUC = ") else .("Repeated Stratified CV (AUC = ")
-                        leg_labels <- c(leg_labels, paste0(lbl, auc_cv_str, ")"))
+                        lbl <- if (partition == "kfold") .("K-Fold CV (AUC =") else .("Repeated Stratified CV (AUC =")
+                        leg_labels <- c(leg_labels, paste0(lbl, " ", auc_cv_str, ")"))
                         
                         pROC::plot.roc(r_cv, col=cols[2],
                             percent=is_pct,

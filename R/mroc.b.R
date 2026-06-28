@@ -278,7 +278,7 @@ mROCClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 } else TR <- ""
                 fmt  <- ifelse(self$options$perc,'%#.1f%%','%#.3f')
 
-                fauc <- paste(.("AUC "), fmt)
+                fauc <- paste(.("AUC"), fmt)
                 if (self$options$ciAUC)
                     fauc <- paste(fauc, " [",  sprintf(gsub("%%","",fmt), AUC[,1]),
                     "-",  sprintf(gsub("%%","",fmt), AUC[,3]), "]", sep="")
@@ -328,8 +328,8 @@ mROCClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                   au <- sprintf(AUC[,2], fmt=fmt)
                   ci <- paste(sprintf(AUC[,1], fmt=fmt), "-", sprintf(AUC[,3], fmt=fmt), sep="")
                   if (self$options$ciAUC) au <- paste(au, " [", ci, "]", sep="")
-                  tit <- paste(kk, .(" (AUC"), 
-                    ifelse(self$options$ciAUC, jmvcore::format(.(" [{prc}% CI]"), prc=self$options$ciWidth),""),
+                  tit <- paste(kk, " (", .("AUC"), 
+                    ifelse(self$options$ciAUC, paste0(" ", jmvcore::format(.("[{prc}% CI]"), prc=self$options$ciWidth)), ""),
                     ifelse(self$options$perc, "%",""), ")", sep="")
                   if (self$options$perc) au <- paste(au, "%", sep="")
 
