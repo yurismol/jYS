@@ -776,7 +776,7 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 
                 # Plot Training Curve
                 p <- pROC::plot.roc(r_tr, col=cols[1],
-                    main=.("ROC Curves"), cex.main=1.3,
+                    main=.("ROC curves"), cex.main=1.3,
                     percent=is_pct,
                     cex.lab=1.5, cex.axis=1.3, lwd=3, lty=1,
                     legacy.axes=legacy_axes,

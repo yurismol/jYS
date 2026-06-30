@@ -28,7 +28,7 @@ items:
             title: Eigenvalue
             type: number
           - name: variance
-            title: '% of Variance'
+            title: '% of variance'
             type: number
           - name: cumulative
             title: 'Cumulative %'

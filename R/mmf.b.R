@@ -122,7 +122,7 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
           p$labels$x <- .("Number of missing entries per variable")
           p$labels$y <- .("Pattern frequency")
           p <- p +
-		ggplot2::scale_fill_manual(values=fill, labels=c(.("missing"), .("observed"))) +
+		ggplot2::scale_fill_manual(values=fill, labels=c(.("missing"), .("Observed"))) +
 		ggplot2::theme(text=ggplot2::element_text(size=ggtheme[[1]]$text$size))
 	  if (self$options$anghead) {
 		p <- p + ggplot2::theme(axis.text.x = ggplot2::element_text(angle=0, hjust=0))
@@ -261,7 +261,7 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 d   <- dat[[key]]
                 nr  <- length(d[is.na(d)])
                 if (nr==0) {
-                  tableRow <- list(ninp=nr, exp='\u2014', mar='\u2014')
+                   tableRow <- list(ninp=nr, exp='\u2013', mar='\u2013')
                 } else {
                   tableRow <- list(ninp=nr, exp=mare[key], mar=marp[key])
                 }
@@ -300,13 +300,13 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     d   <- dat[[key]]
                     nr  <- length(out[[key]]) - length(d[!is.na(d)])
                     oo  <- oob[key]
-                    if (is.na(oo) || nr==0) oo <- '\u2014'
-                    if (private$.columnType(d)=="continuous") {
-                      tableRow <- list(ninp=nr, err=oo, pfc='\u2014')
-                      dec <- decimalplaces(d)
-                      self$results$imputeOV$setValues(index=i, round(out[[key]], dec))
-                    } else {
-                      tableRow <- list(ninp=nr, err='\u2014', pfc=oo)
+                     if (is.na(oo) || nr==0) oo <- '\u2013'
+                     if (private$.columnType(d)=="continuous") {
+                       tableRow <- list(ninp=nr, err=oo, pfc='\u2013')
+                       dec <- decimalplaces(d)
+                       self$results$imputeOV$setValues(index=i, round(out[[key]], dec))
+                     } else {
+                       tableRow <- list(ninp=nr, err='\u2013', pfc=oo)
                       self$results$imputeOV$setValues(index=i, out[[key]])
                     }
                     etable$setRow(rowKey=key, tableRow)

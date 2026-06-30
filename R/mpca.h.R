@@ -307,7 +307,7 @@ mPCAResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `type`="number"),
                     list(
                         `name`="variance", 
-                        `title`="% of Variance", 
+                        `title`="% of variance", 
                         `type`="number"),
                     list(
                         `name`="cumulative", 

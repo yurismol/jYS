@@ -500,7 +500,7 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               ggsurvfit::ggsurvfit(fit, type = km_type) +
                   ggplot2::labs(
                       x = self$options$elapsed,
-                      y = ifelse(km_type == "survival", .("Survival Probability"), .("Cumulative Hazard"))
+                      y = ifelse(km_type == "survival", .("Survival probability"), .("Cumulative hazard"))
                   )
           }, silent = TRUE)
 

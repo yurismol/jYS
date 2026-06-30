@@ -51,11 +51,11 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 values[[paste0(v, '[n]')]]   <- ''
             }
 
-            values[[paste0(var, '[r]')]]   <- '\u2014'
-            values[[paste0(var, '[cil]')]] <- '\u2014'
-            values[[paste0(var, '[ciu]')]] <- '\u2014'
-            values[[paste0(var, '[p]')]]   <- '\u2014'
-            values[[paste0(var, '[n]')]]   <- '\u2014'
+            values[[paste0(var, '[r]')]]   <- '\u2013'
+            values[[paste0(var, '[cil]')]] <- '\u2013'
+            values[[paste0(var, '[ciu]')]] <- '\u2013'
+            values[[paste0(var, '[p]')]]   <- '\u2013'
+            values[[paste0(var, '[n]')]]   <- '\u2013'
 
             values[['.stat[ciu]']] <- jmvcore::format(.('{ciWidth}% CI Upper'), ciWidth=ciw)
             values[['.stat[cil]']] <- jmvcore::format(.('{ciWidth}% CI Lower'), ciWidth=ciw)
@@ -125,9 +125,9 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                   values[[paste0(vars[[j]], '[p]')]] <- ''
                   values[[paste0(vars[[j]], '[n]')]] <- ''
               }
-              values[[paste0(var, '[r]')]] <- '\u2014'
-              values[[paste0(var, '[p]')]] <- '\u2014'
-              values[[paste0(var, '[n]')]] <- '\u2014'
+              values[[paste0(var, '[r]')]] <- '\u2013'
+              values[[paste0(var, '[p]')]] <- '\u2013'
+              values[[paste0(var, '[n]')]] <- '\u2013'
               glassoTable$setRow(rowKey=var, values)
           }
      },
@@ -417,9 +417,9 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     for (j in seq_along(vars)) {
                         colVarName <- vars[[j]]
                         if (i == j) {
-                            values[[paste0(colVarName, '[r]')]] <- '\u2014'
-                            values[[paste0(colVarName, '[p]')]] <- '\u2014'
-                            values[[paste0(colVarName, '[n]')]] <- '\u2014'
+                             values[[paste0(colVarName, '[r]')]] <- '\u2013'
+                             values[[paste0(colVarName, '[p]')]] <- '\u2013'
+                             values[[paste0(colVarName, '[n]')]] <- '\u2013'
                         } else if (j > i && netMethod != "semiclassic") {
                             values[[paste0(colVarName, '[r]')]] <- ''
                             values[[paste0(colVarName, '[p]')]] <- ''
@@ -643,9 +643,9 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
 	  vars  <- colnames(c$r)
 
-	  col <- c("#053061", "#2166AC", "#4393C3",
-		"#92C5DE", "#D1E5F0", "#FDDBC7", "#F4A582",
-		"#D6604D", "#B2182B", "#67001F")
+	  col <- c("#053061", "#2869AC", "#5098C3",
+		"#83C0DE", "#B8DDF0", "#FAC5A8", "#F4A07B",
+		"#D65C48", "#B21E30", "#67001F")
 	  cols <- hcl.colors(10, palette="Blue-Red 3")
 	  if (self$options$signif=="all") {
 		insig <- "pch"
@@ -774,9 +774,9 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
       .rplot=function(image, ggtheme, theme, ...) {
           if (is.null(image$state)) return(FALSE)
           cor   <- image$state
-	  col <- c("#053061", "#2166AC", "#4393C3",
-		"#92C5DE", "#D1E5F0", "#FDDBC7", "#F4A582",
-		"#D6604D", "#B2182B", "#67001F")
+	  col <- c("#053061", "#2869AC", "#5098C3",
+		"#83C0DE", "#B8DDF0", "#FAC5A8", "#F4A07B",
+		"#D65C48", "#B21E30", "#67001F")
 	  plotMetU <- self$options$plotMetU
 	  ULe  <- plotMetU=="empty"
 	  if (ULe) pm = "circle"

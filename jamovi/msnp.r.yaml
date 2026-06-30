@@ -1,0 +1,394 @@
+---
+name:  mSNP
+title: SNP Analysis
+jrs:   '1.1'
+refs: [jys, hw_pkg, mdr_ritchie, mdr_hahn, botstein1980]
+
+items:
+    # HWE Analysis Section
+    - name: hweGroup
+      title: Hardy–Weinberg Equilibrium (HWE) Analysis
+      type: Group
+      items:
+        - name: freqTable
+          title: Genotype and Allele Frequencies
+          type: Table
+          visible: (freqTable)
+          clearWith:
+            - vars
+            - group
+            - mafThreshold
+          columns:
+            - name: marker
+              title: Marker
+              type: text
+            - name: group
+              title: Population
+              type: text
+              visible: (group)
+            - name: p_freq
+              title: p (A)
+              type: number
+            - name: q_freq
+              title: q (B)
+              type: number
+            - name: obsAA
+              title: Obs AA
+              type: integer
+            - name: obsAB
+              title: Obs AB
+              type: integer
+            - name: obsBB
+              title: Obs BB
+              type: integer
+            - name: expAA
+              title: Exp AA
+              type: number
+            - name: expAB
+              title: Exp AB
+              type: number
+            - name: expBB
+              title: Exp BB
+              type: number
+            - name: h_obs
+              title: H(obs)
+              type: number
+            - name: h_exp
+              title: H(exp)
+              type: number
+
+        - name: hwTable
+          title: Hardy–Weinberg Equilibrium Statistical Tests
+          type: Table
+          visible: (hwTests)
+          clearWith:
+            - vars
+            - group
+            - hwPerm
+            - nPerm
+            - adjust
+          columns:
+            - name: marker
+              title: Marker
+              type: text
+            - name: group
+              title: Population
+              type: text
+              visible: (group)
+            - name: chi_stat
+              title: χ²
+              type: number
+            - name: chi_p
+              title: Chi-square p
+              type: number
+              format: zto,pvalue
+            - name: chi_p_adj
+              title: Chi-square p-adj
+              type: number
+              format: zto,pvalue
+            - name: exact_p
+              title: Exact p
+              type: number
+              format: zto,pvalue
+            - name: exact_p_adj
+              title: Exact p-adj
+              type: number
+              format: zto,pvalue
+            - name: lr_stat
+              title: LRT Stat
+              type: number
+            - name: lr_p
+              title: LRT p
+              type: number
+              format: zto,pvalue
+            - name: lr_p_adj
+              title: LRT p-adj
+              type: number
+              format: zto,pvalue
+            - name: perm_p
+              title: Permutation p
+              type: number
+              format: zto,pvalue
+              visible: (hwPerm)
+            - name: perm_p_adj
+              title: Permutation p-adj
+              type: number
+              format: zto,pvalue
+              visible: (hwPerm)
+            - name: fis
+              title: F_IS
+              type: number
+
+        - name: ternaryPlot
+          title: Ternary Diagram (de Finetti)
+          type: Image
+          width:  600
+          height: 500
+          renderFun: .plotTernary
+          requiresData: true
+          visible: (ternaryPlot)
+          clearWith:
+            - vars
+            - group
+            - ternaryRegion
+
+        - name: qqPlot
+          title: Q-Q Plot of HWE p-values
+          type: Image
+          width:  550
+          height: 450
+          renderFun: .plotQQ
+          requiresData: true
+          visible: (qqPlot)
+          clearWith:
+            - vars
+            - group
+            - hwPerm
+
+        - name: barPlot
+          title: Genotype barplot (Observed vs Expected)
+          type: Image
+          width:  650
+          height: 450
+          renderFun: .plotBar
+          requiresData: true
+          visible: (barPlot)
+          clearWith:
+            - vars
+            - group
+
+    # Association Tests Section
+    - name: assocGroup
+      title: Phenotype Association Tests
+      type: Group
+      visible: (assocEnable)
+      items:
+        - name: assocTable
+          title: Genetic Association Analysis
+          type: Table
+          visible: (assocEnable)
+          clearWith:
+            - vars
+            - outcome
+            - geneticModel
+            - adjust
+          columns:
+            - name: marker
+              title: Marker
+              type: text
+            - name: model
+              title: Genetic Model
+              type: text
+            - name: counts_cases
+              title: Genotypes Cases
+              type: text
+            - name: counts_ctrls
+              title: Genotypes Controls
+              type: text
+            - name: or_val
+              title: Odds Ratio
+              type: number
+            - name: or_lower
+              title: OR Lower 95% CI
+              type: number
+            - name: or_upper
+              title: OR Upper 95% CI
+              type: number
+            - name: p_val
+              title: p-value
+              type: number
+              format: zto,pvalue
+            - name: p_adj
+              title: p-adjusted
+              type: number
+              format: zto,pvalue
+
+        - name: assocForest
+          title: Odds Ratio Forest Plot
+          type: Image
+          width:  650
+          height: 500
+          renderFun: .plotForest
+          requiresData: true
+          visible: (assocEnable && assocForest)
+          clearWith:
+            - vars
+            - outcome
+            - geneticModel
+            - adjust
+
+    # Population Genetics Section
+    - name: popGroup
+      title: Population Genetics metrics
+      type: Group
+      visible: (popMetrics)
+      items:
+        - name: popTable
+          title: Marker Informative Metrics
+          type: Table
+          visible: (popMetrics)
+          clearWith:
+            - vars
+            - mafThreshold
+          columns:
+            - name: marker
+              title: Marker
+              type: text
+            - name: maf
+              title: MAF
+              type: number
+            - name: pic
+              title: PIC
+              type: number
+            - name: shannon
+              title: Shannon Index (I)
+              type: number
+            - name: ne
+              title: Effective Alleles (Ne)
+              type: number
+
+    # MDR Analysis Section
+    - name: mdrGroup
+      title: Multifactor Dimensionality Reduction (MDR)
+      type: Group
+      visible: (mdrEnable)
+      items:
+        - name: mdrBestTable
+          title: Best MDR Models by Order
+          type: Table
+          visible: (mdrEnable)
+          clearWith:
+            - vars
+            - outcome
+            - mdrOrder
+            - mdrFolds
+            - mdrPermTest
+            - nPermMDR
+            - mdrSeed
+          columns:
+            - name: order
+              title: Order
+              type: integer
+            - name: combination
+              title: Best Combination
+              type: text
+            - name: train_ba
+              title: Training BA
+              type: number
+            - name: test_ba
+              title: Testing BA
+              type: number
+            - name: cvc
+              title: CVC
+              type: integer
+            - name: p_val
+              title: Permutation p
+              type: number
+              format: zto,pvalue
+              visible: (mdrPermTest)
+
+        - name: mdrCellTable
+          title: Detailed Cell Risk Classification
+          type: Table
+          visible: (mdrEnable && mdrCellTable)
+          clearWith:
+            - vars
+            - outcome
+            - mdrOrder
+            - mdrFolds
+            - mdrSeed
+          columns:
+            - name: combination
+              title: Best Combination
+              type: text
+            - name: cell
+              title: Genotypes
+              type: text
+            - name: cases
+              title: Cases
+              type: integer
+            - name: controls
+              title: Controls
+              type: integer
+            - name: ratio
+              title: Cases/Controls Ratio
+              type: number
+            - name: risk
+              title: Risk Classification
+              type: text
+
+        - name: mdrHeatmap
+          title: MDR Interaction Heatmap
+          type: Image
+          width:  600
+          height: 500
+          renderFun: .plotMDRHeatmap
+          requiresData: true
+          visible: (mdrEnable && mdrHeatmap)
+          clearWith:
+            - vars
+            - outcome
+            - mdrOrder
+            - mdrFolds
+            - mdrSeed
+
+        - name: mdrBarPlot
+          title: MDR Model Performance Comparison
+          type: Image
+          width:  600
+          height: 450
+          renderFun: .plotMDRBar
+          requiresData: true
+          visible: (mdrEnable && mdrBarPlot)
+          clearWith:
+            - vars
+            - outcome
+            - mdrOrder
+            - mdrFolds
+            - mdrSeed
+
+    # Linkage Disequilibrium Section
+    - name: ldGroup
+      title: Linkage Disequilibrium (LD) Analysis
+      type: Group
+      visible: (ldEnable)
+      items:
+        - name: ldTable
+          title: Linkage Disequilibrium (LD) Table
+          type: Table
+          visible: (ldEnable && ldTable)
+          clearWith:
+            - vars
+          columns:
+            - name: marker1
+              title: Marker 1
+              type: text
+            - name: marker2
+              title: Marker 2
+              type: text
+            - name: d
+              title: D
+              type: number
+            - name: d_prime
+              title: D'
+              type: number
+            - name: r2
+              title: r²
+              type: number
+            - name: p_val
+              title: p-value
+              type: number
+              format: zto,pvalue
+
+        - name: ldHeatmap
+          title: LD Heatmap
+          type: Image
+          width:  600
+          height: 550
+          renderFun: .plotLDHeatmap
+          requiresData: true
+          visible: (ldEnable && ldHeatmap)
+          clearWith:
+            - vars
+            - ldMetric
+...

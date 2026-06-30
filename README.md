@@ -52,4 +52,11 @@ Some usefull [Jamovi](https://www.jamovi.org/) procedures for researchers
   - ggsurvfit (Daniel D. Sjoberg)
   - pROC (Xavier Robin et al.)
 
+- SNP Analysis (mSNP)
+  - Hardy–Weinberg Equilibrium tests & de Finetti ternary diagram: HardyWeinberg (Jan Graffelman)
+  - Genetic Association tests (allelic, genotypic, codominant, dominant, recessive, overdominant, log-additive) & Forest plot of Odds Ratios: ggplot2
+  - Population genetics metrics (MAF, PIC, Shannon Index, Ne)
+  - Multifactor Dimensionality Reduction (MDR) for epistasis/interaction detection: custom R6 implementation
+  - Linkage Disequilibrium (LD) estimation (EM-algorithm for haplotype frequencies) & LD heatmap: custom R6 implementation
+
 Author: [Yuri Smolyakov](https://t.me/jYSmol)

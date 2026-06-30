@@ -1,0 +1,265 @@
+---
+name:  mSNP
+title: SNP Analysis
+menuGroup: jYS
+menuSubgroup: Genetics
+version: '1.0.0'
+jas: '1.2'
+
+options:
+    - name: data
+      type: Data
+
+    - name: vars
+      title: Markers
+      type: Variables
+      required: true
+      suggested:
+        - nominal
+        - ordinal
+      permitted:
+        - factor
+
+    - name: group
+      title: Group
+      type: Variable
+      required: false
+      suggested:
+        - nominal
+        - ordinal
+      permitted:
+        - factor
+
+    - name: outcome
+      title: Outcome (Case/Control)
+      type: Variable
+      required: false
+      suggested:
+        - nominal
+      permitted:
+        - factor
+
+    # HWE Analysis Section
+    - name: freqTable
+      title: Show allele and genotype frequencies
+      type: Bool
+      default: true
+
+    - name: hwTests
+      title: Show HWE statistical tests
+      type: Bool
+      default: true
+
+    - name: alpha
+      title: Significance level (alpha)
+      type: List
+      options:
+        - title: "0.05"
+          name: "0.05"
+        - title: "0.01"
+          name: "0.01"
+        - title: "0.001"
+          name: "0.001"
+        - title: "0.10"
+          name: "0.10"
+      default: "0.05"
+
+    - name: hwPerm
+      title: Perform permutation test
+      type: Bool
+      default: false
+
+    - name: nPerm
+      title: Number of permutations
+      type: Number
+      default: 1000
+
+    - name: ternaryPlot
+      title: Ternary diagram (de Finetti)
+      type: Bool
+      default: false
+
+    - name: ternaryRegion
+      title: Acceptance region type
+      type: List
+      options:
+        - title: None (0)
+          name: "0"
+        - title: Asymptotic Chi-square (1)
+          name: "1"
+        - title: Exact joint (2)
+          name: "2"
+        - title: Asymptotic Chi-square female (3)
+          name: "3"
+        - title: Exact female (4)
+          name: "4"
+        - title: Asymptotic Likelihood-ratio (5)
+          name: "5"
+        - title: Exact joint test (6)
+          name: "6"
+        - title: Exact autosomal (7)
+          name: "7"
+      default: "1"
+
+    - name: qqPlot
+      title: Q-Q plot of HWE p-values
+      type: Bool
+      default: false
+
+    - name: barPlot
+      title: Genotype barplot (Observed vs Expected)
+      type: Bool
+      default: false
+
+    # Association Tests Section
+    - name: assocEnable
+      title: Enable association tests
+      type: Bool
+      default: false
+
+    - name: geneticModel
+      title: Genetic model
+      type: List
+      options:
+        - title: All models
+          name: all
+        - title: Codominant
+          name: codominant
+        - title: Dominant
+          name: dominant
+        - title: Recessive
+          name: recessive
+        - title: Overdominant
+          name: overdominant
+        - title: Log-additive
+          name: log-additive
+      default: all
+
+    - name: assocForest
+      title: Forest plot of Odds Ratios
+      type: Bool
+      default: false
+
+    # Population Genetics Section
+    - name: popMetrics
+      title: Show population genetic metrics
+      type: Bool
+      default: false
+
+    - name: mafThreshold
+      title: MAF threshold for warnings
+      type: List
+      options:
+        - title: None
+          name: none
+        - title: "0.01"
+          name: "0.01"
+        - title: "0.05"
+          name: "0.05"
+        - title: "0.10"
+          name: "0.10"
+      default: none
+
+    # MDR Analysis Section
+    - name: mdrEnable
+      title: Enable MDR analysis
+      type: Bool
+      default: false
+
+    - name: mdrOrder
+      title: Max interaction order
+      type: List
+      options:
+        - title: 1-way
+          name: "1"
+        - title: 2-way
+          name: "2"
+        - title: 3-way
+          name: "3"
+        - title: 4-way
+          name: "4"
+      default: "2"
+
+    - name: mdrFolds
+      title: Cross-validation folds
+      type: List
+      options:
+        - title: 3 folds
+          name: "3"
+        - title: 5 folds
+          name: "5"
+        - title: 10 folds
+          name: "10"
+      default: "10"
+
+    - name: mdrPermTest
+      title: Perform permutation testing
+      type: Bool
+      default: false
+
+    - name: nPermMDR
+      title: Number of MDR permutations
+      type: Number
+      default: 100
+
+    - name: mdrSeed
+      title: Random seed
+      type: Number
+      default: 42
+
+    - name: mdrCellTable
+      title: Show detailed cell classification table
+      type: Bool
+      default: false
+
+    - name: mdrHeatmap
+      title: MDR interaction heatmap (2-way grid)
+      type: Bool
+      default: false
+
+    - name: mdrBarPlot
+      title: Model performance barplot
+      type: Bool
+      default: false
+
+    # Linkage Disequilibrium Section
+    - name: ldEnable
+      title: Enable Linkage Disequilibrium (LD) analysis
+      type: Bool
+      default: false
+
+    - name: ldTable
+      title: Show LD metrics table
+      type: Bool
+      default: true
+
+    - name: ldHeatmap
+      title: LD heatmap (r² / D' triangular plot)
+      type: Bool
+      default: false
+
+    - name: ldMetric
+      title: Heatmap metric
+      type: List
+      options:
+        - title: "r²"
+          name: r2
+        - title: "D'"
+          name: Dprime
+      default: r2
+
+    # Multiple Testing Correction Section
+    - name: adjust
+      title: Multiple testing correction
+      type: List
+      options:
+        - title: None
+          name: none
+        - title: Bonferroni
+          name: bonferroni
+        - title: Holm
+          name: holm
+        - title: Benjamini–Hochberg (FDR)
+          name: fdr
+      default: none
+...

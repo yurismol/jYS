@@ -1,7 +1,7 @@
 ---
 title: jYS Extended Functions
 name: jYS
-version: 1.1.2
+version: 1.1.3
 jms: '1.0'
 authors:
   - Yuri Smolyakov
@@ -28,10 +28,10 @@ datasets:
     description: Blood cells multiple ROC Classification demonstration
   - name: BC Models ROC Estimation
     path: LOG_BLOOD.omv
-    description: ROC estimation for binomial logistis models demonstration
+    description: ROC estimation for binomial logistic models demonstration
   - name: CHD Models ROC Estimation
     path: LOG_CHD.omv
-    description: ROC estimation for binomial logistis models demonstration
+    description: ROC estimation for binomial logistic models demonstration
   - name: Missing Values Imputation
     path: MF_IRIS.omv
     description: Missing values imputation using the prediction power of Random Forests
@@ -41,9 +41,9 @@ datasets:
   - name: Uncertain Interval (UI)
     path: UI_HI.omv
     description: Three-Way threshold determination in test results
-  - name: UI for binomial logistis models
+  - name: UI for binomial logistic models
     path: UI_LOG.omv
-    description: Uncertain Interval estimation for binomial logistis models
+    description: Uncertain Interval estimation for binomial logistic models
   - name: Neural Network Classification
     path: MLP.omv
     description: Neural Network Classifier (multilayer perceptron) demonstration
@@ -56,6 +56,9 @@ datasets:
   - name: Survival Analysis Kaggle
     path: SRV_Kaggle.omv
     description: Survival Analysis (Kaplan-Meier and Cox regression) demonstration
+  - name: SNP and HWE analysis
+    path: SNP_CHD.omv
+    description: SNP Association and Hardy–Weinberg Equilibrium analysis demonstration
 analyses:
   - title: Correlation clustering
     name: mCOR
@@ -149,6 +152,16 @@ analyses:
     description: >-
       Principal Component Analysis (PCA). Note that parallel analysis and
       cross-validation use a hardcoded random seed (42) for reproducibility.
+  - title: SNP Analysis
+    name: mSNP
+    ns: jYS
+    category: analyses
+    menuGroup: jYS
+    menuSubgroup: Genetics
+    menuTitle: SNP Analysis
+    description: >-
+      Analysis of genetic polymorphisms (SNP) including Hardy–Weinberg
+      Equilibrium, Association Tests, Population Genetics metrics, MDR, and LD.
 usesNative: true
 minApp: 1.0.8
 

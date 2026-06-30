@@ -84,7 +84,7 @@ items:
           requiresData: true
 
     - name: splots
-      title: Splitted ROC by predictors
+      title: Split ROC by predictors
       type: Array
       visible: (splitROC)
       items: (vars)

@@ -1,0 +1,152 @@
+title: SNP Analysis
+name: mSNP
+jus: '3.0'
+stage: 0
+compilerMode: tame
+children:
+  - type: VariableSupplier
+    persistentItems: false
+    stretchFactor: 1
+    children:
+      - type: TargetLayoutBox
+        label: Markers
+        children:
+          - type: VariablesListBox
+            name: vars
+            isTarget: true
+      - type: TargetLayoutBox
+        label: Group
+        children:
+          - type: VariablesListBox
+            name: group
+            maxItemCount: 1
+            isTarget: true
+      - type: TargetLayoutBox
+        label: Outcome Variable (Case/Control)
+        children:
+          - type: VariablesListBox
+            name: outcome
+            maxItemCount: 1
+            isTarget: true
+  - type: CollapseBox
+    label: Hardy–Weinberg Equilibrium (HWE) Analysis
+    collapsed: false
+    stretchFactor: 1
+    children:
+      - type: CheckBox
+        name: freqTable
+      - type: CheckBox
+        name: hwTests
+        children:
+          - type: ComboBox
+            name: alpha
+            enable: (hwTests)
+          - type: CheckBox
+            name: hwPerm
+            enable: (hwTests)
+            children: []
+      - type: CheckBox
+        name: ternaryPlot
+        children:
+          - type: ComboBox
+            name: ternaryRegion
+            enable: (ternaryPlot)
+      - type: CheckBox
+        name: qqPlot
+      - type: CheckBox
+        name: barPlot
+  - type: CollapseBox
+    label: Phenotype Association Tests
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: CheckBox
+        name: assocEnable
+        children:
+          - type: ComboBox
+            name: geneticModel
+            enable: (assocEnable)
+          - type: CheckBox
+            name: assocForest
+            enable: (assocEnable)
+  - type: LayoutBox
+    margin: large
+    children:
+      - type: TextBox
+        name: nPerm
+        format: number
+  - type: CollapseBox
+    label: Population Genetics Metrics
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: CheckBox
+        name: popMetrics
+        children:
+          - type: ComboBox
+            name: mafThreshold
+            enable: (popMetrics)
+  - type: CollapseBox
+    label: Multifactor Dimensionality Reduction (MDR)
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: CheckBox
+        name: mdrEnable
+        children:
+          - type: ComboBox
+            name: mdrOrder
+            enable: (mdrEnable)
+          - type: ComboBox
+            name: mdrFolds
+            enable: (mdrEnable)
+          - type: CheckBox
+            name: mdrPermTest
+            enable: (mdrEnable)
+            children: []
+          - type: CheckBox
+            name: mdrCellTable
+            enable: (mdrEnable)
+          - type: CheckBox
+            name: mdrHeatmap
+            enable: (mdrEnable)
+          - type: CheckBox
+            name: mdrBarPlot
+            enable: (mdrEnable)
+  - type: CollapseBox
+    label: Linkage Disequilibrium (LD) Analysis
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: CheckBox
+        name: ldEnable
+        children:
+          - type: CheckBox
+            name: ldTable
+            enable: (ldEnable)
+          - type: CheckBox
+            name: ldHeatmap
+            enable: (ldEnable)
+            children:
+              - type: ComboBox
+                name: ldMetric
+                enable: (ldEnable && ldHeatmap)
+  - type: LayoutBox
+    margin: large
+    children:
+      - type: TextBox
+        name: nPermMDR
+        format: number
+  - type: CollapseBox
+    label: Multiple Testing Correction
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: ComboBox
+        name: adjust
+  - type: LayoutBox
+    margin: large
+    children:
+      - type: TextBox
+        name: mdrSeed
+        format: number

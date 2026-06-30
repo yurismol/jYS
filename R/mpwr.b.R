@@ -262,7 +262,7 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 calc_map <- list(
                     n = .("Sample Size (N)"), 
                     power = .("Power"), 
-                    es = .("Effect Size")
+                    es = .("Effect size")
                 )
                 
                 design_text <- switch(design,
@@ -939,7 +939,7 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             df_plot <- na.omit(data.frame(ES = d_seq, Power = pwr_seq))
             if (nrow(df_plot) == 0) return(FALSE)
             
-            x_label <- if (design == "survival") .("Hazard Ratio") else .("Effect Size")
+            x_label <- if (design == "survival") .("Hazard Ratio") else .("Effect size")
             p <- ggplot2::ggplot(df_plot, ggplot2::aes(x = ES, y = Power)) +
                 ggplot2::geom_line(color = "#3366B2", linewidth = 1.2) +
                 ggplot2::geom_point(color = "#3366B2", size = 2) +
@@ -1183,7 +1183,7 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             df_plot <- na.omit(data.frame(ES = d_seq, N = n_seq))
             if (nrow(df_plot) == 0) return(FALSE)
             
-            x_label <- if (design == "survival") .("Hazard Ratio") else .("Effect Size")
+            x_label <- if (design == "survival") .("Hazard Ratio") else .("Effect size")
             p <- ggplot2::ggplot(df_plot, ggplot2::aes(x = ES, y = N)) +
                 ggplot2::geom_line(color = "#3366B2", linewidth = 1.2) +
                 ggplot2::geom_point(color = "#3366B2", size = 2) +
@@ -1355,7 +1355,7 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             df_plot$Alpha <- factor(df_plot$Alpha, levels = c("0.05", "0.01", "0.005"))
             if (nrow(df_plot) == 0) return(FALSE)
             
-            x_label <- if (design == "survival") .("Hazard Ratio") else .("Effect Size")
+            x_label <- if (design == "survival") .("Hazard Ratio") else .("Effect size")
             
             p <- ggplot2::ggplot(df_plot, ggplot2::aes(x = ES, y = Power, color = Alpha)) +
                 ggplot2::geom_line(linewidth = 1.2) +

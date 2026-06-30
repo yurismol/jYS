@@ -336,7 +336,7 @@ mROCResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Array$new(
                 options=options,
                 name="splots",
-                title="Splitted ROC by predictors",
+                title="Split ROC by predictors",
                 visible="(splitROC)",
                 items="(vars)",
                 template=jmvcore::Image$new(
