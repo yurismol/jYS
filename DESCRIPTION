@@ -14,7 +14,9 @@ LazyData: true
 Imports: jmvcore (>= 0.8.5), R6, dendextend, corrplot, pROC,
          RColorBrewer, missForest, missRanger, ggmice,
          car, ggrepel, glmnet, ggplot2, glasso, qgraph, reshape2,
-         survival, survminer, ggsurvfit, ppcor
+         survival, survminer, ggsurvfit, ppcor,
+         norm, randomForest, mice, foreach, iterators, httpuv, shape, itertools,
+         doRNG, mitml, later, rngtools, ranger, jomo, promises, pan
 Remotes: NoahHellen/missr, HansLandsheer/UncertainInterval, metinbulus/pwrss
 Suggests: shiny, testthat
 
