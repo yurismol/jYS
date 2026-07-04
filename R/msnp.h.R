@@ -9,18 +9,30 @@ mSNPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             vars = NULL,
             group = NULL,
             outcome = NULL,
+            covs = NULL,
             freqTable = TRUE,
+            freqPct = FALSE,
+            groupTable = TRUE,
+            groupAlleles = TRUE,
+            polyDf1 = FALSE,
+            groupTotal = FALSE,
             hwTests = TRUE,
             alpha = "0.05",
             hwPerm = FALSE,
             nPerm = 1000,
             ternaryPlot = FALSE,
             ternaryRegion = "1",
+            ternaryShowMAF = FALSE,
             qqPlot = FALSE,
             barPlot = FALSE,
+            hweSplitOutcome = FALSE,
+            gender = NULL,
+            xLinked = FALSE,
             assocEnable = FALSE,
             geneticModel = "all",
             assocForest = FALSE,
+            assocForestTrunc = TRUE,
+            manhattanPlot = FALSE,
             popMetrics = FALSE,
             mafThreshold = "none",
             mdrEnable = FALSE,
@@ -36,7 +48,10 @@ mSNPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             ldTable = TRUE,
             ldHeatmap = FALSE,
             ldMetric = "r2",
-            adjust = "none", ...) {
+            adjust = "none",
+            qcCallRate = "none",
+            qcMaf = "none",
+            qcHwe = "none", ...) {
 
             super$initialize(
                 package="jYS",
@@ -67,13 +82,46 @@ mSNPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 outcome,
                 required=FALSE,
                 suggested=list(
-                    "nominal"),
+                    "nominal",
+                    "continuous"),
                 permitted=list(
-                    "factor"))
+                    "factor",
+                    "numeric"))
+            private$..covs <- jmvcore::OptionVariables$new(
+                "covs",
+                covs,
+                required=FALSE,
+                suggested=list(
+                    "nominal",
+                    "ordinal",
+                    "continuous"),
+                permitted=list(
+                    "factor",
+                    "numeric"))
             private$..freqTable <- jmvcore::OptionBool$new(
                 "freqTable",
                 freqTable,
                 default=TRUE)
+            private$..freqPct <- jmvcore::OptionBool$new(
+                "freqPct",
+                freqPct,
+                default=FALSE)
+            private$..groupTable <- jmvcore::OptionBool$new(
+                "groupTable",
+                groupTable,
+                default=TRUE)
+            private$..groupAlleles <- jmvcore::OptionBool$new(
+                "groupAlleles",
+                groupAlleles,
+                default=TRUE)
+            private$..polyDf1 <- jmvcore::OptionBool$new(
+                "polyDf1",
+                polyDf1,
+                default=FALSE)
+            private$..groupTotal <- jmvcore::OptionBool$new(
+                "groupTotal",
+                groupTotal,
+                default=FALSE)
             private$..hwTests <- jmvcore::OptionBool$new(
                 "hwTests",
                 hwTests,
@@ -112,6 +160,10 @@ mSNPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "6",
                     "7"),
                 default="1")
+            private$..ternaryShowMAF <- jmvcore::OptionBool$new(
+                "ternaryShowMAF",
+                ternaryShowMAF,
+                default=FALSE)
             private$..qqPlot <- jmvcore::OptionBool$new(
                 "qqPlot",
                 qqPlot,
@@ -119,6 +171,22 @@ mSNPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             private$..barPlot <- jmvcore::OptionBool$new(
                 "barPlot",
                 barPlot,
+                default=FALSE)
+            private$..hweSplitOutcome <- jmvcore::OptionBool$new(
+                "hweSplitOutcome",
+                hweSplitOutcome,
+                default=FALSE)
+            private$..gender <- jmvcore::OptionVariable$new(
+                "gender",
+                gender,
+                required=FALSE,
+                suggested=list(
+                    "nominal"),
+                permitted=list(
+                    "factor"))
+            private$..xLinked <- jmvcore::OptionBool$new(
+                "xLinked",
+                xLinked,
                 default=FALSE)
             private$..assocEnable <- jmvcore::OptionBool$new(
                 "assocEnable",
@@ -138,6 +206,14 @@ mSNPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             private$..assocForest <- jmvcore::OptionBool$new(
                 "assocForest",
                 assocForest,
+                default=FALSE)
+            private$..assocForestTrunc <- jmvcore::OptionBool$new(
+                "assocForestTrunc",
+                assocForestTrunc,
+                default=TRUE)
+            private$..manhattanPlot <- jmvcore::OptionBool$new(
+                "manhattanPlot",
+                manhattanPlot,
                 default=FALSE)
             private$..popMetrics <- jmvcore::OptionBool$new(
                 "popMetrics",
@@ -225,22 +301,64 @@ mSNPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "holm",
                     "fdr"),
                 default="none")
+            private$..qcCallRate <- jmvcore::OptionList$new(
+                "qcCallRate",
+                qcCallRate,
+                options=list(
+                    "none",
+                    "0.90",
+                    "0.95",
+                    "0.98"),
+                default="none")
+            private$..qcMaf <- jmvcore::OptionList$new(
+                "qcMaf",
+                qcMaf,
+                options=list(
+                    "none",
+                    "0.01",
+                    "0.05",
+                    "0.10"),
+                default="none")
+            private$..qcHwe <- jmvcore::OptionList$new(
+                "qcHwe",
+                qcHwe,
+                options=list(
+                    "none",
+                    "0.05",
+                    "0.01",
+                    "0.001",
+                    "0.0001"),
+                default="none")
+            private$..prsOutput <- jmvcore::OptionOutput$new(
+                "prsOutput")
 
             self$.addOption(private$..vars)
             self$.addOption(private$..group)
             self$.addOption(private$..outcome)
+            self$.addOption(private$..covs)
             self$.addOption(private$..freqTable)
+            self$.addOption(private$..freqPct)
+            self$.addOption(private$..groupTable)
+            self$.addOption(private$..groupAlleles)
+            self$.addOption(private$..polyDf1)
+            self$.addOption(private$..groupTotal)
             self$.addOption(private$..hwTests)
             self$.addOption(private$..alpha)
             self$.addOption(private$..hwPerm)
             self$.addOption(private$..nPerm)
             self$.addOption(private$..ternaryPlot)
             self$.addOption(private$..ternaryRegion)
+            self$.addOption(private$..ternaryShowMAF)
             self$.addOption(private$..qqPlot)
             self$.addOption(private$..barPlot)
+            self$.addOption(private$..hweSplitOutcome)
+            self$.addOption(private$..gender)
+            self$.addOption(private$..xLinked)
             self$.addOption(private$..assocEnable)
             self$.addOption(private$..geneticModel)
             self$.addOption(private$..assocForest)
+            self$.addOption(private$..assocForestTrunc)
+            self$.addOption(private$..manhattanPlot)
             self$.addOption(private$..popMetrics)
             self$.addOption(private$..mafThreshold)
             self$.addOption(private$..mdrEnable)
@@ -257,23 +375,39 @@ mSNPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..ldHeatmap)
             self$.addOption(private$..ldMetric)
             self$.addOption(private$..adjust)
+            self$.addOption(private$..qcCallRate)
+            self$.addOption(private$..qcMaf)
+            self$.addOption(private$..qcHwe)
+            self$.addOption(private$..prsOutput)
         }),
     active = list(
         vars = function() private$..vars$value,
         group = function() private$..group$value,
         outcome = function() private$..outcome$value,
+        covs = function() private$..covs$value,
         freqTable = function() private$..freqTable$value,
+        freqPct = function() private$..freqPct$value,
+        groupTable = function() private$..groupTable$value,
+        groupAlleles = function() private$..groupAlleles$value,
+        polyDf1 = function() private$..polyDf1$value,
+        groupTotal = function() private$..groupTotal$value,
         hwTests = function() private$..hwTests$value,
         alpha = function() private$..alpha$value,
         hwPerm = function() private$..hwPerm$value,
         nPerm = function() private$..nPerm$value,
         ternaryPlot = function() private$..ternaryPlot$value,
         ternaryRegion = function() private$..ternaryRegion$value,
+        ternaryShowMAF = function() private$..ternaryShowMAF$value,
         qqPlot = function() private$..qqPlot$value,
         barPlot = function() private$..barPlot$value,
+        hweSplitOutcome = function() private$..hweSplitOutcome$value,
+        gender = function() private$..gender$value,
+        xLinked = function() private$..xLinked$value,
         assocEnable = function() private$..assocEnable$value,
         geneticModel = function() private$..geneticModel$value,
         assocForest = function() private$..assocForest$value,
+        assocForestTrunc = function() private$..assocForestTrunc$value,
+        manhattanPlot = function() private$..manhattanPlot$value,
         popMetrics = function() private$..popMetrics$value,
         mafThreshold = function() private$..mafThreshold$value,
         mdrEnable = function() private$..mdrEnable$value,
@@ -289,23 +423,39 @@ mSNPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ldTable = function() private$..ldTable$value,
         ldHeatmap = function() private$..ldHeatmap$value,
         ldMetric = function() private$..ldMetric$value,
-        adjust = function() private$..adjust$value),
+        adjust = function() private$..adjust$value,
+        qcCallRate = function() private$..qcCallRate$value,
+        qcMaf = function() private$..qcMaf$value,
+        qcHwe = function() private$..qcHwe$value,
+        prsOutput = function() private$..prsOutput$value),
     private = list(
         ..vars = NA,
         ..group = NA,
         ..outcome = NA,
+        ..covs = NA,
         ..freqTable = NA,
+        ..freqPct = NA,
+        ..groupTable = NA,
+        ..groupAlleles = NA,
+        ..polyDf1 = NA,
+        ..groupTotal = NA,
         ..hwTests = NA,
         ..alpha = NA,
         ..hwPerm = NA,
         ..nPerm = NA,
         ..ternaryPlot = NA,
         ..ternaryRegion = NA,
+        ..ternaryShowMAF = NA,
         ..qqPlot = NA,
         ..barPlot = NA,
+        ..hweSplitOutcome = NA,
+        ..gender = NA,
+        ..xLinked = NA,
         ..assocEnable = NA,
         ..geneticModel = NA,
         ..assocForest = NA,
+        ..assocForestTrunc = NA,
+        ..manhattanPlot = NA,
         ..popMetrics = NA,
         ..mafThreshold = NA,
         ..mdrEnable = NA,
@@ -321,7 +471,11 @@ mSNPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..ldTable = NA,
         ..ldHeatmap = NA,
         ..ldMetric = NA,
-        ..adjust = NA)
+        ..adjust = NA,
+        ..qcCallRate = NA,
+        ..qcMaf = NA,
+        ..qcHwe = NA,
+        ..prsOutput = NA)
 )
 
 mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
@@ -330,16 +484,18 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     active = list(
         hweGroup = function() private$.items[["hweGroup"]],
         assocGroup = function() private$.items[["assocGroup"]],
+        qcGroup = function() private$.items[["qcGroup"]],
         popGroup = function() private$.items[["popGroup"]],
         mdrGroup = function() private$.items[["mdrGroup"]],
-        ldGroup = function() private$.items[["ldGroup"]]),
+        ldGroup = function() private$.items[["ldGroup"]],
+        prsOutput = function() private$.items[["prsOutput"]]),
     private = list(),
     public=list(
         initialize=function(options) {
             super$initialize(
                 options=options,
                 name="",
-                title="SNP Analysis",
+                title="Single Nucleotide Polymorphism",
                 refs=list(
                     "jys",
                     "hw_pkg",
@@ -350,6 +506,7 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 inherit = jmvcore::Group,
                 active = list(
                     freqTable = function() private$.items[["freqTable"]],
+                    groupAnalysisTable = function() private$.items[["groupAnalysisTable"]],
                     hwTable = function() private$.items[["hwTable"]],
                     ternaryPlot = function() private$.items[["ternaryPlot"]],
                     qqPlot = function() private$.items[["qqPlot"]],
@@ -360,7 +517,7 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         super$initialize(
                             options=options,
                             name="hweGroup",
-                            title="Hardy–Weinberg Equilibrium (HWE) Analysis")
+                            title="Hardy-Weinberg Equilibrium (HWE) Analysis")
                         self$add(jmvcore::Table$new(
                             options=options,
                             name="freqTable",
@@ -369,12 +526,21 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             clearWith=list(
                                 "vars",
                                 "group",
-                                "mafThreshold"),
+                                "mafThreshold",
+                                "freqPct",
+                                "hweSplitOutcome",
+                                "outcome",
+                                "xLinked",
+                                "gender",
+                                "qcCallRate",
+                                "qcMaf",
+                                "qcHwe"),
                             columns=list(
                                 list(
                                     `name`="marker", 
                                     `title`="Marker", 
-                                    `type`="text"),
+                                    `type`="text", 
+                                    `combineBelow`=TRUE),
                                 list(
                                     `name`="group", 
                                     `title`="Population", 
@@ -391,27 +557,27 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 list(
                                     `name`="obsAA", 
                                     `title`="Obs AA", 
-                                    `type`="integer"),
+                                    `type`="text"),
                                 list(
                                     `name`="obsAB", 
                                     `title`="Obs AB", 
-                                    `type`="integer"),
+                                    `type`="text"),
                                 list(
                                     `name`="obsBB", 
                                     `title`="Obs BB", 
-                                    `type`="integer"),
+                                    `type`="text"),
                                 list(
                                     `name`="expAA", 
                                     `title`="Exp AA", 
-                                    `type`="number"),
+                                    `type`="text"),
                                 list(
                                     `name`="expAB", 
                                     `title`="Exp AB", 
-                                    `type`="number"),
+                                    `type`="text"),
                                 list(
                                     `name`="expBB", 
                                     `title`="Exp BB", 
-                                    `type`="number"),
+                                    `type`="text"),
                                 list(
                                     `name`="h_obs", 
                                     `title`="H(obs)", 
@@ -422,20 +588,49 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                     `type`="number"))))
                         self$add(jmvcore::Table$new(
                             options=options,
+                            name="groupAnalysisTable",
+                            title="Analysis of Alleles and Genotypes by Groups",
+                            clearWith=list(
+                                "vars",
+                                "group",
+                                "freqPct",
+                                "qcCallRate",
+                                "qcMaf",
+                                "qcHwe"),
+                            columns=list(
+                                list(
+                                    `name`="marker", 
+                                    `title`="Polymorphism", 
+                                    `type`="text", 
+                                    `combineBelow`=TRUE),
+                                list(
+                                    `name`="genotype", 
+                                    `title`="Genotype", 
+                                    `type`="text"))))
+                        self$add(jmvcore::Table$new(
+                            options=options,
                             name="hwTable",
-                            title="Hardy\u2013Weinberg Equilibrium Statistical Tests",
+                            title="Hardy-Weinberg Equilibrium Statistical Tests",
                             visible="(hwTests)",
                             clearWith=list(
                                 "vars",
                                 "group",
                                 "hwPerm",
                                 "nPerm",
-                                "adjust"),
+                                "adjust",
+                                "hweSplitOutcome",
+                                "outcome",
+                                "xLinked",
+                                "gender",
+                                "qcCallRate",
+                                "qcMaf",
+                                "qcHwe"),
                             columns=list(
                                 list(
                                     `name`="marker", 
                                     `title`="Marker", 
-                                    `type`="text"),
+                                    `type`="text", 
+                                    `combineBelow`=TRUE),
                                 list(
                                     `name`="group", 
                                     `title`="Population", 
@@ -498,7 +693,7 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         self$add(jmvcore::Image$new(
                             options=options,
                             name="ternaryPlot",
-                            title="Ternary Diagram (de Finetti)",
+                            title="Ternary diagram (de Finetti)",
                             width=600,
                             height=500,
                             renderFun=".plotTernary",
@@ -507,11 +702,20 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             clearWith=list(
                                 "vars",
                                 "group",
-                                "ternaryRegion")))
+                                "ternaryRegion",
+                                "ternaryShowMAF",
+                                "mafThreshold",
+                                "hweSplitOutcome",
+                                "outcome",
+                                "xLinked",
+                                "gender",
+                                "qcCallRate",
+                                "qcMaf",
+                                "qcHwe")))
                         self$add(jmvcore::Image$new(
                             options=options,
                             name="qqPlot",
-                            title="Q-Q Plot of HWE p-values",
+                            title="Q-Q plot of HWE p-values",
                             width=550,
                             height=450,
                             renderFun=".plotQQ",
@@ -520,7 +724,14 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             clearWith=list(
                                 "vars",
                                 "group",
-                                "hwPerm")))
+                                "hwPerm",
+                                "hweSplitOutcome",
+                                "outcome",
+                                "xLinked",
+                                "gender",
+                                "qcCallRate",
+                                "qcMaf",
+                                "qcHwe")))
                         self$add(jmvcore::Image$new(
                             options=options,
                             name="barPlot",
@@ -532,12 +743,20 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             visible="(barPlot)",
                             clearWith=list(
                                 "vars",
-                                "group")))}))$new(options=options))
+                                "group",
+                                "hweSplitOutcome",
+                                "outcome",
+                                "xLinked",
+                                "gender",
+                                "qcCallRate",
+                                "qcMaf",
+                                "qcHwe")))}))$new(options=options))
             self$add(R6::R6Class(
                 inherit = jmvcore::Group,
                 active = list(
                     assocTable = function() private$.items[["assocTable"]],
-                    assocForest = function() private$.items[["assocForest"]]),
+                    assocForest = function() private$.items[["assocForest"]],
+                    manhattanPlot = function() private$.items[["manhattanPlot"]]),
                 private = list(),
                 public=list(
                     initialize=function(options) {
@@ -554,15 +773,20 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 "vars",
                                 "outcome",
                                 "geneticModel",
-                                "adjust"),
+                                "adjust",
+                                "covs",
+                                "qcCallRate",
+                                "qcMaf",
+                                "qcHwe"),
                             columns=list(
                                 list(
                                     `name`="marker", 
                                     `title`="Marker", 
-                                    `type`="text"),
+                                    `type`="text", 
+                                    `combineBelow`=TRUE),
                                 list(
                                     `name`="model", 
-                                    `title`="Genetic Model", 
+                                    `title`="Genetic model", 
                                     `type`="text"),
                                 list(
                                     `name`="counts_cases", 
@@ -607,7 +831,76 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 "vars",
                                 "outcome",
                                 "geneticModel",
-                                "adjust")))}))$new(options=options))
+                                "adjust",
+                                "covs",
+                                "assocForestTrunc",
+                                "qcCallRate",
+                                "qcMaf",
+                                "qcHwe")))
+                        self$add(jmvcore::Image$new(
+                            options=options,
+                            name="manhattanPlot",
+                            title="Pseudo-Manhattan Plot of Association p-values",
+                            width=650,
+                            height=400,
+                            renderFun=".plotManhattan",
+                            requiresData=TRUE,
+                            visible="(assocEnable && manhattanPlot)",
+                            clearWith=list(
+                                "vars",
+                                "outcome",
+                                "geneticModel",
+                                "covs",
+                                "adjust",
+                                "qcCallRate",
+                                "qcMaf",
+                                "qcHwe")))}))$new(options=options))
+            self$add(R6::R6Class(
+                inherit = jmvcore::Group,
+                active = list(
+                    qcTable = function() private$.items[["qcTable"]]),
+                private = list(),
+                public=list(
+                    initialize=function(options) {
+                        super$initialize(
+                            options=options,
+                            name="qcGroup",
+                            title="Quality Control (QC) Analysis")
+                        self$add(jmvcore::Table$new(
+                            options=options,
+                            name="qcTable",
+                            title="Quality Control Summary",
+                            clearWith=list(
+                                "vars",
+                                "outcome",
+                                "qcCallRate",
+                                "qcMaf",
+                                "qcHwe",
+                                "gender",
+                                "xLinked"),
+                            columns=list(
+                                list(
+                                    `name`="marker", 
+                                    `title`="Marker", 
+                                    `type`="text"),
+                                list(
+                                    `name`="call_rate", 
+                                    `title`="Call Rate", 
+                                    `type`="number", 
+                                    `format`="zto"),
+                                list(
+                                    `name`="maf", 
+                                    `title`="MAF", 
+                                    `type`="number"),
+                                list(
+                                    `name`="hwe_p", 
+                                    `title`="HWE p-value (Controls)", 
+                                    `type`="number", 
+                                    `format`="zto,pvalue"),
+                                list(
+                                    `name`="status", 
+                                    `title`="Status", 
+                                    `type`="text"))))}))$new(options=options))
             self$add(R6::R6Class(
                 inherit = jmvcore::Group,
                 active = list(
@@ -618,7 +911,7 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         super$initialize(
                             options=options,
                             name="popGroup",
-                            title="Population Genetics metrics")
+                            title="Population genetics metrics")
                         self$add(jmvcore::Table$new(
                             options=options,
                             name="popTable",
@@ -626,7 +919,12 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             visible="(popMetrics)",
                             clearWith=list(
                                 "vars",
-                                "mafThreshold"),
+                                "mafThreshold",
+                                "qcCallRate",
+                                "qcMaf",
+                                "qcHwe",
+                                "gender",
+                                "xLinked"),
                             columns=list(
                                 list(
                                     `name`="marker", 
@@ -674,7 +972,10 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 "mdrFolds",
                                 "mdrPermTest",
                                 "nPermMDR",
-                                "mdrSeed"),
+                                "mdrSeed",
+                                "qcCallRate",
+                                "qcMaf",
+                                "qcHwe"),
                             columns=list(
                                 list(
                                     `name`="order", 
@@ -712,12 +1013,16 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 "outcome",
                                 "mdrOrder",
                                 "mdrFolds",
-                                "mdrSeed"),
+                                "mdrSeed",
+                                "qcCallRate",
+                                "qcMaf",
+                                "qcHwe"),
                             columns=list(
                                 list(
                                     `name`="combination", 
                                     `title`="Best Combination", 
-                                    `type`="text"),
+                                    `type`="text", 
+                                    `combineBelow`=TRUE),
                                 list(
                                     `name`="cell", 
                                     `title`="Genotypes", 
@@ -742,8 +1047,8 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             options=options,
                             name="mdrHeatmap",
                             title="MDR Interaction Heatmap",
-                            width=600,
-                            height=500,
+                            width=400,
+                            height=340,
                             renderFun=".plotMDRHeatmap",
                             requiresData=TRUE,
                             visible="(mdrEnable && mdrHeatmap)",
@@ -752,13 +1057,16 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 "outcome",
                                 "mdrOrder",
                                 "mdrFolds",
-                                "mdrSeed")))
+                                "mdrSeed",
+                                "qcCallRate",
+                                "qcMaf",
+                                "qcHwe")))
                         self$add(jmvcore::Image$new(
                             options=options,
                             name="mdrBarPlot",
                             title="MDR Model Performance Comparison",
-                            width=600,
-                            height=450,
+                            width=400,
+                            height=500,
                             renderFun=".plotMDRBar",
                             requiresData=TRUE,
                             visible="(mdrEnable && mdrBarPlot)",
@@ -767,7 +1075,10 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 "outcome",
                                 "mdrOrder",
                                 "mdrFolds",
-                                "mdrSeed")))}))$new(options=options))
+                                "mdrSeed",
+                                "qcCallRate",
+                                "qcMaf",
+                                "qcHwe")))}))$new(options=options))
             self$add(R6::R6Class(
                 inherit = jmvcore::Group,
                 active = list(
@@ -786,12 +1097,16 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             title="Linkage Disequilibrium (LD) Table",
                             visible="(ldEnable && ldTable)",
                             clearWith=list(
-                                "vars"),
+                                "vars",
+                                "qcCallRate",
+                                "qcMaf",
+                                "qcHwe"),
                             columns=list(
                                 list(
                                     `name`="marker1", 
                                     `title`="Marker 1", 
-                                    `type`="text"),
+                                    `type`="text", 
+                                    `combineBelow`=TRUE),
                                 list(
                                     `name`="marker2", 
                                     `title`="Marker 2", 
@@ -824,7 +1139,14 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             visible="(ldEnable && ldHeatmap)",
                             clearWith=list(
                                 "vars",
-                                "ldMetric")))}))$new(options=options))}))
+                                "ldMetric",
+                                "qcCallRate",
+                                "qcMaf",
+                                "qcHwe")))}))$new(options=options))
+            self$add(jmvcore::Output$new(
+                options=options,
+                name="prsOutput",
+                title="Polygenic Risk Score"))}))
 
 mSNPBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "mSNPBase",
@@ -844,28 +1166,40 @@ mSNPBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 pause = NULL,
                 completeWhenFilled = FALSE,
                 requiresMissings = FALSE,
-                weightsSupport = 'auto')
+                weightsSupport = 'none')
         }))
 
-#' SNP Analysis
+#' Single Nucleotide Polymorphism
 #'
 #' 
 #' @param data .
 #' @param vars .
 #' @param group .
 #' @param outcome .
+#' @param covs .
 #' @param freqTable .
+#' @param freqPct .
+#' @param groupTable .
+#' @param groupAlleles .
+#' @param polyDf1 .
+#' @param groupTotal .
 #' @param hwTests .
 #' @param alpha .
 #' @param hwPerm .
 #' @param nPerm .
 #' @param ternaryPlot .
 #' @param ternaryRegion .
+#' @param ternaryShowMAF .
 #' @param qqPlot .
 #' @param barPlot .
+#' @param hweSplitOutcome .
+#' @param gender .
+#' @param xLinked .
 #' @param assocEnable .
 #' @param geneticModel .
 #' @param assocForest .
+#' @param assocForestTrunc .
+#' @param manhattanPlot .
 #' @param popMetrics .
 #' @param mafThreshold .
 #' @param mdrEnable .
@@ -882,15 +1216,21 @@ mSNPBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param ldHeatmap .
 #' @param ldMetric .
 #' @param adjust .
+#' @param qcCallRate .
+#' @param qcMaf .
+#' @param qcHwe .
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$hweGroup$freqTable} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$hweGroup$groupAnalysisTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$hweGroup$hwTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$hweGroup$ternaryPlot} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$hweGroup$qqPlot} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$hweGroup$barPlot} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$assocGroup$assocTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$assocGroup$assocForest} \tab \tab \tab \tab \tab an image \cr
+#'   \code{results$assocGroup$manhattanPlot} \tab \tab \tab \tab \tab an image \cr
+#'   \code{results$qcGroup$qcTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$popGroup$popTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$mdrGroup$mdrBestTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$mdrGroup$mdrCellTable} \tab \tab \tab \tab \tab a table \cr
@@ -898,6 +1238,7 @@ mSNPBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$mdrGroup$mdrBarPlot} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$ldGroup$ldTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$ldGroup$ldHeatmap} \tab \tab \tab \tab \tab an image \cr
+#'   \code{results$prsOutput} \tab \tab \tab \tab \tab an output \cr
 #' }
 #'
 #' @export
@@ -906,18 +1247,30 @@ mSNP <- function(
     vars,
     group,
     outcome,
+    covs,
     freqTable = TRUE,
+    freqPct = FALSE,
+    groupTable = TRUE,
+    groupAlleles = TRUE,
+    polyDf1 = FALSE,
+    groupTotal = FALSE,
     hwTests = TRUE,
     alpha = "0.05",
     hwPerm = FALSE,
     nPerm = 1000,
     ternaryPlot = FALSE,
     ternaryRegion = "1",
+    ternaryShowMAF = FALSE,
     qqPlot = FALSE,
     barPlot = FALSE,
+    hweSplitOutcome = FALSE,
+    gender,
+    xLinked = FALSE,
     assocEnable = FALSE,
     geneticModel = "all",
     assocForest = FALSE,
+    assocForestTrunc = TRUE,
+    manhattanPlot = FALSE,
     popMetrics = FALSE,
     mafThreshold = "none",
     mdrEnable = FALSE,
@@ -933,7 +1286,10 @@ mSNP <- function(
     ldTable = TRUE,
     ldHeatmap = FALSE,
     ldMetric = "r2",
-    adjust = "none") {
+    adjust = "none",
+    qcCallRate = "none",
+    qcMaf = "none",
+    qcHwe = "none") {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
         stop("mSNP requires jmvcore to be installed (restart may be required)")
@@ -941,33 +1297,49 @@ mSNP <- function(
     if ( ! missing(vars)) vars <- jmvcore::resolveQuo(jmvcore::enquo(vars))
     if ( ! missing(group)) group <- jmvcore::resolveQuo(jmvcore::enquo(group))
     if ( ! missing(outcome)) outcome <- jmvcore::resolveQuo(jmvcore::enquo(outcome))
+    if ( ! missing(covs)) covs <- jmvcore::resolveQuo(jmvcore::enquo(covs))
+    if ( ! missing(gender)) gender <- jmvcore::resolveQuo(jmvcore::enquo(gender))
     if (missing(data))
         data <- jmvcore::marshalData(
             parent.frame(),
             `if`( ! missing(vars), vars, NULL),
             `if`( ! missing(group), group, NULL),
-            `if`( ! missing(outcome), outcome, NULL))
+            `if`( ! missing(outcome), outcome, NULL),
+            `if`( ! missing(covs), covs, NULL),
+            `if`( ! missing(gender), gender, NULL))
 
     for (v in vars) if (v %in% names(data)) data[[v]] <- as.factor(data[[v]])
     for (v in group) if (v %in% names(data)) data[[v]] <- as.factor(data[[v]])
-    for (v in outcome) if (v %in% names(data)) data[[v]] <- as.factor(data[[v]])
+    for (v in gender) if (v %in% names(data)) data[[v]] <- as.factor(data[[v]])
 
     options <- mSNPOptions$new(
         vars = vars,
         group = group,
         outcome = outcome,
+        covs = covs,
         freqTable = freqTable,
+        freqPct = freqPct,
+        groupTable = groupTable,
+        groupAlleles = groupAlleles,
+        polyDf1 = polyDf1,
+        groupTotal = groupTotal,
         hwTests = hwTests,
         alpha = alpha,
         hwPerm = hwPerm,
         nPerm = nPerm,
         ternaryPlot = ternaryPlot,
         ternaryRegion = ternaryRegion,
+        ternaryShowMAF = ternaryShowMAF,
         qqPlot = qqPlot,
         barPlot = barPlot,
+        hweSplitOutcome = hweSplitOutcome,
+        gender = gender,
+        xLinked = xLinked,
         assocEnable = assocEnable,
         geneticModel = geneticModel,
         assocForest = assocForest,
+        assocForestTrunc = assocForestTrunc,
+        manhattanPlot = manhattanPlot,
         popMetrics = popMetrics,
         mafThreshold = mafThreshold,
         mdrEnable = mdrEnable,
@@ -983,7 +1355,10 @@ mSNP <- function(
         ldTable = ldTable,
         ldHeatmap = ldHeatmap,
         ldMetric = ldMetric,
-        adjust = adjust)
+        adjust = adjust,
+        qcCallRate = qcCallRate,
+        qcMaf = qcMaf,
+        qcHwe = qcHwe)
 
     analysis <- mSNPClass$new(
         options = options,

@@ -1,13 +1,13 @@
 ---
 name:  mSNP
-title: SNP Analysis
+title: Single Nucleotide Polymorphism
 jrs:   '1.1'
 refs: [jys, hw_pkg, mdr_ritchie, mdr_hahn, botstein1980]
 
 items:
     # HWE Analysis Section
     - name: hweGroup
-      title: Hardy–Weinberg Equilibrium (HWE) Analysis
+      title: Hardy-Weinberg Equilibrium (HWE) Analysis
       type: Group
       items:
         - name: freqTable
@@ -18,10 +18,19 @@ items:
             - vars
             - group
             - mafThreshold
+            - freqPct
+            - hweSplitOutcome
+            - outcome
+            - xLinked
+            - gender
+            - qcCallRate
+            - qcMaf
+            - qcHwe
           columns:
             - name: marker
               title: Marker
               type: text
+              combineBelow: true
             - name: group
               title: Population
               type: text
@@ -34,22 +43,22 @@ items:
               type: number
             - name: obsAA
               title: Obs AA
-              type: integer
+              type: text
             - name: obsAB
               title: Obs AB
-              type: integer
+              type: text
             - name: obsBB
               title: Obs BB
-              type: integer
+              type: text
             - name: expAA
               title: Exp AA
-              type: number
+              type: text
             - name: expAB
               title: Exp AB
-              type: number
+              type: text
             - name: expBB
               title: Exp BB
-              type: number
+              type: text
             - name: h_obs
               title: H(obs)
               type: number
@@ -57,8 +66,27 @@ items:
               title: H(exp)
               type: number
 
+        - name: groupAnalysisTable
+          title: Analysis of Alleles and Genotypes by Groups
+          type: Table
+          clearWith:
+            - vars
+            - group
+            - freqPct
+            - qcCallRate
+            - qcMaf
+            - qcHwe
+          columns:
+            - name: marker
+              title: Polymorphism
+              type: text
+              combineBelow: true
+            - name: genotype
+              title: Genotype
+              type: text
+
         - name: hwTable
-          title: Hardy–Weinberg Equilibrium Statistical Tests
+          title: Hardy-Weinberg Equilibrium Statistical Tests
           type: Table
           visible: (hwTests)
           clearWith:
@@ -67,10 +95,18 @@ items:
             - hwPerm
             - nPerm
             - adjust
+            - hweSplitOutcome
+            - outcome
+            - xLinked
+            - gender
+            - qcCallRate
+            - qcMaf
+            - qcHwe
           columns:
             - name: marker
               title: Marker
               type: text
+              combineBelow: true
             - name: group
               title: Population
               type: text
@@ -120,7 +156,7 @@ items:
               type: number
 
         - name: ternaryPlot
-          title: Ternary Diagram (de Finetti)
+          title: Ternary diagram (de Finetti)
           type: Image
           width:  600
           height: 500
@@ -131,9 +167,18 @@ items:
             - vars
             - group
             - ternaryRegion
+            - ternaryShowMAF
+            - mafThreshold
+            - hweSplitOutcome
+            - outcome
+            - xLinked
+            - gender
+            - qcCallRate
+            - qcMaf
+            - qcHwe
 
         - name: qqPlot
-          title: Q-Q Plot of HWE p-values
+          title: Q-Q plot of HWE p-values
           type: Image
           width:  550
           height: 450
@@ -144,6 +189,13 @@ items:
             - vars
             - group
             - hwPerm
+            - hweSplitOutcome
+            - outcome
+            - xLinked
+            - gender
+            - qcCallRate
+            - qcMaf
+            - qcHwe
 
         - name: barPlot
           title: Genotype barplot (Observed vs Expected)
@@ -156,6 +208,13 @@ items:
           clearWith:
             - vars
             - group
+            - hweSplitOutcome
+            - outcome
+            - xLinked
+            - gender
+            - qcCallRate
+            - qcMaf
+            - qcHwe
 
     # Association Tests Section
     - name: assocGroup
@@ -172,12 +231,17 @@ items:
             - outcome
             - geneticModel
             - adjust
+            - covs
+            - qcCallRate
+            - qcMaf
+            - qcHwe
           columns:
             - name: marker
               title: Marker
               type: text
+              combineBelow: true
             - name: model
-              title: Genetic Model
+              title: Genetic model
               type: text
             - name: counts_cases
               title: Genotypes Cases
@@ -216,10 +280,69 @@ items:
             - outcome
             - geneticModel
             - adjust
+            - covs
+            - assocForestTrunc
+            - qcCallRate
+            - qcMaf
+            - qcHwe
+
+        - name: manhattanPlot
+          title: Pseudo-Manhattan Plot of Association p-values
+          type: Image
+          width:  650
+          height: 400
+          renderFun: .plotManhattan
+          requiresData: true
+          visible: (assocEnable && manhattanPlot)
+          clearWith:
+            - vars
+            - outcome
+            - geneticModel
+            - covs
+            - adjust
+            - qcCallRate
+            - qcMaf
+            - qcHwe
+
+    # Quality Control Section
+    - name: qcGroup
+      title: Quality Control (QC) Analysis
+      type: Group
+      visible: (qcCallRate != "none" || qcMaf != "none" || qcHwe != "none")
+      items:
+        - name: qcTable
+          title: Quality Control Summary
+          type: Table
+          clearWith:
+            - vars
+            - outcome
+            - qcCallRate
+            - qcMaf
+            - qcHwe
+            - gender
+            - xLinked
+          columns:
+            - name: marker
+              title: Marker
+              type: text
+            - name: call_rate
+              title: Call Rate
+              type: number
+              format: zto
+            - name: maf
+              title: MAF
+              type: number
+            - name: hwe_p
+              title: HWE p-value (Controls)
+              type: number
+              format: zto,pvalue
+            - name: status
+              title: Status
+              type: text
 
     # Population Genetics Section
     - name: popGroup
-      title: Population Genetics metrics
+      title: Population genetics metrics
       type: Group
       visible: (popMetrics)
       items:
@@ -230,6 +353,11 @@ items:
           clearWith:
             - vars
             - mafThreshold
+            - qcCallRate
+            - qcMaf
+            - qcHwe
+            - gender
+            - xLinked
           columns:
             - name: marker
               title: Marker
@@ -265,6 +393,9 @@ items:
             - mdrPermTest
             - nPermMDR
             - mdrSeed
+            - qcCallRate
+            - qcMaf
+            - qcHwe
           columns:
             - name: order
               title: Order
@@ -297,10 +428,14 @@ items:
             - mdrOrder
             - mdrFolds
             - mdrSeed
+            - qcCallRate
+            - qcMaf
+            - qcHwe
           columns:
             - name: combination
               title: Best Combination
               type: text
+              combineBelow: true
             - name: cell
               title: Genotypes
               type: text
@@ -320,8 +455,8 @@ items:
         - name: mdrHeatmap
           title: MDR Interaction Heatmap
           type: Image
-          width:  600
-          height: 500
+          width:  400
+          height: 340
           renderFun: .plotMDRHeatmap
           requiresData: true
           visible: (mdrEnable && mdrHeatmap)
@@ -331,12 +466,15 @@ items:
             - mdrOrder
             - mdrFolds
             - mdrSeed
+            - qcCallRate
+            - qcMaf
+            - qcHwe
 
         - name: mdrBarPlot
           title: MDR Model Performance Comparison
           type: Image
-          width:  600
-          height: 450
+          width:  400
+          height: 500
           renderFun: .plotMDRBar
           requiresData: true
           visible: (mdrEnable && mdrBarPlot)
@@ -346,6 +484,9 @@ items:
             - mdrOrder
             - mdrFolds
             - mdrSeed
+            - qcCallRate
+            - qcMaf
+            - qcHwe
 
     # Linkage Disequilibrium Section
     - name: ldGroup
@@ -359,10 +500,14 @@ items:
           visible: (ldEnable && ldTable)
           clearWith:
             - vars
+            - qcCallRate
+            - qcMaf
+            - qcHwe
           columns:
             - name: marker1
               title: Marker 1
               type: text
+              combineBelow: true
             - name: marker2
               title: Marker 2
               type: text
@@ -391,4 +536,13 @@ items:
           clearWith:
             - vars
             - ldMetric
+            - qcCallRate
+            - qcMaf
+            - qcHwe
+
+    # Polygenic Risk Score
+    - name: prsOutput
+      title: Polygenic Risk Score
+      type: Output
+
 ...

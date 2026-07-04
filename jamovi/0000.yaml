@@ -58,7 +58,7 @@ datasets:
     description: Survival Analysis (Kaplan-Meier and Cox regression) demonstration
   - name: SNP and HWE analysis
     path: SNP_CHD.omv
-    description: SNP Association and Hardy–Weinberg Equilibrium analysis demonstration
+    description: SNP Association and Hardy-Weinberg Equilibrium analysis demonstration
 analyses:
   - title: Correlation clustering
     name: mCOR
@@ -152,15 +152,15 @@ analyses:
     description: >-
       Principal Component Analysis (PCA). Note that parallel analysis and
       cross-validation use a hardcoded random seed (42) for reproducibility.
-  - title: SNP Analysis
+  - title: Single Nucleotide Polymorphism
     name: mSNP
     ns: jYS
     category: analyses
     menuGroup: jYS
     menuSubgroup: Genetics
-    menuTitle: SNP Analysis
+    menuTitle: Single Nucleotide Polymorphism
     description: >-
-      Analysis of genetic polymorphisms (SNP) including Hardy–Weinberg
+      Analysis of genetic polymorphisms (SNP) including Hardy-Weinberg
       Equilibrium, Association Tests, Population Genetics metrics, MDR, and LD.
 usesNative: true
 minApp: 1.0.8

@@ -1836,9 +1836,9 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 )
             
             if (show_forest_log) {
-                p <- p + ggplot2::scale_y_log10(labels = function(x) sprintf("%g", x))
+                p <- p + ggplot2::scale_y_log10(labels = function(x) sapply(x, function(val) if (is.na(val)) "" else format(val, scientific = FALSE, trim = TRUE)))
             } else {
-                p <- p + ggplot2::scale_y_continuous(labels = function(x) sprintf("%g", x))
+                p <- p + ggplot2::scale_y_continuous(labels = function(x) sapply(x, function(val) if (is.na(val)) "" else format(val, scientific = FALSE, trim = TRUE)))
             }
             
             n_groups <- length(unique(df$Group))

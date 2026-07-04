@@ -1,4 +1,4 @@
-title: SNP Analysis
+title: Single Nucleotide Polymorphism
 name: mSNP
 jus: '3.0'
 stage: 0
@@ -15,6 +15,19 @@ children:
             name: vars
             isTarget: true
       - type: TargetLayoutBox
+        label: Outcome Variable (Case/Control)
+        children:
+          - type: VariablesListBox
+            name: outcome
+            maxItemCount: 1
+            isTarget: true
+      - type: TargetLayoutBox
+        label: Covariates
+        children:
+          - type: VariablesListBox
+            name: covs
+            isTarget: true
+      - type: TargetLayoutBox
         label: Group
         children:
           - type: VariablesListBox
@@ -22,19 +35,45 @@ children:
             maxItemCount: 1
             isTarget: true
       - type: TargetLayoutBox
-        label: Outcome Variable (Case/Control)
+        label: Sex Variable (for X-linked HWE)
         children:
           - type: VariablesListBox
-            name: outcome
+            name: gender
             maxItemCount: 1
             isTarget: true
   - type: CollapseBox
-    label: Hardy–Weinberg Equilibrium (HWE) Analysis
+    label: Frequency Tables
     collapsed: false
     stretchFactor: 1
     children:
       - type: CheckBox
         name: freqTable
+      - type: CheckBox
+        name: groupTable
+        enable: ({ return ui['group'].value() !== null; })
+        children:
+          - type: CheckBox
+            name: groupAlleles
+            enable: >-
+              ({ return ui['groupTable'].value() && ui['group'].value() !==
+              null; })
+          - type: CheckBox
+            name: polyDf1
+            enable: >-
+              ({ return ui['groupTable'].value() && ui['group'].value() !==
+              null; })
+          - type: CheckBox
+            name: groupTotal
+            enable: >-
+              ({ return ui['groupTable'].value() && ui['group'].value() !==
+              null; })
+      - type: CheckBox
+        name: freqPct
+  - type: CollapseBox
+    label: Hardy-Weinberg Equilibrium (HWE) Analysis
+    collapsed: false
+    stretchFactor: 1
+    children:
       - type: CheckBox
         name: hwTests
         children:
@@ -51,13 +90,22 @@ children:
           - type: ComboBox
             name: ternaryRegion
             enable: (ternaryPlot)
+          - type: CheckBox
+            name: ternaryShowMAF
+            enable: (ternaryPlot)
       - type: CheckBox
         name: qqPlot
       - type: CheckBox
         name: barPlot
+      - type: CheckBox
+        name: hweSplitOutcome
+        enable: ({ return ui['outcome'].value() !== null; })
+      - type: CheckBox
+        name: xLinked
+        enable: ({ return ui['gender'].value() !== null; })
   - type: CollapseBox
     label: Phenotype Association Tests
-    collapsed: true
+    collapsed: false
     stretchFactor: 1
     children:
       - type: CheckBox
@@ -69,6 +117,13 @@ children:
           - type: CheckBox
             name: assocForest
             enable: (assocEnable)
+            children:
+              - type: CheckBox
+                name: assocForestTrunc
+                enable: (assocEnable && assocForest)
+          - type: CheckBox
+            name: manhattanPlot
+            enable: (assocEnable)
   - type: LayoutBox
     margin: large
     children:
@@ -76,8 +131,8 @@ children:
         name: nPerm
         format: number
   - type: CollapseBox
-    label: Population Genetics Metrics
-    collapsed: true
+    label: Population genetics metrics
+    collapsed: false
     stretchFactor: 1
     children:
       - type: CheckBox
@@ -87,8 +142,19 @@ children:
             name: mafThreshold
             enable: (popMetrics)
   - type: CollapseBox
-    label: Multifactor Dimensionality Reduction (MDR)
+    label: Quality Control (QC) Filters
     collapsed: true
+    stretchFactor: 1
+    children:
+      - type: ComboBox
+        name: qcCallRate
+      - type: ComboBox
+        name: qcMaf
+      - type: ComboBox
+        name: qcHwe
+  - type: CollapseBox
+    label: Multifactor Dimensionality Reduction (MDR)
+    collapsed: false
     stretchFactor: 1
     children:
       - type: CheckBox
@@ -113,9 +179,14 @@ children:
           - type: CheckBox
             name: mdrBarPlot
             enable: (mdrEnable)
+  - type: LayoutBox
+    margin: large
+    children:
+      - type: Output
+        name: prsOutput
   - type: CollapseBox
     label: Linkage Disequilibrium (LD) Analysis
-    collapsed: true
+    collapsed: false
     stretchFactor: 1
     children:
       - type: CheckBox
@@ -138,8 +209,8 @@ children:
         name: nPermMDR
         format: number
   - type: CollapseBox
-    label: Multiple Testing Correction
-    collapsed: true
+    label: Multiple testing correction
+    collapsed: false
     stretchFactor: 1
     children:
       - type: ComboBox

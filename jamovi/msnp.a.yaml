@@ -1,6 +1,6 @@
 ---
 name:  mSNP
-title: SNP Analysis
+title: Single Nucleotide Polymorphism
 menuGroup: jYS
 menuSubgroup: Genetics
 version: '1.0.0'
@@ -36,17 +36,56 @@ options:
       required: false
       suggested:
         - nominal
+        - continuous
       permitted:
         - factor
+        - numeric
+
+    - name: covs
+      title: Covariates
+      type: Variables
+      required: false
+      suggested:
+        - nominal
+        - ordinal
+        - continuous
+      permitted:
+        - factor
+        - numeric
 
     # HWE Analysis Section
     - name: freqTable
-      title: Show allele and genotype frequencies
+      title: Allele and genotype frequencies
       type: Bool
       default: true
 
+    - name: freqPct
+      title: Frequencies as percentages (%)
+      type: Bool
+      default: false
+
+    - name: groupTable
+      title: Genotype and allele analysis by groups
+      type: Bool
+      default: true
+
+    - name: groupAlleles
+      title: Allele analysis
+      type: Bool
+      default: true
+
+    - name: polyDf1
+      title: Controversial df for polymorphism
+      type: Bool
+      default: false
+
+    - name: groupTotal
+      title: Calculate totals
+      type: Bool
+      default: false
+
     - name: hwTests
-      title: Show HWE statistical tests
+      title: HWE statistical tests
       type: Bool
       default: true
 
@@ -101,6 +140,11 @@ options:
           name: "7"
       default: "1"
 
+    - name: ternaryShowMAF
+      title: MAF threshold boundary lines
+      type: Bool
+      default: false
+
     - name: qqPlot
       title: Q-Q plot of HWE p-values
       type: Bool
@@ -111,9 +155,28 @@ options:
       type: Bool
       default: false
 
+    - name: hweSplitOutcome
+      title: Split HWE by outcome
+      type: Bool
+      default: false
+
+    - name: gender
+      title: Sex variable
+      type: Variable
+      required: false
+      suggested:
+        - nominal
+      permitted:
+        - factor
+
+    - name: xLinked
+      title: Markers are X-linked
+      type: Bool
+      default: false
+
     # Association Tests Section
     - name: assocEnable
-      title: Enable association tests
+      title: Association tests
       type: Bool
       default: false
 
@@ -140,9 +203,19 @@ options:
       type: Bool
       default: false
 
+    - name: assocForestTrunc
+      title: Truncate large confidence intervals
+      type: Bool
+      default: true
+
+    - name: manhattanPlot
+      title: Pseudo-Manhattan plot
+      type: Bool
+      default: false
+
     # Population Genetics Section
     - name: popMetrics
-      title: Show population genetic metrics
+      title: Population genetic metrics
       type: Bool
       default: false
 
@@ -162,7 +235,7 @@ options:
 
     # MDR Analysis Section
     - name: mdrEnable
-      title: Enable MDR analysis
+      title: MDR analysis
       type: Bool
       default: false
 
@@ -208,7 +281,7 @@ options:
       default: 42
 
     - name: mdrCellTable
-      title: Show detailed cell classification table
+      title: Detailed cell classification table
       type: Bool
       default: false
 
@@ -224,12 +297,12 @@ options:
 
     # Linkage Disequilibrium Section
     - name: ldEnable
-      title: Enable Linkage Disequilibrium (LD) analysis
+      title: Linkage Disequilibrium (LD) analysis
       type: Bool
       default: false
 
     - name: ldTable
-      title: Show LD metrics table
+      title: LD metrics table
       type: Bool
       default: true
 
@@ -248,7 +321,6 @@ options:
           name: Dprime
       default: r2
 
-    # Multiple Testing Correction Section
     - name: adjust
       title: Multiple testing correction
       type: List
@@ -262,4 +334,55 @@ options:
         - title: Benjamini–Hochberg (FDR)
           name: fdr
       default: none
+
+    # Quality Control Filters
+    - name: qcCallRate
+      title: Minimum Call Rate
+      type: List
+      options:
+        - title: None
+          name: none
+        - title: "0.90"
+          name: "0.90"
+        - title: "0.95"
+          name: "0.95"
+        - title: "0.98"
+          name: "0.98"
+      default: none
+
+    - name: qcMaf
+      title: Minimum MAF
+      type: List
+      options:
+        - title: None
+          name: none
+        - title: "0.01"
+          name: "0.01"
+        - title: "0.05"
+          name: "0.05"
+        - title: "0.10"
+          name: "0.10"
+      default: none
+
+    - name: qcHwe
+      title: Minimum HWE p-value in controls
+      type: List
+      options:
+        - title: None
+          name: none
+        - title: "0.05"
+          name: "0.05"
+        - title: "0.01"
+          name: "0.01"
+        - title: "0.001"
+          name: "0.001"
+        - title: "0.0001"
+          name: "0.0001"
+      default: none
+
+    # Polygenic Risk Score
+    - name: prsOutput
+      title: Polygenic Risk Score
+      type: Output
+
 ...

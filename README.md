@@ -53,7 +53,7 @@ Some usefull [Jamovi](https://www.jamovi.org/) procedures for researchers
   - pROC (Xavier Robin et al.)
 
 - SNP Analysis (mSNP)
-  - Hardy–Weinberg Equilibrium tests & de Finetti ternary diagram: HardyWeinberg (Jan Graffelman)
+  - Hardy-Weinberg Equilibrium tests & de Finetti ternary diagram: HardyWeinberg (Jan Graffelman)
   - Genetic Association tests (allelic, genotypic, codominant, dominant, recessive, overdominant, log-additive) & Forest plot of Odds Ratios: ggplot2
   - Population genetics metrics (MAF, PIC, Shannon Index, Ne)
   - Multifactor Dimensionality Reduction (MDR) for epistasis/interaction detection: custom R6 implementation
