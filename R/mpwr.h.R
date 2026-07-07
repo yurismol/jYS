@@ -25,12 +25,7 @@ mPWROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             r2_predictor = 0,
             df_chisq = 1,
             factor_levels = 3,
-            k_covariates = 0,
-            margin = 0,
-            crt = FALSE,
-            cluster_size = 10,
-            icc = 0.05,
-            power_es_alpha_curve = FALSE, ...) {
+            k_covariates = 0, ...) {
 
             super$initialize(
                 package="jYS",
@@ -62,8 +57,7 @@ mPWROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "linear",
                     "logistic",
                     "chisq",
-                    "anova",
-                    "survival"),
+                    "anova"),
                 default="independent")
             private$..es <- jmvcore::OptionNumber$new(
                 "es",
@@ -86,10 +80,7 @@ mPWROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 alt,
                 options=list(
                     "two.sided",
-                    "one.sided",
-                    "equivalent",
-                    "non-inferior",
-                    "superior"),
+                    "one.sided"),
                 default="two.sided")
             private$..alpha <- jmvcore::OptionNumber$new(
                 "alpha",
@@ -159,29 +150,6 @@ mPWROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 k_covariates,
                 min=0,
                 default=0)
-            private$..margin <- jmvcore::OptionNumber$new(
-                "margin",
-                margin,
-                default=0)
-            private$..crt <- jmvcore::OptionBool$new(
-                "crt",
-                crt,
-                default=FALSE)
-            private$..cluster_size <- jmvcore::OptionInteger$new(
-                "cluster_size",
-                cluster_size,
-                min=1,
-                default=10)
-            private$..icc <- jmvcore::OptionNumber$new(
-                "icc",
-                icc,
-                min=0,
-                max=1,
-                default=0.05)
-            private$..power_es_alpha_curve <- jmvcore::OptionBool$new(
-                "power_es_alpha_curve",
-                power_es_alpha_curve,
-                default=FALSE)
 
             self$.addOption(private$..calc)
             self$.addOption(private$..design)
@@ -203,11 +171,6 @@ mPWROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..df_chisq)
             self$.addOption(private$..factor_levels)
             self$.addOption(private$..k_covariates)
-            self$.addOption(private$..margin)
-            self$.addOption(private$..crt)
-            self$.addOption(private$..cluster_size)
-            self$.addOption(private$..icc)
-            self$.addOption(private$..power_es_alpha_curve)
         }),
     active = list(
         calc = function() private$..calc$value,
@@ -229,12 +192,7 @@ mPWROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         r2_predictor = function() private$..r2_predictor$value,
         df_chisq = function() private$..df_chisq$value,
         factor_levels = function() private$..factor_levels$value,
-        k_covariates = function() private$..k_covariates$value,
-        margin = function() private$..margin$value,
-        crt = function() private$..crt$value,
-        cluster_size = function() private$..cluster_size$value,
-        icc = function() private$..icc$value,
-        power_es_alpha_curve = function() private$..power_es_alpha_curve$value),
+        k_covariates = function() private$..k_covariates$value),
     private = list(
         ..calc = NA,
         ..design = NA,
@@ -255,12 +213,7 @@ mPWROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..r2_predictor = NA,
         ..df_chisq = NA,
         ..factor_levels = NA,
-        ..k_covariates = NA,
-        ..margin = NA,
-        ..crt = NA,
-        ..cluster_size = NA,
-        ..icc = NA,
-        ..power_es_alpha_curve = NA)
+        ..k_covariates = NA)
 )
 
 mPWRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
@@ -272,7 +225,6 @@ mPWRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         powerCurve = function() private$.items[["powerCurve"]],
         powerEsCurve = function() private$.items[["powerEsCurve"]],
         nEsCurve = function() private$.items[["nEsCurve"]],
-        powerEsAlphaCurve = function() private$.items[["powerEsAlphaCurve"]],
         text = function() private$.items[["text"]]),
     private = list(),
     public=list(
@@ -310,11 +262,7 @@ mPWRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "r2_predictor",
                     "df_chisq",
                     "factor_levels",
-                    "k_covariates",
-                    "margin",
-                    "crt",
-                    "cluster_size",
-                    "icc"),
+                    "k_covariates"),
                 columns=list(
                     list(
                         `name`="n1", 
@@ -325,23 +273,13 @@ mPWRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `title`="N2", 
                         `type`="integer"),
                     list(
-                        `name`="k1", 
-                        `title`="Clusters 1", 
-                        `type`="integer", 
-                        `visible`="(crt && (design:independent || design:welch || design:paired || design:one.sample))"),
-                    list(
-                        `name`="k2", 
-                        `title`="Clusters 2", 
-                        `type`="integer", 
-                        `visible`="(crt && (design:independent || design:welch || design:paired || design:one.sample))"),
-                    list(
                         `name`="power", 
                         `title`="Power", 
                         `type`="number", 
                         `format`="pvalue"),
                     list(
                         `name`="es", 
-                        `title`="Effect Size", 
+                        `title`="Effect size", 
                         `type`="number"),
                     list(
                         `name`="n1_user", 
@@ -355,7 +293,7 @@ mPWRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `superTitle`="User Defined"),
                     list(
                         `name`="es_user", 
-                        `title`="Effect Size", 
+                        `title`="Effect size", 
                         `type`="number", 
                         `superTitle`="User Defined"),
                     list(
@@ -399,11 +337,7 @@ mPWRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "r2_predictor",
                     "df_chisq",
                     "factor_levels",
-                    "k_covariates",
-                    "margin",
-                    "crt",
-                    "cluster_size",
-                    "icc")))
+                    "k_covariates")))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="powerCurve",
@@ -428,11 +362,7 @@ mPWRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "r2_predictor",
                     "df_chisq",
                     "factor_levels",
-                    "k_covariates",
-                    "margin",
-                    "crt",
-                    "cluster_size",
-                    "icc")))
+                    "k_covariates")))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="powerEsCurve",
@@ -457,11 +387,7 @@ mPWRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "r2_predictor",
                     "df_chisq",
                     "factor_levels",
-                    "k_covariates",
-                    "margin",
-                    "crt",
-                    "cluster_size",
-                    "icc")))
+                    "k_covariates")))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="nEsCurve",
@@ -486,40 +412,7 @@ mPWRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "r2_predictor",
                     "df_chisq",
                     "factor_levels",
-                    "k_covariates",
-                    "margin",
-                    "crt",
-                    "cluster_size",
-                    "icc")))
-            self$add(jmvcore::Image$new(
-                options=options,
-                name="powerEsAlphaCurve",
-                title="Power by Effect Size and Alpha",
-                width=500,
-                height=400,
-                renderFun=".powerEsAlphaCurve",
-                visible="(power_es_alpha_curve)",
-                clearWith=list(
-                    "calc",
-                    "design",
-                    "es",
-                    "power",
-                    "n",
-                    "alt",
-                    "alpha",
-                    "n_ratio",
-                    "var_ratio",
-                    "k_total",
-                    "k_tested",
-                    "base_prob",
-                    "r2_predictor",
-                    "df_chisq",
-                    "factor_levels",
-                    "k_covariates",
-                    "margin",
-                    "crt",
-                    "cluster_size",
-                    "icc")))
+                    "k_covariates")))
             self$add(jmvcore::Preformatted$new(
                 options=options,
                 name="text",
@@ -570,11 +463,6 @@ mPWRBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param df_chisq .
 #' @param factor_levels .
 #' @param k_covariates .
-#' @param margin .
-#' @param crt .
-#' @param cluster_size .
-#' @param icc .
-#' @param power_es_alpha_curve .
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$powerTable} \tab \tab \tab \tab \tab a table \cr
@@ -582,7 +470,6 @@ mPWRBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$powerCurve} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$powerEsCurve} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$nEsCurve} \tab \tab \tab \tab \tab an image \cr
-#'   \code{results$powerEsAlphaCurve} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$text} \tab \tab \tab \tab \tab a preformatted \cr
 #' }
 #'
@@ -613,12 +500,7 @@ mPWR <- function(
     r2_predictor = 0,
     df_chisq = 1,
     factor_levels = 3,
-    k_covariates = 0,
-    margin = 0,
-    crt = FALSE,
-    cluster_size = 10,
-    icc = 0.05,
-    power_es_alpha_curve = FALSE) {
+    k_covariates = 0) {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
         stop("mPWR requires jmvcore to be installed (restart may be required)")
@@ -644,12 +526,7 @@ mPWR <- function(
         r2_predictor = r2_predictor,
         df_chisq = df_chisq,
         factor_levels = factor_levels,
-        k_covariates = k_covariates,
-        margin = margin,
-        crt = crt,
-        cluster_size = cluster_size,
-        icc = icc,
-        power_es_alpha_curve = power_es_alpha_curve)
+        k_covariates = k_covariates)
 
     analysis <- mPWRClass$new(
         options = options,

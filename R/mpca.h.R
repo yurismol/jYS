@@ -331,7 +331,7 @@ mPCAResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Image$new(
                 options=options,
                 name="loadingsHeatmap",
-                title="Factor Loadings Heatmap",
+                title="Factor loadings heatmap",
                 visible="(loadingsHeatmap)",
                 width=500,
                 height=500,
@@ -345,7 +345,7 @@ mPCAResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Image$new(
                 options=options,
                 name="screePlot",
-                title="Scree Plot with Parallel Analysis",
+                title="Scree plot with parallel analysis",
                 visible="(screePlot)",
                 width=600,
                 height=450,
