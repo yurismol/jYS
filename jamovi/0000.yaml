@@ -103,7 +103,7 @@ analyses:
     ns: jYS
     category: analyses
     menuGroup: jYS
-    menuSubgroup: Diagnostics
+    menuSubgroup: Diagnostics & Genetics
     menuTitle: Uncertain Interval (UI)
   - title: A Priori Power Analysis
     name: mPWR
@@ -157,7 +157,7 @@ analyses:
     ns: jYS
     category: analyses
     menuGroup: jYS
-    menuSubgroup: Genetics
+    menuSubgroup: Diagnostics & Genetics
     menuTitle: Single Nucleotide Polymorphism
     description: >-
       Analysis of genetic polymorphisms (SNP) including Hardy-Weinberg

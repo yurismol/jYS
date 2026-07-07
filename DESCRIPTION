@@ -17,7 +17,10 @@ Imports: jmvcore (>= 0.8.5), R6, dendextend, corrplot, pROC,
          survival, survminer, ggsurvfit, ppcor,
          norm, randomForest, mice, foreach, iterators, httpuv, shape, itertools,
          doRNG, mitml, later, rngtools, ranger, jomo, promises, pan,
-         HardyWeinberg, Rsolnp, nnet, truncnorm
-Remotes: NoahHellen/missr, HansLandsheer/UncertainInterval, metinbulus/pwrss
+         HardyWeinberg, Rsolnp, nnet, truncnorm,
+         MASS, Matrix, missr, UncertainInterval, pwrss
+Remotes: NoahHellen/missr@de8a7bce98de39466c36e68c808c911f8481ab55,
+         HansLandsheer/UncertainInterval@0055fc6fd7a872d356581e58db96f06f86f749ea,
+         metinbulus/pwrss@b0e3cb0dd9547d575f7820a478bd4e880a15df49
 Suggests: shiny, testthat
 

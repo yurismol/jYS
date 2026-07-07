@@ -91,7 +91,7 @@ children:
     children:
       - name: show_formula
         type: CheckBox
-        label: Show Mathematical Model Formula
+        label: Mathematical model formula
       - name: showForest
         type: CheckBox
         label: Forest plot of Odds Ratios
@@ -111,15 +111,15 @@ children:
             enable: (showForest && !forestLog && forestClip)
       - name: show_roc
         type: CheckBox
-        label: Show ROC Analysis curves
+        label: ROC analysis curves
         children:
           - name: show_roc_cut
             type: CheckBox
-            label: Show Cut-off Thresholds
+            label: Cut-off thresholds
             enable: (show_roc)
           - name: show_roc_table
             type: CheckBox
-            label: Show ROC Table
+            label: ROC table
             enable: (show_roc)
           - name: multiclass_roc_type
             type: ComboBox

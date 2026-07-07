@@ -278,16 +278,26 @@ mMFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                    if (self$options$seed>0) set.seed(self$options$seed)
                 }
                 if (self$options$alg=="mF") {
-                  rf <- missForest::missForest(dat, maxiter=self$options$maxiter,
+                  rf <- tryCatch(
+                      missForest::missForest(dat, maxiter=self$options$maxiter,
 			ntree=self$options$ntree, replace=TRUE,
-			variablewise=TRUE)
+			variablewise=TRUE),
+                      error = function(e) {
+                          jmvcore::reject(jmvcore::format(.("Imputation failed: {}"), e$message), code='')
+                      }
+                  )
                   oob <- rf$OOBerror
                   names(oob) <- colnames(dat)
                   out <- rf$ximp
                 } else {
-                  rf <- missRanger::missRanger(dat, data_only=FALSE, returnOOB=FALSE,
+                  rf <- tryCatch(
+                      missRanger::missRanger(dat, data_only=FALSE, returnOOB=FALSE,
 			maxiter=self$options$maxiter, num.trees=self$options$ntree,
-			pmm.k=self$options$pmmk)	#, seed=self$options$seed
+			pmm.k=self$options$pmmk),	#, seed=self$options$seed
+                      error = function(e) {
+                          jmvcore::reject(jmvcore::format(.("Imputation failed: {}"), e$message), code='')
+                      }
+                  )
                   oob <- rf$pred_errors[rf$best_iter,]
                   out <- rf$data
                 }

@@ -2,7 +2,7 @@
 name:  mSNP
 title: Single Nucleotide Polymorphism
 menuGroup: jYS
-menuSubgroup: Genetics
+menuSubgroup: Diagnostics & Genetics
 version: '1.0.0'
 jas: '1.2'
 

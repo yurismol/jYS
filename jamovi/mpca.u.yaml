@@ -115,11 +115,11 @@ children:
             children:
               - name: show_roc_cut
                 type: CheckBox
-                label: Show Cut-off Thresholds
+                label: Cut-off thresholds
                 enable: (rocPlot)
               - name: show_roc_table
                 type: CheckBox
-                label: Show ROC Table
+                label: ROC table
                 enable: (rocPlot)
               - name: roc_x
                 type: ComboBox
