@@ -41,7 +41,6 @@ children:
             name: gender
             maxItemCount: 1
             isTarget: true
-
   - type: CollapseBox
     label: Frequency Tables
     collapsed: false
@@ -51,20 +50,27 @@ children:
         name: freqTable
       - type: CheckBox
         name: groupTable
-        enable: ({ return ui['group'].value() !== null; })
+        enable: ({ return ui['outcome'].value() !== null; })
         children:
           - type: CheckBox
             name: groupAlleles
-            enable: ({ return ui['groupTable'].value() && ui['group'].value() !== null; })
+            enable: >-
+              ({ return ui['groupTable'].value() && ui['outcome'].value() !==
+              null; })
           - type: CheckBox
             name: polyDf1
-            enable: ({ return ui['groupTable'].value() && ui['group'].value() !== null; })
+            enable: >-
+              ({ return ui['groupTable'].value() && ui['outcome'].value() !==
+              null; })
           - type: CheckBox
             name: groupTotal
-            enable: ({ return ui['groupTable'].value() && ui['group'].value() !== null; })
+            enable: >-
+              ({ return ui['groupTable'].value() && ui['outcome'].value() !==
+              null; })
       - type: CheckBox
         name: freqPct
-
+      - type: CheckBox
+        name: signifMarkers
   - type: CollapseBox
     label: Hardy-Weinberg Equilibrium (HWE) Analysis
     collapsed: false
@@ -79,10 +85,7 @@ children:
           - type: CheckBox
             name: hwPerm
             enable: (hwTests)
-            children:
-              - type: TextBox
-                name: nPerm
-                enable: (hwTests && hwPerm)
+            children: []
       - type: CheckBox
         name: ternaryPlot
         children:
@@ -102,7 +105,6 @@ children:
       - type: CheckBox
         name: xLinked
         enable: ({ return ui['gender'].value() !== null; })
-
   - type: CollapseBox
     label: Phenotype Association Tests
     collapsed: false
@@ -124,7 +126,12 @@ children:
           - type: CheckBox
             name: manhattanPlot
             enable: (assocEnable)
-
+  - type: LayoutBox
+    margin: large
+    children:
+      - type: TextBox
+        name: nPerm
+        format: number
   - type: CollapseBox
     label: Population genetics metrics
     collapsed: false
@@ -136,7 +143,6 @@ children:
           - type: ComboBox
             name: mafThreshold
             enable: (popMetrics)
-
   - type: CollapseBox
     label: Quality Control (QC) Filters
     collapsed: true
@@ -148,7 +154,6 @@ children:
         name: qcMaf
       - type: ComboBox
         name: qcHwe
-
   - type: CollapseBox
     label: Multifactor Dimensionality Reduction (MDR)
     collapsed: false
@@ -166,13 +171,7 @@ children:
           - type: CheckBox
             name: mdrPermTest
             enable: (mdrEnable)
-            children:
-              - type: TextBox
-                name: nPermMDR
-                enable: (mdrEnable && mdrPermTest)
-          - type: TextBox
-            name: mdrSeed
-            enable: (mdrEnable)
+            children: []
           - type: CheckBox
             name: mdrCellTable
             enable: (mdrEnable)
@@ -182,7 +181,11 @@ children:
           - type: CheckBox
             name: mdrBarPlot
             enable: (mdrEnable)
-
+  - type: LayoutBox
+    margin: large
+    children:
+      - type: Output
+        name: prsOutput
   - type: CollapseBox
     label: Linkage Disequilibrium (LD) Analysis
     collapsed: false
@@ -201,7 +204,12 @@ children:
               - type: ComboBox
                 name: ldMetric
                 enable: (ldEnable && ldHeatmap)
-
+  - type: LayoutBox
+    margin: large
+    children:
+      - type: TextBox
+        name: nPermMDR
+        format: number
   - type: CollapseBox
     label: Multiple testing correction
     collapsed: false
@@ -209,13 +217,9 @@ children:
     children:
       - type: ComboBox
         name: adjust
-
-  - type: CollapseBox
-    label: Polygenic Risk Score (PRS)
-    collapsed: true
-    stretchFactor: 1
+  - type: LayoutBox
+    margin: large
     children:
-      - type: CheckBox
-        name: prsOutput
-
-...
+      - type: TextBox
+        name: mdrSeed
+        format: number

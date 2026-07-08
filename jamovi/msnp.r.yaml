@@ -67,15 +67,16 @@ items:
               type: number
 
         - name: groupAnalysisTable
-          title: Analysis of Alleles and Genotypes by Groups
+          title: Analysis of Alleles and Genotypes by Outcome Variable
           type: Table
           clearWith:
             - vars
-            - group
+            - outcome
             - freqPct
             - qcCallRate
             - qcMaf
             - qcHwe
+            - signifMarkers
           columns:
             - name: marker
               title: Polymorphism
@@ -102,6 +103,7 @@ items:
             - qcCallRate
             - qcMaf
             - qcHwe
+            - signifMarkers
           columns:
             - name: marker
               title: Marker
@@ -235,6 +237,7 @@ items:
             - qcCallRate
             - qcMaf
             - qcHwe
+            - signifMarkers
           columns:
             - name: marker
               title: Marker
@@ -396,6 +399,7 @@ items:
             - qcCallRate
             - qcMaf
             - qcHwe
+            - signifMarkers
           columns:
             - name: order
               title: Order

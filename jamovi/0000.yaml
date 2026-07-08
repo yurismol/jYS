@@ -158,10 +158,10 @@ analyses:
     category: analyses
     menuGroup: jYS
     menuSubgroup: Diagnostics & Genetics
-    menuTitle: Single Nucleotide Polymorphism (mSNP)
+    menuTitle: Single Nucleotide Polymorphism
     description: >-
-      Analysis of genetic polymorphisms (SNP) including Hardy-Weinberg Equilibrium,
-      Association Tests, Population Genetics metrics, MDR, and LD.
+      Analysis of genetic polymorphisms (SNP) including Hardy-Weinberg
+      Equilibrium, Association Tests, Population Genetics metrics, MDR, and LD.
 usesNative: true
 minApp: 1.0.8
 

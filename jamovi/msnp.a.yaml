@@ -64,8 +64,13 @@ options:
       type: Bool
       default: false
 
+    - name: signifMarkers
+      title: Significance markers
+      type: Bool
+      default: false
+
     - name: groupTable
-      title: Genotype and allele analysis by groups
+      title: Genotype and allele analysis by outcome
       type: Bool
       default: true
 

@@ -242,16 +242,7 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             super$initialize(
                 options=options,
                 name="",
-                title="Survival Analysis",
-                refs=list(
-                    "jys",
-                    "survival",
-                    "survminer",
-                    "ggsurvfit",
-                    "kaplan1958",
-                    "cox1972",
-                    "heagerty2000",
-                    "harrell2015"))
+                title="Survival Analysis")
             self$add(R6::R6Class(
                 inherit = jmvcore::Group,
                 active = list(
@@ -264,7 +255,13 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         super$initialize(
                             options=options,
                             name="kmSection",
-                            title="Kaplan-Meier Survival Analysis")
+                            title="Kaplan-Meier Survival Analysis",
+                            refs=list(
+                    "jys",
+                    "survival",
+                    "survminer",
+                    "ggsurvfit",
+                    "kaplan1958"))
                         self$add(jmvcore::Table$new(
                             options=options,
                             name="kmSummaryTable",
@@ -350,6 +347,8 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 name="logRankTable",
                 title="Log-rank Test (Group Comparison)",
                 visible="(showLogRank)",
+                refs=list(
+                    "survival"),
                 clearWith=list(
                     "elapsed",
                     "status",
@@ -383,7 +382,11 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         super$initialize(
                             options=options,
                             name="coxSection",
-                            title="Cox Proportional Hazards Regression")
+                            title="Cox Proportional Hazards Regression",
+                            refs=list(
+                    "survival",
+                    "cox1972",
+                    "harrell2015"))
                         self$add(jmvcore::Table$new(
                             options=options,
                             name="coxFitTable",
@@ -529,7 +532,9 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         super$initialize(
                             options=options,
                             name="rocSection",
-                            title="Time-dependent ROC Analysis")
+                            title="Time-dependent ROC Analysis",
+                            refs=list(
+                    "heagerty2000"))
                         self$add(jmvcore::Table$new(
                             options=options,
                             name="rocTable",

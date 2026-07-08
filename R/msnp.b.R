@@ -51,24 +51,24 @@ mSNPClass <- R6::R6Class(
             
             # Setup groupTable columns dynamically
             groupTable <- self$results$hweGroup$groupAnalysisTable
-            has_group <- !is.null(self$options$group)
-            show_group_table <- has_group && isTRUE(self$options$groupTable)
+            has_outcome <- !is.null(self$options$outcome)
+            show_group_table <- has_outcome && isTRUE(self$options$groupTable)
             groupTable$setVisible(show_group_table)
             if (isTRUE(self$options$groupAlleles)) {
-                groupTable$setTitle(.("Analysis of Alleles and Genotypes by Groups"))
+                groupTable$setTitle(.("Analysis of Alleles and Genotypes by Outcome Variable"))
             } else {
-                groupTable$setTitle(.("Analysis of Genotypes by Groups"))
+                groupTable$setTitle(.("Analysis of Genotypes by Outcome Variable"))
             }
             
             if (show_group_table) {
-                group_var_name <- self$options$group
-                if (group_var_name %in% names(self$data)) {
-                    groups <- levels(self$data[[group_var_name]])
+                outcome_var_name <- self$options$outcome
+                if (outcome_var_name %in% names(self$data)) {
+                    groups <- levels(self$data[[outcome_var_name]])
                     if (is.null(groups) || length(groups) == 0) {
-                        groups <- levels(factor(self$data[[group_var_name]]))
+                        groups <- levels(factor(self$data[[outcome_var_name]]))
                     }
                     for (g in groups) {
-                        groupTable$addColumn(name = paste0("grp_", g), title = g, type = "text")
+                        groupTable$addColumn(name = paste0("grp_", g), title = g, type = "text", superTitle = .("Outcome"))
                     }
                     # Calculate degrees of freedom
                     # df for a contingency table is (r - 1) * (c - 1)
@@ -78,6 +78,13 @@ mSNPClass <- R6::R6Class(
                     df_gt <- G - 1
                     df_poly <- if (isTRUE(self$options$polyDf1)) G - 1 else 2 * (G - 1)
 
+                    groupTable$addColumn(
+                        name = "genotype_model",
+                        title = .("Model"),
+                        type = "text",
+                        combineBelow = TRUE,
+                        superTitle = .("Genotype test")
+                    )
                     groupTable$addColumn(
                         name = "genotype_chi",
                         title = paste0("χ² (df=", df_gt, ")"),
@@ -115,14 +122,16 @@ mSNPClass <- R6::R6Class(
             freqTable$setNote('n1', .("<b>Allele frequencies (p, q)</b> represent the proportions of the two alleles in the sample. For a biallelic marker with alleles A and B: p = freq(A) = (2*n_AA + n_AB) / (2*N), q = 1 - p."))
             freqTable$setNote('n2', .("<b>Observed genotype frequencies</b> are the raw counts and proportions of each genotype (AA, AB, BB) directly from the data."))
             freqTable$setNote('n3', .("<b>Expected genotype frequencies</b> are the counts predicted under Hardy-Weinberg equilibrium: E(AA) = p² × N, E(AB) = 2pq × N, E(BB) = q² × N."))
-            freqTable$setNote('n4', .("<b>Observed heterozygosity (H_obs)</b> is the proportion of heterozygous individuals (AB) in the sample: H_obs = n_AB / N."))
-            freqTable$setNote('n5', .("<b>Expected heterozygosity (H_exp)</b> is the heterozygosity expected under HWE: H_exp = 2pq. A significant difference between H_obs and H_exp may indicate inbreeding, population substructure, or selection."))
+            freqTable$setNote('n4', .("<b>Observed heterozygosity (H(obs))</b> is the proportion of heterozygous individuals (AB) in the sample: H(obs) = n_AB / N."))
+            freqTable$setNote('n5', .("<b>Expected heterozygosity (H(exp))</b> is the heterozygosity expected under HWE: H(exp) = 2pq. A significant difference between H(obs) and H(exp) may indicate inbreeding, population substructure, or selection."))
             
             hwTable$setNote('n1', .("<b>Chi-square test</b> is the classical Pearson goodness-of-fit test comparing observed and expected genotype counts under HWE. Suitable for large sample sizes (N > 50). Asymptotic; may be unreliable for rare alleles."))
             hwTable$setNote('n2', .("<b>Exact test</b> (Haldane, 1954) computes the exact probability of the observed heterozygote count, conditional on the allele counts. Recommended for small samples or rare alleles."))
             hwTable$setNote('n3', .("<b>Likelihood-ratio test</b> compares the likelihood of the data under HWE versus the saturated model. The test statistic -2 × ln(L_HWE / L_sat) follows chi-square with 1 df."))
             hwTable$setNote('n4', .("<b>Permutation test</b> estimates the p-value by randomly permuting alleles among genotypes. Distribution-free; valid for any sample size."))
-            hwTable$setNote('n5', .("<b>Inbreeding coefficient (F_IS)</b> measures deviation from HWE: F_IS = 1 - H_obs / H_exp. <b>F_IS > 0</b> indicates heterozygote deficiency (inbreeding), <b>F_IS < 0</b> indicates heterozygote excess (outbreeding), <b>F_IS = 0</b> indicates Hardy-Weinberg equilibrium."))
+            hwTable$setNote('n5', .("<b>Inbreeding coefficient (F_IS)</b> measures deviation from HWE: F_IS = 1 - H(obs) / H(exp). <b>F_IS > 0</b> indicates heterozygote deficiency (inbreeding), <b>F_IS < 0</b> indicates heterozygote excess (outbreeding), <b>F_IS = 0</b> indicates Hardy-Weinberg equilibrium."))
+            
+            groupTable$setNote('n1', .("A – Allelic, D – Dominant, OD – Overdominant, R – Recessive"))
             
             assocTable$setNote('n1', .("<b>Allelic test</b> compares allele frequencies between case and control groups using a 2×2 contingency table. Tests whether the minor allele is significantly more (or less) frequent in cases than controls."))
             assocTable$setNote('n2', .("<b>Odds Ratio (OR)</b> quantifies the strength of association between an allele/genotype and the outcome. <b>OR > 1</b> indicates increased risk, <b>OR < 1</b> indicates protective effect, <b>OR = 1</b> indicates no association. The 95% CI that does not cross 1.0 indicates significance."))
@@ -166,8 +175,8 @@ mSNPClass <- R6::R6Class(
             }
             
             # 1b. Group Table Analysis
-            has_group <- !is.null(self$options$group)
-            show_group_table <- has_group && isTRUE(self$options$groupTable)
+            has_outcome <- !is.null(self$options$outcome)
+            show_group_table <- has_outcome && isTRUE(self$options$groupTable)
             self$results$hweGroup$groupAnalysisTable$setVisible(show_group_table)
             if (show_group_table) {
                 private$.fillGroupTable()
@@ -727,6 +736,18 @@ mSNPClass <- R6::R6Class(
                     }
                     
                     hwTable$addRow(rowKey = k$row_key, value = row_val)
+                    if (isTRUE(self$options$signifMarkers)) {
+                        private$.add_p_symbol(hwTable, k$row_key, "chi_p", raw_p_chi[i])
+                        private$.add_p_symbol(hwTable, k$row_key, "chi_p_adj", adj_p_chi[i])
+                        private$.add_p_symbol(hwTable, k$row_key, "exact_p", raw_p_exact[i])
+                        private$.add_p_symbol(hwTable, k$row_key, "exact_p_adj", adj_p_exact[i])
+                        private$.add_p_symbol(hwTable, k$row_key, "lr_p", raw_p_lr[i])
+                        private$.add_p_symbol(hwTable, k$row_key, "lr_p_adj", adj_p_lr[i])
+                        if (self$options$hwPerm) {
+                            private$.add_p_symbol(hwTable, k$row_key, "perm_p", raw_p_perm[i])
+                            private$.add_p_symbol(hwTable, k$row_key, "perm_p_adj", adj_p_perm[i])
+                        }
+                    }
                     
                     existing <- private$g_hwe_results[[k$row_key]]
                     if (!is.null(existing)) {
@@ -746,6 +767,9 @@ mSNPClass <- R6::R6Class(
                     if (!is.null(marker_status) && marker_status != "Passed") {
                         hwTable$addFootnote(rowKey = k$row_key, col = "marker", paste0(.("Failed QC"), " (", marker_status, ")"))
                     }
+                }
+                if (isTRUE(self$options$signifMarkers)) {
+                    hwTable$setNote('signif_legend', '* p < .05, ** p < .01, *** p < .001')
                 }
             }
         },
@@ -1017,8 +1041,16 @@ mSNPClass <- R6::R6Class(
                     r$p_adj <- adj_p_vals[i]
                     row_key <- paste(r$marker, r$model, sep="_")
                     assocTable$addRow(rowKey = row_key, value = r)
+                    if (isTRUE(self$options$signifMarkers)) {
+                        private$.add_p_symbol(assocTable, row_key, "p_val", r$p_val)
+                        private$.add_p_symbol(assocTable, row_key, "p_adj", r$p_adj)
+                    }
                     private$g_assoc_results[[row_key]] <- r
                 }
+            }
+            
+            if (isTRUE(self$options$signifMarkers)) {
+                assocTable$setNote('signif_legend', '* p < .05, ** p < .01, *** p < .001')
             }
             
             if (has_covs && !is_continuous) {
@@ -1360,7 +1392,14 @@ mSNPClass <- R6::R6Class(
                 if (self$options$mdrPermTest) row_val$p_val <- m$p_val
                 
                 mdrBestTable$addRow(rowKey = as.character(m$order), value = row_val)
+                if (self$options$mdrPermTest && isTRUE(self$options$signifMarkers)) {
+                    private$.add_p_symbol(mdrBestTable, as.character(m$order), "p_val", m$p_val)
+                }
                 private$g_mdr_results[[as.character(m$order)]] <- row_val
+            }
+            
+            if (self$options$mdrPermTest && isTRUE(self$options$signifMarkers)) {
+                mdrBestTable$setNote('signif_legend', '* p < .05, ** p < .01, *** p < .001')
             }
             
             # Save best models state for cells table and plot
@@ -1545,9 +1584,21 @@ mSNPClass <- R6::R6Class(
             return(c(p11=p11, p12=p12, p21=p21, p22=p22))
         },
         
+        .add_p_symbol = function(table, row_key, col_name, p) {
+            if (isTRUE(self$options$signifMarkers) && !is.null(p) && !is.na(p)) {
+                if (p < 0.001) {
+                    table$addSymbol(rowKey = row_key, col = col_name, symbol = "***")
+                } else if (p < 0.01) {
+                    table$addSymbol(rowKey = row_key, col = col_name, symbol = "**")
+                } else if (p < 0.05) {
+                    table$addSymbol(rowKey = row_key, col = col_name, symbol = "*")
+                }
+            }
+        },
+        
         .fillGroupTable = function() {
             groupTable <- self$results$hweGroup$groupAnalysisTable
-            group_var_name <- self$options$group
+            group_var_name <- self$options$outcome
             groups <- levels(private$g_data[[group_var_name]])
             if (is.null(groups) || length(groups) == 0) {
                 groups <- levels(factor(private$g_data[[group_var_name]]))
@@ -1636,6 +1687,14 @@ mSNPClass <- R6::R6Class(
                         genotype = g_labels[[gt]]
                     )
                     
+                    if (gt == "AA") {
+                        row_val$genotype_model <- .("Dominant abbreviation")
+                    } else if (gt == "AB") {
+                        row_val$genotype_model <- .("Overdominant abbreviation")
+                    } else if (gt == "BB") {
+                        row_val$genotype_model <- .("Recessive abbreviation")
+                    }
+                    
                     # Group columns
                     for (g in groups) {
                         cnt <- counts[gt, g]
@@ -1663,6 +1722,10 @@ mSNPClass <- R6::R6Class(
                     row_val$poly_p <- test_poly$p
                     
                     groupTable$addRow(rowKey = row_key, value = row_val)
+                    if (isTRUE(self$options$signifMarkers)) {
+                        private$.add_p_symbol(groupTable, row_key, "genotype_p", test_gt$p)
+                        private$.add_p_symbol(groupTable, row_key, "poly_p", test_poly$p)
+                    }
                 }
                 
                 # Add allele rows: major (A) and minor (B)
@@ -1700,7 +1763,12 @@ mSNPClass <- R6::R6Class(
                         row_val$poly_chi <- NA
                         row_val$poly_p <- NA
                         
+                        row_val$genotype_model <- .("Allelic abbreviation")
+                        
                         groupTable$addRow(rowKey = row_key, value = row_val)
+                        if (isTRUE(self$options$signifMarkers)) {
+                            private$.add_p_symbol(groupTable, row_key, "genotype_p", test_allele$p)
+                        }
                     }
                 }
                 
@@ -1726,9 +1794,13 @@ mSNPClass <- R6::R6Class(
                     row_val$genotype_p <- NA
                     row_val$poly_chi <- NA
                     row_val$poly_p <- NA
+                    row_val$genotype_model <- ""
                     
                     groupTable$addRow(rowKey = row_key, value = row_val)
                 }
+            }
+            if (isTRUE(self$options$signifMarkers)) {
+                groupTable$setNote('signif_legend', '* p < .05, ** p < .01, *** p < .001')
             }
         },
         
@@ -1835,7 +1907,7 @@ mSNPClass <- R6::R6Class(
                     row_key <- paste(marker_names[i], group_names[i], sep="_")
                     row <- private$g_hwe_results[[row_key]]
                     is_sig <- FALSE
-                    if (!is.null(row) && !is.na(row$exact_p)) {
+                    if (!is.null(row) && !is.null(row$exact_p) && !is.na(row$exact_p)) {
                         is_sig <- (row$exact_p < 0.05)
                     }
                     col_vec <- c(col_vec, if (is_sig) col_red else col_green)
