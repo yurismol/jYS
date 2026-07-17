@@ -1,0 +1,227 @@
+---
+name:  mRF
+title: Random Forest Classifier
+menuGroup: jYS
+menuSubgroup: Regression & Classification
+menuTitle: Random Forest Classifier
+description:
+    main: Random Forest Classifier using the ranger package. Note that data partitioning uses a hardcoded random seed (42) for reproducibility.
+version: '1.0.0'
+jas: '1.2'
+
+options:
+    - name: data
+      type: Data
+
+    - name: dep
+      title: Dependent Variable (Target)
+      type: Variable
+      suggested:
+        - nominal
+        - ordinal
+      permitted:
+        - factor
+      required: true
+
+    - name: covs
+      title: Covariates (Continuous Predictors)
+      type: Variables
+      suggested:
+        - continuous
+      permitted:
+        - numeric
+
+    - name: factors
+      title: Factors (Categorical Predictors)
+      type: Variables
+      suggested:
+        - nominal
+        - ordinal
+      permitted:
+        - factor
+
+    - name: ntree
+      title: Number of Trees
+      type: Integer
+      min: 10
+      max: 10000
+      default: 500
+
+    - name: mtry_method
+      title: Variables per Split (mtry)
+      type: List
+      options:
+        - name: auto
+          title: Auto (sqrt for classification)
+        - name: manual
+          title: Manual
+      default: auto
+
+    - name: mtry_val
+      title: Manual mtry Value
+      type: Integer
+      min: 1
+      default: 3
+
+    - name: nodesize
+      title: Minimum Node Size
+      type: Integer
+      min: 1
+      default: 1
+
+    - name: maxdepth
+      title: Maximum Tree Depth (0 = unlimited)
+      type: Integer
+      min: 0
+      default: 0
+
+    - name: sample_fraction
+      title: Sample Fraction (Bootstrap)
+      type: Number
+      min: 0.1
+      max: 1.0
+      default: 1.0
+
+    - name: partition
+      title: Partition Method
+      type: List
+      options:
+        - name: oob
+          title: Out-of-Bag (OOB) Estimation
+        - name: holdout
+          title: Hold-out Validation Split
+        - name: kfold
+          title: K-Fold Cross-Validation
+      default: oob
+
+    - name: val_split
+      title: Hold-out Validation Split (%)
+      type: Number
+      min: 10
+      max: 90
+      default: 30
+
+    - name: cv_folds
+      title: Cross-Validation Folds (K)
+      type: Integer
+      min: 2
+      max: 20
+      default: 5
+
+    - name: show_imp
+      title: Variable Importance
+      type: Bool
+      default: false
+
+    - name: imp_type
+      title: Importance Type
+      type: List
+      options:
+        - name: permutation
+          title: Permutation Importance
+        - name: impurity
+          title: Impurity (Gini) Importance
+      default: permutation
+
+    - name: show_oob_curve
+      title: OOB Error Convergence Curve
+      type: Bool
+      default: false
+
+    - name: show_matrix
+      title: Confusion Matrix
+      type: Bool
+      default: false
+
+    - name: show_roc
+      title: ROC Analysis
+      type: Bool
+      default: false
+
+    - name: show_roc_cut
+      title: Show Cut-off Thresholds
+      type: Bool
+      default: true
+
+    - name: show_roc_table
+      title: Show ROC Table
+      type: Bool
+      default: false
+
+    - name: roc_x
+      title: ROC X-axis Coordinate
+      type: List
+      options:
+        - name: spec
+          title: Specificity
+        - name: 1spec
+          title: 1 - Specificity
+      default: 1spec
+
+    - name: roc_unit
+      title: ROC Axis Units
+      type: List
+      options:
+        - name: decimal
+          title: Decimal (0 to 1)
+        - name: percent
+          title: Percentage (%)
+      default: percent
+
+    - name: multiclass_roc_type
+      title: Multiclass ROC Layout
+      type: List
+      options:
+        - name: combined
+          title: Combined Plot (Single Axes)
+        - name: separate
+          title: Separate Plots (Class-Specific)
+      default: combined
+
+    - name: palBrewer
+      title: Brewer's qualitative palette
+      type: List
+      options:
+        - title: None
+          name:  none
+        - title: Accent
+          name:  Accent
+        - title: Dark2
+          name:  Dark2
+        - title: Paired
+          name:  Paired
+        - title: Pastel1
+          name:  Pastel1
+        - title: Set1
+          name:  Set1
+        - title: Set2
+          name:  Set2
+        - title: Set3
+          name:  Set3
+      default: Dark2
+
+    - name: show_pdp
+      title: Partial Dependence Plots (Top Predictors)
+      type: Bool
+      default: false
+
+    - name: pdp_n_vars
+      title: Number of Top Predictors for PDP
+      type: Integer
+      min: 1
+      max: 10
+      default: 4
+
+    - name: seed
+      title: Seed number
+      type: Integer
+      default: 42
+
+    - name: predClass
+      title: Predicted Class
+      type: Output
+
+    - name: predProb
+      title: Predicted Probability
+      type: Output
+...

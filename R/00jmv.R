@@ -307,4 +307,14 @@
         `volume`=32, 
         `issue`=3, 
         `pages`="314\u2013331", 
-        `url`="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1686077/"))
+        `url`="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC1686077/"), 
+    `breiman2001`=list(
+        `type`="article", 
+        `author`="Breiman, L.", 
+        `year`=2001, 
+        `title`="Random Forests", 
+        `publisher`="Machine Learning", 
+        `volume`=45, 
+        `issue`=1, 
+        `pages`="5-32", 
+        `url`="https://doi.org/10.1023/A:1010933404324"))

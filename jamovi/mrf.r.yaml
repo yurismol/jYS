@@ -1,0 +1,298 @@
+---
+name:  mRF
+title: Random Forest Classifier
+jrs:   '1.1'
+refs: [jys, rg, roc, breiman2001]
+
+items:
+    - name: text
+      title: Conditions
+      type: Html
+      visible: false
+
+    - name: infoTable
+      title: Model Information & Accuracy
+      type: Table
+      rows: 7
+      clearWith:
+          - dep
+          - covs
+          - factors
+          - ntree
+          - mtry_method
+          - mtry_val
+          - nodesize
+          - maxdepth
+          - sample_fraction
+          - partition
+          - val_split
+          - cv_folds
+          - seed
+      columns:
+          - name: metric
+            title: Metric
+            type: text
+          - name: value
+            title: Value
+            type: text
+
+    - name: importanceTable
+      title: Variable Importance
+      type: Table
+      visible: (show_imp)
+      clearWith:
+          - dep
+          - covs
+          - factors
+          - ntree
+          - mtry_method
+          - mtry_val
+          - nodesize
+          - maxdepth
+          - sample_fraction
+          - imp_type
+          - seed
+      columns:
+          - name: var
+            title: Predictor
+            type: text
+          - name: imp
+            title: Importance
+            type: number
+          - name: rank
+            title: Rank
+            type: integer
+
+    - name: importancePlot
+      title: Variable Importance Chart
+      type: Image
+      visible: (show_imp)
+      width:  550
+      height: 400
+      renderFun: .importancePlot
+      requiresData: true
+      clearWith:
+          - dep
+          - covs
+          - factors
+          - ntree
+          - mtry_method
+          - mtry_val
+          - nodesize
+          - maxdepth
+          - sample_fraction
+          - imp_type
+          - seed
+
+    - name: oobCurvePlot
+      title: OOB Error Convergence
+      type: Image
+      visible: (show_oob_curve)
+      width:  550
+      height: 350
+      renderFun: .oobCurvePlot
+      requiresData: true
+      clearWith:
+          - dep
+          - covs
+          - factors
+          - ntree
+          - mtry_method
+          - mtry_val
+          - nodesize
+          - maxdepth
+          - sample_fraction
+          - seed
+
+    - name: matrixTable
+      title: Confusion Matrix
+      type: Table
+      visible: (show_matrix)
+      clearWith:
+          - dep
+          - covs
+          - factors
+          - ntree
+          - mtry_method
+          - mtry_val
+          - nodesize
+          - maxdepth
+          - sample_fraction
+          - partition
+          - val_split
+          - cv_folds
+          - seed
+      columns:
+          - name: actual
+            title: Actual Class
+            type: text
+          - name: predicted
+            title: Predicted Class
+            type: text
+          - name: count
+            title: Count
+            type: integer
+
+    - name: statsTable
+      title: Performance Statistics
+      type: Table
+      visible: (show_matrix)
+      clearWith:
+          - dep
+          - covs
+          - factors
+          - ntree
+          - mtry_method
+          - mtry_val
+          - nodesize
+          - maxdepth
+          - sample_fraction
+          - partition
+          - val_split
+          - cv_folds
+          - seed
+      columns:
+          - name: metric
+            title: Metric
+            type: text
+          - name: trainVal
+            title: Training
+            type: number
+          - name: cvVal
+            title: Validation
+            type: number
+
+    - name: rocTable
+      title: ROC Quantitative Evaluation
+      type: Table
+      visible: (show_roc && show_roc_table)
+      clearWith:
+          - dep
+          - covs
+          - factors
+          - ntree
+          - mtry_method
+          - mtry_val
+          - nodesize
+          - maxdepth
+          - sample_fraction
+          - partition
+          - val_split
+          - cv_folds
+          - roc_x
+          - roc_unit
+          - multiclass_roc_type
+          - palBrewer
+          - show_roc_cut
+          - show_roc_table
+          - seed
+      columns:
+          - name: part
+            title: Curve
+            type: text
+          - name: auc
+            title: AUC
+            type: number
+          - name: cutoff
+            title: Cut-off
+            type: number
+          - name: se
+            title: Sensitivity (Se)
+            type: number
+          - name: sp
+            title: Specificity (Sp)
+            type: number
+          - name: direction
+            title: Direction
+            type: text
+
+    - name: rocPlot
+      title: ROC Analysis Comparison
+      type: Array
+      visible: (show_roc)
+      template:
+          type: Image
+          width:  500
+          height: 500
+          renderFun: .rocPlot
+          requiresData: true
+      clearWith:
+          - dep
+          - covs
+          - factors
+          - ntree
+          - mtry_method
+          - mtry_val
+          - nodesize
+          - maxdepth
+          - sample_fraction
+          - partition
+          - val_split
+          - cv_folds
+          - roc_x
+          - roc_unit
+          - multiclass_roc_type
+          - palBrewer
+          - show_roc_cut
+          - show_roc_table
+          - seed
+
+    - name: pdpPlot
+      title: Partial Dependence Plots
+      type: Array
+      visible: (show_pdp)
+      template:
+          type: Image
+          width:  550
+          height: 400
+          renderFun: .pdpPlot
+          requiresData: true
+      clearWith:
+          - dep
+          - covs
+          - factors
+          - ntree
+          - mtry_method
+          - mtry_val
+          - nodesize
+          - maxdepth
+          - sample_fraction
+          - pdp_n_vars
+          - seed
+
+    - name: predClass
+      title: Predicted Class
+      type: Output
+      clearWith:
+          - dep
+          - covs
+          - factors
+          - ntree
+          - mtry_method
+          - mtry_val
+          - nodesize
+          - maxdepth
+          - sample_fraction
+          - partition
+          - val_split
+          - cv_folds
+          - seed
+
+    - name: predProb
+      title: Predicted Probability
+      type: Output
+      clearWith:
+          - dep
+          - covs
+          - factors
+          - ntree
+          - mtry_method
+          - mtry_val
+          - nodesize
+          - maxdepth
+          - sample_fraction
+          - partition
+          - val_split
+          - cv_folds
+          - seed
+...

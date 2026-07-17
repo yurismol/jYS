@@ -1,0 +1,140 @@
+title: Random Forest Classifier
+name: mRF
+jus: '3.0'
+stage: 0
+compilerMode: tame
+children:
+  - type: VariableSupplier
+    persistentItems: false
+    stretchFactor: 1
+    children:
+      - type: TargetLayoutBox
+        label: Dependent Variable (Target)
+        children:
+          - type: VariablesListBox
+            name: dep
+            maxItemCount: 1
+            isTarget: true
+      - type: TargetLayoutBox
+        label: Covariates (Continuous Predictors)
+        children:
+          - type: VariablesListBox
+            name: covs
+            isTarget: true
+      - type: TargetLayoutBox
+        label: Factors (Categorical Predictors)
+        children:
+          - type: VariablesListBox
+            name: factors
+            isTarget: true
+
+  - type: CollapseBox
+    label: Model Parameters
+    collapsed: true
+    children:
+      - name: ntree
+        type: TextBox
+        label: Number of Trees
+        format: number
+      - name: mtry_method
+        type: ComboBox
+        label: Variables per Split (mtry)
+      - name: mtry_val
+        type: TextBox
+        label: Manual mtry Value
+        format: number
+        enable: (mtry_method:manual)
+      - name: nodesize
+        type: TextBox
+        label: Minimum Node Size
+        format: number
+      - name: maxdepth
+        type: TextBox
+        label: Maximum Tree Depth (0 = unlimited)
+        format: number
+      - name: sample_fraction
+        type: TextBox
+        label: Sample Fraction (Bootstrap)
+        format: number
+
+  - type: CollapseBox
+    label: Validation Settings
+    collapsed: true
+    children:
+      - name: partition
+        type: ComboBox
+        label: Partition Method
+      - name: val_split
+        type: TextBox
+        label: Hold-out Validation Split (%)
+        format: number
+        enable: (partition:holdout)
+      - name: cv_folds
+        type: TextBox
+        label: Cross-Validation Folds (K)
+        format: number
+        enable: (partition:kfold)
+      - name: seed
+        type: TextBox
+        label: Seed number
+        format: number
+
+  - type: CollapseBox
+    label: Outputs & Evaluation
+    collapsed: false
+    children:
+      - name: show_imp
+        type: CheckBox
+        children:
+          - name: imp_type
+            type: ComboBox
+            label: Importance Type
+            enable: (show_imp)
+      - name: show_oob_curve
+        type: CheckBox
+      - name: show_matrix
+        type: CheckBox
+      - name: show_pdp
+        type: CheckBox
+        children:
+          - name: pdp_n_vars
+            type: TextBox
+            label: Number of Top Predictors
+            format: number
+            enable: (show_pdp)
+      - name: show_roc
+        type: CheckBox
+        children:
+          - name: show_roc_cut
+            type: CheckBox
+            label: Cut-off thresholds
+            enable: (show_roc)
+          - name: show_roc_table
+            type: CheckBox
+            label: ROC table
+            enable: (show_roc)
+          - name: roc_x
+            type: ComboBox
+            label: X-axis Coordinate
+            enable: (show_roc)
+          - name: roc_unit
+            type: ComboBox
+            label: Axis Units
+            enable: (show_roc)
+          - name: multiclass_roc_type
+            type: ComboBox
+            label: Multiclass ROC Layout
+            enable: (show_roc)
+          - name: palBrewer
+            type: ComboBox
+            label: Brewer's qualitative palette
+            enable: (show_roc)
+  - type: CollapseBox
+    label: Save
+    collapsed: true
+    children:
+      - type: Output
+        name: predClass
+      - type: Output
+        name: predProb
+...
