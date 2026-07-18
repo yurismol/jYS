@@ -20,6 +20,10 @@ mLROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             cv_folds = 5,
             cv_repeats = 3,
             show_formula = TRUE,
+            show_risk_strat = FALSE,
+            risk_cut_low = 20,
+            risk_cut_high = 70,
+            show_misclassified = FALSE,
             show_roc = FALSE,
             show_roc_cut = TRUE,
             show_roc_table = FALSE,
@@ -133,6 +137,26 @@ mLROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "show_formula",
                 show_formula,
                 default=TRUE)
+            private$..show_risk_strat <- jmvcore::OptionBool$new(
+                "show_risk_strat",
+                show_risk_strat,
+                default=FALSE)
+            private$..risk_cut_low <- jmvcore::OptionNumber$new(
+                "risk_cut_low",
+                risk_cut_low,
+                min=0,
+                max=100,
+                default=20)
+            private$..risk_cut_high <- jmvcore::OptionNumber$new(
+                "risk_cut_high",
+                risk_cut_high,
+                min=0,
+                max=100,
+                default=70)
+            private$..show_misclassified <- jmvcore::OptionBool$new(
+                "show_misclassified",
+                show_misclassified,
+                default=FALSE)
             private$..show_roc <- jmvcore::OptionBool$new(
                 "show_roc",
                 show_roc,
@@ -218,6 +242,10 @@ mLROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..cv_folds)
             self$.addOption(private$..cv_repeats)
             self$.addOption(private$..show_formula)
+            self$.addOption(private$..show_risk_strat)
+            self$.addOption(private$..risk_cut_low)
+            self$.addOption(private$..risk_cut_high)
+            self$.addOption(private$..show_misclassified)
             self$.addOption(private$..show_roc)
             self$.addOption(private$..show_roc_cut)
             self$.addOption(private$..show_roc_table)
@@ -248,6 +276,10 @@ mLROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         cv_folds = function() private$..cv_folds$value,
         cv_repeats = function() private$..cv_repeats$value,
         show_formula = function() private$..show_formula$value,
+        show_risk_strat = function() private$..show_risk_strat$value,
+        risk_cut_low = function() private$..risk_cut_low$value,
+        risk_cut_high = function() private$..risk_cut_high$value,
+        show_misclassified = function() private$..show_misclassified$value,
         show_roc = function() private$..show_roc$value,
         show_roc_cut = function() private$..show_roc_cut$value,
         show_roc_table = function() private$..show_roc_table$value,
@@ -277,6 +309,10 @@ mLROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..cv_folds = NA,
         ..cv_repeats = NA,
         ..show_formula = NA,
+        ..show_risk_strat = NA,
+        ..risk_cut_low = NA,
+        ..risk_cut_high = NA,
+        ..show_misclassified = NA,
         ..show_roc = NA,
         ..show_roc_cut = NA,
         ..show_roc_table = NA,
@@ -304,6 +340,8 @@ mLRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         forestPlot = function() private$.items[["forestPlot"]],
         rocTable = function() private$.items[["rocTable"]],
         rocPlot = function() private$.items[["rocPlot"]],
+        riskTable = function() private$.items[["riskTable"]],
+        misclassifiedTable = function() private$.items[["misclassifiedTable"]],
         predClass = function() private$.items[["predClass"]],
         predProb = function() private$.items[["predProb"]]),
     private = list(),
@@ -515,6 +553,91 @@ mLRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "show_roc_cut",
                     "show_roc_table",
                     "multiclass_roc_type")))
+            self$add(jmvcore::Table$new(
+                options=options,
+                name="riskTable",
+                title="Risk Stratification",
+                visible="(show_risk_strat)",
+                clearWith=list(
+                    "dep",
+                    "covs",
+                    "factors",
+                    "method",
+                    "elastic_alpha",
+                    "lasso_penalty",
+                    "partition",
+                    "val_split",
+                    "cv_folds",
+                    "cv_repeats",
+                    "group",
+                    "selgroup",
+                    "risk_cut_low",
+                    "risk_cut_high"),
+                columns=list(
+                    list(
+                        `name`="category", 
+                        `title`="Risk Category", 
+                        `type`="text"),
+                    list(
+                        `name`="range", 
+                        `title`="Probability Range", 
+                        `type`="text"),
+                    list(
+                        `name`="total", 
+                        `title`="Total (N)", 
+                        `type`="integer"),
+                    list(
+                        `name`="total_pct", 
+                        `title`="Total (%)", 
+                        `type`="number"),
+                    list(
+                        `name`="events", 
+                        `title`="Events (n)", 
+                        `type`="integer"),
+                    list(
+                        `name`="event_rate", 
+                        `title`="Observed Event Rate (%)", 
+                        `type`="number"))))
+            self$add(jmvcore::Table$new(
+                options=options,
+                name="misclassifiedTable",
+                title="Misclassified Cases",
+                visible="(show_misclassified)",
+                clearWith=list(
+                    "dep",
+                    "covs",
+                    "factors",
+                    "method",
+                    "elastic_alpha",
+                    "lasso_penalty",
+                    "partition",
+                    "val_split",
+                    "cv_folds",
+                    "cv_repeats",
+                    "group",
+                    "selgroup"),
+                columns=list(
+                    list(
+                        `name`="row_id", 
+                        `title`="Row", 
+                        `type`="integer"),
+                    list(
+                        `name`="actual", 
+                        `title`="Actual Class", 
+                        `type`="text"),
+                    list(
+                        `name`="predicted", 
+                        `title`="Predicted Class", 
+                        `type`="text"),
+                    list(
+                        `name`="prob", 
+                        `title`="Confidence", 
+                        `type`="number", 
+                        `format`="zto"),
+                    list(
+                        `name`="error_type", 
+                        `title`="Error Type", 
+                        `type`="text"))))
             self$add(jmvcore::Output$new(
                 options=options,
                 name="predClass",
@@ -590,6 +713,10 @@ mLRBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param cv_folds .
 #' @param cv_repeats .
 #' @param show_formula .
+#' @param show_risk_strat .
+#' @param risk_cut_low .
+#' @param risk_cut_high .
+#' @param show_misclassified .
 #' @param show_roc .
 #' @param show_roc_cut .
 #' @param show_roc_table .
@@ -611,6 +738,8 @@ mLRBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$forestPlot} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$rocTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$rocPlot} \tab \tab \tab \tab \tab an array of images \cr
+#'   \code{results$riskTable} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$misclassifiedTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$predClass} \tab \tab \tab \tab \tab an output \cr
 #'   \code{results$predProb} \tab \tab \tab \tab \tab an output \cr
 #' }
@@ -638,6 +767,10 @@ mLR <- function(
     cv_folds = 5,
     cv_repeats = 3,
     show_formula = TRUE,
+    show_risk_strat = FALSE,
+    risk_cut_low = 20,
+    risk_cut_high = 70,
+    show_misclassified = FALSE,
     show_roc = FALSE,
     show_roc_cut = TRUE,
     show_roc_table = FALSE,
@@ -685,6 +818,10 @@ mLR <- function(
         cv_folds = cv_folds,
         cv_repeats = cv_repeats,
         show_formula = show_formula,
+        show_risk_strat = show_risk_strat,
+        risk_cut_low = risk_cut_low,
+        risk_cut_high = risk_cut_high,
+        show_misclassified = show_misclassified,
         show_roc = show_roc,
         show_roc_cut = show_roc_cut,
         show_roc_table = show_roc_table,

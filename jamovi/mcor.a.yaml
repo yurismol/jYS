@@ -343,9 +343,41 @@ options:
       default: true
 
     - name: glassoLabels
-      title: Show edge labels
+      title: Edge labels
       type: Bool
       default: true
+
+    - name: glassoCentralityPlot
+      title: Centrality plot
+      type: Bool
+      default: false
+
+    - name: glassoStability
+      title: Bootstrapped stability analysis
+      type: Bool
+      default: false
+
+    - name: glassoBootType
+      title: Bootstrap type
+      type: List
+      options:
+        - title: Non-parametric (edge stability)
+          name: nonparametric
+        - title: Case-dropping (centrality stability)
+          name: casedrop
+      default: nonparametric
+
+    - name: glassoBootN
+      title: Bootstrap samples (N)
+      type: Integer
+      min: 10
+      max: 1000
+      default: 100
+
+    - name: glassoStabilityPlot
+      title: Network stability plot
+      type: Bool
+      default: false
 
 
 ...

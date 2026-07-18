@@ -127,9 +127,33 @@ options:
       default: 3
 
     - name: show_formula
-      title: Show Model Formula
+      title: Model formula
       type: Bool
       default: true
+
+    - name: show_risk_strat
+      title: Risk Stratification Table
+      type: Bool
+      default: false
+
+    - name: risk_cut_low
+      title: Low Risk Threshold (%)
+      type: Number
+      min: 0.0
+      max: 100.0
+      default: 20.0
+
+    - name: risk_cut_high
+      title: High Risk Threshold (%)
+      type: Number
+      min: 0.0
+      max: 100.0
+      default: 70.0
+
+    - name: show_misclassified
+      title: Misclassified cases table
+      type: Bool
+      default: false
 
     - name: show_roc
       title: ROC Analysis
@@ -137,12 +161,12 @@ options:
       default: false
 
     - name: show_roc_cut
-      title: Show Cut-off Thresholds
+      title: Cut-off thresholds
       type: Bool
       default: true
 
     - name: show_roc_table
-      title: Show ROC Table
+      title: ROC table
       type: Bool
       default: false
 

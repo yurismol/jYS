@@ -185,6 +185,80 @@ items:
           - show_roc_table
           - multiclass_roc_type
 
+    - name: riskTable
+      title: Risk Stratification
+      type: Table
+      visible: (show_risk_strat)
+      clearWith:
+          - dep
+          - covs
+          - factors
+          - method
+          - elastic_alpha
+          - lasso_penalty
+          - partition
+          - val_split
+          - cv_folds
+          - cv_repeats
+          - group
+          - selgroup
+          - risk_cut_low
+          - risk_cut_high
+      columns:
+          - name: category
+            title: Risk Category
+            type: text
+          - name: range
+            title: Probability Range
+            type: text
+          - name: total
+            title: Total (N)
+            type: integer
+          - name: total_pct
+            title: Total (%)
+            type: number
+          - name: events
+            title: Events (n)
+            type: integer
+          - name: event_rate
+            title: Observed Event Rate (%)
+            type: number
+
+    - name: misclassifiedTable
+      title: Misclassified Cases
+      type: Table
+      visible: (show_misclassified)
+      clearWith:
+          - dep
+          - covs
+          - factors
+          - method
+          - elastic_alpha
+          - lasso_penalty
+          - partition
+          - val_split
+          - cv_folds
+          - cv_repeats
+          - group
+          - selgroup
+      columns:
+          - name: row_id
+            title: Row
+            type: integer
+          - name: actual
+            title: Actual Class
+            type: text
+          - name: predicted
+            title: Predicted Class
+            type: text
+          - name: prob
+            title: Confidence
+            type: number
+            format: zto
+          - name: error_type
+            title: Error Type
+            type: text
+
     - name: predClass
       title: Predicted Class
       type: Output

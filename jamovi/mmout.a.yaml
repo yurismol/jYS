@@ -69,7 +69,7 @@ options:
       default: both
 
     - name: outind
-      title: Show outliers indices table
+      title: Outliers indices table
       type: Bool
       default: true
 

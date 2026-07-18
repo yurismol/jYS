@@ -526,6 +526,138 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 }
             }
             
+            # Risk Stratification Table
+            if (self$options$show_risk_strat) {
+                risk_table <- self$results$riskTable
+                low_cut <- self$options$risk_cut_low
+                high_cut <- self$options$risk_cut_high
+                
+                low <- max(0, min(100, low_cut)) / 100
+                high <- max(0, min(100, high_cut)) / 100
+                if (low > high) {
+                    tmp <- low
+                    low <- high
+                    high <- tmp
+                }
+                
+                if (!is_multinomial) {
+                    pos_probs <- predict(fit_full, newdata = as.data.frame(X_selected), type = "response")
+                    y_pos <- (y_num == 1)
+                    N_clean <- length(y_num)
+                    
+                    idx_low <- pos_probs < low
+                    idx_mod <- pos_probs >= low & pos_probs < high
+                    idx_high <- pos_probs >= high
+                    
+                    cats <- list(
+                        list(
+                            name_key = .("Low Risk"),
+                            range = paste0("< ", round(low * 100, 1), "%"),
+                            idx = idx_low
+                        ),
+                        list(
+                            name_key = .("Moderate Risk"),
+                            range = paste0(round(low * 100, 1), "% – ", round(high * 100, 1), "%"),
+                            idx = idx_mod
+                        ),
+                        list(
+                            name_key = .("High Risk"),
+                            range = paste0("≥ ", round(high * 100, 1), "%"),
+                            idx = idx_high
+                        )
+                    )
+                    
+                    tot_events <- sum(y_pos, na.rm = TRUE)
+                    
+                    for (c_item in cats) {
+                        cnt <- sum(c_item$idx, na.rm = TRUE)
+                        ev <- sum(y_pos[c_item$idx], na.rm = TRUE)
+                        pct <- if (N_clean > 0) (cnt / N_clean) * 100 else 0
+                        rate <- if (cnt > 0) (ev / cnt) * 100 else 0
+                        
+                        risk_table$addRow(rowKey = c_item$name_key, values = list(
+                            category = c_item$name_key,
+                            range = c_item$range,
+                            total = cnt,
+                            total_pct = pct,
+                            events = ev,
+                            event_rate = rate
+                        ))
+                    }
+                    
+                    tot_pct <- if (N_clean > 0) 100 else 0
+                    tot_rate <- if (N_clean > 0) (tot_events / N_clean) * 100 else 0
+                    risk_table$addRow(rowKey = "Total", values = list(
+                        category = .("Total"),
+                        range = "0% – 100%",
+                        total = N_clean,
+                        total_pct = tot_pct,
+                        events = tot_events,
+                        event_rate = tot_rate
+                    ))
+                }
+            }
+
+            # Misclassified Cases Table
+            if (self$options$show_misclassified) {
+                misc_table <- self$results$misclassifiedTable
+                misc_table$deleteRows()
+                
+                orig_row_nums <- as.integer(rownames(clean_data))
+                actual_chars <- as.character(y)
+                
+                if (is_multinomial) {
+                    m_probs <- predict(fit_full, newdata = as.data.frame(X_selected), type = "probs")
+                    pred_chars <- as.character(predict(fit_full, newdata = as.data.frame(X_selected), type = "class"))
+                    conf_vals <- apply(m_probs, 1, max)
+                } else {
+                    b_probs <- predict(fit_full, newdata = as.data.frame(X_selected), type = "response")
+                    pred_chars <- ifelse(b_probs >= 0.5, pos_class_label, neg_class_label)
+                    conf_vals <- ifelse(b_probs >= 0.5, b_probs, 1 - b_probs)
+                }
+                
+                misc_count <- 0
+                max_misc_rows <- 100
+                
+                for (i in seq_along(actual_chars)) {
+                    act_val <- actual_chars[i]
+                    pred_val <- pred_chars[i]
+                    
+                    if (!is.na(act_val) && !is.na(pred_val) && act_val != pred_val) {
+                        misc_count <- misc_count + 1
+                        if (misc_count <= max_misc_rows) {
+                            max_p <- conf_vals[i]
+                            
+                            err_str <- if (!is_multinomial) {
+                                if (act_val == neg_class_label && pred_val == pos_class_label) {
+                                    .("False Positive (FP)")
+                                } else {
+                                    .("False Negative (FN)")
+                                }
+                            } else {
+                                .("Misclassified")
+                            }
+                            
+                            misc_table$addRow(rowKey = i, values = list(
+                                row_id = unname(as.integer(orig_row_nums[i]))[[1]],
+                                actual = unname(as.character(act_val))[[1]],
+                                predicted = unname(as.character(pred_val))[[1]],
+                                prob = unname(as.numeric(max_p))[[1]],
+                                error_type = unname(as.character(err_str))[[1]]
+                            ))
+                        }
+                    }
+                }
+                
+                if (misc_count > max_misc_rows) {
+                    misc_table$setNote("n_misc", jmvcore::format(.("Showing first {max_rows} of {total} misclassified cases."), max_rows = max_misc_rows, total = misc_count))
+                } else if (misc_count == 0) {
+                    misc_table$setNote("n_misc", .("No misclassified cases found."))
+                } else {
+                    misc_table$setNote("n_misc", NULL)
+                }
+            }
+
             # ----------------------------------------------------
             # Save ROC State
             # ----------------------------------------------------

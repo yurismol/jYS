@@ -40,7 +40,12 @@ mCOROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             glassoRho = 0.1,
             glassoHub = FALSE,
             glassoPlotScale = TRUE,
-            glassoLabels = TRUE, ...) {
+            glassoLabels = TRUE,
+            glassoCentralityPlot = FALSE,
+            glassoStability = FALSE,
+            glassoBootType = "nonparametric",
+            glassoBootN = 100,
+            glassoStabilityPlot = FALSE, ...) {
 
             super$initialize(
                 package="jYS",
@@ -273,6 +278,31 @@ mCOROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "glassoLabels",
                 glassoLabels,
                 default=TRUE)
+            private$..glassoCentralityPlot <- jmvcore::OptionBool$new(
+                "glassoCentralityPlot",
+                glassoCentralityPlot,
+                default=FALSE)
+            private$..glassoStability <- jmvcore::OptionBool$new(
+                "glassoStability",
+                glassoStability,
+                default=FALSE)
+            private$..glassoBootType <- jmvcore::OptionList$new(
+                "glassoBootType",
+                glassoBootType,
+                options=list(
+                    "nonparametric",
+                    "casedrop"),
+                default="nonparametric")
+            private$..glassoBootN <- jmvcore::OptionInteger$new(
+                "glassoBootN",
+                glassoBootN,
+                min=10,
+                max=1000,
+                default=100)
+            private$..glassoStabilityPlot <- jmvcore::OptionBool$new(
+                "glassoStabilityPlot",
+                glassoStabilityPlot,
+                default=FALSE)
 
             self$.addOption(private$..vars)
             self$.addOption(private$..group)
@@ -309,6 +339,11 @@ mCOROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..glassoHub)
             self$.addOption(private$..glassoPlotScale)
             self$.addOption(private$..glassoLabels)
+            self$.addOption(private$..glassoCentralityPlot)
+            self$.addOption(private$..glassoStability)
+            self$.addOption(private$..glassoBootType)
+            self$.addOption(private$..glassoBootN)
+            self$.addOption(private$..glassoStabilityPlot)
         }),
     active = list(
         vars = function() private$..vars$value,
@@ -345,7 +380,12 @@ mCOROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         glassoRho = function() private$..glassoRho$value,
         glassoHub = function() private$..glassoHub$value,
         glassoPlotScale = function() private$..glassoPlotScale$value,
-        glassoLabels = function() private$..glassoLabels$value),
+        glassoLabels = function() private$..glassoLabels$value,
+        glassoCentralityPlot = function() private$..glassoCentralityPlot$value,
+        glassoStability = function() private$..glassoStability$value,
+        glassoBootType = function() private$..glassoBootType$value,
+        glassoBootN = function() private$..glassoBootN$value,
+        glassoStabilityPlot = function() private$..glassoStabilityPlot$value),
     private = list(
         ..vars = NA,
         ..group = NA,
@@ -381,7 +421,12 @@ mCOROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..glassoRho = NA,
         ..glassoHub = NA,
         ..glassoPlotScale = NA,
-        ..glassoLabels = NA)
+        ..glassoLabels = NA,
+        ..glassoCentralityPlot = NA,
+        ..glassoStability = NA,
+        ..glassoBootType = NA,
+        ..glassoBootN = NA,
+        ..glassoStabilityPlot = NA)
 )
 
 mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
@@ -544,7 +589,10 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 active = list(
                     glassoTable = function() private$.items[["glassoTable"]],
                     glassoHubTable = function() private$.items[["glassoHubTable"]],
-                    glassoPlot = function() private$.items[["glassoPlot"]]),
+                    glassoPlot = function() private$.items[["glassoPlot"]],
+                    glassoCentralityPlot = function() private$.items[["glassoCentralityPlot"]],
+                    glassoStabilityTable = function() private$.items[["glassoStabilityTable"]],
+                    glassoStabilityPlot = function() private$.items[["glassoStabilityPlot"]]),
                 private = list(),
                 public=list(
                     initialize=function(options) {
@@ -700,7 +748,74 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 "clustMet",
                                 "clustCol",
                                 "clustMan",
-                                "method")))}))$new(options=options))}))
+                                "method")))
+                        self$add(jmvcore::Image$new(
+                            options=options,
+                            name="glassoCentralityPlot",
+                            title="Centrality plot",
+                            visible="(glasso && glassoCentralityPlot)",
+                            width=600,
+                            height=450,
+                            renderFun=".glassoCentralityPlot",
+                            requiresData=TRUE,
+                            clearWith=list(
+                                "netMethod",
+                                "glassoType",
+                                "glassoGamma",
+                                "glassoRho",
+                                "vars",
+                                "group",
+                                "selgroup",
+                                "method")))
+                        self$add(jmvcore::Table$new(
+                            options=options,
+                            name="glassoStabilityTable",
+                            title="Network stability summary",
+                            visible="(glasso && glassoStability)",
+                            clearWith=list(
+                                "netMethod",
+                                "glassoType",
+                                "glassoGamma",
+                                "glassoRho",
+                                "vars",
+                                "group",
+                                "selgroup",
+                                "method",
+                                "glassoBootType",
+                                "glassoBootN"),
+                            columns=list(
+                                list(
+                                    `name`="metric", 
+                                    `title`="Metric / Target", 
+                                    `type`="text"),
+                                list(
+                                    `name`="cs_coef", 
+                                    `title`="CS-coefficient (cor = 0.7)", 
+                                    `type`="number"),
+                                list(
+                                    `name`="summary", 
+                                    `title`="Stability Assessment", 
+                                    `type`="text"))))
+                        self$add(jmvcore::Image$new(
+                            options=options,
+                            name="glassoStabilityPlot",
+                            title="Network stability plot",
+                            visible="(glasso && glassoStability && glassoStabilityPlot)",
+                            width=600,
+                            height=450,
+                            renderFun=".glassoStabilityPlot",
+                            requiresData=TRUE,
+                            clearWith=list(
+                                "netMethod",
+                                "glassoType",
+                                "glassoGamma",
+                                "glassoRho",
+                                "vars",
+                                "group",
+                                "selgroup",
+                                "method",
+                                "glassoBootType",
+                                "glassoBootN")))}))$new(options=options))}))
 
 mCORBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "mCORBase",
@@ -763,6 +878,11 @@ mCORBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param glassoHub .
 #' @param glassoPlotScale .
 #' @param glassoLabels .
+#' @param glassoCentralityPlot .
+#' @param glassoStability .
+#' @param glassoBootType .
+#' @param glassoBootN .
+#' @param glassoStabilityPlot .
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$text} \tab \tab \tab \tab \tab a html \cr
@@ -773,6 +893,9 @@ mCORBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$glassoGroup$glassoTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$glassoGroup$glassoHubTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$glassoGroup$glassoPlot} \tab \tab \tab \tab \tab an image \cr
+#'   \code{results$glassoGroup$glassoCentralityPlot} \tab \tab \tab \tab \tab an image \cr
+#'   \code{results$glassoGroup$glassoStabilityTable} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$glassoGroup$glassoStabilityPlot} \tab \tab \tab \tab \tab an image \cr
 #' }
 #'
 #' Tables can be converted to data frames with \code{asDF} or \code{\link{as.data.frame}}. For example:
@@ -818,7 +941,12 @@ mCOR <- function(
     glassoRho = 0.1,
     glassoHub = FALSE,
     glassoPlotScale = TRUE,
-    glassoLabels = TRUE) {
+    glassoLabels = TRUE,
+    glassoCentralityPlot = FALSE,
+    glassoStability = FALSE,
+    glassoBootType = "nonparametric",
+    glassoBootN = 100,
+    glassoStabilityPlot = FALSE) {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
         stop("mCOR requires jmvcore to be installed (restart may be required)")
@@ -868,7 +996,12 @@ mCOR <- function(
         glassoRho = glassoRho,
         glassoHub = glassoHub,
         glassoPlotScale = glassoPlotScale,
-        glassoLabels = glassoLabels)
+        glassoLabels = glassoLabels,
+        glassoCentralityPlot = glassoCentralityPlot,
+        glassoStability = glassoStability,
+        glassoBootType = glassoBootType,
+        glassoBootN = glassoBootN,
+        glassoStabilityPlot = glassoStabilityPlot)
 
     analysis <- mCORClass$new(
         options = options,

@@ -130,20 +130,22 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             }
 
             # Helpers for predictions and accuracies
-            get_predictions <- function(prob, num_classes) {
+            get_prob_mat <- function(prob, num_classes) {
                 if (num_classes == 2) {
-                    return(ifelse(prob >= 0.5, 1, 0))
+                    p_vec <- as.vector(prob)
+                    return(cbind(1 - p_vec, p_vec))
                 } else {
-                    return(apply(prob, 1, which.max))
+                    return(prob)
                 }
             }
 
+            get_predictions <- function(prob, num_classes) {
+                pm <- get_prob_mat(prob, num_classes)
+                return(apply(pm, 1, which.max))
+            }
+
             get_accuracy <- function(pred, y_target, num_classes) {
-                if (num_classes == 2) {
-                    return(mean(pred == y_target) * 100)
-                } else {
-                    return(mean(pred == as.integer(y_target)) * 100)
-                }
+                return(mean(pred == as.integer(y_target)) * 100)
             }
 
             subset_target <- function(y_target, idx) {
@@ -156,8 +158,9 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
             # Baseline Training Performance
             train_prob <- private$.predict_mlp(fit_full, X_matrix)
+            train_prob_mat <- get_prob_mat(train_prob, C)
             train_pred <- get_predictions(train_prob, C)
-            train_acc <- get_accuracy(train_pred, if (C == 2) y_num else y, C)
+            train_acc <- get_accuracy(train_pred, y, C)
 
             partition <- self$options$partition
             val_acc <- NA
@@ -195,7 +198,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 val_prob <- private$.predict_mlp(fit_val, X_matrix[test_idx, , drop = FALSE])
                 val_pred <- get_predictions(val_prob, C)
                 if (partition == "holdout") {
-                    val_acc <- get_accuracy(val_pred, if (C == 2) y_num[test_idx] else y[test_idx], C)
+                    val_acc <- get_accuracy(val_pred, y[test_idx], C)
                 }
             } else {
                 val_acc <- NA
@@ -305,6 +308,131 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 info_table$setNote("n6", .("<b>K-Fold CV Accuracy</b>: average classification accuracy across cross-validation folds."))
             } else {
                 info_table$setNote("n6", NULL)
+            }
+
+            # 3.5 Misclassified Cases Table
+            if (self$options$show_misclassified) {
+                misc_table <- self$results$misclassifiedTable
+                misc_table$deleteRows()
+                
+                orig_row_nums <- as.integer(rownames(clean_data))
+                actual_chars <- as.character(y)
+                train_pred_labels <- y_levels[train_pred]
+                
+                misc_count <- 0
+                max_misc_rows <- 100
+                
+                for (i in seq_along(actual_chars)) {
+                    act_val <- actual_chars[i]
+                    pred_val <- train_pred_labels[i]
+                    
+                    if (!is.na(act_val) && !is.na(pred_val) && act_val != pred_val) {
+                        misc_count <- misc_count + 1
+                        if (misc_count <= max_misc_rows) {
+                            max_p <- train_prob_mat[i, train_pred[i]]
+                            
+                            err_str <- if (C == 2) {
+                                if (act_val == y_levels[1] && pred_val == y_levels[2]) {
+                                    .("False Positive (FP)")
+                                } else {
+                                    .("False Negative (FN)")
+                                }
+                            } else {
+                                .("Misclassified")
+                            }
+                            
+                            misc_table$addRow(rowKey = i, values = list(
+                                row_id = unname(as.integer(orig_row_nums[i]))[[1]],
+                                actual = unname(as.character(act_val))[[1]],
+                                predicted = unname(as.character(pred_val))[[1]],
+                                prob = unname(as.numeric(max_p))[[1]],
+                                error_type = unname(as.character(err_str))[[1]]
+                            ))
+                        }
+                    }
+                }
+                
+                if (misc_count > max_misc_rows) {
+                    misc_table$setNote("n_misc", jmvcore::format(.("Showing first {max_rows} of {total} misclassified cases."), max_rows = max_misc_rows, total = misc_count))
+                } else if (misc_count == 0) {
+                    misc_table$setNote("n_misc", .("No misclassified cases found."))
+                } else {
+                    misc_table$setNote("n_misc", NULL)
+                }
+            }
+
+            # 3b. Risk Stratification Table
+            if (self$options$show_risk_strat) {
+                risk_table <- self$results$riskTable
+                risk_table$deleteRows()
+                low_cut <- self$options$risk_cut_low
+                high_cut <- self$options$risk_cut_high
+                
+                low <- max(0, min(100, low_cut)) / 100
+                high <- max(0, min(100, high_cut)) / 100
+                if (low > high) {
+                    tmp <- low
+                    low <- high
+                    high <- tmp
+                }
+                
+                if (C == 2 && length(y_levels) == 2) {
+                    pos_level <- y_levels[2]
+                    pos_probs <- train_prob_mat[, 2]
+                    y_pos <- (y == pos_level)
+                    N_clean <- length(y)
+                    
+                    idx_low <- pos_probs < low
+                    idx_mod <- pos_probs >= low & pos_probs < high
+                    idx_high <- pos_probs >= high
+                    
+                    cats <- list(
+                        list(
+                            name_key = .("Low Risk"),
+                            range = paste0("< ", round(low * 100, 1), "%"),
+                            idx = idx_low
+                        ),
+                        list(
+                            name_key = .("Moderate Risk"),
+                            range = paste0(round(low * 100, 1), "% – ", round(high * 100, 1), "%"),
+                            idx = idx_mod
+                        ),
+                        list(
+                            name_key = .("High Risk"),
+                            range = paste0("≥ ", round(high * 100, 1), "%"),
+                            idx = idx_high
+                        )
+                    )
+                    
+                    tot_events <- sum(y_pos, na.rm = TRUE)
+                    
+                    for (c_item in cats) {
+                        cnt <- sum(c_item$idx, na.rm = TRUE)
+                        ev <- sum(y_pos[c_item$idx], na.rm = TRUE)
+                        pct <- if (N_clean > 0) (cnt / N_clean) * 100 else 0
+                        rate <- if (cnt > 0) (ev / cnt) * 100 else 0
+                        
+                        risk_table$addRow(rowKey = c_item$name_key, values = list(
+                            category = c_item$name_key,
+                            range = c_item$range,
+                            total = cnt,
+                            total_pct = pct,
+                            events = ev,
+                            event_rate = rate
+                        ))
+                    }
+                    
+                    tot_pct <- if (N_clean > 0) 100 else 0
+                    tot_rate <- if (N_clean > 0) (tot_events / N_clean) * 100 else 0
+                    risk_table$addRow(rowKey = "Total", values = list(
+                        category = .("Total"),
+                        range = "0% – 100%",
+                        total = N_clean,
+                        total_pct = tot_pct,
+                        events = tot_events,
+                        event_rate = tot_rate
+                    ))
+                }
             }
 
             # 4. Permutation Importance
@@ -418,18 +546,18 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             if (self$options$show_matrix) {
                 can_run_matrix <- FALSE
                 if (partition == "kfold" && cv_errors == 0) {
-                    actual_val <- if (C == 2) y_num else as.integer(y)
+                    actual_val <- as.integer(y)
                     pred_val <- cv_preds
                     can_run_matrix <- TRUE
                 } else if (partition == "holdout" && !is.null(val_pred)) {
-                    actual_val <- if (C == 2) y_num[test_idx] else as.integer(y)[test_idx]
+                    actual_val <- as.integer(y)[test_idx]
                     pred_val <- val_pred
                     can_run_matrix <- TRUE
                 }
 
                 if (can_run_matrix) {
-                    actual_idx <- if (C == 2) actual_val + 1 else actual_val
-                    pred_idx <- if (C == 2) pred_val + 1 else pred_val
+                    actual_idx <- actual_val
+                    pred_idx <- pred_val
                     
                     actual_labels <- y_levels[actual_idx]
                     pred_labels <- y_levels[pred_idx]
@@ -461,11 +589,11 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         pos_neg <- cm_table[y_levels[2], y_levels[1]]
                         pos_pos <- cm_table[y_levels[2], y_levels[2]]
                         
-                        cm_tr <- table(Actual = y_num, Predicted = train_pred)
-                        t_neg_neg <- if ("0" %in% rownames(cm_tr) && "0" %in% colnames(cm_tr)) cm_tr["0", "0"] else 0
-                        t_neg_pos <- if ("0" %in% rownames(cm_tr) && "1" %in% colnames(cm_tr)) cm_tr["0", "1"] else 0
-                        t_pos_neg <- if ("1" %in% rownames(cm_tr) && "0" %in% colnames(cm_tr)) cm_tr["1", "0"] else 0
-                        t_pos_pos <- if ("1" %in% rownames(cm_tr) && "1" %in% colnames(cm_tr)) cm_tr["1", "1"] else 0
+                        cm_tr <- table(Actual = as.integer(y), Predicted = train_pred)
+                        t_neg_neg <- if ("1" %in% rownames(cm_tr) && "1" %in% colnames(cm_tr)) cm_tr["1", "1"] else 0
+                        t_neg_pos <- if ("1" %in% rownames(cm_tr) && "2" %in% colnames(cm_tr)) cm_tr["1", "2"] else 0
+                        t_pos_neg <- if ("2" %in% rownames(cm_tr) && "1" %in% colnames(cm_tr)) cm_tr["2", "1"] else 0
+                        t_pos_pos <- if ("2" %in% rownames(cm_tr) && "2" %in% colnames(cm_tr)) cm_tr["2", "2"] else 0
                         
                         calc_metrics <- function(tn, fp, fn, tp) {
                             acc <- (tn + tp) / (tn + fp + fn + tp)
@@ -777,15 +905,11 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 pred_class_col <- rep(NA, nrow(self$data))
                 
                 full_probs <- private$.predict_mlp(fit_full, X_matrix)
+                full_prob_mat <- get_prob_mat(full_probs, C)
                 full_preds_idx <- get_predictions(full_probs, C)
                 
-                if (C == 2) {
-                    full_classes <- ifelse(full_preds_idx == 1, y_levels[2], y_levels[1])
-                    full_prob_val <- as.numeric(full_probs)
-                } else {
-                    full_classes <- y_levels[full_preds_idx]
-                    full_prob_val <- apply(full_probs, 1, max)
-                }
+                full_classes <- y_levels[full_preds_idx]
+                full_prob_val <- full_prob_mat[cbind(seq_along(full_preds_idx), full_preds_idx)]
                 
                 complete_case_indices <- as.integer(rownames(clean_data))
                 pred_prob_col[complete_case_indices] <- full_prob_val

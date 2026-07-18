@@ -272,4 +272,68 @@ items:
             - clustCol
             - clustMan
             - method
+
+        - name: glassoCentralityPlot
+          title: Centrality plot
+          type: Image
+          visible: (glasso && glassoCentralityPlot)
+          width: 600
+          height: 450
+          renderFun: .glassoCentralityPlot
+          requiresData: true
+          clearWith:
+            - netMethod
+            - glassoType
+            - glassoGamma
+            - glassoRho
+            - vars
+            - group
+            - selgroup
+            - method
+
+        - name: glassoStabilityTable
+          title: Network stability summary
+          type: Table
+          visible: (glasso && glassoStability)
+          clearWith:
+            - netMethod
+            - glassoType
+            - glassoGamma
+            - glassoRho
+            - vars
+            - group
+            - selgroup
+            - method
+            - glassoBootType
+            - glassoBootN
+          columns:
+            - name: metric
+              title: Metric / Target
+              type: text
+            - name: cs_coef
+              title: CS-coefficient (cor = 0.7)
+              type: number
+            - name: summary
+              title: Stability Assessment
+              type: text
+
+        - name: glassoStabilityPlot
+          title: Network stability plot
+          type: Image
+          visible: (glasso && glassoStability && glassoStabilityPlot)
+          width: 600
+          height: 450
+          renderFun: .glassoStabilityPlot
+          requiresData: true
+          clearWith:
+            - netMethod
+            - glassoType
+            - glassoGamma
+            - glassoRho
+            - vars
+            - group
+            - selgroup
+            - method
+            - glassoBootType
+            - glassoBootN
 ...

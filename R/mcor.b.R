@@ -590,6 +590,35 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 # Set plot state
                 gplot <- self$results$glassoGroup$glassoPlot
                 gplot$setState(list(pcor = pcor, vars = vars, subs = subs, clusters = clusters, centrality = node_cent))
+
+                # Centrality Plot State
+                if (self$options$glassoCentralityPlot) {
+                    cplot <- self$results$glassoGroup$glassoCentralityPlot
+                    cplot$setState(list(pcor = pcor, vars = vars, centrality = node_cent))
+                }
+
+                # Network Stability Analysis
+                if (self$options$glassoStability) {
+                    stabTable <- self$results$glassoGroup$glassoStabilityTable
+                    stabTable$deleteRows()
+                    
+                    boot_n <- self$options$glassoBootN
+                    boot_type <- self$options$glassoBootType
+                    
+                    clean_data <- data.frame(lapply(dat[, vars, drop = FALSE], jmvcore::toNumeric), check.names = FALSE)
+                    clean_data <- clean_data[complete.cases(clean_data), , drop = FALSE]
+                    
+                    stab_res <- private$.computeNetworkStability(clean_data, vars, boot_n, boot_type, pcor)
+                    
+                    for (row in stab_res$table_data) {
+                        stabTable$addRow(rowKey = row$metric, values = row)
+                    }
+                    
+                    if (self$options$glassoStabilityPlot) {
+                        splot <- self$results$glassoGroup$glassoStabilityPlot
+                        splot$setState(list(stab_res = stab_res, boot_type = boot_type, vars = vars))
+                    }
+                }
             }
          }
 
@@ -981,6 +1010,243 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               )
           }
           
+          return(TRUE)
+      },
+
+      .computeNetworkStability = function(clean_data, vars, boot_n, boot_type, orig_pcor) {
+          N <- nrow(clean_data)
+          P <- length(vars)
+          
+          table_data <- list()
+          boot_corrs <- list()
+          boot_edges <- list()
+          
+          if (boot_type == "nonparametric") {
+              n_edges <- P * (P - 1) / 2
+              edge_matrix <- matrix(NA, nrow = boot_n, ncol = n_edges)
+              edge_names <- character(n_edges)
+              
+              k <- 1
+              for (i in 1:(P - 1)) {
+                  for (j in (i + 1):P) {
+                      edge_names[k] <- paste0(vars[i], " – ", vars[j])
+                      k <- k + 1
+                  }
+              }
+              colnames(edge_matrix) <- edge_names
+              
+              for (b in 1:boot_n) {
+                  idx <- sample(N, N, replace = TRUE)
+                  b_data <- clean_data[idx, , drop = FALSE]
+                  b_corr <- cor(b_data, use = "pairwise.complete.obs")
+                  
+                  b_pcor <- tryCatch({
+                      if (self$options$netMethod == "glasso") {
+                          if (self$options$glassoType == "ebic") {
+                              qgraph::EBICglasso(b_corr, n = N, gamma = self$options$glassoGamma, penalize.diagonal = FALSE)
+                          } else {
+                              gl <- glasso::glasso(b_corr, rho = self$options$glassoRho, penalize.diagonal = FALSE)
+                              wi <- gl$wi
+                              d <- diag(wi)
+                              pm <- -wi / (sqrt(d) %*% t(sqrt(d)))
+                              diag(pm) <- 0
+                              (pm + t(pm)) / 2
+                          }
+                      } else {
+                          res <- ppcor::pcor(b_corr)
+                          res$estimate
+                      }
+                  }, error = function(e) orig_pcor)
+                  
+                  edge_matrix[b, ] <- b_pcor[lower.tri(b_pcor)]
+              }
+              
+              edge_means <- colMeans(edge_matrix, na.rm = TRUE)
+              edge_q25 <- apply(edge_matrix, 2, quantile, probs = 0.025, na.rm = TRUE)
+              edge_q975 <- apply(edge_matrix, 2, quantile, probs = 0.975, na.rm = TRUE)
+              
+              mean_width <- mean(edge_q975 - edge_q25, na.rm = TRUE)
+              
+              table_data[[1]] <- list(
+                  metric = .("Edge Weights Bootstrap"),
+                  cs_coef = NA,
+                  summary = jmvcore::format(.("Non-parametric bootstrap ({b} iterations). Mean edge 95% CI width: {w}%"), b = boot_n, w = round(mean_width * 100, 1))
+              )
+              
+              boot_edges <- list(
+                  names = edge_names,
+                  means = edge_means,
+                  q25 = edge_q25,
+                  q975 = edge_q975,
+                  orig = orig_pcor[lower.tri(orig_pcor)]
+              )
+          } else {
+              drop_props <- c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7)
+              orig_cent_res <- try(qgraph::centrality_auto(orig_pcor)$node.centrality, silent = TRUE)
+              
+              orig_str <- if (!inherits(orig_cent_res, "try-error") && "Strength" %in% colnames(orig_cent_res)) {
+                  orig_cent_res[, "Strength"]
+              } else {
+                  rowSums(abs(orig_pcor))
+              }
+              
+              cor_means <- numeric(length(drop_props))
+              
+              for (dp_idx in seq_along(drop_props)) {
+                  dp <- drop_props[dp_idx]
+                  sample_size <- max(3, round(N * (1 - dp)))
+                  cor_list <- numeric(boot_n)
+                  
+                  for (b in 1:boot_n) {
+                      idx <- sample(N, sample_size, replace = FALSE)
+                      b_data <- clean_data[idx, , drop = FALSE]
+                      b_corr <- cor(b_data, use = "pairwise.complete.obs")
+                      
+                      b_pcor <- tryCatch({
+                          if (self$options$netMethod == "glasso") {
+                              if (self$options$glassoType == "ebic") {
+                                  qgraph::EBICglasso(b_corr, n = sample_size, gamma = self$options$glassoGamma, penalize.diagonal = FALSE)
+                              } else {
+                                  gl <- glasso::glasso(b_corr, rho = self$options$glassoRho, penalize.diagonal = FALSE)
+                                  wi <- gl$wi
+                                  d <- diag(wi)
+                                  pm <- -wi / (sqrt(d) %*% t(sqrt(d)))
+                                  diag(pm) <- 0
+                                  (pm + t(pm)) / 2
+                              }
+                          } else {
+                              res <- ppcor::pcor(b_corr)
+                              res$estimate
+                          }
+                      }, error = function(e) orig_pcor)
+                      
+                      b_cent_res <- try(qgraph::centrality_auto(b_pcor)$node.centrality, silent = TRUE)
+                      b_str <- if (!inherits(b_cent_res, "try-error") && "Strength" %in% colnames(b_cent_res)) {
+                          b_cent_res[, "Strength"]
+                      } else {
+                          rowSums(abs(b_pcor))
+                      }
+                      
+                      cor_val <- tryCatch(cor(orig_str, b_str, use = "complete.obs"), error = function(e) 0)
+                      cor_list[b] <- if (is.na(cor_val)) 0 else cor_val
+                  }
+                  cor_means[dp_idx] <- mean(cor_list, na.rm = TRUE)
+              }
+              
+              cs_idx <- which(cor_means >= 0.70)
+              cs_val <- if (length(cs_idx) > 0) drop_props[max(cs_idx)] else 0
+              
+              summary_txt <- if (cs_val >= 0.5) {
+                  .("High stability (CS >= 0.5)")
+              } else if (cs_val >= 0.25) {
+                  .("Moderate stability (0.25 <= CS < 0.5)")
+              } else {
+                  .("Low stability (CS < 0.25). Interpret centrality with caution.")
+              }
+              
+              table_data[[1]] <- list(
+                  metric = .("Node Strength Stability"),
+                  cs_coef = cs_val,
+                  summary = summary_txt
+              )
+              
+              boot_corrs <- list(
+                  drops = drop_props,
+                  corrs = cor_means
+              )
+          }
+          
+          return(list(
+              table_data = table_data,
+              boot_edges = boot_edges,
+              boot_corrs = boot_corrs
+          ))
+      },
+
+      .glassoCentralityPlot = function(image, ...) {
+          if (!self$options$glasso || !self$options$glassoCentralityPlot) return(FALSE)
+          state <- image$state
+          if (is.null(state) || is.null(state$pcor)) return(FALSE)
+          
+          p <- try(qgraph::centralityPlot(
+              state$pcor,
+              labels = state$vars,
+              include = c("Strength", "Closeness", "Betweenness", "ExpectedInfluence")
+          ), silent = TRUE)
+          
+          if (inherits(p, "try-error")) return(FALSE)
+          
+          if (inherits(p, "ggplot") && !is.null(p$data) && "measure" %in% colnames(p$data)) {
+              measure_map <- c(
+                  "Strength" = .("Strength"),
+                  "Closeness" = .("Closeness"),
+                  "Betweenness" = .("Betweenness"),
+                  "ExpectedInfluence" = .("Expected Influence"),
+                  "Expected Influence" = .("Expected Influence")
+              )
+              
+              if (is.factor(p$data$measure)) {
+                  levels(p$data$measure) <- sapply(levels(p$data$measure), function(m) {
+                      if (m %in% names(measure_map)) measure_map[[m]] else m
+                  })
+              } else {
+                  p$data$measure <- sapply(p$data$measure, function(m) {
+                      if (m %in% names(measure_map)) measure_map[[m]] else m
+                  })
+              }
+          }
+          
+          print(p)
+          return(TRUE)
+      },
+
+      .glassoStabilityPlot = function(image, ...) {
+          if (!self$options$glasso || !self$options$glassoStability || !self$options$glassoStabilityPlot) return(FALSE)
+          state <- image$state
+          if (is.null(state) || is.null(state$stab_res)) return(FALSE)
+          
+          stab_res <- state$stab_res
+          boot_type <- state$boot_type
+          
+          if (boot_type == "nonparametric") {
+              be <- stab_res$boot_edges
+              if (is.null(be) || length(be$means) == 0) return(FALSE)
+              
+              ord <- order(be$orig)
+              k <- length(ord)
+              
+              par(mar = c(4, 8, 3, 2))
+              plot(
+                  be$orig[ord], 1:k,
+                  type = "p", pch = 19, col = "navy",
+                  xlim = c(-1, 1), ylim = c(1, k),
+                  xlab = .("Partial Correlation Weight"),
+                  ylab = "", yaxt = "n",
+                  main = .("Bootstrapped Edge Weights 95% CI")
+              )
+              axis(2, at = 1:k, labels = be$names[ord], las = 2, cex.axis = 0.7)
+              abline(v = 0, lty = 2, col = "gray")
+              
+              for (i in 1:k) {
+                  idx <- ord[i]
+                  lines(c(be$q25[idx], be$q975[idx]), c(i, i), col = "navy", lwd = 1.5)
+              }
+          } else {
+              bc <- stab_res$boot_corrs
+              if (is.null(bc) || length(bc$drops) == 0) return(FALSE)
+              
+              plot(
+                  bc$drops * 100, bc$corrs,
+                  type = "b", pch = 19, col = "red", lwd = 2,
+                  ylim = c(0, 1),
+                  xlab = .("Dropped Cases (%)"),
+                  ylab = .("Centrality Correlation (r)"),
+                  main = .("Case-dropping Centrality Stability Curve")
+              )
+              abline(h = 0.70, lty = 2, col = "darkgreen")
+              legend("bottomleft", legend = c(.("Centrality correlation"), .("Threshold (r = 0.70)")),
+                     col = c("red", "darkgreen"), lty = c(1, 2), pch = c(19, NA), bty = "n")
+          }
           return(TRUE)
       }
 ))

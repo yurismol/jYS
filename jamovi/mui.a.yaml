@@ -91,12 +91,12 @@ options:
       default: false
 
     - name: show_roc_cut
-      title: Show Cut-off Thresholds
+      title: Cut-off thresholds
       type: Bool
       default: true
 
     - name: show_roc_table
-      title: Show ROC Table
+      title: ROC table
       type: Bool
       default: false
 

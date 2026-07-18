@@ -109,6 +109,23 @@ children:
             label: Clipping threshold
             format: number
             enable: (showForest && !forestLog && forestClip)
+      - name: show_risk_strat
+        type: CheckBox
+        label: Risk Stratification Table
+        children:
+          - name: risk_cut_low
+            type: TextBox
+            label: Low Risk Threshold (%)
+            format: number
+            enable: (show_risk_strat)
+          - name: risk_cut_high
+            type: TextBox
+            label: High Risk Threshold (%)
+            format: number
+            enable: (show_risk_strat)
+      - name: show_misclassified
+        type: CheckBox
+        label: Misclassified cases table
       - name: show_roc
         type: CheckBox
         label: ROC analysis curves

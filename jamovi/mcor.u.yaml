@@ -150,3 +150,20 @@ children:
             name: glassoRho
             format: number
             enable: (glasso && {return ui['netMethod'].value() == 'glasso' && ui['glassoType'].value() == 'manual';})
+          - type: CheckBox
+            name: glassoCentralityPlot
+            enable: (glasso)
+          - type: CheckBox
+            name: glassoStability
+            enable: (glasso)
+            children:
+              - type: ComboBox
+                name: glassoBootType
+                enable: (glasso && glassoStability)
+              - type: TextBox
+                name: glassoBootN
+                format: number
+                enable: (glasso && glassoStability)
+              - type: CheckBox
+                name: glassoStabilityPlot
+                enable: (glasso && glassoStability)

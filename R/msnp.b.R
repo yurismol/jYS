@@ -386,13 +386,13 @@ mSNPClass <- R6::R6Class(
                 hwe_p <- private$.getHWEpValForQC(marker, controls_idx)
                 
                 # Exclusions
-                status <- "Passed"
+                status <- .("Passed")
                 if (call_rate < call_rate_thr) {
-                    status <- paste0("Excluded: Call Rate < ", call_rate_thr)
+                    status <- paste0(.("Excluded"), ": ", .("Call Rate"), " < ", call_rate_thr)
                 } else if (maf < maf_thr) {
-                    status <- paste0("Excluded: MAF < ", maf_thr)
+                    status <- paste0(.("Excluded"), ": MAF < ", maf_thr)
                 } else if (hwe_p < hwe_thr) {
-                    status <- paste0("Excluded: HWE p < ", hwe_thr)
+                    status <- paste0(.("Excluded"), ": HWE p < ", hwe_thr)
                 }
                 
                 private$g_qc_status[[marker]] <- status
