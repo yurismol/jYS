@@ -9,10 +9,14 @@ maintainer: Yuri Smolyakov <smolyakov@rambler.ru>
 date: '2025-05-17'
 type: R
 description: >
-  Graphic extensions of the functionality of popular data analysis methods:
-  cluster tree of correlating variables, multifactor adaptive correlation
-  matrix, multidimensional ROC classification curves, missing data estimation
-  and imputation, outliers identification and removal etc.
+  Extensions of the functionality of popular data analysis methods: correlation
+  clustering, ROC classification, missing values estimation and imputation,
+  univariate and multivariate outliers identification and removal, Uncertain
+  Interval (UI) threshold estimation, a priori power analysis, MLP neural
+  network classifier, logistic regression with feature selection, Random Forest
+  classifier, survival analysis (Kaplan-Meier and Cox regression), Principal
+  Component Analysis (PCA), and Single Nucleotide Polymorphism (SNP) association
+  and Hardy-Weinberg equilibrium analysis.
 datasets:
   - name: Correlation clustering
     path: COR_BLOOD.omv
