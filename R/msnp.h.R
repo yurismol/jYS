@@ -1008,7 +1008,7 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 list(
                                     `name`="cvc", 
                                     `title`="CVC", 
-                                    `type`="integer"),
+                                    `type`="text"),
                                 list(
                                     `name`="p_val", 
                                     `title`="Permutation p", 
@@ -1078,7 +1078,7 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             name="mdrBarPlot",
                             title="MDR Model Performance Comparison",
                             width=400,
-                            height=500,
+                            height=450,
                             renderFun=".plotMDRBar",
                             requiresData=TRUE,
                             visible="(mdrEnable && mdrBarPlot)",

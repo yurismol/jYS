@@ -40,7 +40,7 @@ Some usefull [Jamovi](https://www.jamovi.org/) procedures for researchers
   - pROC (Xavier Robin et al.)
   - ggplot2 (Hadley Wickham et al.)
 
-- Binomial Logistic Regression with LASSO L1 & L2 regularization, K-Fold cross-validation, and Forest Plot of Odds Ratios
+- Logistic Regression with LASSO L1 & L2 regularization, K-Fold cross-validation, and Forest Plot of Odds Ratios
   - glmnet (Jerome Friedman et al.)
   - nnet (Brian Ripley)
   - pROC (Xavier Robin et al.)

@@ -1297,7 +1297,7 @@ mSNPClass <- R6::R6Class(
                     snps = overall_best_comb,
                     train_ba = mean_train_ba[best_comb_idx],
                     test_ba = mean_test_ba[best_comb_idx],
-                    cvc = overall_cvc
+                    cvc = paste0(overall_cvc, "/", folds)
                 )
             }
             
@@ -1405,63 +1405,50 @@ mSNPClass <- R6::R6Class(
             # Save best models state for cells table and plot
             image_best_models <- best_models
             
-            # Fill cells table if checked
+            # Fill cells table if checked (for best combinations of all orders)
             if (self$options$mdrCellTable) {
                 mdrCellTable <- self$results$mdrGroup$mdrCellTable
-                
-                # Fill for the overall best model (highest testing BA among all orders)
-                test_bas <- sapply(best_models, function(x) x$test_ba)
-                best_ord <- which.max(test_bas)
-                m_best <- best_models[[best_ord]]
-                
-                comb_snps <- m_best$snps
-                
-                # Counts in whole dataset
-                cell_idx_all <- rep(1, nrow(df_comp))
-                for (i in seq_along(comb_snps)) {
-                    cell_idx_all <- cell_idx_all + (geno_mat[, comb_snps[i]] - 1) * (3^(i-1))
-                }
-                
-                # Get unique genotype cells present in data
-                comb_genotypes <- list()
-                for (snp in comb_snps) {
-                    cl <- private$g_classified[[snp]][complete_cases]
-                    comb_genotypes[[snp]] <- cl
-                }
-                
-                # Unique cells observed
-                cells_df <- unique(df_comp[, comb_snps, drop=FALSE])
                 
                 total_cases <- sum(outcome_vec == "Case")
                 total_ctrls <- sum(outcome_vec == "Control")
                 threshold <- total_cases / total_ctrls
                 
-                for (r in 1:nrow(cells_df)) {
-                    row_data <- cells_df[r, , drop=FALSE]
-                    cell_label <- paste(sapply(comb_snps, function(s) paste0(s, ":", row_data[1, s])), collapse=", ")
+                row_counter <- 0
+                for (ord in 1:max_order) {
+                    m_best <- best_models[[ord]]
+                    comb_snps <- m_best$snps
                     
-                    # Match indexes
-                    match_idx <- rep(TRUE, nrow(df_comp))
-                    for (snp in comb_snps) {
-                        match_idx <- match_idx & (df_comp[[snp]] == row_data[1, snp])
+                    # Unique cells observed
+                    cells_df <- unique(df_comp[, comb_snps, drop=FALSE])
+                    
+                    for (r in 1:nrow(cells_df)) {
+                        row_counter <- row_counter + 1
+                        row_data <- cells_df[r, , drop=FALSE]
+                        cell_label <- paste(sapply(comb_snps, function(s) paste0(s, ":", row_data[1, s])), collapse=", ")
+                        
+                        # Match indexes
+                        match_idx <- rep(TRUE, nrow(df_comp))
+                        for (snp in comb_snps) {
+                            match_idx <- match_idx & (df_comp[[snp]] == row_data[1, snp])
+                        }
+                        
+                        cases <- sum(match_idx & outcome_vec == "Case")
+                        controls <- sum(match_idx & outcome_vec == "Control")
+                        
+                        ratio <- if (controls > 0) cases / controls else Inf
+                        risk <- if (ratio >= threshold) .("High Risk") else .("Low Risk")
+                        
+                        row_val <- list(
+                            combination = m_best$combination,
+                            cell = cell_label,
+                            cases = cases,
+                            controls = controls,
+                            ratio = if (is.infinite(ratio)) NA else ratio,
+                            risk = risk
+                        )
+                        
+                        mdrCellTable$addRow(rowKey = as.character(row_counter), value = row_val)
                     }
-                    
-                    cases <- sum(match_idx & outcome_vec == "Case")
-                    controls <- sum(match_idx & outcome_vec == "Control")
-                    
-                    ratio <- if (controls > 0) cases / controls else Inf
-                    risk <- if (ratio >= threshold) .("High Risk") else .("Low Risk")
-                    
-                    row_val <- list(
-                        combination = m_best$combination,
-                        cell = cell_label,
-                        cases = cases,
-                        controls = controls,
-                        ratio = if (is.infinite(ratio)) NA else ratio,
-                        risk = risk
-                    )
-                    
-                    mdrCellTable$addRow(rowKey = as.character(r), value = row_val)
                 }
             }
         },
@@ -2427,6 +2414,9 @@ mSNPClass <- R6::R6Class(
             test_lbl <- .("Testing")
             
             max_order <- as.integer(self$options$mdrOrder)
+            plot_width <- max(300, 200 + max_order * 100)
+            image$setSize(width = plot_width, height = 450)
+            
             for (ord in 1:max_order) {
                 row <- private$g_mdr_results[[as.character(ord)]]
                 if (!is.null(row) && !is.na(row$train_ba)) {
@@ -2459,7 +2449,7 @@ mSNPClass <- R6::R6Class(
                       axis.title.y = element_text(size = 14, face = "bold"),
                       axis.text.x = element_text(size = 12, face = "bold"),
                       axis.text.y = element_text(size = 12, face = "bold")) +
-                labs(x = .("Interaction Order"), y = .("Balanced Accuracy (BA)"), fill = .("Type"))
+                labs(x = .("Interaction Order"), y = .("Balanced Accuracy (BA)"), fill = NULL)
                 
             print(p)
             TRUE

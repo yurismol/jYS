@@ -415,7 +415,7 @@ items:
               type: number
             - name: cvc
               title: CVC
-              type: integer
+              type: text
             - name: p_val
               title: Permutation p
               type: number
@@ -478,7 +478,7 @@ items:
           title: MDR Model Performance Comparison
           type: Image
           width:  400
-          height: 500
+          height: 450
           renderFun: .plotMDRBar
           requiresData: true
           visible: (mdrEnable && mdrBarPlot)
