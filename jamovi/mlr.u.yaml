@@ -17,7 +17,7 @@ children:
             isTarget: true
           - type: LevelSelector
             name: refLevel
-            label: Reference level
+            label: Reference
             enable: ({return ui['dep'].value()!==null;})
       - type: TargetLayoutBox
         label: Covariates (Continuous Predictors)

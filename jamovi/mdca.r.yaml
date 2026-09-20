@@ -1,0 +1,183 @@
+---
+name:  mDCA
+title: Decision Curve Analysis (DCA)
+jrs:   '1.1'
+refs: [jys, vickers2006, vickers2016]
+
+items:
+    - name: instructions
+      title: Instructions
+      type: Html
+      visible: true
+
+    - name: dcaTable
+      title: Net Benefit at Key Clinical Thresholds
+      type: Table
+      visible: (showDcaTable)
+      clearWith:
+          - dep
+          - targetLevel
+          - probs
+          - scores
+          - threshMin
+          - threshMax
+          - threshStep
+          - harm
+          - recalibrate
+      columns:
+          - name: model
+            title: Model / Predictor
+            type: text
+          - name: nb_10
+            title: NB at 10%
+            type: number
+            format: zto,dp:3
+          - name: nb_20
+            title: NB at 20%
+            type: number
+            format: zto,dp:3
+          - name: nb_30
+            title: NB at 30%
+            type: number
+            format: zto,dp:3
+          - name: nb_40
+            title: NB at 40%
+            type: number
+            format: zto,dp:3
+          - name: max_nb
+            title: Max Net Benefit
+            type: number
+            format: zto,dp:3
+          - name: opt_thresh
+            title: Optimal Threshold
+            type: number
+            format: zto,dp:2
+
+    - name: windowTable
+      title: Clinical Decision Window
+      type: Table
+      visible: (showWindowTable)
+      clearWith:
+          - dep
+          - targetLevel
+          - probs
+          - scores
+          - threshMin
+          - threshMax
+          - threshStep
+          - harm
+          - recalibrate
+      columns:
+          - name: model
+            title: Model / Predictor
+            type: text
+          - name: min_thresh
+            title: Min Threshold (%)
+            type: number
+            format: zto,dp:1
+          - name: max_thresh
+            title: Max Threshold (%)
+            type: number
+            format: zto,dp:1
+          - name: window_span
+            title: Window Span (%)
+            type: number
+            format: zto,dp:1
+          - name: avoid_20
+            title: Avoided at 20% (per 100)
+            type: number
+            format: zto,dp:1
+          - name: status
+            title: Clinical Superiority
+            type: text
+
+    - name: dcaPlot
+      title: Decision Curves (Net Benefit vs Threshold)
+      type: Image
+      visible: (showDcaPlot)
+      width:  650
+      height: 450
+      renderFun: .dcaPlot
+      clearWith:
+          - dep
+          - targetLevel
+          - probs
+          - scores
+          - threshMin
+          - threshMax
+          - threshStep
+          - harm
+          - recalibrate
+          - palBrewer
+
+    - name: avoidedPlot
+      title: Net Reduction in Interventions (per 100 patients)
+      type: Image
+      visible: (showAvoidedPlot)
+      width:  650
+      height: 420
+      renderFun: .avoidedPlot
+      clearWith:
+          - dep
+          - targetLevel
+          - probs
+          - scores
+          - threshMin
+          - threshMax
+          - threshStep
+          - harm
+          - recalibrate
+          - palBrewer
+
+    - name: calTable
+      title: Model Calibration Metrics
+      type: Table
+      visible: (showCalTable)
+      clearWith:
+          - dep
+          - targetLevel
+          - probs
+          - scores
+          - recalibrate
+          - calBins
+      columns:
+          - name: model
+            title: Model
+            type: text
+          - name: brier
+            title: Brier Score
+            type: number
+            format: zto,dp:4
+          - name: slope
+            title: Calibration Slope
+            type: number
+            format: zto,dp:3
+          - name: intercept
+            title: Calibration Intercept
+            type: number
+            format: zto,dp:3
+          - name: e_avg
+            title: E avg
+            type: number
+            format: zto,dp:3
+          - name: e_max
+            title: E max
+            type: number
+            format: zto,dp:3
+
+    - name: calPlot
+      title: Model Calibration Curves (Observed vs Predicted)
+      type: Image
+      visible: (showCalPlot)
+      width:  600
+      height: 450
+      renderFun: .calPlot
+      clearWith:
+          - dep
+          - targetLevel
+          - probs
+          - scores
+          - recalibrate
+          - calBins
+          - palBrewer
+...

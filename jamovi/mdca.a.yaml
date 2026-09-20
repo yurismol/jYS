@@ -1,0 +1,134 @@
+---
+name:  mDCA
+title: Decision Curve Analysis (DCA)
+menuGroup: jYS
+menuSubgroup: Regression & Classification
+menuTitle: Decision Curve Analysis (DCA)
+description:
+    main: Decision Curve Analysis (DCA) and Model Calibration. Evaluates clinical net benefit (Vickers et al., 2006) and interventions avoided for predictive models and biomarkers.
+version: '1.0.0'
+jas: '1.2'
+
+options:
+    - name: data
+      type: Data
+
+    - name: dep
+      title: Dependent Variable (Target)
+      type: Variable
+      suggested:
+        - nominal
+        - ordinal
+      permitted:
+        - factor
+      required: true
+
+    - name: targetLevel
+      title: Target
+      type: Level
+      variable: (dep)
+
+    - name: probs
+      title: Model Probabilities (0 to 1)
+      type: Variables
+      suggested:
+        - continuous
+      permitted:
+        - numeric
+      required: true
+
+    - name: scores
+      title: Continuous Predictors / Scores
+      type: Variables
+      suggested:
+        - continuous
+      permitted:
+        - numeric
+      default: []
+
+    - name: threshMin
+      title: Minimum Threshold
+      type: Number
+      min: 0.001
+      max: 0.50
+      default: 0.01
+
+    - name: threshMax
+      title: Maximum Threshold
+      type: Number
+      min: 0.10
+      max: 0.99
+      default: 0.50
+
+    - name: threshStep
+      title: Threshold Step
+      type: Number
+      min: 0.005
+      max: 0.10
+      default: 0.01
+
+    - name: harm
+      title: Harm of Intervention
+      type: Number
+      default: 0.0
+
+    - name: showDcaTable
+      title: Net Benefit Summary Table
+      type: Bool
+      default: true
+
+    - name: showWindowTable
+      title: Clinical Decision Window Table
+      type: Bool
+      default: true
+
+    - name: showDcaPlot
+      title: Decision Curves Plot (Net Benefit)
+      type: Bool
+      default: true
+
+    - name: showAvoidedPlot
+      title: Interventions Avoided Plot
+      type: Bool
+      default: true
+
+    - name: showCalTable
+      title: Model Calibration Table
+      type: Bool
+      default: true
+
+    - name: showCalPlot
+      title: Model Calibration Plot
+      type: Bool
+      default: false
+
+    - name: calBins
+      title: Calibration Deciles (Bins)
+      type: Integer
+      min: 4
+      max: 20
+      default: 10
+
+    - name: recalibrate
+      title: Recalibrate Probabilities (Platt Scaling)
+      type: Bool
+      default: false
+
+    - name: palBrewer
+      title: Qualitative Palette
+      type: List
+      options:
+        - title: Dark2
+          name:  Dark2
+        - title: Set1
+          name:  Set1
+        - title: Set2
+          name:  Set2
+        - title: Set3
+          name:  Set3
+        - title: Paired
+          name:  Paired
+        - title: Accent
+          name:  Accent
+      default: Dark2
+...

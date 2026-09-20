@@ -1,0 +1,79 @@
+title: Decision Curve Analysis (DCA)
+name: mDCA
+jus: '3.0'
+stage: 0
+compilerMode: tame
+children:
+  - type: VariableSupplier
+    persistentItems: false
+    stretchFactor: 1
+    children:
+      - type: TargetLayoutBox
+        label: Dependent Variable (Target)
+        children:
+          - type: VariablesListBox
+            name: dep
+            maxItemCount: 1
+            isTarget: true
+          - type: LevelSelector
+            name: targetLevel
+            label: Target
+            enable: ({return ui['dep'].value()!==null;})
+      - type: TargetLayoutBox
+        label: Model Probabilities (0 to 1)
+        children:
+          - type: VariablesListBox
+            name: probs
+            isTarget: true
+      - type: TargetLayoutBox
+        label: Continuous Predictors / Scores
+        children:
+          - type: VariablesListBox
+            name: scores
+            isTarget: true
+  - type: CollapseBox
+    label: Clinical Threshold Settings
+    collapsed: false
+    stretchFactor: 1
+    children:
+      - type: TextBox
+        name: threshMin
+        format: number
+      - type: TextBox
+        name: threshMax
+        format: number
+      - type: TextBox
+        name: threshStep
+        format: number
+      - type: TextBox
+        name: harm
+        format: number
+  - type: CollapseBox
+    label: Analysis & Plot Options
+    collapsed: false
+    stretchFactor: 1
+    children:
+      - type: CheckBox
+        name: showDcaPlot
+      - type: CheckBox
+        name: showAvoidedPlot
+      - type: CheckBox
+        name: showDcaTable
+      - type: CheckBox
+        name: showWindowTable
+      - type: ComboBox
+        name: palBrewer
+  - type: CollapseBox
+    label: Model Calibration
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: CheckBox
+        name: showCalTable
+      - type: CheckBox
+        name: showCalPlot
+      - type: TextBox
+        name: calBins
+        format: number
+      - type: CheckBox
+        name: recalibrate

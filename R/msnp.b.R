@@ -354,7 +354,7 @@ mSNPClass <- R6::R6Class(
                 if (is_x_linked) {
                     gender_var <- private$g_data[[self$options$gender]]
                     gender_levels <- levels(gender_var)
-                    female_idx_g <- grep("f|w|жен|2|girl|woman", gender_levels, ignore.case=TRUE)
+                    female_idx_g <- grep("f|w|\\u0436|female|girl|woman|2", gender_levels, ignore.case=TRUE)
                     if (length(female_idx_g) > 0) {
                         female_level <- gender_levels[female_idx_g[1]]
                         male_level <- gender_levels[-female_idx_g[1]][1]
@@ -422,7 +422,7 @@ mSNPClass <- R6::R6Class(
             if (is_x_linked) {
                 gender_var <- private$g_data[[self$options$gender]][indices]
                 gender_levels <- levels(gender_var)
-                female_idx_g <- grep("f|w|жен|2|girl|woman", gender_levels, ignore.case=TRUE)
+                female_idx_g <- grep("f|w|\\u0436|female|girl|woman|2", gender_levels, ignore.case=TRUE)
                 if (length(female_idx_g) > 0) {
                     female_level <- gender_levels[female_idx_g[1]]
                     male_level <- gender_levels[-female_idx_g[1]][1]
@@ -506,7 +506,7 @@ mSNPClass <- R6::R6Class(
                     if (is_x_linked) {
                         gender_var <- private$g_data[[self$options$gender]][subset_idx]
                         gender_levels <- levels(gender_var)
-                        female_idx_g <- grep("f|w|жен|2|girl|woman", gender_levels, ignore.case=TRUE)
+                        female_idx_g <- grep("f|w|\\u0436|female|girl|woman|2", gender_levels, ignore.case=TRUE)
                         if (length(female_idx_g) > 0) {
                             female_level <- gender_levels[female_idx_g[1]]
                             male_level <- gender_levels[-female_idx_g[1]][1]
@@ -1093,7 +1093,7 @@ mSNPClass <- R6::R6Class(
                 if (is_x_linked) {
                     gender_var <- private$g_data[[self$options$gender]]
                     gender_levels <- levels(gender_var)
-                    female_idx_g <- grep("f|w|жен|2|girl|woman", gender_levels, ignore.case=TRUE)
+                    female_idx_g <- grep("f|w|\\u0436|female|girl|woman|2", gender_levels, ignore.case=TRUE)
                     if (length(female_idx_g) > 0) {
                         female_level <- gender_levels[female_idx_g[1]]
                         male_level <- gender_levels[-female_idx_g[1]][1]
@@ -1759,7 +1759,7 @@ mSNPClass <- R6::R6Class(
                     }
                 }
                 
-                # Add total row: Сумма/Всего
+                # Add total row: Total / Sum
                 if (isTRUE(self$options$groupTotal)) {
                     row_key <- paste(marker, "total", sep="_")
                     row_val <- list(
@@ -1842,7 +1842,7 @@ mSNPClass <- R6::R6Class(
                     if (is_x_linked) {
                         gender_var <- private$g_data[[self$options$gender]][subset_idx]
                         gender_levels <- levels(gender_var)
-                        female_idx_g <- grep("f|w|жен|2|girl|woman", gender_levels, ignore.case=TRUE)
+                        female_idx_g <- grep("f|w|\\u0436|female|girl|woman|2", gender_levels, ignore.case=TRUE)
                         if (length(female_idx_g) > 0) {
                             female_level <- gender_levels[female_idx_g[1]]
                         } else {
@@ -2008,7 +2008,7 @@ mSNPClass <- R6::R6Class(
                     if (is_x_linked) {
                         gender_var <- private$g_data[[self$options$gender]][subset_idx]
                         gender_levels <- levels(gender_var)
-                        female_idx_g <- grep("f|w|жен|2|girl|woman", gender_levels, ignore.case=TRUE)
+                        female_idx_g <- grep("f|w|\\u0436|female|girl|woman|2", gender_levels, ignore.case=TRUE)
                         if (length(female_idx_g) > 0) {
                             female_level <- gender_levels[female_idx_g[1]]
                         } else {

@@ -1,7 +1,7 @@
 Package: jYS
 Type: Package
 Title: jYS Extended Functions
-Version: 1.1.4
+Version: 1.1.5
 Author: Yuri Smolyakov
 Maintainer: Yuri Smolyakov <smolyakov@rambler.ru>
 Description: Extensions of the functionality of popular data analysis methods:
@@ -10,8 +10,9 @@ Description: Extensions of the functionality of popular data analysis methods:
   Uncertain Interval (UI) threshold estimation, a priori power analysis, MLP
   neural network classifier, logistic regression with feature selection, Random
   Forest classifier, survival analysis (Kaplan-Meier and Cox regression),
-  Principal Component Analysis (PCA), and Single Nucleotide Polymorphism (SNP)
-  association and Hardy-Weinberg equilibrium analysis.
+  Principal Component Analysis (PCA), Single Nucleotide Polymorphism (SNP)
+  association and Hardy-Weinberg equilibrium analysis, and Decision Curve
+  Analysis (DCA) with model calibration.
 License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true

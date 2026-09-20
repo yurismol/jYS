@@ -64,4 +64,10 @@ Some usefull [Jamovi](https://www.jamovi.org/) procedures for researchers
   - Multifactor Dimensionality Reduction (MDR) for epistasis/interaction detection: custom R6 implementation
   - Linkage Disequilibrium (LD) estimation (EM-algorithm for haplotype frequencies) & LD heatmap: custom R6 implementation
 
+- Decision Curve Analysis (DCA)
+  - Clinical net benefit evaluation (Vickers et al.) & Interventions Avoided curves
+  - Model calibration curves (observed vs predicted probability by deciles with 95% CI) & Brier score, calibration slope and intercept
+  - Multi-model evaluation across clinical risk thresholds (Random Forest, MLP, Logistic Regression, and raw continuous biomarkers)
+  - Visualizations: ggplot2
+
 Author: [Yuri Smolyakov](https://t.me/jYSmol)
