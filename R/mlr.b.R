@@ -3,7 +3,226 @@
 mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
     "mLRClass",
     inherit = mLRBase,
+    public = list(
+        .savePart = function(path, part, ...) {
+            smart_lookup <- function(results, p_str, options = NULL) {
+                if (is.null(results) || is.null(p_str)) return(NULL)
+                if (length(p_str) > 1) p_str <- paste(p_str, collapse = "/")
+                if (!nzchar(p_str)) return(NULL)
+
+                covs <- tryCatch(options$covariates, error = function(e) NULL)
+                group_var <- tryCatch(options$group, error = function(e) NULL)
+                vars <- tryCatch(options$vars, error = function(e) NULL)
+
+                find_child <- function(curr, seg) {
+                    if (is.null(curr) || is.null(seg) || !nzchar(seg)) return(NULL)
+                    clean <- gsub('^["\']|["\']$', '', seg)
+
+                    if (inherits(curr, 'Array')) {
+                        nxt <- tryCatch(curr$get(key = clean), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+
+                        nxt <- tryCatch(curr$get(name = paste0('"', clean, '"')), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+                        nxt <- tryCatch(curr$get(name = seg), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+                        nxt <- tryCatch(curr$get(name = clean), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+
+                        items <- tryCatch(curr$items, error = function(e) NULL)
+                        if (!is.null(items) && length(items) > 0) {
+                            # 1. Exact match by key, name, or title
+                            for (it in items) {
+                                it_key <- tryCatch(it$key, error = function(e) NULL)
+                                it_name <- tryCatch(it$name, error = function(e) NULL)
+                                it_title <- tryCatch(it$title, error = function(e) NULL)
+                                if (identical(it_key, clean) || identical(it_key, seg) ||
+                                    identical(it_name, clean) || identical(it_name, seg) ||
+                                    identical(it_title, clean) || identical(it_title, seg)) {
+                                    return(it)
+                                }
+                            }
+
+                            # 2. Match covariate by index if clean is in covs or group_var
+                            if (!is.null(covs) && clean %in% covs) {
+                                c_idx <- which(covs == clean)
+                                target_key <- paste0("..cov_", c_idx, "_")
+                                for (it in items) {
+                                    if (identical(it$key, target_key) || grepl(paste0("^\\.\\.cov_", c_idx), as.character(it$key))) {
+                                        return(it)
+                                    }
+                                }
+                            }
+                            if (!is.null(group_var) && (clean == group_var || grepl(paste0("^", clean), group_var))) {
+                                for (it in items) {
+                                    if (identical(it$key, "..group") || grepl("^\\.\\.group", as.character(it$key))) {
+                                        return(it)
+                                    }
+                                }
+                            }
+
+                            # 3. Match suffix of title after dash
+                            for (it in items) {
+                                it_title <- tryCatch(as.character(it$title), error = function(e) "")
+                                title_var <- trimws(sub(".*[\u2013\u2014-]\\s*", "", it_title))
+                                title_var_clean <- gsub("[_()]", "", title_var)
+                                clean_nopunct <- gsub("[_()]", "", clean)
+                                if (nzchar(title_var) && (identical(title_var, clean) || identical(title_var_clean, clean_nopunct))) {
+                                    return(it)
+                                }
+                            }
+
+                            # 4. Word boundary match in title
+                            for (it in items) {
+                                it_title <- tryCatch(as.character(it$title), error = function(e) "")
+                                pattern <- paste0("(^|[^a-zA-Z0-9_])", clean, "([^a-zA-Z0-9_]|$)")
+                                if (grepl(pattern, it_title)) {
+                                    return(it)
+                                }
+                            }
+
+                            # 5. Check integer index
+                            idx <- suppressWarnings(as.integer(clean))
+                            if (!is.na(idx)) {
+                                items_len <- length(items)
+                                if (idx == 0 && items_len >= 1) return(items[[1]])
+                                if (idx >= 1 && idx <= items_len) return(items[[idx]])
+                            }
+                        }
+                    }
+
+                    nxt <- tryCatch(curr$.lookup(seg), error = function(e) NULL)
+                    if (!is.null(nxt)) return(nxt)
+                    if (seg != clean) {
+                        nxt <- tryCatch(curr$.lookup(clean), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+                    }
+
+                    if (inherits(curr, 'Group')) {
+                        nxt <- tryCatch(curr$get(clean), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+                        nxt <- tryCatch(curr$get(seg), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+                    }
+
+                    items <- tryCatch(curr$items, error = function(e) NULL)
+                    if (!is.null(items) && length(items) > 0) {
+                        if (clean %in% names(items)) return(items[[clean]])
+                        if (seg %in% names(items)) return(items[[seg]])
+                        for (it in items) {
+                            it_name <- tryCatch(it$name, error = function(e) NULL)
+                            it_key <- tryCatch(it$key, error = function(e) NULL)
+                            it_title <- tryCatch(it$title, error = function(e) NULL)
+                            if (identical(it_name, clean) || identical(it_name, seg) ||
+                                identical(it_key, clean) || identical(it_key, seg)) {
+                                return(it)
+                            }
+                        }
+                    }
+                    NULL
+                }
+
+                traverse <- function(node, segs) {
+                    if (is.null(node) || length(segs) == 0) return(node)
+                    child <- find_child(node, segs[1])
+                    if (!is.null(child)) {
+                        return(traverse(child, segs[-1]))
+                    }
+                    NULL
+                }
+
+                search_recursive <- function(node, segs) {
+                    if (is.null(node)) return(NULL)
+                    res <- traverse(node, segs)
+                    if (!is.null(res)) return(res)
+
+                    items <- tryCatch(node$items, error = function(e) NULL)
+                    if (!is.null(items) && length(items) > 0) {
+                        for (child in items) {
+                            if (inherits(child, 'Group') || inherits(child, 'Array')) {
+                                res <- search_recursive(child, segs)
+                                if (!is.null(res)) return(res)
+                            }
+                        }
+                    }
+                    NULL
+                }
+
+                norm_p <- gsub('\\[[\'"]?([^\'"]+?)[\'"]?\\]', '/\\1', p_str)
+                parts <- strsplit(norm_p, '/+', perl = TRUE)[[1]]
+                parts <- parts[parts != ""]
+                if (length(parts) == 0) return(NULL)
+
+                # Strip analysisId or 'results' prefix if present
+                if (length(parts) > 1 && (parts[1] == "results" || !is.na(suppressWarnings(as.integer(parts[1]))))) {
+                    if (is.null(find_child(results, parts[1]))) {
+                        parts <- parts[-1]
+                    }
+                }
+
+                target <- search_recursive(results, parts)
+                if (inherits(target, 'Array') && length(target$items) > 0) {
+                    target <- target$items[[1]]
+                }
+                target
+            }
+
+            element <- smart_lookup(self$results, part, self$options)
+            if (is.null(element)) {
+                return(FALSE)
+            }
+
+            if (inherits(element, 'Array')) {
+                if (length(element$items) > 0) {
+                    element <- element$items[[1]]
+                } else {
+                    return(FALSE)
+                }
+            }
+
+            if (inherits(element, 'Image')) {
+                if (is.null(element$state) && !is.null(element$parent$state)) {
+                    parent_state <- element$parent$state
+                    if (!is.null(parent_state$zph)) {
+                        var_name <- element$key
+                        var_idx <- if (!is.null(var_name) && var_name %in% rownames(parent_state$zph$table)) {
+                            which(rownames(parent_state$zph$table) == var_name)
+                        } else 1
+                        element$setState(list(zph = parent_state$zph, var_idx = var_idx, var_name = var_name))
+                    } else if (!is.null(element$key) && !is.null(parent_state[[element$key]])) {
+                        element$setState(parent_state[[element$key]])
+                    } else if (is.list(parent_state) && length(parent_state) > 0) {
+                        element$setState(parent_state[[1]])
+                    }
+                }
+            }
+
+            if (element$requiresData && is.function(private$.ensureData)) {
+                private$.ensureData()
+            }
+            save_ok <- tryCatch({
+                element$saveAs(path, ...)
+                file.exists(path) && file.info(path)$size > 0
+            }, error = function(e) {
+                tryCatch({
+                    element$saveAs(path)
+                    file.exists(path) && file.info(path)$size > 0
+                }, error = function(e2) {
+                    FALSE
+                })
+            })
+            return(save_ok)
+        }
+    ),
     private = list(
+        .ensureData = function() {
+            if (is.null(private$.data) || nrow(private$.data) == 0) {
+                d <- tryCatch(self$readDataset(headerOnly = FALSE), error = function(e) NULL)
+                if (!is.null(d) && nrow(d) > 0)
+                    private$.data <- d
+            }
+            return(!is.null(private$.data) && nrow(private$.data) > 0)
+        },
         
         .init = function() {
             private$.initOutputs()
@@ -14,15 +233,7 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             covs <- self$options$covs
             factors <- self$options$factors
             
-            if (is.null(dep)) {
-                self$results$text$setVisible(TRUE)
-                self$results$text$setContent(.("Please select a dependent variable (target)."))
-                return()
-            }
-            
-            if (length(covs) == 0 && length(factors) == 0) {
-                self$results$text$setVisible(TRUE)
-                self$results$text$setContent(.("Please select at least one predictor variable."))
+            if (is.null(dep) || (length(covs) == 0 && length(factors) == 0)) {
                 return()
             }
             
@@ -34,19 +245,17 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             subs <- ""
             if (!is.null(self$options$group) && !is.null(self$options$selgroup) && self$options$selgroup != "") {
                 subs <- paste(self$options$group, " == \"", self$options$selgroup, "\"", sep="")
-                self$results$text$setContent(paste0("<h4>", jmvcore::.("Dataset restricted to group:"), " ", subs, "</h4>"))
-                self$results$text$setVisible(TRUE)
+                notice <- jmvcore::Notice$new(self$options, name='.filter',
+                    type=jmvcore::NoticeType$INFO,
+                    content=jmvcore::format(.("Dataset restricted to group: {g}"), g=subs))
+                self$results$insert(1, notice)
                 dat <- dat[dat[[self$options$group]] == self$options$selgroup, , drop=FALSE]
-            } else {
-                self$results$text$setVisible(FALSE)
             }
             
             clean_data <- na.omit(dat[, data_vars, drop=FALSE])
             
             if (nrow(clean_data) < 15) {
-                self$results$text$setVisible(TRUE)
-                self$results$text$setContent(.("The dataset has too few complete cases to perform logistic regression (minimum 15 cases required)."))
-                return()
+                jmvcore::reject(.("The dataset has too few complete cases to perform logistic regression (minimum 15 cases required)."))
             }
             
             y <- droplevels(as.factor(clean_data[[dep]]))
@@ -61,9 +270,7 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             num_levels <- length(y_levels)
             
             if (num_levels < 2) {
-                self$results$text$setVisible(TRUE)
-                self$results$text$setContent(.("Dependent variable must have at least two levels."))
-                return()
+                jmvcore::reject(.("Dependent variable must have at least two levels."))
             }
             
             is_multinomial <- num_levels > 2
@@ -170,6 +377,7 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             cv_y <- NULL
             
             set.seed(self$options$seed)
+            private$.checkpoint()
             
             if (partition == "holdout") {
                 # Stratified Train-Test Split (Hold-out)
@@ -252,6 +460,7 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     cv_errors <- 0
                     
                     for (k in 1:cv_folds) {
+                        private$.checkpoint()
                         t_idx <- folds[[k]]
                         tr_idx <- setdiff(1:nrow(X_all), t_idx)
                         
@@ -304,6 +513,7 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     cv_errors <- 0
                     
                     for (k in 1:cv_folds) {
+                        private$.checkpoint()
                         t_idx <- folds[[k]]
                         tr_idx <- setdiff(1:nrow(X_all), t_idx)
                         
@@ -364,6 +574,7 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         colnames(fold_probs) <- y_levels
                         
                         for (k in 1:cv_folds) {
+                            private$.checkpoint()
                             t_idx <- folds[[k]]
                             tr_idx <- setdiff(1:nrow(X_all), t_idx)
                             
@@ -420,6 +631,7 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         fold_probs <- numeric(nrow(X_all))
                         
                         for (k in 1:cv_folds) {
+                            private$.checkpoint()
                             t_idx <- folds[[k]]
                             tr_idx <- setdiff(1:nrow(X_all), t_idx)
                             
@@ -1298,7 +1510,7 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         if (name == "(Intercept)") {
                             terms <- c(terms, paste0(
                                 ifelse(val >= 0, "", "-"), 
-                                "<span style='color: #2563EB; font-weight: 600;'>", val_fmt, "</span>"
+                                "<span style='font-weight: 600;'>", val_fmt, "</span>"
                             ))
                         } else {
                             # Clean variable name (strip backticks and backslashes)
@@ -1307,8 +1519,8 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                             
                             terms <- c(terms, paste0(
                                 sign_str, 
-                                "<span style='color: #2563EB; font-weight: 600;'>", val_fmt, "</span>",
-                                " · <span style='color: #475569; font-style: italic; font-weight: 500;'>", clean_name, "</span>"
+                                "<span style='font-weight: 600;'>", val_fmt, "</span>",
+                                " · <span style='font-style: italic; font-weight: 500;'>", clean_name, "</span>"
                             ))
                         }
                     }
@@ -1320,8 +1532,8 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     }
                     
                     html_blocks <- c(html_blocks, paste0(
-                        "  <div style='font-family: monospace; font-size: 13px; color: #334155; background-color: #FFFFFF; padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 4px; line-height: 1.4; word-wrap: break-word; white-space: pre-wrap; margin-bottom: 6px;'>",
-                        "    <span style='color: #0F172A; font-weight: 600;'>ln( P(Y = '<span style='color: #2563EB;'>", level, "</span>') / P(Y = '<span style='color: #64748B;'>", ref_level, "</span>') )</span> = ", logit_formula, "",
+                        "  <div style='font-family: monospace; font-size: 13px; padding: 8px 12px; border: 1px solid currentColor; border-radius: 4px; line-height: 1.4; word-wrap: break-word; white-space: pre-wrap; margin-bottom: 6px; opacity: 0.9;'>",
+                        "    <span style='font-weight: 600;'>ln( P(Y = '<span>", level, "</span>') / P(Y = '<span>", ref_level, "</span>') )</span> = ", logit_formula, "",
                         "  </div>"
                     ))
                 }
@@ -1335,26 +1547,26 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 
                 for (level in comparison_levels) {
                     probs_formula_blocks <- c(probs_formula_blocks, paste0(
-                        "  <div style='font-family: monospace; font-size: 13px; color: #334155; background-color: #FFFFFF; padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 4px; line-height: 1.4; word-wrap: break-word; white-space: pre-wrap; margin-bottom: 6px;'>",
-                        "    <span style='color: #0F172A; font-weight: 600;'>P( Y = '<span style='color: #10B981;'>", level, "</span>' )</span> = exp( Logit_", level, " ) / [ ", denom_str, " ]",
+                        "  <div style='font-family: monospace; font-size: 13px; padding: 8px 12px; border: 1px solid currentColor; border-radius: 4px; line-height: 1.4; word-wrap: break-word; white-space: pre-wrap; margin-bottom: 6px; opacity: 0.9;'>",
+                        "    <span style='font-weight: 600;'>P( Y = '<span>", level, "</span>' )</span> = exp( Logit_", level, " ) / [ ", denom_str, " ]",
                         "  </div>"
                     ))
                 }
                 probs_formula_blocks <- c(probs_formula_blocks, paste0(
-                    "  <div style='font-family: monospace; font-size: 13px; color: #334155; background-color: #FFFFFF; padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 4px; line-height: 1.4; word-wrap: break-word; white-space: pre-wrap; margin-bottom: 6px;'>",
-                    "    <span style='color: #0F172A; font-weight: 600;'>P( Y = '<span style='color: #64748B;'>", ref_level, "</span>' )</span> = 1 / [ ", denom_str, " ]",
+                    "  <div style='font-family: monospace; font-size: 13px; padding: 8px 12px; border: 1px solid currentColor; border-radius: 4px; line-height: 1.4; word-wrap: break-word; white-space: pre-wrap; margin-bottom: 6px; opacity: 0.9;'>",
+                    "    <span style='font-weight: 600;'>P( Y = '<span>", ref_level, "</span>' )</span> = 1 / [ ", denom_str, " ]",
                     "  </div>"
                 ))
                 
                 html <- paste0(
-                    "<div style='font-family: system-ui, -apple-system, sans-serif; padding: 12px; background-color: #F8FAFC; border: 1px solid #E2E8F0; border-left: 5px solid #2563EB; border-radius: 6px; margin-top: 15px;'>",
-                    "  <div style='color: #1E293B; font-weight: bold; font-size: 14px; margin-bottom: 8px;'>",
-                    "    <b style='background-color: #2563EB; color: white; padding: 1px 6px; border-radius: 3px; font-size: 10px; margin-right: 6px; text-transform: uppercase;'>Logits</b>",
+                    "<div style='font-family: system-ui, -apple-system, sans-serif; padding: 12px; border-left: 4px solid currentColor; margin-top: 15px;'>",
+                    "  <div style='font-weight: bold; font-size: 14px; margin-bottom: 8px;'>",
+                    "    <b style='border: 1px solid currentColor; padding: 1px 6px; border-radius: 3px; font-size: 10px; margin-right: 6px; text-transform: uppercase;'>Logits</b>",
                     "    ", .("Multinomial Log-odds Equations"),
                     "  </div>",
                     paste(html_blocks, collapse = ""),
-                    "  <div style='color: #1E293B; font-weight: bold; font-size: 14px; margin-top: 14px; margin-bottom: 8px;'>",
-                    "    <b style='background-color: #10B981; color: white; padding: 1px 6px; border-radius: 3px; font-size: 10px; margin-right: 6px; text-transform: uppercase;'>Probabilities</b>",
+                    "  <div style='font-weight: bold; font-size: 14px; margin-top: 14px; margin-bottom: 8px;'>",
+                    "    <b style='border: 1px solid currentColor; padding: 1px 6px; border-radius: 3px; font-size: 10px; margin-right: 6px; text-transform: uppercase;'>Probabilities</b>",
                     "    ", .("Probability Models"),
                     "  </div>",
                     paste(probs_formula_blocks, collapse = ""),
@@ -1377,7 +1589,7 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     if (name == "(Intercept)") {
                         terms <- c(terms, paste0(
                             ifelse(val >= 0, "", "-"), 
-                            "<span style='color: #2563EB; font-weight: 600;'>", val_fmt, "</span>"
+                            "<span style='font-weight: 600;'>", val_fmt, "</span>"
                         ))
                     } else {
                         # Clean variable name (strip backticks and backslashes)
@@ -1386,8 +1598,8 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         
                         terms <- c(terms, paste0(
                             sign_str, 
-                            "<span style='color: #2563EB; font-weight: 600;'>", val_fmt, "</span>",
-                            " · <span style='color: #475569; font-style: italic; font-weight: 500;'>", clean_name, "</span>"
+                            "<span style='font-weight: 600;'>", val_fmt, "</span>",
+                            " · <span style='font-style: italic; font-weight: 500;'>", clean_name, "</span>"
                         ))
                     }
                 }
@@ -1399,20 +1611,20 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 }
                 
                 html <- paste0(
-                    "<div style='font-family: system-ui, -apple-system, sans-serif; padding: 12px; background-color: #F8FAFC; border: 1px solid #E2E8F0; border-left: 5px solid #2563EB; border-radius: 6px; margin-top: 15px;'>",
-                    "  <div style='color: #1E293B; font-weight: bold; font-size: 14px; margin-bottom: 8px;'>",
-                    "    <b style='background-color: #2563EB; color: white; padding: 1px 6px; border-radius: 3px; font-size: 10px; margin-right: 6px; text-transform: uppercase;'>Logit</b>",
+                    "<div style='font-family: system-ui, -apple-system, sans-serif; padding: 12px; border-left: 4px solid currentColor; margin-top: 15px;'>",
+                    "  <div style='font-weight: bold; font-size: 14px; margin-bottom: 8px;'>",
+                    "    <b style='border: 1px solid currentColor; padding: 1px 6px; border-radius: 3px; font-size: 10px; margin-right: 6px; text-transform: uppercase;'>Logit</b>",
                     "    ", .("Logistic Regression Model (Log-odds)"),
                     "  </div>",
-                    "  <div style='font-family: monospace; font-size: 13px; color: #334155; background-color: #FFFFFF; padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 4px; line-height: 1.4; word-wrap: break-word; white-space: pre-wrap;'>",
-                    "    <span style='color: #0F172A; font-weight: 600;'>ln( P / (1 - P) )</span> = ", logit_formula, "",
+                    "  <div style='font-family: monospace; font-size: 13px; padding: 8px 12px; border: 1px solid currentColor; border-radius: 4px; line-height: 1.4; word-wrap: break-word; white-space: pre-wrap; opacity: 0.9;'>",
+                    "    <span style='font-weight: 600;'>ln( P / (1 - P) )</span> = ", logit_formula, "",
                     "  </div>",
-                    "  <div style='color: #1E293B; font-weight: bold; font-size: 14px; margin-top: 14px; margin-bottom: 8px;'>",
-                    "    <b style='background-color: #10B981; color: white; padding: 1px 6px; border-radius: 3px; font-size: 10px; margin-right: 6px; text-transform: uppercase;'>Probability</b>",
+                    "  <div style='font-weight: bold; font-size: 14px; margin-top: 14px; margin-bottom: 8px;'>",
+                    "    <b style='border: 1px solid currentColor; padding: 1px 6px; border-radius: 3px; font-size: 10px; margin-right: 6px; text-transform: uppercase;'>Probability</b>",
                     "    ", .("Probability Model"),
                     "  </div>",
-                    "  <div style='font-family: monospace; font-size: 13px; color: #334155; background-color: #FFFFFF; padding: 8px 12px; border: 1px solid #E2E8F0; border-radius: 4px; line-height: 1.4; word-wrap: break-word; white-space: pre-wrap;'>",
-                    "    <span style='color: #0F172A; font-weight: 600;'>P( Y = '<span style='color: #059669;'>", pos_class_label, "</span>' )</span> = 1 / ( 1 + exp[ -( ", logit_formula, " ) ] )",
+                    "  <div style='font-family: monospace; font-size: 13px; padding: 8px 12px; border: 1px solid currentColor; border-radius: 4px; line-height: 1.4; word-wrap: break-word; white-space: pre-wrap; opacity: 0.9;'>",
+                    "    <span style='font-weight: 600;'>P( Y = '<span>", pos_class_label, "</span>' )</span> = 1 / ( 1 + exp[ -( ", logit_formula, " ) ] )",
                     "  </div>",
                     "</div>"
                 )
@@ -1443,381 +1655,16 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
         # Plot: ROC Curves
         # ----------------------------------------------------
         .rocPlot = function(image, ggtheme, theme, ...) {
-            roc_data <- image$state
-            if (is.null(roc_data)) {
-                # Fallback to parent array's state
-                parent_state <- image$parent$state
-                if (!is.null(parent_state) && !is.null(image$key)) {
-                    roc_data <- parent_state[[image$key]]
-                }
-            }
-            if (is.null(roc_data)) return(FALSE)
-            if (!requireNamespace("pROC", quietly = TRUE)) return(FALSE)
-            
-            # Ensure serialization does not distort matrices
-            if (!is.null(roc_data$train_prob)) {
-                roc_data$train_prob <- as.matrix(as.data.frame(roc_data$train_prob))
-            }
-            if (!is.null(roc_data$val_prob)) {
-                roc_data$val_prob <- as.matrix(as.data.frame(roc_data$val_prob))
-            }
-            if (!is.null(roc_data$cv_prob)) {
-                roc_data$cv_prob <- as.matrix(as.data.frame(roc_data$cv_prob))
-            }
-            
-            result <- tryCatch({
-                roc_x <- roc_data$roc_x
-                roc_unit <- roc_data$roc_unit
-                partition <- roc_data$partition
-                is_pct <- roc_unit == "percent"
-                legacy_axes <- (roc_x == "1spec")
-                show_roc_cut <- isTRUE(roc_data$show_roc_cut)
-                
-                # Determine number of classes
-                y_levels <- roc_data$y_levels
-                C <- if (!is.null(roc_data$C)) roc_data$C else length(y_levels)
-                
-                if (roc_data$type == "binary") {
-                    # ----------------------------------------------------
-                    # Binary Plotting Logic (C == 2)
-                    # ----------------------------------------------------
-                    y_val_bin <- if (!is.null(roc_data$y)) as.numeric(roc_data$y) else NULL
-                    train_prob_bin <- if (!is.null(roc_data$train_prob)) as.numeric(roc_data$train_prob) else NULL
-                    val_prob_bin <- if (!is.null(roc_data$val_prob)) as.numeric(roc_data$val_prob) else NULL
-                    val_y_bin <- if (!is.null(roc_data$val_y)) as.numeric(roc_data$val_y) else NULL
-                    cv_prob_bin <- if (!is.null(roc_data$cv_prob)) as.numeric(roc_data$cv_prob) else NULL
-                    cv_y_bin <- if (!is.null(roc_data$cv_y)) as.numeric(roc_data$cv_y) else y_val_bin
-                    
-                    r_tr <- pROC::roc(y_val_bin, train_prob_bin, percent = is_pct, quiet = TRUE)
-                    cols <- c("#3366B2") # Training is always Blue
-                    if (self$options$palBrewer != "none") {
-                        cols <- RColorBrewer::brewer.pal(n=3, name=self$options$palBrewer)
-                    }
-                    active_cols <- c(cols[1])
-                    ltys <- c(1)         # Training is solid
-                    auc_tr_val <- as.numeric(pROC::auc(r_tr))
-                    auc_tr_str <- if (is_pct) paste0(round(auc_tr_val, 1), "%") else round(auc_tr_val, 3)
-                    leg_labels <- c(paste0(.("Training (AUC ="), " ", auc_tr_str, ")"))
-                    
-                    thres_pattern <- ifelse(is_pct, "%.2f (%.1f%%, %.1f%%)", "%.2f (%.3f, %.3f)")
-                    
-                    p <- pROC::plot.roc(r_tr, col=cols[1],
-                        main=.("ROC curves"), cex.main=1.3,
-                        percent=is_pct,
-                        cex.lab=1.5, cex.axis=1.3, lwd=3, lty=1,
-                        legacy.axes=legacy_axes,
-                        xlab=ifelse(is_pct, ifelse(legacy_axes, .("100 - Specificity (%)"), .("Specificity (%)")), ifelse(legacy_axes, .("1 - Specificity"), .("Specificity"))),
-                        ylab=ifelse(is_pct, .("Sensitivity (%)"), .("Sensitivity")),
-                        print.thres=show_roc_cut,
-                        print.thres.col=cols[1],
-                        print.thres.pch=19, print.thres.cex=1.3,
-                        print.thres.best.method="youden",
-                        print.thres.pattern=thres_pattern,
-                        grid=TRUE, add=FALSE
-                    )
-                    
-                    if (partition == "holdout" && !is.null(val_prob_bin)) {
-                        r_va <- pROC::roc(val_y_bin, val_prob_bin, percent = is_pct, quiet = TRUE)
-                        if (self$options$palBrewer == "none") {
-                            cols <- c(cols, "#E54028") # Holdout is Red
-                        }
-                        active_cols <- c(active_cols, cols[2])
-                        ltys <- c(ltys, 1)         # Holdout is solid
-                        auc_va_val <- as.numeric(pROC::auc(r_va))
-                        auc_va_str <- if (is_pct) paste0(round(auc_va_val, 1), "%") else round(auc_va_val, 3)
-                        leg_labels <- c(leg_labels, paste0(.("Hold-out Validation (AUC ="), " ", auc_va_str, ")"))
-                        
-                        pROC::plot.roc(r_va, col=cols[2],
-                            percent=is_pct,
-                            lwd=3, lty=1,
-                            legacy.axes=legacy_axes,
-                            print.thres=show_roc_cut,
-                            print.thres.col=cols[2],
-                            print.thres.pch=19, print.thres.cex=1.3,
-                            print.thres.best.method="youden",
-                            print.thres.pattern=thres_pattern,
-                            add=TRUE
-                        )
-                    } else if (partition %in% c("kfold", "repeated_kfold") && !is.null(cv_prob_bin)) {
-                        r_cv <- pROC::roc(cv_y_bin, cv_prob_bin, percent = is_pct, quiet = TRUE)
-                        if (self$options$palBrewer == "none") {
-                            cols <- c(cols, "#46B233") # CV is Green
-                        }
-                        active_cols <- c(active_cols, cols[2])
-                        ltys <- c(ltys, 2)         # CV is dashed
-                        auc_cv_val <- as.numeric(pROC::auc(r_cv))
-                        auc_cv_str <- if (is_pct) paste0(round(auc_cv_val, 1), "%") else round(auc_cv_val, 3)
-                        lbl <- if (partition == "kfold") .("K-Fold CV (AUC =") else .("Repeated Stratified CV (AUC =")
-                        leg_labels <- c(leg_labels, paste0(lbl, " ", auc_cv_str, ")"))
-                        
-                        pROC::plot.roc(r_cv, col=cols[2],
-                            percent=is_pct,
-                            lwd=3, lty=2,
-                            legacy.axes=legacy_axes,
-                            print.thres=show_roc_cut,
-                            print.thres.col=cols[2],
-                            print.thres.pch=19, print.thres.cex=1.3,
-                            print.thres.best.method="youden",
-                            print.thres.pattern=thres_pattern,
-                            add=TRUE
-                        )
-                    }
-                    
-                    legend("bottomright",
-                        cex=1.1, lwd=3, col=active_cols,
-                        lty=ltys,
-                        bg="white", box.lwd=1,
-                        legend=leg_labels
-                    )
-                    
-                } else if (roc_data$type == "combined_training") {
-                    # ----------------------------------------------------
-                    # Multiclass Combined Training Plotting Logic
-                    # ----------------------------------------------------
-                    y_val <- roc_data$y
-                    train_prob <- roc_data$train_prob
-                    
-                    base_colors <- c("#3366B2", "#E54028", "#46B233", "#8A2BE2", "#FF8C00", "#C71585", "#008080", "#8B4513")
-                    if (self$options$palBrewer != "none") {
-                        max_n <- switch(self$options$palBrewer,
-                            "Accent" = 8, "Dark2" = 8, "Paired" = 12, "Pastel1" = 9,
-                            "Set1" = 9, "Set2" = 8, "Set3" = 12, 8)
-                        req_n <- max(3, min(C, max_n))
-                        base_colors <- RColorBrewer::brewer.pal(n=req_n, name=self$options$palBrewer)
-                        if (C > max_n) {
-                            base_colors <- grDevices::colorRampPalette(base_colors)(C)
-                        }
-                    }
-                    if (C > length(base_colors)) {
-                        cols <- grDevices::rainbow(C)
-                    } else {
-                        cols <- base_colors[1:C]
-                    }
-                    
-                    leg_labels <- c()
-                    thres_pattern <- ifelse(is_pct, "%.2f (%.1f%%, %.1f%%)", "%.2f (%.3f, %.3f)")
-                    
-                    for (c in 1:C) {
-                        lev <- y_levels[c]
-                        y_tr_c <- as.numeric(y_val == lev)
-                        prob_tr_c <- if (!is.null(colnames(train_prob)) && lev %in% colnames(train_prob)) train_prob[, lev] else train_prob[, c]
-                        r_tr <- pROC::roc(y_tr_c, prob_tr_c, percent = is_pct, quiet = TRUE)
-                        auc_tr <- as.numeric(pROC::auc(r_tr))
-                        auc_tr_str <- if (is_pct) paste0(round(auc_tr, 1), "%") else round(auc_tr, 3)
-                        leg_labels <- c(leg_labels, paste0(lev, " (AUC = ", auc_tr_str, ")"))
-                        
-                        p <- pROC::plot.roc(r_tr, col=cols[c],
-                            main=.("Combined ROC - Training"), cex.main=1.3,
-                            percent=is_pct,
-                            cex.lab=1.5, cex.axis=1.3, lwd=3,
-                            legacy.axes=legacy_axes,
-                            xlab=ifelse(is_pct, ifelse(legacy_axes, .("100 - Specificity (%)"), .("Specificity (%)")), ifelse(legacy_axes, .("1 - Specificity"), .("Specificity"))),
-                            ylab=ifelse(is_pct, .("Sensitivity (%)"), .("Sensitivity")),
-                            print.thres=show_roc_cut,
-                            print.thres.col=cols[c],
-                            print.thres.pch=19, print.thres.cex=1.3,
-                            print.thres.best.method="youden",
-                            print.thres.pattern=thres_pattern,
-                            grid=(c == 1), add=(c > 1)
-                        )
-                    }
-                    
-                    legend("bottomright",
-                        cex=1.1, lwd=3, col=cols,
-                        bg="white", box.lwd=1,
-                        legend=leg_labels
-                    )
-                    
-                } else if (roc_data$type == "combined_validation") {
-                    # ----------------------------------------------------
-                    # Multiclass Combined Validation/CV Plotting Logic
-                    # ----------------------------------------------------
-                    val_prob <- roc_data$val_prob
-                    val_y <- roc_data$val_y
-                    cv_prob <- roc_data$cv_prob
-                    cv_y <- roc_data$cv_y
-                    
-                    base_colors <- c("#3366B2", "#E54028", "#46B233", "#8A2BE2", "#FF8C00", "#C71585", "#008080", "#8B4513")
-                    if (self$options$palBrewer != "none") {
-                        max_n <- switch(self$options$palBrewer,
-                            "Accent" = 8, "Dark2" = 8, "Paired" = 12, "Pastel1" = 9,
-                            "Set1" = 9, "Set2" = 8, "Set3" = 12, 8)
-                        req_n <- max(3, min(C, max_n))
-                        base_colors <- RColorBrewer::brewer.pal(n=req_n, name=self$options$palBrewer)
-                        if (C > max_n) {
-                            base_colors <- grDevices::colorRampPalette(base_colors)(C)
-                        }
-                    }
-                    if (C > length(base_colors)) {
-                        cols <- grDevices::rainbow(C)
-                    } else {
-                        cols <- base_colors[1:C]
-                    }
-                    
-                    leg_labels <- c()
-                    thres_pattern <- ifelse(is_pct, "%.2f (%.1f%%, %.1f%%)", "%.2f (%.3f, %.3f)")
-                    plot_title <- if (partition %in% c("kfold", "repeated_kfold")) .("Combined ROC - Cross-Validation") else .("Combined ROC - Validation")
-                    
-                    for (c in 1:C) {
-                        lev <- y_levels[c]
-                        if (partition == "holdout" && !is.null(val_prob) && !is.null(val_y)) {
-                            y_va_c <- as.numeric(val_y == lev)
-                            prob_va_c <- if (!is.null(colnames(val_prob)) && lev %in% colnames(val_prob)) val_prob[, lev] else val_prob[, c]
-                            r_va <- pROC::roc(y_va_c, prob_va_c, percent = is_pct, quiet = TRUE)
-                            auc_va <- as.numeric(pROC::auc(r_va))
-                            auc_va_str <- if (is_pct) paste0(round(auc_va, 1), "%") else round(auc_va, 3)
-                            leg_labels <- c(leg_labels, paste0(lev, " (AUC = ", auc_va_str, ")"))
-                            
-                            p <- pROC::plot.roc(r_va, col=cols[c],
-                                main=plot_title, cex.main=1.3,
-                                percent=is_pct,
-                                cex.lab=1.5, cex.axis=1.3, lwd=3,
-                                legacy.axes=legacy_axes,
-                                xlab=ifelse(is_pct, ifelse(legacy_axes, .("100 - Specificity (%)"), .("Specificity (%)")), ifelse(legacy_axes, .("1 - Specificity"), .("Specificity"))),
-                                ylab=ifelse(is_pct, .("Sensitivity (%)"), .("Sensitivity")),
-                                print.thres=show_roc_cut,
-                                print.thres.col=cols[c],
-                                print.thres.pch=19, print.thres.cex=1.3,
-                                print.thres.best.method="youden",
-                                print.thres.pattern=thres_pattern,
-                                grid=(c == 1), add=(c > 1)
-                            )
-                        } else if (partition %in% c("kfold", "repeated_kfold") && !is.null(cv_prob) && !is.null(cv_y)) {
-                            y_cv_c <- as.numeric(cv_y == lev)
-                            prob_cv_c <- if (!is.null(colnames(cv_prob)) && lev %in% colnames(cv_prob)) cv_prob[, lev] else cv_prob[, c]
-                            r_cv <- pROC::roc(y_cv_c, prob_cv_c, percent = is_pct, quiet = TRUE)
-                            auc_cv <- as.numeric(pROC::auc(r_cv))
-                            auc_cv_str <- if (is_pct) paste0(round(auc_cv, 1), "%") else round(auc_cv, 3)
-                            leg_labels <- c(leg_labels, paste0(lev, " (AUC = ", auc_cv_str, ")"))
-                            
-                            p <- pROC::plot.roc(r_cv, col=cols[c],
-                                main=plot_title, cex.main=1.3,
-                                percent=is_pct,
-                                cex.lab=1.5, cex.axis=1.3, lwd=3, lty=2,
-                                legacy.axes=legacy_axes,
-                                xlab=ifelse(is_pct, ifelse(legacy_axes, .("100 - Specificity (%)"), .("Specificity (%)")), ifelse(legacy_axes, .("1 - Specificity"), .("Specificity"))),
-                                ylab=ifelse(is_pct, .("Sensitivity (%)"), .("Sensitivity")),
-                                print.thres=show_roc_cut,
-                                print.thres.col=cols[c],
-                                print.thres.pch=19, print.thres.cex=1.3,
-                                print.thres.best.method="youden",
-                                print.thres.pattern=thres_pattern,
-                                grid=(c == 1), add=(c > 1)
-                            )
-                        }
-                    }
-                    
-                    legend("bottomright",
-                        cex=1.1, lwd=3, col=cols,
-                        lty=ifelse(partition %in% c("kfold", "repeated_kfold"), 2, 1),
-                        bg="white", box.lwd=1,
-                        legend=leg_labels
-                    )
-                    
-                } else {
-                    # ----------------------------------------------------
-                    # Multiclass Separate Class Plotting Logic
-                    # ----------------------------------------------------
-                    class_name <- roc_data$class_name
-                    y_val_bin <- roc_data$train_y
-                    train_prob_bin <- roc_data$train_prob
-                    val_prob_bin <- roc_data$val_prob
-                    val_y_bin <- roc_data$val_y
-                    cv_prob_bin <- roc_data$cv_prob
-                    cv_y_bin <- roc_data$cv_y
-                    title_text <- jmvcore::format(.("ROC Analysis for {class}"), class = class_name)
-                    
-                    r_tr <- pROC::roc(y_val_bin, train_prob_bin, percent = is_pct, quiet = TRUE)
-                    cols <- c("#3366B2") # Training is always Blue
-                    if (self$options$palBrewer != "none") {
-                        cols <- RColorBrewer::brewer.pal(n=3, name=self$options$palBrewer)
-                    }
-                    active_cols <- c(cols[1])
-                    ltys <- c(1)         # Training is solid
-                    auc_tr_val <- as.numeric(pROC::auc(r_tr))
-                    auc_tr_str <- if (is_pct) paste0(round(auc_tr_val, 1), "%") else round(auc_tr_val, 3)
-                    leg_labels <- c(paste0(.("Training (AUC ="), " ", auc_tr_str, ")"))
-                    
-                    thres_pattern <- ifelse(is_pct, "%.2f (%.1f%%, %.1f%%)", "%.2f (%.3f, %.3f)")
-                    
-                    p <- pROC::plot.roc(r_tr, col=cols[1],
-                        main=title_text, cex.main=1.3,
-                        percent=is_pct,
-                        cex.lab=1.5, cex.axis=1.3, lwd=3, lty=1,
-                        legacy.axes=legacy_axes,
-                        xlab=ifelse(is_pct, ifelse(legacy_axes, .("100 - Specificity (%)"), .("Specificity (%)")), ifelse(legacy_axes, .("1 - Specificity"), .("Specificity"))),
-                        ylab=ifelse(is_pct, .("Sensitivity (%)"), .("Sensitivity")),
-                        print.thres=show_roc_cut,
-                        print.thres.col=cols[1],
-                        print.thres.pch=19, print.thres.cex=1.3,
-                        print.thres.best.method="youden",
-                        print.thres.pattern=thres_pattern,
-                        grid=TRUE, add=FALSE
-                    )
-                    
-                    if (partition == "holdout" && !is.null(val_prob_bin)) {
-                        r_va <- pROC::roc(val_y_bin, val_prob_bin, percent = is_pct, quiet = TRUE)
-                        if (self$options$palBrewer == "none") {
-                            cols <- c(cols, "#E54028") # Holdout is Red
-                        }
-                        active_cols <- c(active_cols, cols[2])
-                        ltys <- c(ltys, 1)         # Holdout is solid
-                        auc_va_val <- as.numeric(pROC::auc(r_va))
-                        auc_va_str <- if (is_pct) paste0(round(auc_va_val, 1), "%") else round(auc_va_val, 3)
-                        leg_labels <- c(leg_labels, paste0(.("Hold-out Validation (AUC ="), " ", auc_va_str, ")"))
-                        
-                        pROC::plot.roc(r_va, col=cols[2],
-                            percent=is_pct,
-                            lwd=3, lty=1,
-                            legacy.axes=legacy_axes,
-                            print.thres=show_roc_cut,
-                            print.thres.col=cols[2],
-                            print.thres.pch=19, print.thres.cex=1.3,
-                            print.thres.best.method="youden",
-                            print.thres.pattern=thres_pattern,
-                            add=TRUE
-                        )
-                    } else if (partition %in% c("kfold", "repeated_kfold") && !is.null(cv_prob_bin)) {
-                        r_cv <- pROC::roc(cv_y_bin, cv_prob_bin, percent = is_pct, quiet = TRUE)
-                        if (self$options$palBrewer == "none") {
-                            cols <- c(cols, "#46B233") # CV is Green
-                        }
-                        active_cols <- c(active_cols, cols[2])
-                        ltys <- c(ltys, 2)         # CV is dashed
-                        auc_cv_val <- as.numeric(pROC::auc(r_cv))
-                        auc_cv_str <- if (is_pct) paste0(round(auc_cv_val, 1), "%") else round(auc_cv_val, 3)
-                        lbl <- if (partition == "kfold") .("K-Fold CV (AUC =") else .("Repeated Stratified CV (AUC =")
-                        leg_labels <- c(leg_labels, paste0(lbl, " ", auc_cv_str, ")"))
-                        
-                        pROC::plot.roc(r_cv, col=cols[2],
-                            percent=is_pct,
-                            lwd=3, lty=2,
-                            legacy.axes=legacy_axes,
-                            print.thres=show_roc_cut,
-                            print.thres.col=cols[2],
-                            print.thres.pch=19, print.thres.cex=1.3,
-                            print.thres.best.method="youden",
-                            print.thres.pattern=thres_pattern,
-                            add=TRUE
-                        )
-                    }
-                    
-                    legend("bottomright",
-                        cex=1.1, lwd=3, col=active_cols,
-                        lty=ltys,
-                        bg="white", box.lwd=1,
-                        legend=leg_labels
-                    )
-                }
-                
-                if (exists("p") && !is.null(p)) {
-                    print(p)
-                }
-                return(TRUE)
-            }, error = function(e) {
-                return(FALSE)
-            })
-            return(result)
+            .renderClassifierRocPlot(
+                image = image,
+                ggtheme = ggtheme,
+                theme = theme,
+                options = self$options,
+                defaultTrainColor = "#3366B2",
+                defaultCvColor = "#46B233",
+                mainTitle = .("ROC curves"),
+                kfoldLabel = .("K-Fold CV (AUC =")
+            )
         },
         
         .forestPlot = function(image, ggtheme, theme, ...) {

@@ -223,9 +223,9 @@ options:
       title: Agglomeration method
       type: List
       options:
-        - title: Ward´s Linkage
+        - title: Ward's Linkage
           name:  ward.D
-        - title: Ward´s D2 Linkage
+        - title: Ward's D2 Linkage
           name:  ward.D2
         - title: Single Linkage
           name:  single

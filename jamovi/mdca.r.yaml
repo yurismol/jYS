@@ -31,27 +31,27 @@ items:
           - name: nb_10
             title: NB at 10%
             type: number
-            format: zto,dp:3
+            format: zto
           - name: nb_20
             title: NB at 20%
             type: number
-            format: zto,dp:3
+            format: zto
           - name: nb_30
             title: NB at 30%
             type: number
-            format: zto,dp:3
+            format: zto
           - name: nb_40
             title: NB at 40%
             type: number
-            format: zto,dp:3
+            format: zto
           - name: max_nb
             title: Max Net Benefit
             type: number
-            format: zto,dp:3
+            format: zto
           - name: opt_thresh
             title: Optimal Threshold
             type: number
-            format: zto,dp:2
+            format: zto
 
     - name: windowTable
       title: Clinical Decision Window
@@ -74,19 +74,15 @@ items:
           - name: min_thresh
             title: Min Threshold (%)
             type: number
-            format: zto,dp:1
           - name: max_thresh
             title: Max Threshold (%)
             type: number
-            format: zto,dp:1
           - name: window_span
             title: Window Span (%)
             type: number
-            format: zto,dp:1
           - name: avoid_20
             title: Avoided at 20% (per 100)
             type: number
-            format: zto,dp:1
           - name: status
             title: Clinical Superiority
             type: text
@@ -98,6 +94,7 @@ items:
       width:  650
       height: 450
       renderFun: .dcaPlot
+      requiresData: true
       clearWith:
           - dep
           - targetLevel
@@ -117,6 +114,7 @@ items:
       width:  650
       height: 420
       renderFun: .avoidedPlot
+      requiresData: true
       clearWith:
           - dep
           - targetLevel
@@ -147,23 +145,21 @@ items:
           - name: brier
             title: Brier Score
             type: number
-            format: zto,dp:4
+            format: zto
           - name: slope
             title: Calibration Slope
             type: number
-            format: zto,dp:3
           - name: intercept
             title: Calibration Intercept
             type: number
-            format: zto,dp:3
           - name: e_avg
             title: E avg
             type: number
-            format: zto,dp:3
+            format: zto
           - name: e_max
             title: E max
             type: number
-            format: zto,dp:3
+            format: zto
 
     - name: calPlot
       title: Model Calibration Curves (Observed vs Predicted)
@@ -172,6 +168,7 @@ items:
       width:  600
       height: 450
       renderFun: .calPlot
+      requiresData: true
       clearWith:
           - dep
           - targetLevel

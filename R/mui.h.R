@@ -382,44 +382,77 @@ mUIResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 title="Two-graph ROC curves",
                 visible="(isTGR)",
                 items="(test)",
+                clearWith=list(
+                    "ref",
+                    "test",
+                    "model",
+                    "minSe",
+                    "minSp",
+                    "polygon"),
                 template=jmvcore::Image$new(
                     options=options,
                     title="$key",
                     width=500,
                     height=500,
                     renderFun=".plotTGR",
-                    requiresData=TRUE)))
+                    requiresData=TRUE,
+                    clearWith=list(
+                        "ref",
+                        "test",
+                        "model",
+                        "minSe",
+                        "minSp",
+                        "polygon"))))
             self$add(jmvcore::Array$new(
                 options=options,
                 name="plotsMD",
                 title="Mixed Densities",
                 visible="(isMD)",
                 items="(test)",
+                clearWith=list(
+                    "ref",
+                    "test",
+                    "model",
+                    "UImethod",
+                    "polygon",
+                    "youden"),
                 template=jmvcore::Image$new(
                     options=options,
                     title="$key",
                     width=500,
                     height=500,
                     renderFun=".plotMD",
-                    requiresData=TRUE)))
+                    requiresData=TRUE,
+                    clearWith=list(
+                        "ref",
+                        "test",
+                        "model",
+                        "UImethod",
+                        "polygon",
+                        "youden"))))
             self$add(jmvcore::Array$new(
                 options=options,
                 name="plotsROC",
                 title="ROC curves",
                 visible="(isROC)",
                 items="(test)",
+                clearWith=list(
+                    "ref",
+                    "test",
+                    "UImethod",
+                    "show_roc_cut"),
                 template=jmvcore::Image$new(
                     options=options,
                     title="$key",
                     width=500,
                     height=500,
                     renderFun=".plotROC",
-                    requiresData=TRUE),
-                clearWith=list(
-                    "ref",
-                    "test",
-                    "UImethod",
-                    "show_roc_cut")))
+                    requiresData=TRUE,
+                    clearWith=list(
+                        "ref",
+                        "test",
+                        "UImethod",
+                        "show_roc_cut"))))
             self$add(jmvcore::Output$new(
                 options=options,
                 name="decision",

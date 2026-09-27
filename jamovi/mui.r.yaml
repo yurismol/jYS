@@ -145,7 +145,13 @@ items:
       type: Array
       visible: (isTGR)
       items: (test)
-      #refs: []
+      clearWith:
+          - ref
+          - test
+          - model
+          - minSe
+          - minSp
+          - polygon
       template:
           title: $key
           type: Image
@@ -153,12 +159,26 @@ items:
           height: 500
           renderFun: .plotTGR
           requiresData: true
+          clearWith:
+              - ref
+              - test
+              - model
+              - minSe
+              - minSp
+              - polygon
 
     - name: plotsMD
       title: Mixed Densities
       type: Array
       visible: (isMD)
       items: (test)
+      clearWith:
+          - ref
+          - test
+          - model
+          - UImethod
+          - polygon
+          - youden
       template:
           title: $key
           type: Image
@@ -166,12 +186,24 @@ items:
           height: 500
           renderFun: .plotMD
           requiresData: true
+          clearWith:
+              - ref
+              - test
+              - model
+              - UImethod
+              - polygon
+              - youden
 
     - name: plotsROC
       title: ROC curves
       type: Array
       visible: (isROC)
       items: (test)
+      clearWith:
+          - ref
+          - test
+          - UImethod
+          - show_roc_cut
       template:
           title: $key
           type: Image
@@ -179,11 +211,11 @@ items:
           height: 500
           renderFun: .plotROC
           requiresData: true
-      clearWith:
-          - ref
-          - test
-          - UImethod
-          - show_roc_cut
+          clearWith:
+              - ref
+              - test
+              - UImethod
+              - show_roc_cut
 
     - name: decision
       title: Proposed decision

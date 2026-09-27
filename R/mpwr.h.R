@@ -272,8 +272,7 @@ mPWRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         powerCurve = function() private$.items[["powerCurve"]],
         powerEsCurve = function() private$.items[["powerEsCurve"]],
         nEsCurve = function() private$.items[["nEsCurve"]],
-        powerEsAlphaCurve = function() private$.items[["powerEsAlphaCurve"]],
-        text = function() private$.items[["text"]]),
+        powerEsAlphaCurve = function() private$.items[["powerEsAlphaCurve"]]),
     private = list(),
     public=list(
         initialize=function(options) {
@@ -519,12 +518,7 @@ mPWRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "margin",
                     "crt",
                     "cluster_size",
-                    "icc")))
-            self$add(jmvcore::Preformatted$new(
-                options=options,
-                name="text",
-                title="Log / Errors",
-                visible=FALSE))}))
+                    "icc")))}))
 
 mPWRBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "mPWRBase",
@@ -583,7 +577,6 @@ mPWRBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$powerEsCurve} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$nEsCurve} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$powerEsAlphaCurve} \tab \tab \tab \tab \tab an image \cr
-#'   \code{results$text} \tab \tab \tab \tab \tab a preformatted \cr
 #' }
 #'
 #' Tables can be converted to data frames with \code{asDF} or \code{\link{as.data.frame}}. For example:

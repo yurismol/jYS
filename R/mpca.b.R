@@ -4,7 +4,227 @@
 mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
     "mPCAClass",
     inherit = mPCABase,
+    public = list(
+        .savePart = function(path, part, ...) {
+            smart_lookup <- function(results, p_str, options = NULL) {
+                if (is.null(results) || is.null(p_str)) return(NULL)
+                if (length(p_str) > 1) p_str <- paste(p_str, collapse = "/")
+                if (!nzchar(p_str)) return(NULL)
+
+                covs <- tryCatch(options$covariates, error = function(e) NULL)
+                group_var <- tryCatch(options$group, error = function(e) NULL)
+                vars <- tryCatch(options$vars, error = function(e) NULL)
+
+                find_child <- function(curr, seg) {
+                    if (is.null(curr) || is.null(seg) || !nzchar(seg)) return(NULL)
+                    clean <- gsub('^["\']|["\']$', '', seg)
+
+                    if (inherits(curr, 'Array')) {
+                        nxt <- tryCatch(curr$get(key = clean), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+
+                        nxt <- tryCatch(curr$get(name = paste0('"', clean, '"')), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+                        nxt <- tryCatch(curr$get(name = seg), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+                        nxt <- tryCatch(curr$get(name = clean), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+
+                        items <- tryCatch(curr$items, error = function(e) NULL)
+                        if (!is.null(items) && length(items) > 0) {
+                            # 1. Exact match by key, name, or title
+                            for (it in items) {
+                                it_key <- tryCatch(it$key, error = function(e) NULL)
+                                it_name <- tryCatch(it$name, error = function(e) NULL)
+                                it_title <- tryCatch(it$title, error = function(e) NULL)
+                                if (identical(it_key, clean) || identical(it_key, seg) ||
+                                    identical(it_name, clean) || identical(it_name, seg) ||
+                                    identical(it_title, clean) || identical(it_title, seg)) {
+                                    return(it)
+                                }
+                            }
+
+                            # 2. Match covariate by index if clean is in covs or group_var
+                            if (!is.null(covs) && clean %in% covs) {
+                                c_idx <- which(covs == clean)
+                                target_key <- paste0("..cov_", c_idx, "_")
+                                for (it in items) {
+                                    if (identical(it$key, target_key) || grepl(paste0("^\\.\\.cov_", c_idx), as.character(it$key))) {
+                                        return(it)
+                                    }
+                                }
+                            }
+                            if (!is.null(group_var) && (clean == group_var || grepl(paste0("^", clean), group_var))) {
+                                for (it in items) {
+                                    if (identical(it$key, "..group") || grepl("^\\.\\.group", as.character(it$key))) {
+                                        return(it)
+                                    }
+                                }
+                            }
+
+                            # 3. Match suffix of title after dash
+                            for (it in items) {
+                                it_title <- tryCatch(as.character(it$title), error = function(e) "")
+                                title_var <- trimws(sub(".*[\u2013\u2014-]\\s*", "", it_title))
+                                title_var_clean <- gsub("[_()]", "", title_var)
+                                clean_nopunct <- gsub("[_()]", "", clean)
+                                if (nzchar(title_var) && (identical(title_var, clean) || identical(title_var_clean, clean_nopunct))) {
+                                    return(it)
+                                }
+                            }
+
+                            # 4. Word boundary match in title
+                            for (it in items) {
+                                it_title <- tryCatch(as.character(it$title), error = function(e) "")
+                                pattern <- paste0("(^|[^a-zA-Z0-9_])", clean, "([^a-zA-Z0-9_]|$)")
+                                if (grepl(pattern, it_title)) {
+                                    return(it)
+                                }
+                            }
+
+                            # 5. Check integer index
+                            idx <- suppressWarnings(as.integer(clean))
+                            if (!is.na(idx)) {
+                                items_len <- length(items)
+                                if (idx == 0 && items_len >= 1) return(items[[1]])
+                                if (idx >= 1 && idx <= items_len) return(items[[idx]])
+                            }
+                        }
+                    }
+
+                    nxt <- tryCatch(curr$.lookup(seg), error = function(e) NULL)
+                    if (!is.null(nxt)) return(nxt)
+                    if (seg != clean) {
+                        nxt <- tryCatch(curr$.lookup(clean), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+                    }
+
+                    if (inherits(curr, 'Group')) {
+                        nxt <- tryCatch(curr$get(clean), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+                        nxt <- tryCatch(curr$get(seg), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+                    }
+
+                    items <- tryCatch(curr$items, error = function(e) NULL)
+                    if (!is.null(items) && length(items) > 0) {
+                        if (clean %in% names(items)) return(items[[clean]])
+                        if (seg %in% names(items)) return(items[[seg]])
+                        for (it in items) {
+                            it_name <- tryCatch(it$name, error = function(e) NULL)
+                            it_key <- tryCatch(it$key, error = function(e) NULL)
+                            it_title <- tryCatch(it$title, error = function(e) NULL)
+                            if (identical(it_name, clean) || identical(it_name, seg) ||
+                                identical(it_key, clean) || identical(it_key, seg)) {
+                                return(it)
+                            }
+                        }
+                    }
+                    NULL
+                }
+
+                traverse <- function(node, segs) {
+                    if (is.null(node) || length(segs) == 0) return(node)
+                    child <- find_child(node, segs[1])
+                    if (!is.null(child)) {
+                        return(traverse(child, segs[-1]))
+                    }
+                    NULL
+                }
+
+                search_recursive <- function(node, segs) {
+                    if (is.null(node)) return(NULL)
+                    res <- traverse(node, segs)
+                    if (!is.null(res)) return(res)
+
+                    items <- tryCatch(node$items, error = function(e) NULL)
+                    if (!is.null(items) && length(items) > 0) {
+                        for (child in items) {
+                            if (inherits(child, 'Group') || inherits(child, 'Array')) {
+                                res <- search_recursive(child, segs)
+                                if (!is.null(res)) return(res)
+                            }
+                        }
+                    }
+                    NULL
+                }
+
+                norm_p <- gsub('\\[[\'"]?([^\'"]+?)[\'"]?\\]', '/\\1', p_str)
+                parts <- strsplit(norm_p, '/+', perl = TRUE)[[1]]
+                parts <- parts[parts != ""]
+                if (length(parts) == 0) return(NULL)
+
+                # Strip analysisId or 'results' prefix if present
+                if (length(parts) > 1 && (parts[1] == "results" || !is.na(suppressWarnings(as.integer(parts[1]))))) {
+                    if (is.null(find_child(results, parts[1]))) {
+                        parts <- parts[-1]
+                    }
+                }
+
+                target <- search_recursive(results, parts)
+                if (inherits(target, 'Array') && length(target$items) > 0) {
+                    target <- target$items[[1]]
+                }
+                target
+            }
+
+            element <- smart_lookup(self$results, part, self$options)
+            if (is.null(element)) {
+                return(FALSE)
+            }
+
+            if (inherits(element, 'Array')) {
+                if (length(element$items) > 0) {
+                    element <- element$items[[1]]
+                } else {
+                    return(FALSE)
+                }
+            }
+
+            if (inherits(element, 'Image')) {
+                if (is.null(element$state) && !is.null(element$parent$state)) {
+                    parent_state <- element$parent$state
+                    if (!is.null(parent_state$zph)) {
+                        var_name <- element$key
+                        var_idx <- if (!is.null(var_name) && var_name %in% rownames(parent_state$zph$table)) {
+                            which(rownames(parent_state$zph$table) == var_name)
+                        } else 1
+                        element$setState(list(zph = parent_state$zph, var_idx = var_idx, var_name = var_name))
+                    } else if (!is.null(element$key) && !is.null(parent_state[[element$key]])) {
+                        element$setState(parent_state[[element$key]])
+                    } else if (is.list(parent_state) && length(parent_state) > 0) {
+                        element$setState(parent_state[[1]])
+                    }
+                }
+            }
+
+            if (element$requiresData && is.function(private$.ensureData)) {
+                private$.ensureData()
+            }
+            save_ok <- tryCatch({
+                element$saveAs(path, ...)
+                file.exists(path) && file.info(path)$size > 0
+            }, error = function(e) {
+                tryCatch({
+                    element$saveAs(path)
+                    file.exists(path) && file.info(path)$size > 0
+                }, error = function(e2) {
+                    FALSE
+                })
+            })
+            return(save_ok)
+        }
+    ),
     private = list(
+        .ensureData = function() {
+            if (is.null(private$.data) || nrow(private$.data) == 0) {
+                d <- tryCatch(self$readDataset(headerOnly = FALSE), error = function(e) NULL)
+                if (!is.null(d) && nrow(d) > 0)
+                    private$.data <- d
+            }
+            return(!is.null(private$.data) && nrow(private$.data) > 0)
+        },
+
         .get_n_comp = function() {
             vars <- self$options$vars
             if (is.null(vars) || length(vars) < 2) return(1)
@@ -27,7 +247,7 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
         .run = function() {
             vars <- self$options$vars
             if (is.null(vars) || length(vars) < 2) {
-                self$results$text$setContent(.("Please select at least 2 variables for PCA."))
+                jmvcore::reject(.("Please select at least 2 variables for PCA."))
                 return()
             }
             
@@ -37,10 +257,11 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             subs <- ""
             if (!is.null(self$options$group) && !is.null(self$options$selgroup) && self$options$selgroup != "") {
                 subs <- paste(self$options$group, " == \"", self$options$selgroup, "\"", sep="")
-                self$results$text$setContent(paste0("<h4>", jmvcore::.("Dataset restricted to group:"), " ", subs, "</h4>"))
+                notice <- jmvcore::Notice$new(self$options, name='.filter',
+                    type=jmvcore::NoticeType$INFO,
+                    content=jmvcore::format(.("Dataset restricted to group: {g}"), g=subs))
+                self$results$insert(1, notice)
                 dat <- dat[dat[[self$options$group]] == self$options$selgroup, , drop=FALSE]
-            } else {
-                self$results$text$setContent(paste0("<h4>", jmvcore::.("Full dataset used in analysis"), "</h4>"))
             }
             
             # Extract variables and grouping class
@@ -53,7 +274,7 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             # Omit rows with missing values
             dat_clean <- na.omit(dat[, select_cols, drop=FALSE])
             if (nrow(dat_clean) < 5) {
-                self$results$text$setContent(.("Too few observations after removing missing values (minimum 5 required)."))
+                jmvcore::reject(.("Too few observations after removing missing values (minimum 5 required)."))
                 return()
             }
             
@@ -66,7 +287,7 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             # 2. Perform PCA
             pca_res <- try(prcomp(pca_data, scale. = TRUE, center = TRUE), silent = TRUE)
             if (inherits(pca_res, "try-error")) {
-                self$results$text$setContent(.("Error occurred while calculating PCA. Please check your variables."))
+                jmvcore::reject(.("Error occurred while calculating PCA. Please check your variables."))
                 return()
             }
             
@@ -88,6 +309,7 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             n_sim <- 100
             sim_eigenvalues <- matrix(0, nrow=n_sim, ncol=p)
             for (s in 1:n_sim) {
+                if (s %% 20 == 0) private$.checkpoint()
                 sim_data <- matrix(rnorm(n * p), nrow=n, ncol=p)
                 sim_pca <- prcomp(sim_data, scale. = TRUE, center = TRUE)
                 sim_eigenvalues[s, ] <- sim_pca$sdev^2
@@ -311,6 +533,7 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         regTable$deleteRows()
                         
                         for (fold_idx in 1:k_folds) {
+                            private$.checkpoint()
                             test_indices <- which(folds == fold_idx)
                             train_data <- scores_df[-test_indices, , drop=FALSE]
                             test_data <- scores_df[test_indices, , drop=FALSE]
@@ -482,7 +705,7 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 ggplot2::geom_point(ggplot2::aes(y = Noise, color = lbl_noise), size = 2) +
                 ggplot2::geom_vline(xintercept = optimal, color = "red", linetype = "dotted", size = 1.2) +
                 ggplot2::annotate("text", x = optimal + 0.15, y = max(df$Eigenvalue) * 0.9, 
-                         label = paste0(.("Threshold (K ="), " ", optimal, " ", .("comp.)")), color = "red", fontface = "bold", hjust=0) +
+                         label = jmvcore::format(.("Threshold (K = {optimal} comp.)"), optimal = optimal), color = "red", fontface = "bold", hjust=0) +
                 ggplot2::scale_color_manual(values = stats::setNames(c("blue", "red"), c(lbl_obs, lbl_noise))) +
                 ggplot2::labs(
                     title = .("Eigenvalues and Parallel Analysis"),
@@ -576,7 +799,9 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             p <- p + ggplot2::scale_fill_gradient(low = "white", high = "#1f77b4", limit = c(0, 1))
             print(p)
             TRUE
-        },        .scorePlot = function(image, ggtheme, theme, ...) {
+        },
+
+        .scorePlot = function(image, ggtheme, theme, ...) {
             state <- image$state
             if (is.null(state)) return(FALSE)
             
@@ -614,10 +839,10 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     title = .("Group Projection in PCA Space"),
                     subtitle = if (!is.null(p_val)) {
                         p_text <- if (p_val < 0.001) "p < 0.001" else paste0("p = ", sprintf("%.3f", p_val))
-                        paste0(.("Group:"), " ", groupName, " (", .("Permutation"), " ", p_text, ")")
+                        jmvcore::format(.("Group: {group} (Permutation {p})"), group=groupName, p=p_text)
                     } else "",
-                    x = paste0(.("Principal Component"), " ", pcX, " (PC", pcX, ") - ", sprintf("%.1f", (pca$sdev[pcX]^2/sum(pca$sdev^2))*100), .("% of variance")),
-                    y = paste0(.("Principal Component"), " ", pcY, " (PC", pcY, ") - ", sprintf("%.1f", (pca$sdev[pcY]^2/sum(pca$sdev^2))*100), .("% of variance")),
+                    x = jmvcore::format(.("Principal Component {i} (PC{i}) – {pct}% of variance"), i=pcX, pct=sprintf("%.1f", (pca$sdev[pcX]^2/sum(pca$sdev^2))*100)),
+                    y = jmvcore::format(.("Principal Component {i} (PC{i}) – {pct}% of variance"), i=pcY, pct=sprintf("%.1f", (pca$sdev[pcY]^2/sum(pca$sdev^2))*100)),
                     color = NULL,
                     fill = NULL
                 ) +
@@ -706,8 +931,8 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                          bg.color = "white", bg.r = 0.15) +
                 ggplot2::labs(
                     title = .("Two-dimensional Variable Projection (Biplot)"),
-                    x = paste0(.("Principal Component"), " ", pcX, " (PC", pcX, ") - ", sprintf("%.1f", (pca$sdev[pcX]^2/sum(pca$sdev^2))*100), .("% of variance")),
-                    y = paste0(.("Principal Component"), " ", pcY, " (PC", pcY, ") - ", sprintf("%.1f", (pca$sdev[pcY]^2/sum(pca$sdev^2))*100), .("% of variance"))
+                    x = jmvcore::format(.("Principal Component {i} (PC{i}) – {pct}% of variance"), i=pcX, pct=sprintf("%.1f", (pca$sdev[pcX]^2/sum(pca$sdev^2))*100)),
+                    y = jmvcore::format(.("Principal Component {i} (PC{i}) – {pct}% of variance"), i=pcY, pct=sprintf("%.1f", (pca$sdev[pcY]^2/sum(pca$sdev^2))*100))
                 ) +
                 ggplot2::theme_bw() +
                 ggplot2::theme(
@@ -769,7 +994,7 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 ltys <- c(1)         # Training is solid
                 auc_tr_val <- as.numeric(pROC::auc(r_tr))
                 auc_tr_str <- if (is_pct) paste0(round(auc_tr_val, 1), "%") else round(auc_tr_val, 3)
-                leg_labels <- c(paste0(.("Training (AUC ="), " ", auc_tr_str, ")"))
+                leg_labels <- c(jmvcore::format(.("Training (AUC = {auc})"), auc = auc_tr_str))
                 
                 # Format threshold pattern
                 thres_pattern <- ifelse(is_pct, "%.2f (%.1f%%, %.1f%%)", "%.2f (%.3f, %.3f)")
@@ -800,7 +1025,7 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     ltys <- c(ltys, 1)         # Holdout is solid
                     auc_va_val <- as.numeric(pROC::auc(r_va))
                     auc_va_str <- if (is_pct) paste0(round(auc_va_val, 1), "%") else round(auc_va_val, 3)
-                    leg_labels <- c(leg_labels, paste0(.("Hold-out Validation (AUC ="), " ", auc_va_str, ")"))
+                    leg_labels <- c(leg_labels, jmvcore::format(.("Hold-out Validation (AUC = {auc})"), auc = auc_va_str))
                     
                     pROC::plot.roc(r_va, col=cols[2],
                         percent=is_pct,
@@ -822,8 +1047,8 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     ltys <- c(ltys, 2)         # CV is dashed
                     auc_cv_val <- as.numeric(pROC::auc(r_cv))
                     auc_cv_str <- if (is_pct) paste0(round(auc_cv_val, 1), "%") else round(auc_cv_val, 3)
-                    lbl <- if (partition == "kfold") .("K-Fold CV (AUC =") else .("Repeated Stratified CV (AUC =")
-                    leg_labels <- c(leg_labels, paste0(lbl, " ", auc_cv_str, ")"))
+                    lbl <- if (partition == "kfold") .("K-Fold CV (AUC = {auc})") else .("Repeated Stratified CV (AUC = {auc})")
+                    leg_labels <- c(leg_labels, jmvcore::format(lbl, auc = auc_cv_str))
                     
                     pROC::plot.roc(r_cv, col=cols[2],
                         percent=is_pct,

@@ -5,7 +5,7 @@ menuGroup: jYS
 menuSubgroup: Regression & Classification
 menuTitle: Random Forest Classifier
 description:
-    main: Random Forest Classifier using the ranger package. Note that data partitioning uses a hardcoded random seed (42) for reproducibility.
+    main: Random Forest Classifier using the ranger package. Note that data partitioning uses a random seed (default 42, configurable under Validation Settings) for reproducibility.
 version: '1.0.0'
 jas: '1.2'
 

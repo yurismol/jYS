@@ -112,58 +112,63 @@ children:
               - type: CheckBox
                 name: clustCol
                 enable: (hclust)
-  - type: LayoutBox
-    margin: large
+  - type: CollapseBox
+    label: Partial Correlation Network
+    collapsed: true
+    stretchFactor: 1
     children:
-      - type: CheckBox
-        name: glasso
+      - type: LayoutBox
+        margin: large
         children:
           - type: CheckBox
-            name: glassoTable
-            enable: (glasso)
-          - type: CheckBox
-            name: glassoHub
-            enable: (glasso)
-          - type: CheckBox
-            name: glassoPlot
-            enable: (glasso)
-          - type: CheckBox
-            name: glassoPlotScale
-            enable: (glasso)
-          - type: CheckBox
-            name: glassoLabels
-            enable: (glasso)
-          - type: ComboBox
-            name: netMethod
-            enable: (glasso)
-          - type: ComboBox
-            name: glassoLayout
-            enable: (glasso)
-          - type: ComboBox
-            name: glassoType
-            enable: (glasso && {return ui['netMethod'].value() == 'glasso';})
-          - type: TextBox
-            name: glassoGamma
-            format: number
-            enable: (glasso && {return ui['netMethod'].value() == 'glasso' && ui['glassoType'].value() == 'ebic';})
-          - type: TextBox
-            name: glassoRho
-            format: number
-            enable: (glasso && {return ui['netMethod'].value() == 'glasso' && ui['glassoType'].value() == 'manual';})
-          - type: CheckBox
-            name: glassoCentralityPlot
-            enable: (glasso)
-          - type: CheckBox
-            name: glassoStability
-            enable: (glasso)
+            name: glasso
             children:
-              - type: ComboBox
-                name: glassoBootType
-                enable: (glasso && glassoStability)
-              - type: TextBox
-                name: glassoBootN
-                format: number
-                enable: (glasso && glassoStability)
               - type: CheckBox
-                name: glassoStabilityPlot
-                enable: (glasso && glassoStability)
+                name: glassoTable
+                enable: (glasso)
+              - type: CheckBox
+                name: glassoHub
+                enable: (glasso)
+              - type: CheckBox
+                name: glassoPlot
+                enable: (glasso)
+              - type: CheckBox
+                name: glassoPlotScale
+                enable: (glasso)
+              - type: CheckBox
+                name: glassoLabels
+                enable: (glasso)
+              - type: ComboBox
+                name: netMethod
+                enable: (glasso)
+              - type: ComboBox
+                name: glassoLayout
+                enable: (glasso)
+              - type: ComboBox
+                name: glassoType
+                enable: (glasso && {return ui['netMethod'].value() == 'glasso';})
+              - type: TextBox
+                name: glassoGamma
+                format: number
+                enable: (glasso && {return ui['netMethod'].value() == 'glasso' && ui['glassoType'].value() == 'ebic';})
+              - type: TextBox
+                name: glassoRho
+                format: number
+                enable: (glasso && {return ui['netMethod'].value() == 'glasso' && ui['glassoType'].value() == 'manual';})
+              - type: CheckBox
+                name: glassoCentralityPlot
+                enable: (glasso)
+              - type: CheckBox
+                name: glassoStability
+                enable: (glasso)
+                children:
+                  - type: ComboBox
+                    name: glassoBootType
+                    enable: (glasso && glassoStability)
+                  - type: TextBox
+                    name: glassoBootN
+                    format: number
+                    enable: (glasso && glassoStability)
+                  - type: CheckBox
+                    name: glassoStabilityPlot
+                    enable: (glasso && glassoStability)

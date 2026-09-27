@@ -41,6 +41,9 @@ children:
             name: gender
             maxItemCount: 1
             isTarget: true
+          - type: LevelSelector
+            name: femaleLevel
+            enable: (gender)
   - type: CollapseBox
     label: Frequency Tables
     collapsed: false
@@ -115,6 +118,9 @@ children:
         children:
           - type: ComboBox
             name: geneticModel
+            enable: (assocEnable)
+          - type: ComboBox
+            name: adjust
             enable: (assocEnable)
           - type: CheckBox
             name: assocForest
@@ -210,13 +216,6 @@ children:
       - type: TextBox
         name: nPermMDR
         format: number
-  - type: CollapseBox
-    label: Multiple testing correction
-    collapsed: false
-    stretchFactor: 1
-    children:
-      - type: ComboBox
-        name: adjust
   - type: LayoutBox
     margin: large
     children:

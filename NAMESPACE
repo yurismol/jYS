@@ -3,5 +3,4 @@ import(jmvcore)
 import(ggplot2)
 importFrom(jmvcore,.)
 importFrom(jmvcore,matchSet)
-importFrom(magrittr,"%>%")
 

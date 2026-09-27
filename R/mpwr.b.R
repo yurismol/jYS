@@ -3,13 +3,223 @@
 mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
     "mPWRClass",
     inherit = mPWRBase,
+    public = list(
+        .savePart = function(path, part, ...) {
+            smart_lookup <- function(results, p_str, options = NULL) {
+                if (is.null(results) || is.null(p_str)) return(NULL)
+                if (length(p_str) > 1) p_str <- paste(p_str, collapse = "/")
+                if (!nzchar(p_str)) return(NULL)
+
+                covs <- tryCatch(options$covariates, error = function(e) NULL)
+                group_var <- tryCatch(options$group, error = function(e) NULL)
+                vars <- tryCatch(options$vars, error = function(e) NULL)
+
+                find_child <- function(curr, seg) {
+                    if (is.null(curr) || is.null(seg) || !nzchar(seg)) return(NULL)
+                    clean <- gsub('^["\']|["\']$', '', seg)
+
+                    if (inherits(curr, 'Array')) {
+                        nxt <- tryCatch(curr$get(key = clean), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+
+                        nxt <- tryCatch(curr$get(name = paste0('"', clean, '"')), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+                        nxt <- tryCatch(curr$get(name = seg), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+                        nxt <- tryCatch(curr$get(name = clean), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+
+                        items <- tryCatch(curr$items, error = function(e) NULL)
+                        if (!is.null(items) && length(items) > 0) {
+                            # 1. Exact match by key, name, or title
+                            for (it in items) {
+                                it_key <- tryCatch(it$key, error = function(e) NULL)
+                                it_name <- tryCatch(it$name, error = function(e) NULL)
+                                it_title <- tryCatch(it$title, error = function(e) NULL)
+                                if (identical(it_key, clean) || identical(it_key, seg) ||
+                                    identical(it_name, clean) || identical(it_name, seg) ||
+                                    identical(it_title, clean) || identical(it_title, seg)) {
+                                    return(it)
+                                }
+                            }
+
+                            # 2. Match covariate by index if clean is in covs or group_var
+                            if (!is.null(covs) && clean %in% covs) {
+                                c_idx <- which(covs == clean)
+                                target_key <- paste0("..cov_", c_idx, "_")
+                                for (it in items) {
+                                    if (identical(it$key, target_key) || grepl(paste0("^\\.\\.cov_", c_idx), as.character(it$key))) {
+                                        return(it)
+                                    }
+                                }
+                            }
+                            if (!is.null(group_var) && (clean == group_var || grepl(paste0("^", clean), group_var))) {
+                                for (it in items) {
+                                    if (identical(it$key, "..group") || grepl("^\\.\\.group", as.character(it$key))) {
+                                        return(it)
+                                    }
+                                }
+                            }
+
+                            # 3. Match suffix of title after dash
+                            for (it in items) {
+                                it_title <- tryCatch(as.character(it$title), error = function(e) "")
+                                title_var <- trimws(sub(".*[\u2013\u2014-]\\s*", "", it_title))
+                                title_var_clean <- gsub("[_()]", "", title_var)
+                                clean_nopunct <- gsub("[_()]", "", clean)
+                                if (nzchar(title_var) && (identical(title_var, clean) || identical(title_var_clean, clean_nopunct))) {
+                                    return(it)
+                                }
+                            }
+
+                            # 4. Word boundary match in title
+                            for (it in items) {
+                                it_title <- tryCatch(as.character(it$title), error = function(e) "")
+                                pattern <- paste0("(^|[^a-zA-Z0-9_])", clean, "([^a-zA-Z0-9_]|$)")
+                                if (grepl(pattern, it_title)) {
+                                    return(it)
+                                }
+                            }
+
+                            # 5. Check integer index
+                            idx <- suppressWarnings(as.integer(clean))
+                            if (!is.na(idx)) {
+                                items_len <- length(items)
+                                if (idx == 0 && items_len >= 1) return(items[[1]])
+                                if (idx >= 1 && idx <= items_len) return(items[[idx]])
+                            }
+                        }
+                    }
+
+                    nxt <- tryCatch(curr$.lookup(seg), error = function(e) NULL)
+                    if (!is.null(nxt)) return(nxt)
+                    if (seg != clean) {
+                        nxt <- tryCatch(curr$.lookup(clean), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+                    }
+
+                    if (inherits(curr, 'Group')) {
+                        nxt <- tryCatch(curr$get(clean), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+                        nxt <- tryCatch(curr$get(seg), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+                    }
+
+                    items <- tryCatch(curr$items, error = function(e) NULL)
+                    if (!is.null(items) && length(items) > 0) {
+                        if (clean %in% names(items)) return(items[[clean]])
+                        if (seg %in% names(items)) return(items[[seg]])
+                        for (it in items) {
+                            it_name <- tryCatch(it$name, error = function(e) NULL)
+                            it_key <- tryCatch(it$key, error = function(e) NULL)
+                            it_title <- tryCatch(it$title, error = function(e) NULL)
+                            if (identical(it_name, clean) || identical(it_name, seg) ||
+                                identical(it_key, clean) || identical(it_key, seg)) {
+                                return(it)
+                            }
+                        }
+                    }
+                    NULL
+                }
+
+                traverse <- function(node, segs) {
+                    if (is.null(node) || length(segs) == 0) return(node)
+                    child <- find_child(node, segs[1])
+                    if (!is.null(child)) {
+                        return(traverse(child, segs[-1]))
+                    }
+                    NULL
+                }
+
+                search_recursive <- function(node, segs) {
+                    if (is.null(node)) return(NULL)
+                    res <- traverse(node, segs)
+                    if (!is.null(res)) return(res)
+
+                    items <- tryCatch(node$items, error = function(e) NULL)
+                    if (!is.null(items) && length(items) > 0) {
+                        for (child in items) {
+                            if (inherits(child, 'Group') || inherits(child, 'Array')) {
+                                res <- search_recursive(child, segs)
+                                if (!is.null(res)) return(res)
+                            }
+                        }
+                    }
+                    NULL
+                }
+
+                norm_p <- gsub('\\[[\'"]?([^\'"]+?)[\'"]?\\]', '/\\1', p_str)
+                parts <- strsplit(norm_p, '/+', perl = TRUE)[[1]]
+                parts <- parts[parts != ""]
+                if (length(parts) == 0) return(NULL)
+
+                # Strip analysisId or 'results' prefix if present
+                if (length(parts) > 1 && (parts[1] == "results" || !is.na(suppressWarnings(as.integer(parts[1]))))) {
+                    if (is.null(find_child(results, parts[1]))) {
+                        parts <- parts[-1]
+                    }
+                }
+
+                target <- search_recursive(results, parts)
+                if (inherits(target, 'Array') && length(target$items) > 0) {
+                    target <- target$items[[1]]
+                }
+                target
+            }
+
+            element <- smart_lookup(self$results, part, self$options)
+            if (is.null(element)) {
+                return(FALSE)
+            }
+
+            if (inherits(element, 'Array')) {
+                if (length(element$items) > 0) {
+                    element <- element$items[[1]]
+                } else {
+                    return(FALSE)
+                }
+            }
+
+            if (inherits(element, 'Image')) {
+                if (is.null(element$state) && !is.null(element$parent$state)) {
+                    parent_state <- element$parent$state
+                    if (!is.null(parent_state$zph)) {
+                        var_name <- element$key
+                        var_idx <- if (!is.null(var_name) && var_name %in% rownames(parent_state$zph$table)) {
+                            which(rownames(parent_state$zph$table) == var_name)
+                        } else 1
+                        element$setState(list(zph = parent_state$zph, var_idx = var_idx, var_name = var_name))
+                    } else if (!is.null(element$key) && !is.null(parent_state[[element$key]])) {
+                        element$setState(parent_state[[element$key]])
+                    } else if (is.list(parent_state) && length(parent_state) > 0) {
+                        element$setState(parent_state[[1]])
+                    }
+                }
+            }
+
+            if (element$requiresData && is.function(private$.ensureData)) {
+                private$.ensureData()
+            }
+            save_ok <- tryCatch({
+                element$saveAs(path, ...)
+                file.exists(path) && file.info(path)$size > 0
+            }, error = function(e) {
+                tryCatch({
+                    element$saveAs(path)
+                    file.exists(path) && file.info(path)$size > 0
+                }, error = function(e2) {
+                    FALSE
+                })
+            })
+            return(save_ok)
+        }
+    ),
     private = list(
         
         .run = function() {
 
             if (!requireNamespace("pwrss", quietly = TRUE)) {
-                self$results$text$setVisible(TRUE)
-                self$results$text$setContent(.("The 'pwrss' package is not installed. Please install it in R."))
+                jmvcore::reject(.("The 'pwrss' package is not installed. Please install it in R."))
                 return()
             }
 
@@ -177,8 +387,8 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             }
 
             if (inherits(res, "try-error")) {
-                self$results$text$setVisible(TRUE)
-                self$results$text$setContent(paste0(.("Calculation error:"), "\n", res))
+                jmvcore::reject(jmvcore::format(.("Calculation error: {err}"), err = as.character(res)))
+                return()
             } else {
                 table <- self$results$powerTable
                 

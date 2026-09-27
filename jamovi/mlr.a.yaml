@@ -5,7 +5,7 @@ menuGroup: jYS
 menuSubgroup: Regression & Classification
 menuTitle: Logistic Regression
 description:
-    main: Logistic Regression with feature selection. Note that cross-validation fold partitioning uses a hardcoded random seed (42) for reproducibility.
+    main: Logistic Regression with feature selection. Note that cross-validation fold partitioning uses a random seed (default 42, configurable under Validation Settings) for reproducibility.
 version: '1.0.0'
 jas: '1.2'
 

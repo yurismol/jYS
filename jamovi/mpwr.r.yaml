@@ -230,9 +230,4 @@ items:
         - crt
         - cluster_size
         - icc
-
-    - name:  text
-      title: Log / Errors
-      type:  Preformatted
-      visible: false
 ...

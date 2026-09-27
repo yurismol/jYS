@@ -333,7 +333,6 @@ mLRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "mLRResults",
     inherit = jmvcore::Group,
     active = list(
-        text = function() private$.items[["text"]],
         infoTable = function() private$.items[["infoTable"]],
         coeffTable = function() private$.items[["coeffTable"]],
         formulaHtml = function() private$.items[["formulaHtml"]],
@@ -355,11 +354,6 @@ mLRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "jys",
                     "roc",
                     "glmnet"))
-            self$add(jmvcore::Html$new(
-                options=options,
-                name="text",
-                title="Conditions & Diagnostics",
-                visible=FALSE))
             self$add(jmvcore::Table$new(
                 options=options,
                 name="infoTable",
@@ -533,7 +527,25 @@ mLRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     width=500,
                     height=500,
                     renderFun=".rocPlot",
-                    requiresData=TRUE),
+                    clearWith=list(
+                        "dep",
+                        "covs",
+                        "factors",
+                        "method",
+                        "elastic_alpha",
+                        "lasso_penalty",
+                        "partition",
+                        "val_split",
+                        "cv_folds",
+                        "cv_repeats",
+                        "roc_x",
+                        "roc_unit",
+                        "palBrewer",
+                        "group",
+                        "selgroup",
+                        "show_roc_cut",
+                        "show_roc_table",
+                        "multiclass_roc_type")),
                 clearWith=list(
                     "dep",
                     "covs",
@@ -697,7 +709,8 @@ mLRBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' Logistic Regression
 #'
 #' Logistic Regression with feature selection. Note that cross-validation fold 
-#' partitioning uses a hardcoded random seed (42) for reproducibility.
+#' partitioning uses a random seed (default 42, configurable under Validation 
+#' Settings) for reproducibility.
 #' @param data .
 #' @param dep .
 #' @param refLevel .
@@ -731,7 +744,6 @@ mLRBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param seed .
 #' @return A results object containing:
 #' \tabular{llllll}{
-#'   \code{results$text} \tab \tab \tab \tab \tab a html \cr
 #'   \code{results$infoTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$coeffTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$formulaHtml} \tab \tab \tab \tab \tab a html \cr

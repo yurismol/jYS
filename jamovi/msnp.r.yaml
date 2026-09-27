@@ -163,8 +163,8 @@ items:
           width:  600
           height: 500
           renderFun: .plotTernary
-          requiresData: true
           visible: (ternaryPlot)
+          requiresData: true
           clearWith:
             - vars
             - group
@@ -185,8 +185,8 @@ items:
           width:  550
           height: 450
           renderFun: .plotQQ
-          requiresData: true
           visible: (qqPlot)
+          requiresData: true
           clearWith:
             - vars
             - group
@@ -205,8 +205,8 @@ items:
           width:  650
           height: 450
           renderFun: .plotBar
-          requiresData: true
           visible: (barPlot)
+          requiresData: true
           clearWith:
             - vars
             - group
@@ -276,8 +276,8 @@ items:
           width:  650
           height: 500
           renderFun: .plotForest
-          requiresData: true
           visible: (assocEnable && assocForest)
+          requiresData: true
           clearWith:
             - vars
             - outcome
@@ -295,8 +295,8 @@ items:
           width:  650
           height: 400
           renderFun: .plotManhattan
-          requiresData: true
           visible: (assocEnable && manhattanPlot)
+          requiresData: true
           clearWith:
             - vars
             - outcome
@@ -462,8 +462,8 @@ items:
           width:  400
           height: 340
           renderFun: .plotMDRHeatmap
-          requiresData: true
           visible: (mdrEnable && mdrHeatmap)
+          requiresData: true
           clearWith:
             - vars
             - outcome
@@ -480,8 +480,8 @@ items:
           width:  400
           height: 450
           renderFun: .plotMDRBar
-          requiresData: true
           visible: (mdrEnable && mdrBarPlot)
+          requiresData: true
           clearWith:
             - vars
             - outcome
@@ -535,8 +535,8 @@ items:
           width:  600
           height: 550
           renderFun: .plotLDHeatmap
-          requiresData: true
           visible: (ldEnable && ldHeatmap)
+          requiresData: true
           clearWith:
             - vars
             - ldMetric

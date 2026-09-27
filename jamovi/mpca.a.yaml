@@ -4,7 +4,7 @@ title: Principal Component Analysis
 menuGroup: jYS
 menuSubgroup: Exploratory & Factor Analysis
 description:
-    main: Principal Component Analysis (PCA). Note that parallel analysis and cross-validation use a hardcoded random seed (42) for reproducibility.
+    main: Principal Component Analysis (PCA). Note that parallel analysis and cross-validation use a random seed (default 42, configurable under PCA Configuration) for reproducibility.
 version: '1.0.0'
 jas: '1.2'
 

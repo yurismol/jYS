@@ -5,11 +5,6 @@ jrs:   '1.1'
 refs: [jys, rg, roc, breiman2001]
 
 items:
-    - name: text
-      title: Conditions
-      type: Html
-      visible: false
-
     - name: infoTable
       title: Model Information & Accuracy
       type: Table
@@ -290,7 +285,26 @@ items:
           width:  500
           height: 500
           renderFun: .rocPlot
-          requiresData: true
+          clearWith:
+              - dep
+              - covs
+              - factors
+              - ntree
+              - mtry_method
+              - mtry_val
+              - nodesize
+              - maxdepth
+              - sample_fraction
+              - partition
+              - val_split
+              - cv_folds
+              - roc_x
+              - roc_unit
+              - multiclass_roc_type
+              - palBrewer
+              - show_roc_cut
+              - show_roc_table
+              - seed
       clearWith:
           - dep
           - covs
@@ -322,6 +336,18 @@ items:
           height: 400
           renderFun: .pdpPlot
           requiresData: true
+          clearWith:
+              - dep
+              - covs
+              - factors
+              - ntree
+              - mtry_method
+              - mtry_val
+              - nodesize
+              - maxdepth
+              - sample_fraction
+              - pdp_n_vars
+              - seed
       clearWith:
           - dep
           - covs

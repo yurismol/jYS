@@ -16,6 +16,13 @@ children:
             maxItemCount: 1
             isTarget: true
       - type: TargetLayoutBox
+        label: Entry / Start Time (optional)
+        children:
+          - type: VariablesListBox
+            name: tstart
+            maxItemCount: 1
+            isTarget: true
+      - type: TargetLayoutBox
         label: Status / Event Variable
         children:
           - type: VariablesListBox
@@ -27,6 +34,13 @@ children:
             label: Level
             enable: ({return ui['status'].value()!==null;})
       - type: TargetLayoutBox
+        label: Subject ID / Cluster (optional)
+        children:
+          - type: VariablesListBox
+            name: subjectId
+            maxItemCount: 1
+            isTarget: true
+      - type: TargetLayoutBox
         label: Grouping Variable
         children:
           - type: VariablesListBox
@@ -34,10 +48,24 @@ children:
             maxItemCount: 1
             isTarget: true
       - type: TargetLayoutBox
-        label: Covariates (Cox regression)
+        label: Covariates (Adjustment / Confounders)
         children:
           - type: VariablesListBox
             name: covariates
+            isTarget: true
+            height: small
+      - type: TargetLayoutBox
+        label: Exposure Variable (Adjusted Curves)
+        children:
+          - type: VariablesListBox
+            name: adjExposure
+            maxItemCount: 1
+            isTarget: true
+      - type: TargetLayoutBox
+        label: Time-dependent Covariates (Cox)
+        children:
+          - type: VariablesListBox
+            name: timeDepVars
             isTarget: true
             height: small
 
@@ -53,7 +81,6 @@ children:
             isTarget: true
             height: small
 
-
   - type: CollapseBox
     label: Kaplan-Meier Curves & Estimation
     collapsed: false
@@ -63,13 +90,22 @@ children:
         name: showKm
         children:
           - type: CheckBox
-            name: kmCI
+            name: kmPlot
             enable: (showKm)
+            children:
+              - type: CheckBox
+                name: kmCI
+                enable: (showKm && kmPlot)
+              - type: ComboBox
+                name: kmType
+                enable: (showKm && kmPlot)
           - type: CheckBox
             name: kmTable
             enable: (showKm)
-          - type: ComboBox
-            name: kmType
+          - type: TextBox
+            name: kmMaxTime
+            label: Max time (0 = unlimited)
+            format: number
             enable: (showKm)
 
   - type: CollapseBox
@@ -94,9 +130,62 @@ children:
           - type: CheckBox
             name: coxAssump
             enable: (showCox)
+            children:
+              - type: CheckBox
+                name: showSchoenfeldPlot
+                enable: (showCox && coxAssump)
           - type: CheckBox
-            name: showSchoenfeldPlot
-            enable: (showCox && coxAssump)
+            name: showTimeDepEffects
+            enable: (showCox)
+            children:
+              - type: ComboBox
+                name: timeDepFunc
+                enable: (showCox && showTimeDepEffects)
+
+  - type: CollapseBox
+    label: Adjusted Survival Curves (Direct / G-computation)
+    collapsed: false
+    stretchFactor: 1
+    children:
+      - type: CheckBox
+        name: showAdjCurves
+        children:
+          - type: CheckBox
+            name: adjCI
+            enable: (showAdjCurves)
+
+  - type: CollapseBox
+    label: Competing Risks Analysis
+    collapsed: false
+    stretchFactor: 1
+    children:
+      - type: CheckBox
+        name: showCompRisks
+        children:
+          - type: LevelSelector
+            name: compEvent
+            label: Event of Interest
+            enable: (showCompRisks && {return ui['status'].value()!==null;})
+          - type: LevelSelector
+            name: compCensor
+            label: Censored Level
+            enable: (showCompRisks && {return ui['status'].value()!==null;})
+          - type: CheckBox
+            name: showCifTable
+            enable: (showCompRisks)
+          - type: CheckBox
+            name: showCifPlot
+            enable: (showCompRisks)
+            children:
+              - type: CheckBox
+                name: cifCI
+                enable: (showCompRisks && showCifPlot)
+          - type: CheckBox
+            name: showGrayTest
+            enable: (showCompRisks)
+          - type: CheckBox
+            name: showFineGray
+            enable: (showCompRisks)
 
   - type: CollapseBox
     label: Time-dependent ROC Analysis
@@ -123,6 +212,7 @@ children:
           - type: CheckBox
             name: rocPlot
             enable: (showRoc)
-          - type: ComboBox
-            name: palBrewer
-            enable: (rocPlot)
+            children:
+              - type: ComboBox
+                name: palBrewer
+                enable: (showRoc && rocPlot)

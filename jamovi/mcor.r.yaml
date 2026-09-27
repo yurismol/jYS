@@ -5,16 +5,6 @@ jrs:   '1.1'
 refs: [jys, corr]
 
 items:
-    #- name:  pre
-    #  title: ''
-    #  type:  Preformatted
-
-    - name: text
-      title: Correlations
-      type:  Html
-      clearWith:
-          - group
-
     - name: matrix
       visible: (tables)
       title: Correlation matrix
@@ -118,6 +108,16 @@ items:
       height: 400
       renderFun: .treeplot
       requiresData: true
+      clearWith:
+        - vars
+        - group
+        - selgroup
+        - method
+        - hclust
+        - numClust
+        - clustMet
+        - clustCol
+        - clustMan
 
     - name: plot
       title: Correlation matrix
@@ -127,15 +127,64 @@ items:
       height: 500
       renderFun: .plot
       requiresData: true
+      clearWith:
+        - vars
+        - group
+        - selgroup
+        - method
+        - plots
+        - plotMetU
+        - plotMetL
+        - plotOrder
+        - signif
+        - ci
+        - pval
+        - n
+        - hclust
+        - numClust
+        - clustMet
+        - clustCol
+        - clustMan
+        - clPos
 
     - name: rplots
       title: Intercluster Matrices
       type: Array
       visible: (plots && clustMat)
+      clearWith:
+        - vars
+        - group
+        - selgroup
+        - method
+        - plots
+        - clustMat
+        - hclust
+        - numClust
+        - clustMet
+        - clustCol
+        - clustMan
+        - plotMetU
+        - signif
+        - clPos
       template:
           type: Image
           renderFun: .rplot
           requiresData: true
+          clearWith:
+            - vars
+            - group
+            - selgroup
+            - method
+            - plots
+            - clustMat
+            - hclust
+            - numClust
+            - clustMet
+            - clustCol
+            - clustMan
+            - plotMetU
+            - signif
+            - clPos
 
     - name: glassoGroup
       title: Partial Correlation Network

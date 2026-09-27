@@ -3,8 +3,6 @@ name: mOUT
 jus: '3.0'
 stage: 0
 compilerMode: tame
-events:
-  update: './mout.events::update'
 children:
   - type: VariableSupplier
     persistentItems: false

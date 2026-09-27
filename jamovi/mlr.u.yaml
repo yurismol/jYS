@@ -2,7 +2,7 @@ title: Logistic Regression
 name: mLR
 jus: '3.0'
 stage: 0
-compilerMode: wild
+compilerMode: tame
 children:
   - type: VariableSupplier
     persistentItems: false

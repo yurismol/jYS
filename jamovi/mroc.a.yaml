@@ -45,7 +45,7 @@ options:
       variable: (groups)
 
     - name: theBest
-      title: The Best point on ROC
+      title: Optimal cut-off
       type: List
       options:
         - title: None
@@ -150,7 +150,7 @@ options:
       default: false
 
     - name: showTable
-      title: ROC Tables
+      title: ROC table
       type: Bool
       default: false
 

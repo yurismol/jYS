@@ -69,12 +69,56 @@ items:
       height: 500
       renderFun: .plot
       requiresData: true
+      clearWith:
+          - vars
+          - class
+          - groups
+          - selgroup
+          - theBest
+          - cmpDeLong
+          - mAst
+          - ciAUC
+          - ciWidth
+          - perc
+          - ciMark
+          - direction
+          - lwd
+          - dotline
+          - BW
+          - legacy
+          - polygon
+          - legBox
+          - sepROC
+          - splitROC
+          - palBrewer
 
     - name: plots
       title: ROC by groups
       type: Array
       visible: (sepROC)
       items: (vars)
+      clearWith:
+          - vars
+          - class
+          - groups
+          - selgroup
+          - theBest
+          - cmpDeLong
+          - mAst
+          - ciAUC
+          - ciWidth
+          - perc
+          - ciMark
+          - direction
+          - lwd
+          - dotline
+          - BW
+          - legacy
+          - polygon
+          - legBox
+          - sepROC
+          - splitROC
+          - palBrewer
       template:
           title: $key
           type: Image
@@ -88,6 +132,28 @@ items:
       type: Array
       visible: (splitROC)
       items: (vars)
+      clearWith:
+          - vars
+          - class
+          - groups
+          - selgroup
+          - theBest
+          - cmpDeLong
+          - mAst
+          - ciAUC
+          - ciWidth
+          - perc
+          - ciMark
+          - direction
+          - lwd
+          - dotline
+          - BW
+          - legacy
+          - polygon
+          - legBox
+          - sepROC
+          - splitROC
+          - palBrewer
       template:
           title: $key
           type: Image

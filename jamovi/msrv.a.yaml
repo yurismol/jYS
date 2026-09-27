@@ -19,6 +19,15 @@ options:
       permitted:
         - numeric
 
+    - name: tstart
+      title: Entry / Start Time (optional)
+      type: Variable
+      required: false
+      suggested:
+        - continuous
+      permitted:
+        - numeric
+
     - name: status
       title: Status / Event Variable
       type: Variable
@@ -35,6 +44,19 @@ options:
       title: Level
       type: Level
       variable: (status)
+
+    - name: subjectId
+      title: Subject ID / Cluster (optional)
+      type: Variable
+      required: false
+      suggested:
+        - nominal
+        - ordinal
+        - id
+      permitted:
+        - factor
+        - numeric
+        - id
 
     - name: group
       title: Grouping Variable
@@ -58,8 +80,25 @@ options:
         - numeric
         - factor
 
+    - name: timeDepVars
+      title: Time-dependent Covariates
+      type: Variables
+      required: false
+      suggested:
+        - continuous
+        - nominal
+        - ordinal
+      permitted:
+        - numeric
+        - factor
+
     - name: showKm
       title: Kaplan-Meier Survival Curves
+      type: Bool
+      default: true
+
+    - name: kmPlot
+      title: Kaplan-Meier Survival Plot
       type: Bool
       default: true
 
@@ -83,6 +122,12 @@ options:
           name: hazard
       default: survival
 
+    - name: kmMaxTime
+      title: Max time (0 = unlimited)
+      type: Number
+      min: 0
+      default: 0
+
     - name: showLogRank
       title: Log-rank Test for Group Comparison
       type: Bool
@@ -105,6 +150,81 @@ options:
 
     - name: showSchoenfeldPlot
       title: Schoenfeld Residuals Plot
+      type: Bool
+      default: false
+
+    - name: showAdjCurves
+      title: Show Adjusted Survival Curves
+      type: Bool
+      default: false
+
+    - name: adjExposure
+      title: Exposure Variable (Adjusted Curves)
+      type: Variable
+      required: false
+      suggested:
+        - nominal
+        - ordinal
+      permitted:
+        - factor
+
+    - name: adjCI
+      title: Confidence Intervals (Bootstrap)
+      type: Bool
+      default: false
+
+    - name: showTimeDepEffects
+      title: Time-dependent effects (time-varying coefficients)
+      type: Bool
+      default: false
+
+    - name: timeDepFunc
+      title: Time Transform Function
+      type: List
+      options:
+        - title: log(t) (Logarithmic time)
+          name: log
+        - title: t (Linear time)
+          name: linear
+      default: log
+
+    - name: showCompRisks
+      title: Competing Risks Analysis
+      type: Bool
+      default: false
+
+    - name: compEvent
+      title: Event of Interest
+      type: Level
+      variable: (status)
+
+    - name: compCensor
+      title: Censored Level
+      type: Level
+      variable: (status)
+
+    - name: showCifTable
+      title: Cumulative Incidence Summary
+      type: Bool
+      default: true
+
+    - name: showCifPlot
+      title: Cumulative Incidence Curves (Aalen-Johansen)
+      type: Bool
+      default: true
+
+    - name: cifCI
+      title: Confidence Intervals (CIF)
+      type: Bool
+      default: false
+
+    - name: showGrayTest
+      title: Gray's Test for Group Differences
+      type: Bool
+      default: true
+
+    - name: showFineGray
+      title: Fine-Gray Subdistribution Hazard Model
       type: Bool
       default: false
 

@@ -106,6 +106,11 @@ items:
           height: 500
           renderFun: .cplot
           requiresData: true
+          clearWith:
+            - learnvar
+            - imputevar
+            - compinres
+            - anghead
 
         - name: plot
           title: Missing data patterns
@@ -115,6 +120,12 @@ items:
           height: 500
           renderFun: .plot
           requiresData: true
+          clearWith:
+            - learnvar
+            - imputevar
+            - compinres
+            - npat
+            - anghead
 
         - name: fplot
           title: Influx-outflux plot
@@ -124,6 +135,10 @@ items:
           height: 550
           renderFun: .fplot
           requiresData: true
+          clearWith:
+            - learnvar
+            - imputevar
+            - compinres
 
     - name: imput
       title: Missing Values Imputation

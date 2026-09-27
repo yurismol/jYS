@@ -2,7 +2,227 @@
 mSNPClass <- R6::R6Class(
     "mSNPClass",
     inherit = mSNPBase,
+    public = list(
+        .savePart = function(path, part, ...) {
+            smart_lookup <- function(results, p_str, options = NULL) {
+                if (is.null(results) || is.null(p_str)) return(NULL)
+                if (length(p_str) > 1) p_str <- paste(p_str, collapse = "/")
+                if (!nzchar(p_str)) return(NULL)
+
+                covs <- tryCatch(options$covariates, error = function(e) NULL)
+                group_var <- tryCatch(options$group, error = function(e) NULL)
+                vars <- tryCatch(options$vars, error = function(e) NULL)
+
+                find_child <- function(curr, seg) {
+                    if (is.null(curr) || is.null(seg) || !nzchar(seg)) return(NULL)
+                    clean <- gsub('^["\']|["\']$', '', seg)
+
+                    if (inherits(curr, 'Array')) {
+                        nxt <- tryCatch(curr$get(key = clean), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+
+                        nxt <- tryCatch(curr$get(name = paste0('"', clean, '"')), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+                        nxt <- tryCatch(curr$get(name = seg), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+                        nxt <- tryCatch(curr$get(name = clean), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+
+                        items <- tryCatch(curr$items, error = function(e) NULL)
+                        if (!is.null(items) && length(items) > 0) {
+                            # 1. Exact match by key, name, or title
+                            for (it in items) {
+                                it_key <- tryCatch(it$key, error = function(e) NULL)
+                                it_name <- tryCatch(it$name, error = function(e) NULL)
+                                it_title <- tryCatch(it$title, error = function(e) NULL)
+                                if (identical(it_key, clean) || identical(it_key, seg) ||
+                                    identical(it_name, clean) || identical(it_name, seg) ||
+                                    identical(it_title, clean) || identical(it_title, seg)) {
+                                    return(it)
+                                }
+                            }
+
+                            # 2. Match covariate by index if clean is in covs or group_var
+                            if (!is.null(covs) && clean %in% covs) {
+                                c_idx <- which(covs == clean)
+                                target_key <- paste0("..cov_", c_idx, "_")
+                                for (it in items) {
+                                    if (identical(it$key, target_key) || grepl(paste0("^\\.\\.cov_", c_idx), as.character(it$key))) {
+                                        return(it)
+                                    }
+                                }
+                            }
+                            if (!is.null(group_var) && (clean == group_var || grepl(paste0("^", clean), group_var))) {
+                                for (it in items) {
+                                    if (identical(it$key, "..group") || grepl("^\\.\\.group", as.character(it$key))) {
+                                        return(it)
+                                    }
+                                }
+                            }
+
+                            # 3. Match suffix of title after dash
+                            for (it in items) {
+                                it_title <- tryCatch(as.character(it$title), error = function(e) "")
+                                title_var <- trimws(sub(".*[\u2013\u2014-]\\s*", "", it_title))
+                                title_var_clean <- gsub("[_()]", "", title_var)
+                                clean_nopunct <- gsub("[_()]", "", clean)
+                                if (nzchar(title_var) && (identical(title_var, clean) || identical(title_var_clean, clean_nopunct))) {
+                                    return(it)
+                                }
+                            }
+
+                            # 4. Word boundary match in title
+                            for (it in items) {
+                                it_title <- tryCatch(as.character(it$title), error = function(e) "")
+                                pattern <- paste0("(^|[^a-zA-Z0-9_])", clean, "([^a-zA-Z0-9_]|$)")
+                                if (grepl(pattern, it_title)) {
+                                    return(it)
+                                }
+                            }
+
+                            # 5. Check integer index
+                            idx <- suppressWarnings(as.integer(clean))
+                            if (!is.na(idx)) {
+                                items_len <- length(items)
+                                if (idx == 0 && items_len >= 1) return(items[[1]])
+                                if (idx >= 1 && idx <= items_len) return(items[[idx]])
+                            }
+                        }
+                    }
+
+                    nxt <- tryCatch(curr$.lookup(seg), error = function(e) NULL)
+                    if (!is.null(nxt)) return(nxt)
+                    if (seg != clean) {
+                        nxt <- tryCatch(curr$.lookup(clean), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+                    }
+
+                    if (inherits(curr, 'Group')) {
+                        nxt <- tryCatch(curr$get(clean), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+                        nxt <- tryCatch(curr$get(seg), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+                    }
+
+                    items <- tryCatch(curr$items, error = function(e) NULL)
+                    if (!is.null(items) && length(items) > 0) {
+                        if (clean %in% names(items)) return(items[[clean]])
+                        if (seg %in% names(items)) return(items[[seg]])
+                        for (it in items) {
+                            it_name <- tryCatch(it$name, error = function(e) NULL)
+                            it_key <- tryCatch(it$key, error = function(e) NULL)
+                            it_title <- tryCatch(it$title, error = function(e) NULL)
+                            if (identical(it_name, clean) || identical(it_name, seg) ||
+                                identical(it_key, clean) || identical(it_key, seg)) {
+                                return(it)
+                            }
+                        }
+                    }
+                    NULL
+                }
+
+                traverse <- function(node, segs) {
+                    if (is.null(node) || length(segs) == 0) return(node)
+                    child <- find_child(node, segs[1])
+                    if (!is.null(child)) {
+                        return(traverse(child, segs[-1]))
+                    }
+                    NULL
+                }
+
+                search_recursive <- function(node, segs) {
+                    if (is.null(node)) return(NULL)
+                    res <- traverse(node, segs)
+                    if (!is.null(res)) return(res)
+
+                    items <- tryCatch(node$items, error = function(e) NULL)
+                    if (!is.null(items) && length(items) > 0) {
+                        for (child in items) {
+                            if (inherits(child, 'Group') || inherits(child, 'Array')) {
+                                res <- search_recursive(child, segs)
+                                if (!is.null(res)) return(res)
+                            }
+                        }
+                    }
+                    NULL
+                }
+
+                norm_p <- gsub('\\[[\'"]?([^\'"]+?)[\'"]?\\]', '/\\1', p_str)
+                parts <- strsplit(norm_p, '/+', perl = TRUE)[[1]]
+                parts <- parts[parts != ""]
+                if (length(parts) == 0) return(NULL)
+
+                # Strip analysisId or 'results' prefix if present
+                if (length(parts) > 1 && (parts[1] == "results" || !is.na(suppressWarnings(as.integer(parts[1]))))) {
+                    if (is.null(find_child(results, parts[1]))) {
+                        parts <- parts[-1]
+                    }
+                }
+
+                target <- search_recursive(results, parts)
+                if (inherits(target, 'Array') && length(target$items) > 0) {
+                    target <- target$items[[1]]
+                }
+                target
+            }
+
+            element <- smart_lookup(self$results, part, self$options)
+            if (is.null(element)) {
+                return(FALSE)
+            }
+
+            if (inherits(element, 'Array')) {
+                if (length(element$items) > 0) {
+                    element <- element$items[[1]]
+                } else {
+                    return(FALSE)
+                }
+            }
+
+            if (inherits(element, 'Image')) {
+                if (is.null(element$state) && !is.null(element$parent$state)) {
+                    parent_state <- element$parent$state
+                    if (!is.null(parent_state$zph)) {
+                        var_name <- element$key
+                        var_idx <- if (!is.null(var_name) && var_name %in% rownames(parent_state$zph$table)) {
+                            which(rownames(parent_state$zph$table) == var_name)
+                        } else 1
+                        element$setState(list(zph = parent_state$zph, var_idx = var_idx, var_name = var_name))
+                    } else if (!is.null(element$key) && !is.null(parent_state[[element$key]])) {
+                        element$setState(parent_state[[element$key]])
+                    } else if (is.list(parent_state) && length(parent_state) > 0) {
+                        element$setState(parent_state[[1]])
+                    }
+                }
+            }
+
+            if (element$requiresData && is.function(private$.ensureData)) {
+                private$.ensureData()
+            }
+            save_ok <- tryCatch({
+                element$saveAs(path, ...)
+                file.exists(path) && file.info(path)$size > 0
+            }, error = function(e) {
+                tryCatch({
+                    element$saveAs(path)
+                    file.exists(path) && file.info(path)$size > 0
+                }, error = function(e2) {
+                    FALSE
+                })
+            })
+            return(save_ok)
+        }
+    ),
     private = list(
+        .ensureData = function() {
+            if (is.null(private$.data) || nrow(private$.data) == 0) {
+                d <- tryCatch(self$readDataset(headerOnly = FALSE), error = function(e) NULL)
+                if (!is.null(d) && nrow(d) > 0)
+                    private$.data <- d
+            }
+            return(!is.null(private$.data) && nrow(private$.data) > 0)
+        },
+
         # Internal state
         g_data = NULL,
         g_alleles = list(), # list of list(major, minor) per marker
@@ -15,6 +235,50 @@ mSNPClass <- R6::R6Class(
         g_mdr_results = list(),
         g_ld_results = list(),
         
+        .getSexLevels = function(gender_var) {
+            if (is.null(gender_var)) return(list(female = NULL, male = NULL))
+            gender_levels <- levels(as.factor(gender_var))
+            female_level <- self$options$femaleLevel
+            if (!is.null(female_level) && female_level %in% gender_levels) {
+                male_level <- setdiff(gender_levels, female_level)[1]
+                return(list(female = female_level, male = male_level))
+            }
+            female_idx_g <- grep("f|w|\\u0436|female|girl|woman|2", gender_levels, ignore.case=TRUE)
+            if (length(female_idx_g) > 0) {
+                female_level <- gender_levels[female_idx_g[1]]
+                male_level <- gender_levels[-female_idx_g[1]][1]
+            } else {
+                female_level <- gender_levels[1]
+                male_level <- if (length(gender_levels) > 1) gender_levels[2] else NULL
+            }
+            list(female = female_level, male = male_level)
+        },
+
+        .getpvals = function(X, nsim = 100) {
+            simpval <- NULL
+            for (j in seq_len(nrow(X))) {
+                y <- as.vector(X[j, ])
+                names(y) <- c("AA", "AB", "BB")
+                n <- sum(y)
+                nA <- 2 * y[1] + y[2]
+                nB <- 2 * n - nA
+                MaxHet <- min(nA, nB)
+                if (MaxHet %% 2 == 0) {
+                    nAB <- seq(0, MaxHet, 2)
+                } else {
+                    nAB <- seq(1, MaxHet, 2)
+                }
+                probs <- HardyWeinberg::HWCondProbAB(n, nA, nAB)$p
+                nAA <- (nA - nAB) / 2
+                nBB <- (nB - nAB) / 2
+                Xaux <- cbind(nAA, nAB, nBB)
+                colnames(Xaux) <- c("AA", "AB", "BB")
+                pvals <- HardyWeinberg::HWExactStats(Xaux, plinkcode = FALSE)
+                simpval <- rbind(simpval, sample(pvals, nsim, replace = TRUE, prob = probs))
+            }
+            simpval
+        },
+
         .init = function() {
             # Footnotes and translation definitions
             freqTable <- self$results$hweGroup$freqTable
@@ -353,15 +617,9 @@ mSNPClass <- R6::R6Class(
                 is_x_linked <- isTRUE(self$options$xLinked) && !is.null(self$options$gender)
                 if (is_x_linked) {
                     gender_var <- private$g_data[[self$options$gender]]
-                    gender_levels <- levels(gender_var)
-                    female_idx_g <- grep("f|w|\\u0436|female|girl|woman|2", gender_levels, ignore.case=TRUE)
-                    if (length(female_idx_g) > 0) {
-                        female_level <- gender_levels[female_idx_g[1]]
-                        male_level <- gender_levels[-female_idx_g[1]][1]
-                    } else {
-                        female_level <- gender_levels[1]
-                        male_level <- if (length(gender_levels) > 1) gender_levels[2] else NULL
-                    }
+                    sex_levels <- private$.getSexLevels(gender_var)
+                    female_level <- sex_levels$female
+                    male_level <- sex_levels$male
                     male_idx <- which(gender_var == male_level)
                     female_idx <- which(gender_var == female_level)
                     
@@ -388,11 +646,11 @@ mSNPClass <- R6::R6Class(
                 # Exclusions
                 status <- .("Passed")
                 if (call_rate < call_rate_thr) {
-                    status <- paste0(.("Excluded"), ": ", .("Call Rate"), " < ", call_rate_thr)
+                    status <- jmvcore::format(.("Excluded: Call Rate < {val}"), val = call_rate_thr)
                 } else if (maf < maf_thr) {
-                    status <- paste0(.("Excluded"), ": MAF < ", maf_thr)
+                    status <- jmvcore::format(.("Excluded: MAF < {val}"), val = maf_thr)
                 } else if (hwe_p < hwe_thr) {
-                    status <- paste0(.("Excluded"), ": HWE p < ", hwe_thr)
+                    status <- jmvcore::format(.("Excluded: HWE p < {val}"), val = hwe_thr)
                 }
                 
                 private$g_qc_status[[marker]] <- status
@@ -421,15 +679,9 @@ mSNPClass <- R6::R6Class(
             is_x_linked <- isTRUE(self$options$xLinked) && !is.null(self$options$gender)
             if (is_x_linked) {
                 gender_var <- private$g_data[[self$options$gender]][indices]
-                gender_levels <- levels(gender_var)
-                female_idx_g <- grep("f|w|\\u0436|female|girl|woman|2", gender_levels, ignore.case=TRUE)
-                if (length(female_idx_g) > 0) {
-                    female_level <- gender_levels[female_idx_g[1]]
-                    male_level <- gender_levels[-female_idx_g[1]][1]
-                } else {
-                    female_level <- gender_levels[1]
-                    male_level <- if (length(gender_levels) > 1) gender_levels[2] else NULL
-                }
+                sex_levels <- private$.getSexLevels(gender_var)
+                female_level <- sex_levels$female
+                male_level <- sex_levels$male
                 
                 male_idx <- which(gender_var == male_level)
                 female_idx <- which(gender_var == female_level)
@@ -453,12 +705,7 @@ mSNPClass <- R6::R6Class(
             }
         },
         
-        .fillFreqAndHWETables = function() {
-            freqTable <- self$results$hweGroup$freqTable
-            hwTable <- self$results$hweGroup$hwTable
-            private$g_hwe_results <- list()
-            
-            # Dynamic group subsets (supports splitting by outcome)
+        .getSubsets = function() {
             has_group <- !is.null(self$options$group)
             has_outcome <- !is.null(self$options$outcome) && !is.numeric(private$g_data[[self$options$outcome]]) && length(levels(factor(private$g_data[[self$options$outcome]]))) >= 2
             split_hwe <- isTRUE(self$options$hweSplitOutcome) && has_outcome
@@ -485,6 +732,15 @@ mSNPClass <- R6::R6Class(
             } else {
                 subsets[["Total"]] <- seq_along(private$g_classified[[self$options$vars[1]]])
             }
+            subsets
+        },
+        
+        .fillFreqAndHWETables = function() {
+            freqTable <- self$results$hweGroup$freqTable
+            hwTable <- self$results$hweGroup$hwTable
+            private$g_hwe_results <- list()
+            
+            subsets <- private$.getSubsets()
             
             # Temporary storage to compute multiple correction
             raw_p_chi <- numeric()
@@ -494,6 +750,7 @@ mSNPClass <- R6::R6Class(
             keys <- list()
             
             for (marker in self$options$vars) {
+                private$.checkpoint()
                 classified <- private$g_classified[[marker]]
                 for (g in names(subsets)) {
                     subset_idx <- subsets[[g]]
@@ -505,15 +762,9 @@ mSNPClass <- R6::R6Class(
                     
                     if (is_x_linked) {
                         gender_var <- private$g_data[[self$options$gender]][subset_idx]
-                        gender_levels <- levels(gender_var)
-                        female_idx_g <- grep("f|w|\\u0436|female|girl|woman|2", gender_levels, ignore.case=TRUE)
-                        if (length(female_idx_g) > 0) {
-                            female_level <- gender_levels[female_idx_g[1]]
-                            male_level <- gender_levels[-female_idx_g[1]][1]
-                        } else {
-                            female_level <- gender_levels[1]
-                            male_level <- if (length(gender_levels) > 1) gender_levels[2] else NULL
-                        }
+                        sex_levels <- private$.getSexLevels(gender_var)
+                        female_level <- sex_levels$female
+                        male_level <- sex_levels$male
                         
                         male_idx <- which(gender_var == male_level)
                         female_idx <- which(gender_var == female_level)
@@ -686,6 +937,7 @@ mSNPClass <- R6::R6Class(
                         
                         perm_p <- NA
                         if (self$options$hwPerm && N > 0) {
+                            private$.checkpoint()
                             perm_p <- tryCatch(HardyWeinberg::HWPerm(counts_vec, x.linked = is_x_linked, nperm=as.integer(self$options$nPerm), verbose=FALSE)$pval, error = function(e) NA)
                         }
                         
@@ -772,6 +1024,9 @@ mSNPClass <- R6::R6Class(
                     hwTable$setNote('signif_legend', '* p < .05, ** p < .01, *** p < .001')
                 }
             }
+            private$.prepareTernaryState(subsets)
+            private$.prepareQQState(subsets)
+            private$.prepareBarState(subsets)
         },
         
         .fillAssociationTable = function() {
@@ -863,6 +1118,7 @@ mSNPClass <- R6::R6Class(
             cov_names <- self$options$covs
             
             for (marker in analyzed_vars) {
+                private$.checkpoint()
                 classified <- private$g_classified[[marker]]
                 
                 # Get non-NA pairs
@@ -965,11 +1221,11 @@ mSNPClass <- R6::R6Class(
                             model_df$x <- ifelse(sub_class == "AA", 0, ifelse(sub_class == "AB", 1, 2))
                         }
                         
-                        formula_str <- "y ~ x"
-                        if (has_covs) {
-                            formula_str <- paste(formula_str, paste(cov_names, collapse=" + "), sep=" + ")
+                        formula_obj <- if (has_covs) {
+                            jmvcore::composeFormula("y", c("x", cov_names))
+                        } else {
+                            stats::as.formula("y ~ x")
                         }
-                        formula_obj <- as.formula(formula_str)
                         
                         if (is_continuous) {
                             res_fit <- tryCatch(lm(formula_obj, data=model_df), error=function(e) NULL)
@@ -1058,6 +1314,7 @@ mSNPClass <- R6::R6Class(
             } else if (has_covs && is_continuous) {
                 assocTable$setNote('cov_note', .("Note: Linear regression is adjusted for selected covariates."))
             }
+            private$.prepareAssocStates(is_continuous)
         },
         
         .fillPopulationTable = function() {
@@ -1092,15 +1349,9 @@ mSNPClass <- R6::R6Class(
                 is_x_linked <- isTRUE(self$options$xLinked) && !is.null(self$options$gender)
                 if (is_x_linked) {
                     gender_var <- private$g_data[[self$options$gender]]
-                    gender_levels <- levels(gender_var)
-                    female_idx_g <- grep("f|w|\\u0436|female|girl|woman|2", gender_levels, ignore.case=TRUE)
-                    if (length(female_idx_g) > 0) {
-                        female_level <- gender_levels[female_idx_g[1]]
-                        male_level <- gender_levels[-female_idx_g[1]][1]
-                    } else {
-                        female_level <- gender_levels[1]
-                        male_level <- if (length(gender_levels) > 1) gender_levels[2] else NULL
-                    }
+                    sex_levels <- private$.getSexLevels(gender_var)
+                    female_level <- sex_levels$female
+                    male_level <- sex_levels$male
                     
                     male_idx <- which(gender_var == male_level)
                     female_idx <- which(gender_var == female_level)
@@ -1226,6 +1477,7 @@ mSNPClass <- R6::R6Class(
                 test_ba_mat <- matrix(0, nrow=length(combs), ncol=folds)
                 
                 for (f in 1:folds) {
+                    private$.checkpoint()
                     train_idx <- which(fold_ids != f)
                     test_idx <- which(fold_ids == f)
                     
@@ -1301,6 +1553,22 @@ mSNPClass <- R6::R6Class(
                 )
             }
             
+            # 4. Fill base MDR best models table
+            mdrBestTable <- self$results$mdrGroup$mdrBestTable
+            for (ord in 1:max_order) {
+                m <- best_models[[ord]]
+                row_val <- list(
+                    order = m$order,
+                    combination = m$combination,
+                    train_ba = m$train_ba,
+                    test_ba = m$test_ba,
+                    cvc = m$cvc
+                )
+                mdrBestTable$addRow(rowKey = as.character(m$order), value = row_val)
+                private$g_mdr_results[[as.character(m$order)]] <- row_val
+            }
+            private$.checkpoint()
+            
             # 4.1 Run Permutation test if selected
             if (self$options$mdrPermTest) {
                 n_perm <- as.integer(self$options$nPermMDR)
@@ -1308,6 +1576,7 @@ mSNPClass <- R6::R6Class(
                 
                 # Perform permutations
                 for (p in 1:n_perm) {
+                    private$.checkpoint()
                     perm_y <- sample(outcome_vec)
                     
                     # We repeat the MDR CV for each order
@@ -1370,36 +1639,21 @@ mSNPClass <- R6::R6Class(
                     }
                 }
                 
-                # Assign p-values
+                # Assign p-values and update table
                 for (ord in 1:max_order) {
                     obs_test_ba <- best_models[[ord]]$test_ba
                     p_val <- sum(perm_test_bas[ord, ] >= obs_test_ba) / n_perm
                     best_models[[ord]]$p_val <- p_val
+                    mdrBestTable$setRow(rowKey = as.character(ord), values = list(p_val = p_val))
+                    if (isTRUE(self$options$signifMarkers)) {
+                        private$.add_p_symbol(mdrBestTable, as.character(ord), "p_val", p_val)
+                    }
+                    private$g_mdr_results[[as.character(ord)]]$p_val <- p_val
                 }
-            }
-            
-            # Fill tables
-            mdrBestTable <- self$results$mdrGroup$mdrBestTable
-            for (ord in 1:max_order) {
-                m <- best_models[[ord]]
-                row_val <- list(
-                    order = m$order,
-                    combination = m$combination,
-                    train_ba = m$train_ba,
-                    test_ba = m$test_ba,
-                    cvc = m$cvc
-                )
-                if (self$options$mdrPermTest) row_val$p_val <- m$p_val
                 
-                mdrBestTable$addRow(rowKey = as.character(m$order), value = row_val)
-                if (self$options$mdrPermTest && isTRUE(self$options$signifMarkers)) {
-                    private$.add_p_symbol(mdrBestTable, as.character(m$order), "p_val", m$p_val)
+                if (isTRUE(self$options$signifMarkers)) {
+                    mdrBestTable$setNote('signif_legend', '* p < .05, ** p < .01, *** p < .001')
                 }
-                private$g_mdr_results[[as.character(m$order)]] <- row_val
-            }
-            
-            if (self$options$mdrPermTest && isTRUE(self$options$signifMarkers)) {
-                mdrBestTable$setNote('signif_legend', '* p < .05, ** p < .01, *** p < .001')
             }
             
             # Save best models state for cells table and plot
@@ -1451,6 +1705,7 @@ mSNPClass <- R6::R6Class(
                     }
                 }
             }
+            private$.prepareMDRStates(best_models, max_order, df_comp, outcome_vec)
         },
         
         .fillLDTable = function() {
@@ -1468,7 +1723,9 @@ mSNPClass <- R6::R6Class(
             
             pairs <- combn(snps, 2, simplify=FALSE)
             
-            for (pair in pairs) {
+            for (p_idx in seq_along(pairs)) {
+                if (p_idx %% 20 == 0) private$.checkpoint()
+                pair <- pairs[[p_idx]]
                 s1 <- pair[1]
                 s2 <- pair[2]
                 
@@ -1535,6 +1792,7 @@ mSNPClass <- R6::R6Class(
                 ldTable$addRow(rowKey = paste(s1, s2, sep="_"), value = row_val)
                 private$g_ld_results[[paste(s1, s2, sep="_")]] <- row_val
             }
+            private$.prepareLDState(snps)
         },
         
         estimateHaplotypes = function(n) {
@@ -1791,42 +2049,13 @@ mSNPClass <- R6::R6Class(
             }
         },
         
-        # ------------------ Ploting functions ------------------
-        
-        .plotTernary = function(image, ...) {
-            if (length(self$options$vars) == 0) return(FALSE)
-            
-            has_group <- !is.null(self$options$group)
-            has_outcome <- !is.null(self$options$outcome) && !is.numeric(private$g_data[[self$options$outcome]]) && length(levels(factor(private$g_data[[self$options$outcome]]))) >= 2
-            split_hwe <- isTRUE(self$options$hweSplitOutcome) && has_outcome
-            
-            subsets <- list()
-            if (has_group && split_hwe) {
-                grp_levels <- levels(private$g_data[[self$options$group]])
-                out_levels <- levels(factor(private$g_data[[self$options$outcome]]))
-                for (gl in grp_levels) {
-                    for (ol in out_levels) {
-                        subsets[[paste0(gl, " - ", ol)]] <- which(private$g_data[[self$options$group]] == gl & private$g_data[[self$options$outcome]] == ol)
-                    }
-                }
-            } else if (has_group) {
-                grp_levels <- levels(private$g_data[[self$options$group]])
-                for (gl in grp_levels) {
-                    subsets[[gl]] <- which(private$g_data[[self$options$group]] == gl)
-                }
-            } else if (split_hwe) {
-                out_levels <- levels(factor(private$g_data[[self$options$outcome]]))
-                for (ol in out_levels) {
-                    subsets[[ol]] <- which(private$g_data[[self$options$outcome]] == ol)
-                }
-            } else {
-                subsets[["Total"]] <- seq_along(private$g_classified[[self$options$vars[1]]])
-            }
-            
+        # ------------------ Plot State Preparation ------------------
+
+        .prepareTernaryState = function(subsets) {
+            if (length(self$options$vars) == 0) return()
             groups <- names(subsets)
             has_multi_groups <- (length(groups) > 1)
             
-            # Collect counts matrix
             counts_list <- list()
             marker_names <- character()
             group_names <- character()
@@ -1841,13 +2070,8 @@ mSNPClass <- R6::R6Class(
                     is_x_linked <- isTRUE(self$options$xLinked) && !is.null(self$options$gender)
                     if (is_x_linked) {
                         gender_var <- private$g_data[[self$options$gender]][subset_idx]
-                        gender_levels <- levels(gender_var)
-                        female_idx_g <- grep("f|w|\\u0436|female|girl|woman|2", gender_levels, ignore.case=TRUE)
-                        if (length(female_idx_g) > 0) {
-                            female_level <- gender_levels[female_idx_g[1]]
-                        } else {
-                            female_level <- gender_levels[1]
-                        }
+                        sex_levels <- private$.getSexLevels(gender_var)
+                        female_level <- sex_levels$female
                         female_idx <- which(gender_var == female_level)
                         female_geno <- sub_class[female_idx]
                         
@@ -1866,6 +2090,8 @@ mSNPClass <- R6::R6Class(
                 }
             }
             
+            if (length(counts_list) == 0) return()
+            
             counts_mat <- do.call(rbind, counts_list)
             rownames(counts_mat) <- if (has_multi_groups) {
                 outer(self$options$vars, groups, paste, sep="_")
@@ -1874,13 +2100,10 @@ mSNPClass <- R6::R6Class(
             }
             
             region_type <- as.integer(self$options$ternaryRegion)
-            
-            # Define premium colors
             palette <- c("#2B5C8F", "#D95F02", "#7570B3", "#E7298A", "#66A61E", "#E6AB02", "#A6761D", "#666666")
             col_green <- "#2E7D32"
             col_red <- "#C62828"
             
-            # Map colors and labels based on groups/HWE significance
             col_vec <- character()
             labels_vec <- character()
             
@@ -1901,6 +2124,340 @@ mSNPClass <- R6::R6Class(
                     labels_vec <- c(labels_vec, marker_names[i])
                 }
             }
+            
+            maf_val <- 0.05
+            maf_opt <- self$options$mafThreshold
+            if (!is.null(maf_opt) && maf_opt != "none") {
+                maf_val <- as.numeric(maf_opt)
+            }
+            
+            self$results$hweGroup$ternaryPlot$setState(list(
+                counts_mat = counts_mat,
+                col_vec = col_vec,
+                labels_vec = labels_vec,
+                groups = groups,
+                has_multi_groups = has_multi_groups,
+                region_type = region_type,
+                ternaryShowMAF = isTRUE(self$options$ternaryShowMAF),
+                maf_val = maf_val
+            ))
+        },
+
+        .prepareQQState = function(subsets) {
+            if (length(self$options$vars) == 0) return()
+            groups <- names(subsets)
+            
+            counts_list <- list()
+            for (marker in self$options$vars) {
+                classified <- private$g_classified[[marker]]
+                for (g in groups) {
+                    subset_idx <- subsets[[g]]
+                    sub_class <- na.omit(classified[subset_idx])
+                    sub_class <- sub_class[sub_class != ""]
+                    
+                    is_x_linked <- isTRUE(self$options$xLinked) && !is.null(self$options$gender)
+                    if (is_x_linked) {
+                        gender_var <- private$g_data[[self$options$gender]][subset_idx]
+                        sex_levels <- private$.getSexLevels(gender_var)
+                        female_level <- sex_levels$female
+                        female_idx <- which(gender_var == female_level)
+                        female_geno <- sub_class[female_idx]
+                        
+                        obsAA <- sum(female_geno == "AA", na.rm=TRUE)
+                        obsAB <- sum(female_geno == "AB", na.rm=TRUE)
+                        obsBB <- sum(female_geno == "BB", na.rm=TRUE)
+                    } else {
+                        obsAA <- sum(sub_class == "AA")
+                        obsAB <- sum(sub_class == "AB")
+                        obsBB <- sum(sub_class == "BB")
+                    }
+                    
+                    if (obsAA + obsAB + obsBB > 0) {
+                        counts_list[[length(counts_list) + 1]] <- c(AA=obsAA, AB=obsAB, BB=obsBB)
+                    }
+                }
+            }
+            
+            if (length(counts_list) == 0) return()
+            counts_mat <- do.call(rbind, counts_list)
+            
+            pvals <- HardyWeinberg::HWExactStats(counts_mat, plinkcode = FALSE)
+            out <- sort(pvals, index.return = TRUE)
+            pvals <- out$x
+            counts_mat <- counts_mat[out$ix, , drop = FALSE]
+            
+            epvals <- private$.getpvals(counts_mat, 100)
+            
+            lpvals <- -log10(pvals)
+            lepvals <- -log10(epvals)
+            
+            mm <- max(c(lpvals, lepvals), na.rm = TRUE)
+            if (is.na(mm) || is.infinite(mm)) mm <- 5
+            
+            self$results$hweGroup$qqPlot$setState(list(
+                lpvals = lpvals,
+                lepvals = lepvals,
+                mm = mm
+            ))
+        },
+
+        .prepareBarState = function(subsets) {
+            if (length(self$options$vars) == 0) return()
+            groups <- names(subsets)
+            
+            plot_df <- data.frame()
+            obs_label <- .("Observed")
+            exp_label <- .("Expected")
+            
+            all_levels <- c()
+            marker_idx <- 0
+            for (marker in self$options$vars) {
+                marker_idx <- marker_idx + 1
+                major <- private$g_alleles[[marker]]$major
+                minor <- private$g_alleles[[marker]]$minor
+                
+                spaces <- paste(rep(" ", marker_idx), collapse = "")
+                geno_labels <- c(paste0(major, major, spaces), paste0(major, minor, spaces), paste0(minor, minor, spaces))
+                all_levels <- c(all_levels, geno_labels)
+                
+                for (g in groups) {
+                    row_key <- paste(marker, g, sep="_")
+                    row <- private$g_hwe_results[[row_key]]
+                    if (!is.null(row)) {
+                        raw_vals <- c(
+                            if (!is.null(row$raw_obsAA)) row$raw_obsAA else suppressWarnings(as.numeric(row$obsAA)),
+                            if (!is.null(row$raw_obsAB)) row$raw_obsAB else suppressWarnings(as.numeric(row$obsAB)),
+                            if (!is.null(row$raw_obsBB)) row$raw_obsBB else suppressWarnings(as.numeric(row$obsBB)),
+                            if (!is.null(row$raw_expAA)) row$raw_expAA else suppressWarnings(as.numeric(row$expAA)),
+                            if (!is.null(row$raw_expAB)) row$raw_expAB else suppressWarnings(as.numeric(row$expAB)),
+                            if (!is.null(row$raw_expBB)) row$raw_expBB else suppressWarnings(as.numeric(row$expBB))
+                        )
+                        plot_df <- rbind(plot_df, data.frame(
+                            Marker = marker,
+                            Group = g,
+                            Genotype = geno_labels,
+                            Type = c(obs_label, obs_label, obs_label, exp_label, exp_label, exp_label),
+                            Count = raw_vals
+                        ))
+                    }
+                }
+            }
+            
+            if (nrow(plot_df) > 0) {
+                plot_df$Genotype <- factor(plot_df$Genotype, levels = all_levels)
+            }
+            
+            self$results$hweGroup$barPlot$setState(list(
+                plot_df = plot_df,
+                has_multi_groups = (length(groups) > 1),
+                obs_label = obs_label,
+                exp_label = exp_label
+            ))
+        },
+
+        .prepareAssocStates = function(is_continuous) {
+            if (length(self$options$vars) == 0 || is.null(self$options$outcome)) return()
+            
+            model_list <- c("Codominant (AB vs AA)", "Codominant (BB vs AA)", "Dominant", "Recessive", "Overdominant", "Log-additive")
+            if (self$options$geneticModel != "all") {
+                model_list <- switch(self$options$geneticModel,
+                                     "codominant" = c("Codominant (AB vs AA)", "Codominant (BB vs AA)"),
+                                     "dominant" = "Dominant",
+                                     "recessive" = "Recessive",
+                                     "overdominant" = "Overdominant",
+                                     "log-additive" = "Log-additive")
+            }
+            
+            translate_model <- function(m) {
+                switch(m,
+                       "Codominant (AB vs AA)" = .("Codominant (AB vs AA)"),
+                       "Codominant (BB vs AA)" = .("Codominant (BB vs AA)"),
+                       "Dominant" = .("Dominant"),
+                       "Recessive" = .("Recessive"),
+                       "Overdominant" = .("Overdominant"),
+                       "Log-additive" = .("Log-additive"),
+                       m)
+            }
+            
+            plot_df_forest <- data.frame()
+            for (marker in self$options$vars) {
+                for (model in model_list) {
+                    row_key <- paste(marker, model, sep="_")
+                    row <- private$g_assoc_results[[row_key]]
+                    if (!is.null(row) && !is.na(row$or_val)) {
+                        plot_df_forest <- rbind(plot_df_forest, data.frame(
+                            Marker = marker,
+                            Model = translate_model(model),
+                            OR = row$or_val,
+                            Lower = row$or_lower,
+                            Upper = row$or_upper
+                        ))
+                    }
+                }
+            }
+            
+            self$results$assocGroup$assocForest$setState(list(
+                plot_df = plot_df_forest,
+                is_continuous = is_continuous,
+                trunc = isTRUE(self$options$assocForestTrunc),
+                geneticModel = self$options$geneticModel
+            ))
+            
+            plot_df_manh <- data.frame()
+            for (marker in self$options$vars) {
+                marker_pvals <- numeric()
+                for (row_key in names(private$g_assoc_results)) {
+                    row <- private$g_assoc_results[[row_key]]
+                    if (!is.null(row) && row$marker == marker && !is.na(row$p_val)) {
+                        marker_pvals <- c(marker_pvals, row$p_val)
+                    }
+                }
+                if (length(marker_pvals) > 0) {
+                    min_p <- min(marker_pvals)
+                    plot_df_manh <- rbind(plot_df_manh, data.frame(
+                        Marker = marker,
+                        PValue = min_p,
+                        LogP = -log10(min_p)
+                    ))
+                }
+            }
+            
+            bonf_p <- 0.05 / max(1, length(self$options$vars))
+            self$results$assocGroup$manhattanPlot$setState(list(
+                plot_df = plot_df_manh,
+                bonf_p = bonf_p,
+                vars = self$options$vars
+            ))
+        },
+
+        .prepareMDRStates = function(best_models, max_order, df_comp, outcome_vec) {
+            if (max_order >= 2 && length(best_models) >= 2 && !is.null(best_models[[2]]) && !is.na(best_models[[2]]$combination)) {
+                best_2way <- best_models[[2]]
+                comb_snps <- best_2way$snps
+                if (length(comb_snps) == 2) {
+                    total_cases <- sum(outcome_vec == "Case")
+                    total_ctrls <- sum(outcome_vec == "Control")
+                    threshold <- if (total_ctrls > 0) total_cases / total_ctrls else 1
+                    
+                    complete_2way <- complete.cases(df_comp[, c(comb_snps, "outcome_mdr")])
+                    df_2way <- df_comp[complete_2way, ]
+                    g1 <- private$g_classified[[comb_snps[1]]][complete_2way]
+                    g2 <- private$g_classified[[comb_snps[2]]][complete_2way]
+                    
+                    major1 <- private$g_alleles[[comb_snps[1]]]$major
+                    minor1 <- private$g_alleles[[comb_snps[1]]]$minor
+                    geno1 <- c(paste0(major1, major1), paste0(major1, minor1), paste0(minor1, minor1))
+                    
+                    major2 <- private$g_alleles[[comb_snps[2]]]$major
+                    minor2 <- private$g_alleles[[comb_snps[2]]]$minor
+                    geno2 <- c(paste0(major2, major2), paste0(major2, minor2), paste0(minor2, minor2))
+                    
+                    grid_df <- expand.grid(
+                        G1 = c("AA", "AB", "BB"),
+                        G2 = c("AA", "AB", "BB")
+                    )
+                    
+                    plot_list <- list()
+                    cases_lbl <- .("Ca")
+                    ctrls_lbl <- .("Co")
+                    for (r in 1:nrow(grid_df)) {
+                        val1 <- grid_df$G1[r]
+                        val2 <- grid_df$G2[r]
+                        match_idx <- (g1 == val1) & (g2 == val2)
+                        cases <- sum(match_idx & df_2way$outcome_mdr == "Case")
+                        controls <- sum(match_idx & df_2way$outcome_mdr == "Control")
+                        ratio <- if (controls > 0) cases / controls else if (cases > 0) Inf else 0
+                        risk <- if (ratio >= threshold) "High" else "Low"
+                        plot_list[[r]] <- data.frame(
+                            SNP1 = val1,
+                            SNP2 = val2,
+                            Cases = cases,
+                            Controls = controls,
+                            Ratio = ratio,
+                            Risk = risk,
+                            Label = paste0(cases_lbl, ":", cases, "\n", ctrls_lbl, ":", controls)
+                        )
+                    }
+                    plot_df_heat <- do.call(rbind, plot_list)
+                    self$results$mdrGroup$mdrHeatmap$setState(list(
+                        plot_df = plot_df_heat,
+                        comb_snps = comb_snps,
+                        geno1 = geno1,
+                        geno2 = geno2
+                    ))
+                }
+            }
+            
+            plot_df_bar <- data.frame()
+            train_lbl <- .("Training")
+            test_lbl <- .("Testing")
+            for (ord in 1:max_order) {
+                row <- private$g_mdr_results[[as.character(ord)]]
+                if (!is.null(row) && !is.na(row$train_ba)) {
+                    plot_df_bar <- rbind(plot_df_bar, data.frame(
+                        Order = factor(ord),
+                        Type = train_lbl,
+                        BA = row$train_ba
+                    ))
+                    plot_df_bar <- rbind(plot_df_bar, data.frame(
+                        Order = factor(ord),
+                        Type = test_lbl,
+                        BA = row$test_ba
+                    ))
+                }
+            }
+            self$results$mdrGroup$mdrBarPlot$setState(list(
+                plot_df = plot_df_bar,
+                max_order = max_order,
+                train_lbl = train_lbl,
+                test_lbl = test_lbl
+            ))
+        },
+
+        .prepareLDState = function(snps) {
+            if (length(snps) < 2) return()
+            ld_df <- data.frame()
+            for (row_key in names(private$g_ld_results)) {
+                row <- private$g_ld_results[[row_key]]
+                if (!is.null(row) && !is.na(row$r2)) {
+                    r2_val <- as.numeric(row$r2)
+                    dp_val <- as.numeric(row$d_prime)
+                    metric_val <- if (self$options$ldMetric == "r2") r2_val else dp_val
+                    if (row$marker1 %in% snps && row$marker2 %in% snps) {
+                        ld_df <- rbind(ld_df, data.frame(
+                            Marker1 = factor(row$marker1, levels=snps),
+                            Marker2 = factor(row$marker2, levels=snps),
+                            Value = metric_val
+                        ))
+                    }
+                }
+            }
+            
+            metric_title <- if (self$options$ldMetric == "r2") "r²" else "D'"
+            self$results$ldGroup$ldHeatmap$setState(list(
+                ld_df = ld_df,
+                metric_title = metric_title,
+                n_markers = length(snps),
+                snps = snps
+            ))
+        },
+        
+        # ------------------ Plotting functions ------------------
+        
+        .plotTernary = function(image, ...) {
+            state <- image$state
+            if (is.null(state) || is.null(state$counts_mat) || nrow(state$counts_mat) == 0) return(FALSE)
+            
+            counts_mat <- state$counts_mat
+            col_vec <- state$col_vec
+            labels_vec <- state$labels_vec
+            groups <- state$groups
+            has_multi_groups <- state$has_multi_groups
+            region_type <- state$region_type
+            
+            palette <- c("#2B5C8F", "#D95F02", "#7570B3", "#E7298A", "#66A61E", "#E6AB02", "#A6761D", "#666666")
+            col_green <- "#2E7D32"
+            col_red <- "#C62828"
             
             old_par <- par(mar = c(5.5, 4, 4, 2) + 0.1)
             on.exit(par(old_par))
@@ -1937,14 +2494,8 @@ mSNPClass <- R6::R6Class(
                        cex = 1.1, horiz = TRUE, xjust = 0.5, bty = "n")
             }
             
-            if (isTRUE(self$options$ternaryShowMAF)) {
-                # Draw MAF threshold boundary lines if applicable
-                maf_val <- 0.05
-                maf_opt <- self$options$mafThreshold
-                if (!is.null(maf_opt) && maf_opt != "none") {
-                    maf_val <- as.numeric(maf_opt)
-                }
-                
+            if (isTRUE(state$ternaryShowMAF)) {
+                maf_val <- state$maf_val
                 x_left  <- 2 * (maf_val - 0.5) / sqrt(3)
                 x_right <- 2 * (0.5 - maf_val) / sqrt(3)
                 y_height <- 2 * maf_val
@@ -1964,95 +2515,13 @@ mSNPClass <- R6::R6Class(
         },
         
         .plotQQ = function(image, ...) {
-            if (length(self$options$vars) == 0) return(FALSE)
+            state <- image$state
+            if (is.null(state) || is.null(state$lpvals) || length(state$lpvals) == 0) return(FALSE)
             
-            has_group <- !is.null(self$options$group)
-            has_outcome <- !is.null(self$options$outcome) && !is.numeric(private$g_data[[self$options$outcome]]) && length(levels(factor(private$g_data[[self$options$outcome]]))) >= 2
-            split_hwe <- isTRUE(self$options$hweSplitOutcome) && has_outcome
+            lpvals <- state$lpvals
+            lepvals <- state$lepvals
+            mm <- state$mm
             
-            subsets <- list()
-            if (has_group && split_hwe) {
-                grp_levels <- levels(private$g_data[[self$options$group]])
-                out_levels <- levels(factor(private$g_data[[self$options$outcome]]))
-                for (gl in grp_levels) {
-                    for (ol in out_levels) {
-                        subsets[[paste0(gl, " - ", ol)]] <- which(private$g_data[[self$options$group]] == gl & private$g_data[[self$options$outcome]] == ol)
-                    }
-                }
-            } else if (has_group) {
-                grp_levels <- levels(private$g_data[[self$options$group]])
-                for (gl in grp_levels) {
-                    subsets[[gl]] <- which(private$g_data[[self$options$group]] == gl)
-                }
-            } else if (split_hwe) {
-                out_levels <- levels(factor(private$g_data[[self$options$outcome]]))
-                for (ol in out_levels) {
-                    subsets[[ol]] <- which(private$g_data[[self$options$outcome]] == ol)
-                }
-            } else {
-                subsets[["Total"]] <- seq_along(private$g_classified[[self$options$vars[1]]])
-            }
-            
-            groups <- names(subsets)
-            
-            # Collect counts matrix (HWQqplot expects genotype counts columns: AA, AB, BB)
-            counts_list <- list()
-            for (marker in self$options$vars) {
-                classified <- private$g_classified[[marker]]
-                for (g in groups) {
-                    subset_idx <- subsets[[g]]
-                    sub_class <- na.omit(classified[subset_idx])
-                    sub_class <- sub_class[sub_class != ""]
-                    
-                    is_x_linked <- isTRUE(self$options$xLinked) && !is.null(self$options$gender)
-                    if (is_x_linked) {
-                        gender_var <- private$g_data[[self$options$gender]][subset_idx]
-                        gender_levels <- levels(gender_var)
-                        female_idx_g <- grep("f|w|\\u0436|female|girl|woman|2", gender_levels, ignore.case=TRUE)
-                        if (length(female_idx_g) > 0) {
-                            female_level <- gender_levels[female_idx_g[1]]
-                        } else {
-                            female_level <- gender_levels[1]
-                        }
-                        female_idx <- which(gender_var == female_level)
-                        female_geno <- sub_class[female_idx]
-                        
-                        obsAA <- sum(female_geno == "AA", na.rm=TRUE)
-                        obsAB <- sum(female_geno == "AB", na.rm=TRUE)
-                        obsBB <- sum(female_geno == "BB", na.rm=TRUE)
-                    } else {
-                        obsAA <- sum(sub_class == "AA")
-                        obsAB <- sum(sub_class == "AB")
-                        obsBB <- sum(sub_class == "BB")
-                    }
-                    
-                    if (obsAA + obsAB + obsBB > 0) {
-                        counts_list[[length(counts_list) + 1]] <- c(AA=obsAA, AB=obsAB, BB=obsBB)
-                    }
-                }
-            }
-            
-            if (length(counts_list) == 0) return(FALSE)
-            
-            counts_mat <- do.call(rbind, counts_list)
-            
-            # Compute exact p-values
-            pvals <- HardyWeinberg::HWExactStats(counts_mat, plinkcode = FALSE)
-            out <- sort(pvals, index.return = TRUE)
-            pvals <- out$x
-            counts_mat <- counts_mat[out$ix, ]
-            n <- length(pvals)
-            
-            # Simulate expected p-values under the null hypothesis (nsim = 100)
-            epvals <- HardyWeinberg:::getpvals(counts_mat, 100)
-            
-            lpvals <- -log10(pvals)
-            lepvals <- -log10(epvals)
-            
-            mm <- max(c(lpvals, lepvals))
-            if (is.na(mm) || is.infinite(mm)) mm <- 5
-            
-            # Render Q-Q plot without forwarding graphical ... arguments to statistical functions
             plot(
                 lpvals, lpvals, 
                 xlab = .("Expected p-value (-log10)"), 
@@ -2063,8 +2532,10 @@ mSNPClass <- R6::R6Class(
                 type = "n"
             )
             
-            for (i in 1:100) {
-                points(sort(lepvals[, i]), sort(lpvals), type = "l", col = "grey")
+            if (!is.null(lepvals) && is.matrix(lepvals)) {
+                for (i in 1:ncol(lepvals)) {
+                    points(sort(lepvals[, i]), sort(lpvals), type = "l", col = "grey")
+                }
             }
             abline(0, 1, col = "green", lwd = 2)
             
@@ -2072,99 +2543,30 @@ mSNPClass <- R6::R6Class(
         },
         
         .plotBar = function(image, ...) {
-            if (length(self$options$vars) == 0) return(FALSE)
+            state <- image$state
+            if (is.null(state) || is.null(state$plot_df) || nrow(state$plot_df) == 0) return(FALSE)
             
-            has_group <- !is.null(self$options$group)
-            has_outcome <- !is.null(self$options$outcome) && !is.numeric(private$g_data[[self$options$outcome]]) && length(levels(factor(private$g_data[[self$options$outcome]]))) >= 2
-            split_hwe <- isTRUE(self$options$hweSplitOutcome) && has_outcome
-            
-            subsets <- list()
-            if (has_group && split_hwe) {
-                grp_levels <- levels(private$g_data[[self$options$group]])
-                out_levels <- levels(factor(private$g_data[[self$options$outcome]]))
-                for (gl in grp_levels) {
-                    for (ol in out_levels) {
-                        subsets[[paste0(gl, " - ", ol)]] <- which(private$g_data[[self$options$group]] == gl & private$g_data[[self$options$outcome]] == ol)
-                    }
-                }
-            } else if (has_group) {
-                grp_levels <- levels(private$g_data[[self$options$group]])
-                for (gl in grp_levels) {
-                    subsets[[gl]] <- which(private$g_data[[self$options$group]] == gl)
-                }
-            } else if (split_hwe) {
-                out_levels <- levels(factor(private$g_data[[self$options$outcome]]))
-                for (ol in out_levels) {
-                    subsets[[ol]] <- which(private$g_data[[self$options$outcome]] == ol)
-                }
-            } else {
-                subsets[["Total"]] <- seq_along(private$g_classified[[self$options$vars[1]]])
-            }
-            
-            groups <- names(subsets)
-            
-            plot_df <- data.frame()
-            obs_label <- .("Observed")
-            exp_label <- .("Expected")
-            
-            all_levels <- c()
-            marker_idx <- 0
-            for (marker in self$options$vars) {
-                marker_idx <- marker_idx + 1
-                major <- private$g_alleles[[marker]]$major
-                minor <- private$g_alleles[[marker]]$minor
-                
-                # Append spaces to make genotype strings unique across markers for correct ordering
-                spaces <- paste(rep(" ", marker_idx), collapse = "")
-                geno_labels <- c(paste0(major, major, spaces), paste0(major, minor, spaces), paste0(minor, minor, spaces))
-                all_levels <- c(all_levels, geno_labels)
-                
-                for (g in groups) {
-                    row_key <- paste(marker, g, sep="_")
-                    row <- private$g_hwe_results[[row_key]]
-                    if (!is.null(row)) {
-                        # Extract numeric values safely (supporting X-linked and fallback)
-                        raw_vals <- c(
-                            if (!is.null(row$raw_obsAA)) row$raw_obsAA else suppressWarnings(as.numeric(row$obsAA)),
-                            if (!is.null(row$raw_obsAB)) row$raw_obsAB else suppressWarnings(as.numeric(row$obsAB)),
-                            if (!is.null(row$raw_obsBB)) row$raw_obsBB else suppressWarnings(as.numeric(row$obsBB)),
-                            if (!is.null(row$raw_expAA)) row$raw_expAA else suppressWarnings(as.numeric(row$expAA)),
-                            if (!is.null(row$raw_expAB)) row$raw_expAB else suppressWarnings(as.numeric(row$expAB)),
-                            if (!is.null(row$raw_expBB)) row$raw_expBB else suppressWarnings(as.numeric(row$expBB))
-                        )
-                        plot_df <- rbind(plot_df, data.frame(
-                            Marker = marker,
-                            Group = g,
-                            Genotype = geno_labels,
-                            Type = c(obs_label, obs_label, obs_label, exp_label, exp_label, exp_label),
-                            Count = raw_vals
-                        ))
-                    }
-                }
-            }
-            
-            if (nrow(plot_df) > 0) {
-                plot_df$Genotype <- factor(plot_df$Genotype, levels = all_levels)
-            }
-            
-            if (nrow(plot_df) == 0) return(FALSE)
+            plot_df <- state$plot_df
+            has_multi_groups <- isTRUE(state$has_multi_groups)
+            obs_label <- if (!is.null(state$obs_label)) state$obs_label else .("Observed")
+            exp_label <- if (!is.null(state$exp_label)) state$exp_label else .("Expected")
             
             fill_colors <- setNames(c("#2B5C8F", "#D95F02"), c(obs_label, exp_label))
             
-            p <- ggplot(plot_df, aes(x = Genotype, y = Count, fill = Type)) +
-                geom_bar(stat = "identity", position = "dodge", color = "black", size = 0.2) +
-                scale_fill_manual(values = fill_colors) +
-                theme_minimal(base_size = 12) +
-                theme(panel.grid.major.x = element_blank(),
+            p <- ggplot2::ggplot(plot_df, ggplot2::aes(x = Genotype, y = Count, fill = Type)) +
+                ggplot2::geom_bar(stat = "identity", position = "dodge", color = "black", linewidth = 0.2) +
+                ggplot2::scale_fill_manual(values = fill_colors) +
+                ggplot2::theme_minimal(base_size = 12) +
+                ggplot2::theme(panel.grid.major.x = ggplot2::element_blank(),
                       legend.position = "bottom",
-                      legend.text = element_text(size = 12),
-                      legend.title = element_text(size = 12)) +
-                labs(x = .("Genotype"), y = .("Count"), fill = .("Type"))
+                      legend.text = ggplot2::element_text(size = 12),
+                      legend.title = ggplot2::element_text(size = 12)) +
+                ggplot2::labs(x = .("Genotype"), y = .("Count"), fill = .("Type"))
                 
-            if (length(groups) > 1) {
-                p <- p + facet_grid(Group ~ Marker, scales = "free_x")
+            if (has_multi_groups) {
+                p <- p + ggplot2::facet_grid(Group ~ Marker, scales = "free_x")
             } else {
-                p <- p + facet_wrap(~ Marker, scales = "free_x")
+                p <- p + ggplot2::facet_wrap(~ Marker, scales = "free_x")
             }
             
             print(p)
@@ -2172,80 +2574,21 @@ mSNPClass <- R6::R6Class(
         },
         
         .plotForest = function(image, ...) {
-            if (length(self$options$vars) == 0 || is.null(self$options$outcome)) return(FALSE)
+            state <- image$state
+            if (is.null(state) || is.null(state$plot_df) || nrow(state$plot_df) == 0) return(FALSE)
             
-            plot_df <- data.frame()
-            
-            outcome_col <- self$options$outcome
-            outcome_var <- private$g_data[[outcome_col]]
-            is_continuous <- FALSE
-            if (is.numeric(outcome_var)) {
-                if (length(unique(na.omit(outcome_var))) > 2) {
-                    is_continuous <- TRUE
-                }
-            }
-            
-            # Select models
-            if (is_continuous) {
-                model_list <- c("Codominant (AB vs AA)", "Codominant (BB vs AA)", "Dominant", "Recessive", "Overdominant", "Log-additive")
-                if (self$options$geneticModel != "all") {
-                    model_list <- switch(self$options$geneticModel,
-                                         "codominant" = c("Codominant (AB vs AA)", "Codominant (BB vs AA)"),
-                                         "dominant" = "Dominant",
-                                         "recessive" = "Recessive",
-                                         "overdominant" = "Overdominant",
-                                         "log-additive" = "Log-additive")
-                }
-            } else {
-                model_list <- c("Codominant (AB vs AA)", "Codominant (BB vs AA)", "Dominant", "Recessive", "Overdominant", "Log-additive")
-                if (self$options$geneticModel != "all") {
-                    model_list <- switch(self$options$geneticModel,
-                                         "codominant" = c("Codominant (AB vs AA)", "Codominant (BB vs AA)"),
-                                         "dominant" = "Dominant",
-                                         "recessive" = "Recessive",
-                                         "overdominant" = "Overdominant",
-                                         "log-additive" = "Log-additive")
-                }
-            }
-            
-            translate_model <- function(m) {
-                switch(m,
-                       "Codominant (AB vs AA)" = .("Codominant (AB vs AA)"),
-                       "Codominant (BB vs AA)" = .("Codominant (BB vs AA)"),
-                       "Dominant" = .("Dominant"),
-                       "Recessive" = .("Recessive"),
-                       "Overdominant" = .("Overdominant"),
-                       "Log-additive" = .("Log-additive"),
-                       m)
-            }
-            
-            for (marker in self$options$vars) {
-                for (model in model_list) {
-                    row_key <- paste(marker, model, sep="_")
-                    row <- private$g_assoc_results[[row_key]]
-                    if (!is.null(row) && !is.na(row$or_val)) {
-                        plot_df <- rbind(plot_df, data.frame(
-                            Marker = marker,
-                            Model = translate_model(model),
-                            OR = row$or_val,
-                            Lower = row$or_lower,
-                            Upper = row$or_upper
-                        ))
-                    }
-                }
-            }
-            
-            if (nrow(plot_df) == 0) return(FALSE)
+            plot_df <- state$plot_df
+            is_continuous <- isTRUE(state$is_continuous)
             
             if (is_continuous) {
-                p <- ggplot(plot_df, aes(x = OR, y = Marker)) +
-                    geom_vline(xintercept = 0.0, linetype = "dashed", color = "gray50") +
-                    geom_errorbarh(aes(xmin = Lower, xmax = Upper), height = 0.2, size = 0.8, color = "#2B5C8F") +
-                    geom_point(size = 3.5, color = "#D95F02") +
-                    theme_minimal(base_size = 12) +
-                    labs(x = .("Effect size (Beta)"), y = .("Marker"))
+                p <- ggplot2::ggplot(plot_df, ggplot2::aes(x = OR, y = Marker)) +
+                    ggplot2::geom_vline(xintercept = 0.0, linetype = "dashed", color = "gray50") +
+                    ggplot2::geom_errorbar(ggplot2::aes(xmin = Lower, xmax = Upper), width = 0.2, linewidth = 0.8, color = "#2B5C8F") +
+                    ggplot2::geom_point(size = 3.5, color = "#D95F02") +
+                    ggplot2::theme_minimal(base_size = 12) +
+                    ggplot2::labs(x = .("Effect size (Beta)"), y = .("Marker"))
             } else {
-                if (isTRUE(self$options$assocForestTrunc)) {
+                if (isTRUE(state$trunc)) {
                     min_or <- min(plot_df$OR, na.rm = TRUE)
                     max_or <- max(plot_df$OR, na.rm = TRUE)
                     
@@ -2257,55 +2600,55 @@ mSNPClass <- R6::R6Class(
                     df_right_trunc <- plot_df[!is.na(plot_df$Lower) & !is.na(plot_df$Upper) & plot_df$Lower >= lower_limit & plot_df$Upper > upper_limit, ]
                     df_both_trunc <- plot_df[!is.na(plot_df$Lower) & !is.na(plot_df$Upper) & plot_df$Lower < lower_limit & plot_df$Upper > upper_limit, ]
                     
-                    p <- ggplot(plot_df, aes(x = OR, y = Marker)) +
-                        geom_vline(xintercept = 1.0, linetype = "dashed", color = "gray50")
+                    p <- ggplot2::ggplot(plot_df, ggplot2::aes(x = OR, y = Marker)) +
+                        ggplot2::geom_vline(xintercept = 1.0, linetype = "dashed", color = "gray50")
                     
                     if (nrow(df_normal) > 0) {
-                        p <- p + geom_errorbarh(data = df_normal, aes(xmin = Lower, xmax = Upper), height = 0.2, size = 0.8, color = "#2B5C8F")
+                        p <- p + ggplot2::geom_errorbar(data = df_normal, ggplot2::aes(xmin = Lower, xmax = Upper), width = 0.2, linewidth = 0.8, color = "#2B5C8F")
                     }
                     
                     if (nrow(df_left_trunc) > 0) {
-                        p <- p + geom_segment(data = df_left_trunc, aes(x = Upper, xend = lower_limit, y = Marker, yend = Marker),
-                                              arrow = arrow(length = unit(0.1, "inches"), type = "closed", ends = "last"), size = 0.8, color = "#2B5C8F") +
-                                 geom_errorbarh(data = df_left_trunc, aes(xmin = Upper, xmax = Upper), height = 0.2, size = 0.8, color = "#2B5C8F")
+                        p <- p + ggplot2::geom_segment(data = df_left_trunc, ggplot2::aes(x = Upper, xend = lower_limit, y = Marker, yend = Marker),
+                                              arrow = ggplot2::arrow(length = ggplot2::unit(0.1, "inches"), type = "closed", ends = "last"), linewidth = 0.8, color = "#2B5C8F") +
+                                 ggplot2::geom_errorbar(data = df_left_trunc, ggplot2::aes(xmin = Upper, xmax = Upper), width = 0.2, linewidth = 0.8, color = "#2B5C8F")
                     }
                     
                     if (nrow(df_right_trunc) > 0) {
-                        p <- p + geom_segment(data = df_right_trunc, aes(x = Lower, xend = upper_limit, y = Marker, yend = Marker),
-                                              arrow = arrow(length = unit(0.1, "inches"), type = "closed", ends = "last"), size = 0.8, color = "#2B5C8F") +
-                                 geom_errorbarh(data = df_right_trunc, aes(xmin = Lower, xmax = Lower), height = 0.2, size = 0.8, color = "#2B5C8F")
+                        p <- p + ggplot2::geom_segment(data = df_right_trunc, ggplot2::aes(x = Lower, xend = upper_limit, y = Marker, yend = Marker),
+                                              arrow = ggplot2::arrow(length = ggplot2::unit(0.1, "inches"), type = "closed", ends = "last"), linewidth = 0.8, color = "#2B5C8F") +
+                                 ggplot2::geom_errorbar(data = df_right_trunc, ggplot2::aes(xmin = Lower, xmax = Lower), width = 0.2, linewidth = 0.8, color = "#2B5C8F")
                     }
                     
                     if (nrow(df_both_trunc) > 0) {
-                        p <- p + geom_segment(data = df_both_trunc, aes(x = lower_limit, xend = upper_limit, y = Marker, yend = Marker),
-                                              arrow = arrow(length = unit(0.1, "inches"), type = "closed", ends = "both"), size = 0.8, color = "#2B5C8F")
+                        p <- p + ggplot2::geom_segment(data = df_both_trunc, ggplot2::aes(x = lower_limit, xend = upper_limit, y = Marker, yend = Marker),
+                                              arrow = ggplot2::arrow(length = ggplot2::unit(0.1, "inches"), type = "closed", ends = "both"), linewidth = 0.8, color = "#2B5C8F")
                     }
                     
-                    p <- p + geom_point(size = 3.5, color = "#D95F02") +
-                        scale_x_log10(limits = c(lower_limit, upper_limit), labels = function(x) sapply(x, function(val) if (is.na(val)) "" else format(val, scientific = FALSE, trim = TRUE))) +
-                        theme_minimal(base_size = 12) +
-                        labs(x = .("Odds Ratio (log scale)"), y = .("Marker"))
+                    p <- p + ggplot2::geom_point(size = 3.5, color = "#D95F02") +
+                        ggplot2::scale_x_log10(limits = c(lower_limit, upper_limit), labels = function(x) sapply(x, function(val) if (is.na(val)) "" else format(val, scientific = FALSE, trim = TRUE))) +
+                        ggplot2::theme_minimal(base_size = 12) +
+                        ggplot2::labs(x = .("Odds Ratio (log scale)"), y = .("Marker"))
                 } else {
-                    p <- ggplot(plot_df, aes(x = OR, y = Marker)) +
-                        geom_vline(xintercept = 1.0, linetype = "dashed", color = "gray50") +
-                        geom_errorbarh(aes(xmin = Lower, xmax = Upper), height = 0.2, size = 0.8, color = "#2B5C8F") +
-                        geom_point(size = 3.5, color = "#D95F02") +
-                        scale_x_log10(labels = function(x) sapply(x, function(val) if (is.na(val)) "" else format(val, scientific = FALSE, trim = TRUE))) +
-                        theme_minimal(base_size = 12) +
-                        labs(x = .("Odds Ratio (log scale)"), y = .("Marker"))
+                    p <- ggplot2::ggplot(plot_df, ggplot2::aes(x = OR, y = Marker)) +
+                        ggplot2::geom_vline(xintercept = 1.0, linetype = "dashed", color = "gray50") +
+                        ggplot2::geom_errorbar(ggplot2::aes(xmin = Lower, xmax = Upper), width = 0.2, linewidth = 0.8, color = "#2B5C8F") +
+                        ggplot2::geom_point(size = 3.5, color = "#D95F02") +
+                        ggplot2::scale_x_log10(labels = function(x) sapply(x, function(val) if (is.na(val)) "" else format(val, scientific = FALSE, trim = TRUE))) +
+                        ggplot2::theme_minimal(base_size = 12) +
+                        ggplot2::labs(x = .("Odds Ratio (log scale)"), y = .("Marker"))
                 }
             }
                 
-            if (self$options$geneticModel == "all") {
-                p <- p + facet_wrap(~ Model, ncol = 2)
+            if (state$geneticModel == "all") {
+                p <- p + ggplot2::facet_wrap(~ Model, ncol = 2)
             } else {
-                model_title <- switch(self$options$geneticModel,
+                model_title <- switch(state$geneticModel,
                                       "codominant" = .("Codominant"),
                                       "dominant" = .("Dominant"),
                                       "recessive" = .("Recessive"),
                                       "overdominant" = .("Overdominant"),
                                       "log-additive" = .("Log-additive"))
-                p <- p + labs(title = paste(.("Genetic model:"), model_title))
+                p <- p + ggplot2::labs(title = paste0(.("Genetic model:"), " ", model_title))
             }
             
             print(p)
@@ -2313,243 +2656,117 @@ mSNPClass <- R6::R6Class(
         },
         
         .plotMDRHeatmap = function(image, ...) {
-            if (length(self$options$vars) == 0 || is.null(self$options$outcome)) return(FALSE)
+            state <- image$state
+            if (is.null(state) || is.null(state$plot_df) || nrow(state$plot_df) == 0) return(FALSE)
             
-            # Find the best 2-way model
-            best_2way_row <- private$g_mdr_results[["2"]]
-            if (is.null(best_2way_row) || is.na(best_2way_row$combination)) return(FALSE)
+            plot_df <- state$plot_df
+            comb_snps <- state$comb_snps
+            geno1 <- state$geno1
+            geno2 <- state$geno2
             
-            # Parse SNP names
-            combination <- best_2way_row$combination
-            comb_snps <- unlist(strsplit(combination, " * ", fixed=TRUE))
-            if (length(comb_snps) != 2) return(FALSE)
-            
-            # Reconstruct counts in dataset
-            outcome_col <- self$options$outcome
-            outcome_var <- private$g_data[[outcome_col]]
-            levels_out <- levels(outcome_var)
-            if (length(levels_out) < 2) return(FALSE)
-            
-            case_level <- levels_out[2]
-            control_level <- levels_out[1]
-            
-            df <- private$g_data
-            df$outcome_mdr <- ifelse(df[[outcome_col]] == case_level, "Case", "Control")
-            complete_cases <- complete.cases(df[, c(comb_snps, "outcome_mdr")])
-            df_comp <- df[complete_cases, ]
-            
-            total_cases <- sum(df_comp$outcome_mdr == "Case")
-            total_ctrls <- sum(df_comp$outcome_mdr == "Control")
-            threshold <- total_cases / total_ctrls
-            
-            # Genotypes grids
-            g1 <- private$g_classified[[comb_snps[1]]][complete_cases]
-            g2 <- private$g_classified[[comb_snps[2]]][complete_cases]
-            
-            major1 <- private$g_alleles[[comb_snps[1]]]$major
-            minor1 <- private$g_alleles[[comb_snps[1]]]$minor
-            geno1 <- c(paste0(major1, major1), paste0(major1, minor1), paste0(minor1, minor1))
-            
-            major2 <- private$g_alleles[[comb_snps[2]]]$major
-            minor2 <- private$g_alleles[[comb_snps[2]]]$minor
-            geno2 <- c(paste0(major2, major2), paste0(major2, minor2), paste0(minor2, minor2))
-            
-            grid_df <- expand.grid(
-                G1 = c("AA", "AB", "BB"),
-                G2 = c("AA", "AB", "BB")
-            )
-            
-            plot_list <- list()
-            for (r in 1:nrow(grid_df)) {
-                val1 <- grid_df$G1[r]
-                val2 <- grid_df$G2[r]
-                
-                match_idx <- (g1 == val1) & (g2 == val2)
-                cases <- sum(match_idx & df_comp$outcome_mdr == "Case")
-                controls <- sum(match_idx & df_comp$outcome_mdr == "Control")
-                
-                ratio <- if (controls > 0) cases / controls else if (cases > 0) Inf else 0
-                risk <- if (ratio >= threshold) "High" else "Low"
-                
-                cases_lbl <- .("Ca")
-                ctrls_lbl <- .("Co")
-                plot_list[[r]] <- data.frame(
-                    SNP1 = val1,
-                    SNP2 = val2,
-                    Cases = cases,
-                    Controls = controls,
-                    Ratio = ratio,
-                    Risk = risk,
-                    Label = paste0(cases_lbl, ":", cases, "\n", ctrls_lbl, ":", controls)
-                )
-            }
-            plot_df <- do.call(rbind, plot_list)
-            
-            p <- ggplot(plot_df, aes(x = SNP1, y = SNP2, fill = Risk)) +
-                geom_tile(color = "black", size = 0.5) +
-                geom_text(aes(label = Label), size = 4.5, color = "black", fontface = "bold") +
-                scale_x_discrete(labels = c("AA" = geno1[1], "AB" = geno1[2], "BB" = geno1[3])) +
-                scale_y_discrete(labels = c("AA" = geno2[1], "AB" = geno2[2], "BB" = geno2[3])) +
-                scale_fill_manual(values = c("High" = "#FF8C8C", "Low" = "#8CCEFF"),
+            p <- ggplot2::ggplot(plot_df, ggplot2::aes(x = SNP1, y = SNP2, fill = Risk)) +
+                ggplot2::geom_tile(color = "black", linewidth = 0.5) +
+                ggplot2::geom_text(ggplot2::aes(label = Label), size = 4.5, color = "black", fontface = "bold") +
+                ggplot2::scale_x_discrete(labels = c("AA" = geno1[1], "AB" = geno1[2], "BB" = geno1[3])) +
+                ggplot2::scale_y_discrete(labels = c("AA" = geno2[1], "AB" = geno2[2], "BB" = geno2[3])) +
+                ggplot2::scale_fill_manual(values = c("High" = "#FF8C8C", "Low" = "#8CCEFF"),
                                   labels = c("High" = .("High Risk"), "Low" = .("Low Risk"))) +
-                theme_minimal(base_size = 12) +
-                theme(
+                ggplot2::theme_minimal(base_size = 12) +
+                ggplot2::theme(
                     legend.position = "bottom",
-                    legend.text = element_text(size = 12),
-                    legend.title = element_text(size = 12),
-                    axis.title.x = element_text(size = 14, face = "bold"),
-                    axis.title.y = element_text(size = 14, face = "bold"),
-                    axis.text.x = element_text(size = 12, face = "bold"),
-                    axis.text.y = element_text(size = 12, face = "bold")
+                    legend.text = ggplot2::element_text(size = 12),
+                    legend.title = ggplot2::element_text(size = 12),
+                    axis.title.x = ggplot2::element_text(size = 14, face = "bold"),
+                    axis.title.y = ggplot2::element_text(size = 14, face = "bold"),
+                    axis.text.x = ggplot2::element_text(size = 12, face = "bold"),
+                    axis.text.y = ggplot2::element_text(size = 12, face = "bold")
                 ) +
-                labs(x = comb_snps[1], y = comb_snps[2], fill = .("Risk Class"))
+                ggplot2::labs(x = comb_snps[1], y = comb_snps[2], fill = .("Risk Class"))
                 
             print(p)
             TRUE
         },
         
         .plotMDRBar = function(image, ...) {
-            plot_df <- data.frame()
-            train_lbl <- .("Training")
-            test_lbl <- .("Testing")
+            state <- image$state
+            if (is.null(state) || is.null(state$plot_df) || nrow(state$plot_df) == 0) return(FALSE)
             
-            max_order <- as.integer(self$options$mdrOrder)
+            plot_df <- state$plot_df
+            max_order <- if (!is.null(state$max_order)) state$max_order else 2
+            train_lbl <- if (!is.null(state$train_lbl)) state$train_lbl else .("Training")
+            test_lbl <- if (!is.null(state$test_lbl)) state$test_lbl else .("Testing")
+            
             plot_width <- max(300, 200 + max_order * 100)
             image$setSize(width = plot_width, height = 450)
             
-            for (ord in 1:max_order) {
-                row <- private$g_mdr_results[[as.character(ord)]]
-                if (!is.null(row) && !is.na(row$train_ba)) {
-                    plot_df <- rbind(plot_df, data.frame(
-                        Order = factor(ord),
-                        Type = train_lbl,
-                        BA = row$train_ba
-                    ))
-                    plot_df <- rbind(plot_df, data.frame(
-                        Order = factor(ord),
-                        Type = test_lbl,
-                        BA = row$test_ba
-                    ))
-                }
-            }
-            
-            if (nrow(plot_df) == 0) return(FALSE)
-            
             fill_colors <- setNames(c("#2B5C8F", "#D95F02"), c(train_lbl, test_lbl))
             
-            p <- ggplot(plot_df, aes(x = Order, y = BA, fill = Type)) +
-                geom_bar(stat = "identity", position = "dodge", color = "black", size = 0.2) +
-                scale_fill_manual(values = fill_colors) +
-                coord_cartesian(ylim = c(0.4, 1.0)) +
-                theme_minimal(base_size = 12) +
-                theme(legend.position = "bottom",
-                      legend.text = element_text(size = 12),
-                      legend.title = element_text(size = 12),
-                      axis.title.x = element_text(size = 14, face = "bold"),
-                      axis.title.y = element_text(size = 14, face = "bold"),
-                      axis.text.x = element_text(size = 12, face = "bold"),
-                      axis.text.y = element_text(size = 12, face = "bold")) +
-                labs(x = .("Interaction Order"), y = .("Balanced Accuracy (BA)"), fill = NULL)
+            p <- ggplot2::ggplot(plot_df, ggplot2::aes(x = Order, y = BA, fill = Type)) +
+                ggplot2::geom_bar(stat = "identity", position = "dodge", color = "black", linewidth = 0.2) +
+                ggplot2::scale_fill_manual(values = fill_colors) +
+                ggplot2::coord_cartesian(ylim = c(0.4, 1.0)) +
+                ggplot2::theme_minimal(base_size = 12) +
+                ggplot2::theme(legend.position = "bottom",
+                      legend.text = ggplot2::element_text(size = 12),
+                      legend.title = ggplot2::element_text(size = 12),
+                      axis.title.x = ggplot2::element_text(size = 14, face = "bold"),
+                      axis.title.y = ggplot2::element_text(size = 14, face = "bold"),
+                      axis.text.x = ggplot2::element_text(size = 12, face = "bold"),
+                      axis.text.y = ggplot2::element_text(size = 12, face = "bold")) +
+                ggplot2::labs(x = .("Interaction Order"), y = .("Balanced Accuracy (BA)"), fill = NULL)
                 
             print(p)
             TRUE
         },
         
         .plotLDHeatmap = function(image, ...) {
-            snps <- self$options$vars
-            call_rate_thr <- switch(self$options$qcCallRate, "0.90" = 0.90, "0.95" = 0.95, "0.98" = 0.98, "none" = 0)
-            maf_thr <- switch(self$options$qcMaf, "0.01" = 0.01, "0.05" = 0.05, "0.10" = 0.10, "none" = 0)
-            hwe_thr <- switch(self$options$qcHwe, "0.05" = 0.05, "0.01" = 0.01, "0.001" = 0.001, "0.0001" = 0.0001, "none" = 0)
-            if (call_rate_thr > 0 || maf_thr > 0 || hwe_thr > 0) {
-                snps <- Filter(function(m) private$g_qc_status[[m]] == "Passed", snps)
-            }
-            if (length(snps) < 2) return(FALSE)
+            state <- image$state
+            if (is.null(state) || is.null(state$ld_df) || nrow(state$ld_df) == 0) return(FALSE)
             
-            # Parse data
-            ld_df <- data.frame()
-            for (row_key in names(private$g_ld_results)) {
-                row <- private$g_ld_results[[row_key]]
-                if (!is.null(row) && !is.na(row$r2)) {
-                    r2_val <- as.numeric(row$r2)
-                    dp_val <- as.numeric(row$d_prime)
-                    metric_val <- if (self$options$ldMetric == "r2") r2_val else dp_val
-                    if (row$marker1 %in% snps && row$marker2 %in% snps) {
-                        ld_df <- rbind(ld_df, data.frame(
-                            Marker1 = factor(row$marker1, levels=snps),
-                            Marker2 = factor(row$marker2, levels=snps),
-                            Value = metric_val
-                        ))
-                    }
-                }
-            }
-            
-            if (nrow(ld_df) == 0) return(FALSE)
-            
-            metric_title <- if (self$options$ldMetric == "r2") "r²" else "D'"
-            
-            n_markers <- length(snps)
+            ld_df <- state$ld_df
+            metric_title <- state$metric_title
+            n_markers <- state$n_markers
             font_size <- if (n_markers <= 10) 5 else if (n_markers <= 20) 4 else 3
             
-            p <- ggplot(ld_df, aes(x = Marker1, y = Marker2, fill = Value)) +
-                geom_tile(color = "gray80", size = 0.5)
+            p <- ggplot2::ggplot(ld_df, ggplot2::aes(x = Marker1, y = Marker2, fill = Value)) +
+                ggplot2::geom_tile(color = "gray80", linewidth = 0.5)
                 
             if (n_markers <= 25) {
-                p <- p + geom_text(aes(label = round(Value * 100)), color = "black", size = font_size, fontface = "bold")
+                p <- p + ggplot2::geom_text(ggplot2::aes(label = round(Value * 100)), color = "black", size = font_size, fontface = "bold")
             }
             
-            p <- p + scale_fill_gradient(low = "#FFFFFF", high = "#E41A1C", limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
-                theme_minimal(base_size = 12) +
-                theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 11),
-                      axis.text.y = element_text(size = 11),
-                      panel.grid = element_blank(),
-                      legend.text = element_text(size = 11),
-                      legend.title = element_text(size = 12)) +
-                labs(x = "", y = "", fill = metric_title)
+            p <- p + ggplot2::scale_fill_gradient(low = "#FFFFFF", high = "#E41A1C", limits = c(0, 1), breaks = seq(0, 1, 0.2)) +
+                ggplot2::theme_minimal(base_size = 12) +
+                ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 11),
+                      axis.text.y = ggplot2::element_text(size = 11),
+                      panel.grid = ggplot2::element_blank(),
+                      legend.text = ggplot2::element_text(size = 11),
+                      legend.title = ggplot2::element_text(size = 12)) +
+                ggplot2::labs(x = "", y = "", fill = metric_title)
                 
             print(p)
             TRUE
         },
         
         .plotManhattan = function(image, ...) {
-            if (length(self$options$vars) == 0 || is.null(self$options$outcome)) return(FALSE)
+            state <- image$state
+            if (is.null(state) || is.null(state$plot_df) || nrow(state$plot_df) == 0) return(FALSE)
             
-            plot_df <- data.frame()
-            for (marker in self$options$vars) {
-                # Find association results for this marker
-                marker_pvals <- numeric()
-                for (row_key in names(private$g_assoc_results)) {
-                    row <- private$g_assoc_results[[row_key]]
-                    if (!is.null(row) && row$marker == marker && !is.na(row$p_val)) {
-                        marker_pvals <- c(marker_pvals, row$p_val)
-                    }
-                }
-                if (length(marker_pvals) > 0) {
-                    min_p <- min(marker_pvals)
-                    plot_df <- rbind(plot_df, data.frame(
-                        Marker = marker,
-                        PValue = min_p,
-                        LogP = -log10(min_p)
-                    ))
-                }
-            }
+            plot_df <- state$plot_df
+            bonf_p <- state$bonf_p
+            vars <- state$vars
+            plot_df$Marker <- factor(plot_df$Marker, levels = vars)
             
-            if (nrow(plot_df) == 0) return(FALSE)
-            
-            plot_df$Marker <- factor(plot_df$Marker, levels = self$options$vars)
-            
-            n_tests <- length(self$options$vars)
-            bonf_p <- 0.05 / max(1, n_tests)
-            
-            p <- ggplot(plot_df, aes(x = Marker, y = LogP)) +
-                geom_bar(stat = "identity", fill = "#2B5C8F", width = 0.5, color = "black", size = 0.2) +
-                geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "blue", size = 0.8) +
-                geom_hline(yintercept = -log10(bonf_p), linetype = "dashed", color = "red", size = 0.8) +
-                theme_minimal(base_size = 12) +
-                theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 11, face = "bold"),
-                      axis.text.y = element_text(size = 11),
-                      axis.title.x = element_text(size = 12, face = "bold"),
-                      axis.title.y = element_text(size = 12, face = "bold")) +
-                labs(x = .("Marker"), y = .("-log10(p-value)"))
+            p <- ggplot2::ggplot(plot_df, ggplot2::aes(x = Marker, y = LogP)) +
+                ggplot2::geom_bar(stat = "identity", fill = "#2B5C8F", width = 0.5, color = "black", linewidth = 0.2) +
+                ggplot2::geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "blue", linewidth = 0.8) +
+                ggplot2::geom_hline(yintercept = -log10(bonf_p), linetype = "dashed", color = "red", linewidth = 0.8) +
+                ggplot2::theme_minimal(base_size = 12) +
+                ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 11, face = "bold"),
+                      axis.text.y = ggplot2::element_text(size = 11),
+                      axis.title.x = ggplot2::element_text(size = 12, face = "bold"),
+                      axis.title.y = ggplot2::element_text(size = 12, face = "bold")) +
+                ggplot2::labs(x = .("Marker"), y = .("-log10(p-value)"))
             
             print(p)
             TRUE

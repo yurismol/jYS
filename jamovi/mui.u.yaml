@@ -3,8 +3,6 @@ name: mUI
 jus: '3.0'
 stage: 0
 compilerMode: tame
-events:
-  update: ./mui.events::update
 children:
   - type: VariableSupplier
     persistentItems: false
@@ -25,7 +23,7 @@ children:
             isTarget: true
           - type: LevelSelector
             name: refval
-            label: '0 = '
+            label: Reference level
             enable: ({return ui['ref'].value()!==null;})
   - type: CollapseBox
     label: Intervals Estimation

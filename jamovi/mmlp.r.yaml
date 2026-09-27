@@ -5,11 +5,6 @@ jrs:   '1.1'
 refs: [jys, rip, bish, adam]
 
 items:
-    - name: text
-      title: Conditions
-      type: Html
-      visible: false
-
     - name: infoTable
       title: Model Information & Accuracy
       type: Table
@@ -299,7 +294,25 @@ items:
           width:  500
           height: 500
           renderFun: .rocPlot
-          requiresData: true
+          clearWith:
+              - dep
+              - covs
+              - factors
+              - hidden_structure
+              - activation
+              - out_activation
+              - decay
+              - maxit
+              - rang
+              - partition
+              - val_split
+              - cv_folds
+              - roc_x
+              - roc_unit
+              - multiclass_roc_type
+              - palBrewer
+              - show_roc_cut
+              - show_roc_table
       clearWith:
           - dep
           - covs

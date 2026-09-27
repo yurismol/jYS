@@ -278,16 +278,16 @@ refs:
         pages: 187-202
         url: https://doi.org/10.1111/j.2517-6161.1972.tb00899.x
 
-    heagerty2000:
+    denz2023:
         type: 'article'
-        author: Heagerty, P. J., Lumley, T., Pepe, M. S.
-        year: 2000
-        title: "Time-dependent ROC curves for censored survival data and a diagnostic marker"
-        publisher: Biometrics
-        volume: 56
-        issue: 2
-        pages: 337-344
-        url: https://doi.org/10.1111/j.0006-341X.2000.00337.x
+        author: Denz, R., Klaaßen-Mielke, R., Timmesfeld, N.
+        year: 2023
+        title: "A comparison of different methods to adjust survival curves for confounders"
+        publisher: "Statistics in Medicine"
+        volume: 42
+        issue: 10
+        pages: 1461–1479
+        url: https://doi.org/10.1002/sim.9681
 
     harrell2015:
         type: 'book'
@@ -372,4 +372,46 @@ refs:
         volume: 352
         pages: i6
         url: https://doi.org/10.1136/bmj.i6
+
+    aalen1978:
+        type: 'article'
+        author: Aalen, O. O., & Johansen, S.
+        year: 1978
+        title: "An empirical transition matrix for non-homogeneous Markov chains based on censored observations"
+        publisher: "Scandinavian Journal of Statistics"
+        volume: 5
+        issue: 3
+        pages: 141–150
+        url: https://www.jstor.org/stable/4615704
+
+    gray1988:
+        type: 'article'
+        author: Gray, R. J.
+        year: 1988
+        title: "A class of K-sample tests for comparing the cumulative incidence of a competing risk"
+        publisher: "Annals of Statistics"
+        volume: 16
+        issue: 3
+        pages: 1141–1154
+        url: https://doi.org/10.1214/aos/1176350951
+
+    finegray1999:
+        type: 'article'
+        author: Fine, J. P., & Gray, R. J.
+        year: 1999
+        title: "A proportional hazards model for the subdistribution of a competing risk"
+        publisher: "Journal of the American Statistical Association"
+        volume: 94
+        issue: 446
+        pages: 496–509
+        url: https://doi.org/10.1080/01621459.1999.10474144
+
+    therneau2000:
+        type: 'book'
+        author: Therneau, T. M., & Grambsch, P. M.
+        year: 2000
+        title: "Modeling Survival Data: Extending the Cox Model"
+        publisher: "Springer, New York"
+        url: https://doi.org/10.1007/978-1-4757-3294-8
+
 

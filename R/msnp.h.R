@@ -28,6 +28,7 @@ mSNPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             barPlot = FALSE,
             hweSplitOutcome = FALSE,
             gender = NULL,
+            femaleLevel = NULL,
             xLinked = FALSE,
             assocEnable = FALSE,
             geneticModel = "all",
@@ -189,6 +190,10 @@ mSNPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "nominal"),
                 permitted=list(
                     "factor"))
+            private$..femaleLevel <- jmvcore::OptionLevel$new(
+                "femaleLevel",
+                femaleLevel,
+                variable="(gender)")
             private$..xLinked <- jmvcore::OptionBool$new(
                 "xLinked",
                 xLinked,
@@ -359,6 +364,7 @@ mSNPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..barPlot)
             self$.addOption(private$..hweSplitOutcome)
             self$.addOption(private$..gender)
+            self$.addOption(private$..femaleLevel)
             self$.addOption(private$..xLinked)
             self$.addOption(private$..assocEnable)
             self$.addOption(private$..geneticModel)
@@ -409,6 +415,7 @@ mSNPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         barPlot = function() private$..barPlot$value,
         hweSplitOutcome = function() private$..hweSplitOutcome$value,
         gender = function() private$..gender$value,
+        femaleLevel = function() private$..femaleLevel$value,
         xLinked = function() private$..xLinked$value,
         assocEnable = function() private$..assocEnable$value,
         geneticModel = function() private$..geneticModel$value,
@@ -458,6 +465,7 @@ mSNPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..barPlot = NA,
         ..hweSplitOutcome = NA,
         ..gender = NA,
+        ..femaleLevel = NA,
         ..xLinked = NA,
         ..assocEnable = NA,
         ..geneticModel = NA,
@@ -707,8 +715,8 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             width=600,
                             height=500,
                             renderFun=".plotTernary",
-                            requiresData=TRUE,
                             visible="(ternaryPlot)",
+                            requiresData=TRUE,
                             clearWith=list(
                                 "vars",
                                 "group",
@@ -729,8 +737,8 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             width=550,
                             height=450,
                             renderFun=".plotQQ",
-                            requiresData=TRUE,
                             visible="(qqPlot)",
+                            requiresData=TRUE,
                             clearWith=list(
                                 "vars",
                                 "group",
@@ -749,8 +757,8 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             width=650,
                             height=450,
                             renderFun=".plotBar",
-                            requiresData=TRUE,
                             visible="(barPlot)",
+                            requiresData=TRUE,
                             clearWith=list(
                                 "vars",
                                 "group",
@@ -836,8 +844,8 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             width=650,
                             height=500,
                             renderFun=".plotForest",
-                            requiresData=TRUE,
                             visible="(assocEnable && assocForest)",
+                            requiresData=TRUE,
                             clearWith=list(
                                 "vars",
                                 "outcome",
@@ -855,8 +863,8 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             width=650,
                             height=400,
                             renderFun=".plotManhattan",
-                            requiresData=TRUE,
                             visible="(assocEnable && manhattanPlot)",
+                            requiresData=TRUE,
                             clearWith=list(
                                 "vars",
                                 "outcome",
@@ -1062,8 +1070,8 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             width=400,
                             height=340,
                             renderFun=".plotMDRHeatmap",
-                            requiresData=TRUE,
                             visible="(mdrEnable && mdrHeatmap)",
+                            requiresData=TRUE,
                             clearWith=list(
                                 "vars",
                                 "outcome",
@@ -1080,8 +1088,8 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             width=400,
                             height=450,
                             renderFun=".plotMDRBar",
-                            requiresData=TRUE,
                             visible="(mdrEnable && mdrBarPlot)",
+                            requiresData=TRUE,
                             clearWith=list(
                                 "vars",
                                 "outcome",
@@ -1147,8 +1155,8 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             width=600,
                             height=550,
                             renderFun=".plotLDHeatmap",
-                            requiresData=TRUE,
                             visible="(ldEnable && ldHeatmap)",
+                            requiresData=TRUE,
                             clearWith=list(
                                 "vars",
                                 "ldMetric",
@@ -1207,6 +1215,7 @@ mSNPBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param barPlot .
 #' @param hweSplitOutcome .
 #' @param gender .
+#' @param femaleLevel .
 #' @param xLinked .
 #' @param assocEnable .
 #' @param geneticModel .
@@ -1279,6 +1288,7 @@ mSNP <- function(
     barPlot = FALSE,
     hweSplitOutcome = FALSE,
     gender,
+    femaleLevel,
     xLinked = FALSE,
     assocEnable = FALSE,
     geneticModel = "all",
@@ -1349,6 +1359,7 @@ mSNP <- function(
         barPlot = barPlot,
         hweSplitOutcome = hweSplitOutcome,
         gender = gender,
+        femaleLevel = femaleLevel,
         xLinked = xLinked,
         assocEnable = assocEnable,
         geneticModel = geneticModel,

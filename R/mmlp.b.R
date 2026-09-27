@@ -3,7 +3,227 @@
 mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
     "mMLPClass",
     inherit = mMLPBase,
+    public = list(
+        .savePart = function(path, part, ...) {
+            smart_lookup <- function(results, p_str, options = NULL) {
+                if (is.null(results) || is.null(p_str)) return(NULL)
+                if (length(p_str) > 1) p_str <- paste(p_str, collapse = "/")
+                if (!nzchar(p_str)) return(NULL)
+
+                covs <- tryCatch(options$covariates, error = function(e) NULL)
+                group_var <- tryCatch(options$group, error = function(e) NULL)
+                vars <- tryCatch(options$vars, error = function(e) NULL)
+
+                find_child <- function(curr, seg) {
+                    if (is.null(curr) || is.null(seg) || !nzchar(seg)) return(NULL)
+                    clean <- gsub('^["\']|["\']$', '', seg)
+
+                    if (inherits(curr, 'Array')) {
+                        nxt <- tryCatch(curr$get(key = clean), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+
+                        nxt <- tryCatch(curr$get(name = paste0('"', clean, '"')), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+                        nxt <- tryCatch(curr$get(name = seg), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+                        nxt <- tryCatch(curr$get(name = clean), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+
+                        items <- tryCatch(curr$items, error = function(e) NULL)
+                        if (!is.null(items) && length(items) > 0) {
+                            # 1. Exact match by key, name, or title
+                            for (it in items) {
+                                it_key <- tryCatch(it$key, error = function(e) NULL)
+                                it_name <- tryCatch(it$name, error = function(e) NULL)
+                                it_title <- tryCatch(it$title, error = function(e) NULL)
+                                if (identical(it_key, clean) || identical(it_key, seg) ||
+                                    identical(it_name, clean) || identical(it_name, seg) ||
+                                    identical(it_title, clean) || identical(it_title, seg)) {
+                                    return(it)
+                                }
+                            }
+
+                            # 2. Match covariate by index if clean is in covs or group_var
+                            if (!is.null(covs) && clean %in% covs) {
+                                c_idx <- which(covs == clean)
+                                target_key <- paste0("..cov_", c_idx, "_")
+                                for (it in items) {
+                                    if (identical(it$key, target_key) || grepl(paste0("^\\.\\.cov_", c_idx), as.character(it$key))) {
+                                        return(it)
+                                    }
+                                }
+                            }
+                            if (!is.null(group_var) && (clean == group_var || grepl(paste0("^", clean), group_var))) {
+                                for (it in items) {
+                                    if (identical(it$key, "..group") || grepl("^\\.\\.group", as.character(it$key))) {
+                                        return(it)
+                                    }
+                                }
+                            }
+
+                            # 3. Match suffix of title after dash
+                            for (it in items) {
+                                it_title <- tryCatch(as.character(it$title), error = function(e) "")
+                                title_var <- trimws(sub(".*[\u2013\u2014-]\\s*", "", it_title))
+                                title_var_clean <- gsub("[_()]", "", title_var)
+                                clean_nopunct <- gsub("[_()]", "", clean)
+                                if (nzchar(title_var) && (identical(title_var, clean) || identical(title_var_clean, clean_nopunct))) {
+                                    return(it)
+                                }
+                            }
+
+                            # 4. Word boundary match in title
+                            for (it in items) {
+                                it_title <- tryCatch(as.character(it$title), error = function(e) "")
+                                pattern <- paste0("(^|[^a-zA-Z0-9_])", clean, "([^a-zA-Z0-9_]|$)")
+                                if (grepl(pattern, it_title)) {
+                                    return(it)
+                                }
+                            }
+
+                            # 5. Check integer index
+                            idx <- suppressWarnings(as.integer(clean))
+                            if (!is.na(idx)) {
+                                items_len <- length(items)
+                                if (idx == 0 && items_len >= 1) return(items[[1]])
+                                if (idx >= 1 && idx <= items_len) return(items[[idx]])
+                            }
+                        }
+                    }
+
+                    nxt <- tryCatch(curr$.lookup(seg), error = function(e) NULL)
+                    if (!is.null(nxt)) return(nxt)
+                    if (seg != clean) {
+                        nxt <- tryCatch(curr$.lookup(clean), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+                    }
+
+                    if (inherits(curr, 'Group')) {
+                        nxt <- tryCatch(curr$get(clean), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+                        nxt <- tryCatch(curr$get(seg), error = function(e) NULL)
+                        if (!is.null(nxt)) return(nxt)
+                    }
+
+                    items <- tryCatch(curr$items, error = function(e) NULL)
+                    if (!is.null(items) && length(items) > 0) {
+                        if (clean %in% names(items)) return(items[[clean]])
+                        if (seg %in% names(items)) return(items[[seg]])
+                        for (it in items) {
+                            it_name <- tryCatch(it$name, error = function(e) NULL)
+                            it_key <- tryCatch(it$key, error = function(e) NULL)
+                            it_title <- tryCatch(it$title, error = function(e) NULL)
+                            if (identical(it_name, clean) || identical(it_name, seg) ||
+                                identical(it_key, clean) || identical(it_key, seg)) {
+                                return(it)
+                            }
+                        }
+                    }
+                    NULL
+                }
+
+                traverse <- function(node, segs) {
+                    if (is.null(node) || length(segs) == 0) return(node)
+                    child <- find_child(node, segs[1])
+                    if (!is.null(child)) {
+                        return(traverse(child, segs[-1]))
+                    }
+                    NULL
+                }
+
+                search_recursive <- function(node, segs) {
+                    if (is.null(node)) return(NULL)
+                    res <- traverse(node, segs)
+                    if (!is.null(res)) return(res)
+
+                    items <- tryCatch(node$items, error = function(e) NULL)
+                    if (!is.null(items) && length(items) > 0) {
+                        for (child in items) {
+                            if (inherits(child, 'Group') || inherits(child, 'Array')) {
+                                res <- search_recursive(child, segs)
+                                if (!is.null(res)) return(res)
+                            }
+                        }
+                    }
+                    NULL
+                }
+
+                norm_p <- gsub('\\[[\'"]?([^\'"]+?)[\'"]?\\]', '/\\1', p_str)
+                parts <- strsplit(norm_p, '/+', perl = TRUE)[[1]]
+                parts <- parts[parts != ""]
+                if (length(parts) == 0) return(NULL)
+
+                # Strip analysisId or 'results' prefix if present
+                if (length(parts) > 1 && (parts[1] == "results" || !is.na(suppressWarnings(as.integer(parts[1]))))) {
+                    if (is.null(find_child(results, parts[1]))) {
+                        parts <- parts[-1]
+                    }
+                }
+
+                target <- search_recursive(results, parts)
+                if (inherits(target, 'Array') && length(target$items) > 0) {
+                    target <- target$items[[1]]
+                }
+                target
+            }
+
+            element <- smart_lookup(self$results, part, self$options)
+            if (is.null(element)) {
+                return(FALSE)
+            }
+
+            if (inherits(element, 'Array')) {
+                if (length(element$items) > 0) {
+                    element <- element$items[[1]]
+                } else {
+                    return(FALSE)
+                }
+            }
+
+            if (inherits(element, 'Image')) {
+                if (is.null(element$state) && !is.null(element$parent$state)) {
+                    parent_state <- element$parent$state
+                    if (!is.null(parent_state$zph)) {
+                        var_name <- element$key
+                        var_idx <- if (!is.null(var_name) && var_name %in% rownames(parent_state$zph$table)) {
+                            which(rownames(parent_state$zph$table) == var_name)
+                        } else 1
+                        element$setState(list(zph = parent_state$zph, var_idx = var_idx, var_name = var_name))
+                    } else if (!is.null(element$key) && !is.null(parent_state[[element$key]])) {
+                        element$setState(parent_state[[element$key]])
+                    } else if (is.list(parent_state) && length(parent_state) > 0) {
+                        element$setState(parent_state[[1]])
+                    }
+                }
+            }
+
+            if (element$requiresData && is.function(private$.ensureData)) {
+                private$.ensureData()
+            }
+            save_ok <- tryCatch({
+                element$saveAs(path, ...)
+                file.exists(path) && file.info(path)$size > 0
+            }, error = function(e) {
+                tryCatch({
+                    element$saveAs(path)
+                    file.exists(path) && file.info(path)$size > 0
+                }, error = function(e2) {
+                    FALSE
+                })
+            })
+            return(save_ok)
+        }
+    ),
     private = list(
+        .ensureData = function() {
+            if (is.null(private$.data) || nrow(private$.data) == 0) {
+                d <- tryCatch(self$readDataset(headerOnly = FALSE), error = function(e) NULL)
+                if (!is.null(d) && nrow(d) > 0)
+                    private$.data <- d
+            }
+            return(!is.null(private$.data) && nrow(private$.data) > 0)
+        },
+
         .init = function() {
             private$.initOutputs()
         },
@@ -29,15 +249,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             covs <- self$options$covs
             factors <- self$options$factors
 
-            if (is.null(dep)) {
-                self$results$text$setVisible(TRUE)
-                self$results$text$setContent(.("Please select a dependent variable (target)."))
-                return()
-            }
-
-            if (length(covs) == 0 && length(factors) == 0) {
-                self$results$text$setVisible(TRUE)
-                self$results$text$setContent(.("Please select at least one predictor variable (factor or covariate)."))
+            if (is.null(dep) || (length(covs) == 0 && length(factors) == 0)) {
                 return()
             }
 
@@ -46,18 +258,14 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             clean_data <- na.omit(self$data[, data_vars, drop=FALSE])
 
             if (nrow(clean_data) < 10) {
-                self$results$text$setVisible(TRUE)
-                self$results$text$setContent(.("The dataset has too few complete cases to train the neural network."))
-                return()
+                jmvcore::reject(.("The dataset has too few complete cases to train the neural network."))
             }
 
             y <- as.factor(clean_data[[dep]])
             y_levels <- levels(y)
 
             if (length(y_levels) < 2) {
-                self$results$text$setVisible(TRUE)
-                self$results$text$setContent(.("The dependent variable must have at least 2 levels."))
-                return()
+                jmvcore::reject(.("The dependent variable must have at least 2 levels."))
             }
 
             C <- length(y_levels)
@@ -97,9 +305,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             hidden_str <- self$options$hidden_structure
             hidden_sizes <- try(as.integer(trimws(unlist(strsplit(hidden_str, ",")))), silent = TRUE)
             if (inherits(hidden_sizes, "try-error") || any(is.na(hidden_sizes)) || length(hidden_sizes) == 0 || any(hidden_sizes <= 0)) {
-                self$results$text$setVisible(TRUE)
-                self$results$text$setContent(.("Invalid Hidden Layer Structure. Please enter comma-separated positive integers (e.g., 8 or 10,5)."))
-                return()
+                jmvcore::reject(.("Invalid Hidden Layer Structure. Please enter comma-separated positive integers (e.g., 8 or 10,5)."))
             }
 
             hidden_activation <- self$options$activation
@@ -124,9 +330,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             ), silent = TRUE)
 
             if (inherits(fit_full, "try-error")) {
-                self$results$text$setVisible(TRUE)
-                self$results$text$setContent(paste0(.("Error during neural network fitting:"), " ", fit_full))
-                return()
+                jmvcore::reject(jmvcore::format(.("Error during neural network fitting: {err}"), err = as.character(fit_full)))
             }
 
             # Helpers for predictions and accuracies
@@ -226,6 +430,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 cv_errors <- 0
                 
                 for (i in 1:cv_folds) {
+                    private$.checkpoint()
                     t_idx <- folds[[i]]
                     tr_idx <- setdiff(1:nrow(X_matrix), t_idx)
                     
@@ -441,6 +646,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 imp_values <- numeric(length(pred_vars))
                 
                 for (v_idx in seq_along(pred_vars)) {
+                    private$.checkpoint()
                     v_name <- pred_vars[v_idx]
                     shuffled_data <- clean_data
                     shuffled_data[[v_name]] <- sample(shuffled_data[[v_name]])
@@ -1100,376 +1306,16 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
         },
 
         .rocPlot = function(image, ggtheme, theme, ...) {
-            roc_data <- image$state
-            if (is.null(roc_data)) {
-                # Fallback to parent array's state
-                parent_state <- image$parent$state
-                if (!is.null(parent_state) && !is.null(image$key)) {
-                    roc_data <- parent_state[[image$key]]
-                }
-            }
-            if (is.null(roc_data)) return(FALSE)
-            if (!requireNamespace("pROC", quietly = TRUE)) return(FALSE)
-            
-            # Ensure serialization does not distort matrices
-            if (!is.null(roc_data$train_prob)) {
-                roc_data$train_prob <- as.matrix(as.data.frame(roc_data$train_prob))
-            }
-            if (!is.null(roc_data$val_prob)) {
-                roc_data$val_prob <- as.matrix(as.data.frame(roc_data$val_prob))
-            }
-            if (!is.null(roc_data$cv_prob)) {
-                roc_data$cv_prob <- as.matrix(as.data.frame(roc_data$cv_prob))
-            }
-            
-            result <- tryCatch({
-                roc_x <- roc_data$roc_x
-                roc_unit <- roc_data$roc_unit
-                partition <- roc_data$partition
-                is_pct <- roc_unit == "percent"
-                legacy_axes <- (roc_x == "1spec")
-                C <- roc_data$C
-                show_roc_cut <- isTRUE(roc_data$show_roc_cut)
-                
-                if (roc_data$type == "binary") {
-                    # ----------------------------------------------------
-                    # Binary Plotting Logic (C == 2)
-                    # ----------------------------------------------------
-                    y_val_bin <- if (!is.null(roc_data$y)) as.numeric(roc_data$y) else NULL
-                    train_prob_bin <- if (!is.null(roc_data$train_prob)) as.numeric(roc_data$train_prob) else NULL
-                    val_prob_bin <- if (!is.null(roc_data$val_prob)) as.numeric(roc_data$val_prob) else NULL
-                    val_y_bin <- if (!is.null(roc_data$val_y)) as.numeric(roc_data$val_y) else NULL
-                    cv_prob_bin <- if (!is.null(roc_data$cv_prob)) as.numeric(roc_data$cv_prob) else NULL
-                    cv_y_bin <- y_val_bin
-                    
-                    r_tr <- pROC::roc(y_val_bin, train_prob_bin, percent = is_pct, quiet = TRUE)
-                    cols <- c("#3366B2") # Training is always Blue
-                    if (self$options$palBrewer != "none") {
-                        cols <- RColorBrewer::brewer.pal(n=3, name=self$options$palBrewer)
-                    }
-                    active_cols <- c(cols[1])
-                    ltys <- c(1)         # Training is solid
-                    auc_tr_val <- as.numeric(pROC::auc(r_tr))
-                    auc_tr_str <- if (is_pct) paste0(round(auc_tr_val, 1), "%") else round(auc_tr_val, 3)
-                    leg_labels <- c(paste0(.("Training (AUC ="), " ", auc_tr_str, ")"))
-                    
-                    thres_pattern <- ifelse(is_pct, "%.2f (%.1f%%, %.1f%%)", "%.2f (%.3f, %.3f)")
-                    
-                    p <- pROC::plot.roc(r_tr, col=cols[1],
-                        main=.("ROC Analysis Comparison"), cex.main=1.3,
-                        percent=is_pct,
-                        cex.lab=1.5, cex.axis=1.3, lwd=3, lty=1,
-                        legacy.axes=legacy_axes,
-                        xlab=ifelse(is_pct, ifelse(legacy_axes, .("100 - Specificity (%)"), .("Specificity (%)")), ifelse(legacy_axes, .("1 - Specificity"), .("Specificity"))),
-                        ylab=ifelse(is_pct, .("Sensitivity (%)"), .("Sensitivity")),
-                        print.thres=show_roc_cut,
-                        print.thres.col=cols[1],
-                        print.thres.pch=19, print.thres.cex=1.3,
-                        print.thres.best.method="youden",
-                        print.thres.pattern=thres_pattern,
-                        grid=TRUE, add=FALSE
-                    )
-                    
-                    if (partition == "holdout" && !is.null(val_prob_bin)) {
-                        r_va <- pROC::roc(val_y_bin, val_prob_bin, percent = is_pct, quiet = TRUE)
-                        if (self$options$palBrewer == "none") {
-                            cols <- c(cols, "#E54028") # Holdout is Red
-                        }
-                        active_cols <- c(active_cols, cols[2])
-                        ltys <- c(ltys, 1)         # Holdout is solid
-                        auc_va_val <- as.numeric(pROC::auc(r_va))
-                        auc_va_str <- if (is_pct) paste0(round(auc_va_val, 1), "%") else round(auc_va_val, 3)
-                        leg_labels <- c(leg_labels, paste0(.("Hold-out Validation (AUC ="), " ", auc_va_str, ")"))
-                        
-                        pROC::plot.roc(r_va, col=cols[2],
-                            percent=is_pct,
-                            lwd=3, lty=1,
-                            legacy.axes=legacy_axes,
-                            print.thres=show_roc_cut,
-                            print.thres.col=cols[2],
-                            print.thres.pch=19, print.thres.cex=1.3,
-                            print.thres.best.method="youden",
-                            print.thres.pattern=thres_pattern,
-                            add=TRUE
-                        )
-                    } else if (partition == "kfold" && !is.null(cv_prob_bin)) {
-                        r_cv <- pROC::roc(cv_y_bin, cv_prob_bin, percent = is_pct, quiet = TRUE)
-                        if (self$options$palBrewer == "none") {
-                            cols <- c(cols, "#46B233") # CV is Green
-                        }
-                        active_cols <- c(active_cols, cols[2])
-                        ltys <- c(ltys, 2)         # CV is dashed
-                        auc_cv_val <- as.numeric(pROC::auc(r_cv))
-                        auc_cv_str <- if (is_pct) paste0(round(auc_cv_val, 1), "%") else round(auc_cv_val, 3)
-                        leg_labels <- c(leg_labels, paste0(.("K-Fold Cross-Validation (AUC ="), " ", auc_cv_str, ")"))
-                        
-                        pROC::plot.roc(r_cv, col=cols[2],
-                            percent=is_pct,
-                            lwd=3, lty=2,
-                            legacy.axes=legacy_axes,
-                            print.thres=show_roc_cut,
-                            print.thres.col=cols[2],
-                            print.thres.pch=19, print.thres.cex=1.3,
-                            print.thres.best.method="youden",
-                            print.thres.pattern=thres_pattern,
-                            add=TRUE
-                        )
-                    }
-                    
-                    legend("bottomright",
-                        cex=1.1, lwd=3, col=active_cols,
-                        lty=ltys,
-                        bg="white", box.lwd=1,
-                        legend=leg_labels
-                    )
-                    
-                } else if (roc_data$type == "combined_training") {
-                    # ----------------------------------------------------
-                    # Multiclass Combined Training Plotting Logic
-                    # ----------------------------------------------------
-                    y_val <- roc_data$y
-                    train_prob <- roc_data$train_prob
-                    y_levels <- roc_data$y_levels
-                    
-                    base_colors <- c("#3366B2", "#E54028", "#46B233", "#8A2BE2", "#FF8C00", "#C71585", "#008080", "#8B4513")
-                    if (self$options$palBrewer != "none") {
-                        max_n <- switch(self$options$palBrewer,
-                            "Accent" = 8, "Dark2" = 8, "Paired" = 12, "Pastel1" = 9,
-                            "Set1" = 9, "Set2" = 8, "Set3" = 12, 8)
-                        req_n <- max(3, min(C, max_n))
-                        base_colors <- RColorBrewer::brewer.pal(n=req_n, name=self$options$palBrewer)
-                        if (C > max_n) {
-                            base_colors <- grDevices::colorRampPalette(base_colors)(C)
-                        }
-                    }
-                    if (C > length(base_colors)) {
-                        cols <- grDevices::rainbow(C)
-                    } else {
-                        cols <- base_colors[1:C]
-                    }
-                    
-                    leg_labels <- c()
-                    thres_pattern <- ifelse(is_pct, "%.2f (%.1f%%, %.1f%%)", "%.2f (%.3f, %.3f)")
-                    
-                    for (c in 1:C) {
-                        lev <- y_levels[c]
-                        y_tr_c <- as.numeric(y_val == c)
-                        prob_tr_c <- train_prob[, c]
-                        r_tr <- pROC::roc(y_tr_c, prob_tr_c, percent = is_pct, quiet = TRUE)
-                        auc_tr <- as.numeric(pROC::auc(r_tr))
-                        auc_tr_str <- if (is_pct) paste0(round(auc_tr, 1), "%") else round(auc_tr, 3)
-                        leg_labels <- c(leg_labels, paste0(lev, " (AUC = ", auc_tr_str, ")"))
-                        
-                        p <- pROC::plot.roc(r_tr, col=cols[c],
-                            main=.("Combined ROC - Training"), cex.main=1.3,
-                            percent=is_pct,
-                            cex.lab=1.5, cex.axis=1.3, lwd=3,
-                            legacy.axes=legacy_axes,
-                            xlab=ifelse(is_pct, ifelse(legacy_axes, .("100 - Specificity (%)"), .("Specificity (%)")), ifelse(legacy_axes, .("1 - Specificity"), .("Specificity"))),
-                            ylab=ifelse(is_pct, .("Sensitivity (%)"), .("Sensitivity")),
-                            print.thres=show_roc_cut,
-                            print.thres.col=cols[c],
-                            print.thres.pch=19, print.thres.cex=1.3,
-                            print.thres.best.method="youden",
-                            print.thres.pattern=thres_pattern,
-                            grid=(c == 1), add=(c > 1)
-                        )
-                    }
-                    
-                    legend("bottomright",
-                        cex=1.1, lwd=3, col=cols,
-                        bg="white", box.lwd=1,
-                        legend=leg_labels
-                    )
-                    
-                } else if (roc_data$type == "combined_validation") {
-                    # ----------------------------------------------------
-                    # Multiclass Combined Validation/CV Plotting Logic
-                    # ----------------------------------------------------
-                    val_prob <- roc_data$val_prob
-                    val_y <- roc_data$val_y
-                    cv_prob <- roc_data$cv_prob
-                    cv_y <- roc_data$cv_y
-                    y_levels <- roc_data$y_levels
-                    
-                    base_colors <- c("#3366B2", "#E54028", "#46B233", "#8A2BE2", "#FF8C00", "#C71585", "#008080", "#8B4513")
-                    if (self$options$palBrewer != "none") {
-                        max_n <- switch(self$options$palBrewer,
-                            "Accent" = 8, "Dark2" = 8, "Paired" = 12, "Pastel1" = 9,
-                            "Set1" = 9, "Set2" = 8, "Set3" = 12, 8)
-                        req_n <- max(3, min(C, max_n))
-                        base_colors <- RColorBrewer::brewer.pal(n=req_n, name=self$options$palBrewer)
-                        if (C > max_n) {
-                            base_colors <- grDevices::colorRampPalette(base_colors)(C)
-                        }
-                    }
-                    if (C > length(base_colors)) {
-                        cols <- grDevices::rainbow(C)
-                    } else {
-                        cols <- base_colors[1:C]
-                    }
-                    
-                    leg_labels <- c()
-                    thres_pattern <- ifelse(is_pct, "%.2f (%.1f%%, %.1f%%)", "%.2f (%.3f, %.3f)")
-                    plot_title <- if (partition == "kfold") .("Combined ROC - Cross-Validation") else .("Combined ROC - Validation")
-                    
-                    for (c in 1:C) {
-                        lev <- y_levels[c]
-                        if (partition == "holdout" && !is.null(val_prob)) {
-                            y_va_c <- as.numeric(val_y == c)
-                            prob_va_c <- val_prob[, c]
-                            r_va <- pROC::roc(y_va_c, prob_va_c, percent = is_pct, quiet = TRUE)
-                            auc_va <- as.numeric(pROC::auc(r_va))
-                            auc_va_str <- if (is_pct) paste0(round(auc_va, 1), "%") else round(auc_va, 3)
-                            leg_labels <- c(leg_labels, paste0(lev, " (AUC = ", auc_va_str, ")"))
-                            
-                            p <- pROC::plot.roc(r_va, col=cols[c],
-                                main=plot_title, cex.main=1.3,
-                                percent=is_pct,
-                                cex.lab=1.5, cex.axis=1.3, lwd=3,
-                                legacy.axes=legacy_axes,
-                                xlab=ifelse(is_pct, ifelse(legacy_axes, .("100 - Specificity (%)"), .("Specificity (%)")), ifelse(legacy_axes, .("1 - Specificity"), .("Specificity"))),
-                                ylab=ifelse(is_pct, .("Sensitivity (%)"), .("Sensitivity")),
-                                print.thres=show_roc_cut,
-                                print.thres.col=cols[c],
-                                print.thres.pch=19, print.thres.cex=1.3,
-                                print.thres.best.method="youden",
-                                print.thres.pattern=thres_pattern,
-                                grid=(c == 1), add=(c > 1)
-                            )
-                        } else if (partition == "kfold" && !is.null(cv_prob)) {
-                            y_cv_c <- as.numeric(cv_y == c)
-                            prob_cv_c <- cv_prob[, c]
-                            r_cv <- pROC::roc(y_cv_c, prob_cv_c, percent = is_pct, quiet = TRUE)
-                            auc_cv <- as.numeric(pROC::auc(r_cv))
-                            auc_cv_str <- if (is_pct) paste0(round(auc_cv, 1), "%") else round(auc_cv, 3)
-                            leg_labels <- c(leg_labels, paste0(lev, " (AUC = ", auc_cv_str, ")"))
-                            
-                            p <- pROC::plot.roc(r_cv, col=cols[c],
-                                main=plot_title, cex.main=1.3,
-                                percent=is_pct,
-                                cex.lab=1.5, cex.axis=1.3, lwd=3, lty=2,
-                                legacy.axes=legacy_axes,
-                                xlab=ifelse(is_pct, ifelse(legacy_axes, .("100 - Specificity (%)"), .("Specificity (%)")), ifelse(legacy_axes, .("1 - Specificity"), .("Specificity"))),
-                                ylab=ifelse(is_pct, .("Sensitivity (%)"), .("Sensitivity")),
-                                print.thres=show_roc_cut,
-                                print.thres.col=cols[c],
-                                print.thres.pch=19, print.thres.cex=1.3,
-                                print.thres.best.method="youden",
-                                print.thres.pattern=thres_pattern,
-                                grid=(c == 1), add=(c > 1)
-                            )
-                        }
-                    }
-                    
-                    legend("bottomright",
-                        cex=1.1, lwd=3, col=cols,
-                        lty=ifelse(partition == "kfold", 2, 1),
-                        bg="white", box.lwd=1,
-                        legend=leg_labels
-                    )
-                    
-                } else {
-                    # ----------------------------------------------------
-                    # Multiclass Separate Class Plotting Logic
-                    # ----------------------------------------------------
-                    class_name <- roc_data$class_name
-                    y_val_bin <- roc_data$train_y
-                    train_prob_bin <- roc_data$train_prob
-                    val_prob_bin <- roc_data$val_prob
-                    val_y_bin <- roc_data$val_y
-                    cv_prob_bin <- roc_data$cv_prob
-                    cv_y_bin <- roc_data$cv_y
-                    title_text <- jmvcore::format(.("ROC Analysis for {class}"), class = class_name)
-                    
-                    r_tr <- pROC::roc(y_val_bin, train_prob_bin, percent = is_pct, quiet = TRUE)
-                    cols <- c("#3366B2") # Training is always Blue
-                    if (self$options$palBrewer != "none") {
-                        cols <- RColorBrewer::brewer.pal(n=3, name=self$options$palBrewer)
-                    }
-                    active_cols <- c(cols[1])
-                    ltys <- c(1)         # Training is solid
-                    auc_tr_val <- as.numeric(pROC::auc(r_tr))
-                    auc_tr_str <- if (is_pct) paste0(round(auc_tr_val, 1), "%") else round(auc_tr_val, 3)
-                    leg_labels <- c(paste0(.("Training (AUC ="), " ", auc_tr_str, ")"))
-                    
-                    thres_pattern <- ifelse(is_pct, "%.2f (%.1f%%, %.1f%%)", "%.2f (%.3f, %.3f)")
-                    
-                    p <- pROC::plot.roc(r_tr, col=cols[1],
-                        main=title_text, cex.main=1.3,
-                        percent=is_pct,
-                        cex.lab=1.5, cex.axis=1.3, lwd=3, lty=1,
-                        legacy.axes=legacy_axes,
-                        xlab=ifelse(is_pct, ifelse(legacy_axes, .("100 - Specificity (%)"), .("Specificity (%)")), ifelse(legacy_axes, .("1 - Specificity"), .("Specificity"))),
-                        ylab=ifelse(is_pct, .("Sensitivity (%)"), .("Sensitivity")),
-                        print.thres=show_roc_cut,
-                        print.thres.col=cols[1],
-                        print.thres.pch=19, print.thres.cex=1.3,
-                        print.thres.best.method="youden",
-                        print.thres.pattern=thres_pattern,
-                        grid=TRUE, add=FALSE
-                    )
-                    
-                    if (partition == "holdout" && !is.null(val_prob_bin)) {
-                        r_va <- pROC::roc(val_y_bin, val_prob_bin, percent = is_pct, quiet = TRUE)
-                        if (self$options$palBrewer == "none") {
-                            cols <- c(cols, "#E54028") # Holdout is Red
-                        }
-                        active_cols <- c(active_cols, cols[2])
-                        ltys <- c(ltys, 1)         # Holdout is solid
-                        auc_va_val <- as.numeric(pROC::auc(r_va))
-                        auc_va_str <- if (is_pct) paste0(round(auc_va_val, 1), "%") else round(auc_va_val, 3)
-                        leg_labels <- c(leg_labels, paste0(.("Hold-out Validation (AUC ="), " ", auc_va_str, ")"))
-                        
-                        pROC::plot.roc(r_va, col=cols[2],
-                            percent=is_pct,
-                            lwd=3, lty=1,
-                            legacy.axes=legacy_axes,
-                            print.thres=show_roc_cut,
-                            print.thres.col=cols[2],
-                            print.thres.pch=19, print.thres.cex=1.3,
-                            print.thres.best.method="youden",
-                            print.thres.pattern=thres_pattern,
-                            add=TRUE
-                        )
-                    } else if (partition == "kfold" && !is.null(cv_prob_bin)) {
-                        r_cv <- pROC::roc(cv_y_bin, cv_prob_bin, percent = is_pct, quiet = TRUE)
-                        if (self$options$palBrewer == "none") {
-                            cols <- c(cols, "#46B233") # CV is Green
-                        }
-                        active_cols <- c(active_cols, cols[2])
-                        ltys <- c(ltys, 2)         # CV is dashed
-                        auc_cv_val <- as.numeric(pROC::auc(r_cv))
-                        auc_cv_str <- if (is_pct) paste0(round(auc_cv_val, 1), "%") else round(auc_cv_val, 3)
-                        leg_labels <- c(leg_labels, paste0(.("K-Fold Cross-Validation (AUC ="), " ", auc_cv_str, ")"))
-                        
-                        pROC::plot.roc(r_cv, col=cols[2],
-                            percent=is_pct,
-                            lwd=3, lty=2,
-                            legacy.axes=legacy_axes,
-                            print.thres=show_roc_cut,
-                            print.thres.col=cols[2],
-                            print.thres.pch=19, print.thres.cex=1.3,
-                            print.thres.best.method="youden",
-                            print.thres.pattern=thres_pattern,
-                            add=TRUE
-                        )
-                    }
-                    
-                    legend("bottomright",
-                        cex=1.1, lwd=3, col=active_cols,
-                        lty=ltys,
-                        bg="white", box.lwd=1,
-                        legend=leg_labels
-                    )
-                }
-                
-                print(p)
-                return(TRUE)
-            }, error = function(e) {
-                return(FALSE)
-            })
-            return(result)
+            .renderClassifierRocPlot(
+                image = image,
+                ggtheme = ggtheme,
+                theme = theme,
+                options = self$options,
+                defaultTrainColor = "#3366B2",
+                defaultCvColor = "#46B233",
+                mainTitle = .("ROC Analysis Comparison"),
+                kfoldLabel = .("K-Fold Cross-Validation (AUC =")
+            )
         },
 
         .fit_mlp = function(X, y, hidden_sizes, hidden_activation, out_activation, decay, maxit, rang, lr = 0.01) {
@@ -1560,6 +1406,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             loss_history <- numeric(maxit)
             
             for (epoch in 1:maxit) {
+                if (epoch %% 50 == 0) private$.checkpoint()
                 A <- list()
                 Z <- list()
                 

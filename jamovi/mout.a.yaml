@@ -83,7 +83,7 @@ options:
       default: "3.0"
 
     - name: tholdmZS
-      title: Threshold for Z-score
+      title: Threshold for modified Z-score
       type: List
       options:
         - title: "2.0"

@@ -71,8 +71,8 @@ items:
       width:  550
       height: 450
       renderFun: .plotDD
-      requiresData: true
       visible: (showPlots && (plotType == "dd" || plotType == "both"))
+      requiresData: true
       clearWith:
           - vars
           - group
@@ -85,8 +85,8 @@ items:
       width:  550
       height: 450
       renderFun: .plotQQ
-      requiresData: true
       visible: (showPlots && (plotType == "qq" || plotType == "both"))
+      requiresData: true
       clearWith:
           - vars
           - group

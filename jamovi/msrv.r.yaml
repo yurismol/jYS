@@ -48,6 +48,7 @@ items:
           - status
           - statusEvent
           - group
+          - kmMaxTime
         columns:
           - name: group
             title: Group
@@ -68,7 +69,7 @@ items:
         width: 600
         height: 450
         renderFun: .kmPlot
-        visible: (showKm)
+        visible: (showKm && kmPlot)
         requiresData: true
         clearWith:
           - elapsed
@@ -78,12 +79,12 @@ items:
           - kmCI
           - kmTable
           - kmType
-          - palBrewer
+          - kmMaxTime
 
   - name: logRankTable
     title: Log-rank Test (Group Comparison)
     type: Table
-    visible: (showLogRank)
+    visible: (showLogRank && (!is.null(group)))
     refs: [survival]
     clearWith:
       - elapsed
@@ -105,12 +106,13 @@ items:
   - name: coxSection
     title: Cox Proportional Hazards Regression
     type: Group
-    visible: (showCox)
-    refs: [survival, cox1972, harrell2015]
+    visible: (showCox && ((!is.null(covariates) && length(covariates) > 0) || (!is.null(group)) || showTimeDepEffects))
+    refs: [survival, cox1972, harrell2015, therneau2000]
     items:
       - name: coxFitTable
         title: Cox Model Fit Statistics
         type: Table
+        visible: (showCox && ((!is.null(covariates) && length(covariates) > 0) || (!is.null(group))))
         clearWith:
           - elapsed
           - status
@@ -135,6 +137,7 @@ items:
       - name: coxCoefTable
         title: Cox Regression Coefficients
         type: Table
+        visible: (showCox && ((!is.null(covariates) && length(covariates) > 0) || (!is.null(group))))
         clearWith:
           - elapsed
           - status
@@ -168,14 +171,54 @@ items:
             title: Upper 95% CI
             type: number
 
+      - name: timeDepTable
+        title: Time-dependent Effects in Cox Model
+        type: Table
+        visible: (showCox && showTimeDepEffects)
+        clearWith:
+          - elapsed
+          - tstart
+          - status
+          - statusEvent
+          - subjectId
+          - group
+          - covariates
+          - timeDepVars
+          - timeDepFunc
+        columns:
+          - name: var
+            title: Variable / Term
+            type: text
+          - name: coef
+            title: Coefficient (Estimate)
+            type: number
+          - name: se
+            title: SE
+            type: number
+          - name: z
+            title: z
+            type: number
+          - name: p
+            title: p
+            type: number
+            format: zto,pvalue
+          - name: hr
+            title: Hazard Ratio (HR)
+            type: number
+          - name: hrLower
+            title: Lower 95% CI
+            type: number
+          - name: hrUpper
+            title: Upper 95% CI
+            type: number
+
       - name: coxForestPlot
         title: Cox Hazard Ratios Forest Plot
         type: Image
         width: 500
         height: 400
         renderFun: .coxForestPlot
-        visible: (coxForest)
-        requiresData: true
+        visible: (showCox && coxForest && ((!is.null(covariates) && length(covariates) > 0) || (!is.null(group))))
         clearWith:
           - elapsed
           - status
@@ -186,7 +229,7 @@ items:
       - name: coxAssumpTable
         title: Proportional Hazards Assumption (Schoenfeld Residuals Test)
         type: Table
-        visible: (coxAssump)
+        visible: (showCox && coxAssump && ((!is.null(covariates) && length(covariates) > 0) || (!is.null(group))))
         clearWith:
           - elapsed
           - status
@@ -211,31 +254,215 @@ items:
       - name: schoenfeldPlots
         title: Schoenfeld Residuals Plots
         type: Array
-        visible: (showSchoenfeldPlot)
+        visible: (showCox && showSchoenfeldPlot && coxAssump && ((!is.null(covariates) && length(covariates) > 0) || (!is.null(group))))
         clearWith:
           - elapsed
           - status
           - statusEvent
           - group
           - covariates
+          - coxAssump
+          - showSchoenfeldPlot
         template:
           title: $key
           type: Image
           width: 500
           height: 400
           renderFun: .schoenfeldPlot
-          requiresData: true
+          clearWith:
+            - elapsed
+            - status
+            - statusEvent
+            - group
+            - covariates
+            - coxAssump
+            - showSchoenfeldPlot
+
+  - name: adjSection
+    title: Adjusted Survival Curves (Direct / G-computation)
+    type: Group
+    visible: (showAdjCurves && ((!is.null(adjExposure)) || (!is.null(group))))
+    refs: [survival, denz2023]
+    items:
+      - name: adjSummaryTable
+        title: Adjusted Survival Summary
+        type: Table
+        visible: (showAdjCurves && ((!is.null(adjExposure)) || (!is.null(group))))
+        clearWith:
+          - elapsed
+          - status
+          - statusEvent
+          - group
+          - covariates
+          - adjExposure
+          - kmMaxTime
+        columns:
+          - name: group
+            title: Group
+            type: text
+          - name: n
+            title: N
+            type: integer
+          - name: events
+            title: Events
+            type: integer
+          - name: median
+            title: Adjusted Median Survival
+            type: number
+          - name: rmst
+            title: Adjusted RMST
+            type: number
+
+      - name: adjPlot
+        title: Adjusted Survival Curves (Direct / G-computation)
+        type: Image
+        width: 600
+        height: 450
+        renderFun: .adjPlot
+        visible: (showAdjCurves && ((!is.null(adjExposure)) || (!is.null(group))))
+        clearWith:
+          - elapsed
+          - status
+          - statusEvent
+          - group
+          - covariates
+          - adjExposure
+          - adjCI
+          - kmMaxTime
+
+  - name: compRisksSection
+    title: Competing Risks Analysis
+    type: Group
+    visible: (showCompRisks)
+    refs: [survival, aalen1978, gray1988, finegray1999]
+    items:
+      - name: cifSummaryTable
+        title: Cumulative Incidence Summary
+        type: Table
+        visible: (showCompRisks && showCifTable)
+        clearWith:
+          - elapsed
+          - status
+          - compEvent
+          - compCensor
+          - group
+          - kmMaxTime
+        columns:
+          - name: group
+            title: Group
+            type: text
+          - name: cause
+            title: Cause / Event
+            type: text
+          - name: n
+            title: N
+            type: integer
+          - name: events
+            title: Events
+            type: integer
+          - name: cif
+            title: Cumulative Incidence
+            type: number
+          - name: se
+            title: SE
+            type: number
+          - name: lower
+            title: Lower 95% CI
+            type: number
+          - name: upper
+            title: Upper 95% CI
+            type: number
+
+      - name: cifPlot
+        title: Cumulative Incidence Curves (Aalen-Johansen)
+        type: Image
+        width: 600
+        height: 450
+        renderFun: .cifPlot
+        visible: (showCompRisks && showCifPlot)
+        clearWith:
+          - elapsed
+          - status
+          - compEvent
+          - compCensor
+          - group
+          - cifCI
+          - kmMaxTime
+
+      - name: grayTestTable
+        title: Gray's Test for Group Differences
+        type: Table
+        visible: (showCompRisks && showGrayTest && (!is.null(group)))
+        refs: [gray1988]
+        clearWith:
+          - elapsed
+          - status
+          - compEvent
+          - compCensor
+          - group
+        columns:
+          - name: cause
+            title: Cause / Event
+            type: text
+          - name: stat
+            title: Chi-Square
+            type: number
+          - name: df
+            title: df
+            type: integer
+          - name: p
+            title: p
+            type: number
+            format: zto,pvalue
+
+      - name: fineGrayTable
+        title: Fine-Gray Subdistribution Hazard Regression
+        type: Table
+        visible: (showCompRisks && showFineGray && ((!is.null(covariates) && length(covariates) > 0) || (!is.null(group))))
+        refs: [survival, finegray1999]
+        clearWith:
+          - elapsed
+          - status
+          - compEvent
+          - compCensor
+          - group
+          - covariates
+        columns:
+          - name: var
+            title: Predictor
+            type: text
+          - name: coef
+            title: Coefficient
+            type: number
+          - name: se
+            title: Robust SE
+            type: number
+          - name: z
+            title: z
+            type: number
+          - name: p
+            title: p
+            type: number
+            format: zto,pvalue
+          - name: shr
+            title: Subdistribution HR (sHR)
+            type: number
+          - name: shrLower
+            title: Lower 95% CI
+            type: number
+          - name: shrUpper
+            title: Upper 95% CI
+            type: number
 
   - name: rocSection
     title: Time-dependent ROC Analysis
     type: Group
-    visible: (showRoc)
-    refs: [heagerty2000]
+    visible: (showRoc && (!is.null(rocPredictors) && length(rocPredictors) > 0))
     items:
       - name: rocTable
         title: Time-dependent ROC Results
         type: Table
-        visible: (showRoc)
+        visible: (showRoc && (!is.null(rocPredictors) && length(rocPredictors) > 0))
         clearWith:
           - elapsed
           - status
@@ -278,8 +505,7 @@ items:
         width: 500
         height: 500
         renderFun: .rocPlot
-        visible: (showRoc && rocPlot)
-        requiresData: true
+        visible: (showRoc && rocPlot && (!is.null(rocPredictors) && length(rocPredictors) > 0))
         clearWith:
           - elapsed
           - status

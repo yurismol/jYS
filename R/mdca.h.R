@@ -234,32 +234,32 @@ mDCAResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `name`="nb_10", 
                         `title`="NB at 10%", 
                         `type`="number", 
-                        `format`="zto,dp:3"),
+                        `format`="zto"),
                     list(
                         `name`="nb_20", 
                         `title`="NB at 20%", 
                         `type`="number", 
-                        `format`="zto,dp:3"),
+                        `format`="zto"),
                     list(
                         `name`="nb_30", 
                         `title`="NB at 30%", 
                         `type`="number", 
-                        `format`="zto,dp:3"),
+                        `format`="zto"),
                     list(
                         `name`="nb_40", 
                         `title`="NB at 40%", 
                         `type`="number", 
-                        `format`="zto,dp:3"),
+                        `format`="zto"),
                     list(
                         `name`="max_nb", 
                         `title`="Max Net Benefit", 
                         `type`="number", 
-                        `format`="zto,dp:3"),
+                        `format`="zto"),
                     list(
                         `name`="opt_thresh", 
                         `title`="Optimal Threshold", 
                         `type`="number", 
-                        `format`="zto,dp:2"))))
+                        `format`="zto"))))
             self$add(jmvcore::Table$new(
                 options=options,
                 name="windowTable",
@@ -283,23 +283,19 @@ mDCAResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     list(
                         `name`="min_thresh", 
                         `title`="Min Threshold (%)", 
-                        `type`="number", 
-                        `format`="zto,dp:1"),
+                        `type`="number"),
                     list(
                         `name`="max_thresh", 
                         `title`="Max Threshold (%)", 
-                        `type`="number", 
-                        `format`="zto,dp:1"),
+                        `type`="number"),
                     list(
                         `name`="window_span", 
                         `title`="Window Span (%)", 
-                        `type`="number", 
-                        `format`="zto,dp:1"),
+                        `type`="number"),
                     list(
                         `name`="avoid_20", 
                         `title`="Avoided at 20% (per 100)", 
-                        `type`="number", 
-                        `format`="zto,dp:1"),
+                        `type`="number"),
                     list(
                         `name`="status", 
                         `title`="Clinical Superiority", 
@@ -312,6 +308,7 @@ mDCAResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=650,
                 height=450,
                 renderFun=".dcaPlot",
+                requiresData=TRUE,
                 clearWith=list(
                     "dep",
                     "targetLevel",
@@ -331,6 +328,7 @@ mDCAResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=650,
                 height=420,
                 renderFun=".avoidedPlot",
+                requiresData=TRUE,
                 clearWith=list(
                     "dep",
                     "targetLevel",
@@ -363,27 +361,25 @@ mDCAResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `name`="brier", 
                         `title`="Brier Score", 
                         `type`="number", 
-                        `format`="zto,dp:4"),
+                        `format`="zto"),
                     list(
                         `name`="slope", 
                         `title`="Calibration Slope", 
-                        `type`="number", 
-                        `format`="zto,dp:3"),
+                        `type`="number"),
                     list(
                         `name`="intercept", 
                         `title`="Calibration Intercept", 
-                        `type`="number", 
-                        `format`="zto,dp:3"),
+                        `type`="number"),
                     list(
                         `name`="e_avg", 
                         `title`="E avg", 
                         `type`="number", 
-                        `format`="zto,dp:3"),
+                        `format`="zto"),
                     list(
                         `name`="e_max", 
                         `title`="E max", 
                         `type`="number", 
-                        `format`="zto,dp:3"))))
+                        `format`="zto"))))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="calPlot",
@@ -392,6 +388,7 @@ mDCAResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=600,
                 height=450,
                 renderFun=".calPlot",
+                requiresData=TRUE,
                 clearWith=list(
                     "dep",
                     "targetLevel",
