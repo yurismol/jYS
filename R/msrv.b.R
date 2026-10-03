@@ -4,217 +4,6 @@
 mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
     "mSRVClass",
     inherit = mSRVBase,
-    public = list(
-        .savePart = function(path, part, ...) {
-            smart_lookup <- function(results, p_str, options = NULL) {
-                if (is.null(results) || is.null(p_str)) return(NULL)
-                if (length(p_str) > 1) p_str <- paste(p_str, collapse = "/")
-                if (!nzchar(p_str)) return(NULL)
-
-                covs <- tryCatch(options$covariates, error = function(e) NULL)
-                group_var <- tryCatch(options$group, error = function(e) NULL)
-                vars <- tryCatch(options$vars, error = function(e) NULL)
-
-                find_child <- function(curr, seg) {
-                    if (is.null(curr) || is.null(seg) || !nzchar(seg)) return(NULL)
-                    clean <- gsub('^["\']|["\']$', '', seg)
-
-                    if (inherits(curr, 'Array')) {
-                        nxt <- tryCatch(curr$get(key = clean), error = function(e) NULL)
-                        if (!is.null(nxt)) return(nxt)
-
-                        nxt <- tryCatch(curr$get(name = paste0('"', clean, '"')), error = function(e) NULL)
-                        if (!is.null(nxt)) return(nxt)
-                        nxt <- tryCatch(curr$get(name = seg), error = function(e) NULL)
-                        if (!is.null(nxt)) return(nxt)
-                        nxt <- tryCatch(curr$get(name = clean), error = function(e) NULL)
-                        if (!is.null(nxt)) return(nxt)
-
-                        items <- tryCatch(curr$items, error = function(e) NULL)
-                        if (!is.null(items) && length(items) > 0) {
-                            # 1. Exact match by key, name, or title
-                            for (it in items) {
-                                it_key <- tryCatch(it$key, error = function(e) NULL)
-                                it_name <- tryCatch(it$name, error = function(e) NULL)
-                                it_title <- tryCatch(it$title, error = function(e) NULL)
-                                if (identical(it_key, clean) || identical(it_key, seg) ||
-                                    identical(it_name, clean) || identical(it_name, seg) ||
-                                    identical(it_title, clean) || identical(it_title, seg)) {
-                                    return(it)
-                                }
-                            }
-
-                            # 2. Match covariate by index if clean is in covs or group_var
-                            if (!is.null(covs) && clean %in% covs) {
-                                c_idx <- which(covs == clean)
-                                target_key <- paste0("..cov_", c_idx, "_")
-                                for (it in items) {
-                                    if (identical(it$key, target_key) || grepl(paste0("^\\.\\.cov_", c_idx), as.character(it$key))) {
-                                        return(it)
-                                    }
-                                }
-                            }
-                            if (!is.null(group_var) && (clean == group_var || grepl(paste0("^", clean), group_var))) {
-                                for (it in items) {
-                                    if (identical(it$key, "..group") || grepl("^\\.\\.group", as.character(it$key))) {
-                                        return(it)
-                                    }
-                                }
-                            }
-
-                            # 3. Match suffix of title after dash
-                            for (it in items) {
-                                it_title <- tryCatch(as.character(it$title), error = function(e) "")
-                                title_var <- trimws(sub(".*[\u2013\u2014-]\\s*", "", it_title))
-                                title_var_clean <- gsub("[_()]", "", title_var)
-                                clean_nopunct <- gsub("[_()]", "", clean)
-                                if (nzchar(title_var) && (identical(title_var, clean) || identical(title_var_clean, clean_nopunct))) {
-                                    return(it)
-                                }
-                            }
-
-                            # 4. Word boundary match in title
-                            for (it in items) {
-                                it_title <- tryCatch(as.character(it$title), error = function(e) "")
-                                pattern <- paste0("(^|[^a-zA-Z0-9_])", clean, "([^a-zA-Z0-9_]|$)")
-                                if (grepl(pattern, it_title)) {
-                                    return(it)
-                                }
-                            }
-
-                            # 5. Check integer index
-                            idx <- suppressWarnings(as.integer(clean))
-                            if (!is.na(idx)) {
-                                items_len <- length(items)
-                                if (idx == 0 && items_len >= 1) return(items[[1]])
-                                if (idx >= 1 && idx <= items_len) return(items[[idx]])
-                            }
-                        }
-                    }
-
-                    nxt <- tryCatch(curr$.lookup(seg), error = function(e) NULL)
-                    if (!is.null(nxt)) return(nxt)
-                    if (seg != clean) {
-                        nxt <- tryCatch(curr$.lookup(clean), error = function(e) NULL)
-                        if (!is.null(nxt)) return(nxt)
-                    }
-
-                    if (inherits(curr, 'Group')) {
-                        nxt <- tryCatch(curr$get(clean), error = function(e) NULL)
-                        if (!is.null(nxt)) return(nxt)
-                        nxt <- tryCatch(curr$get(seg), error = function(e) NULL)
-                        if (!is.null(nxt)) return(nxt)
-                    }
-
-                    items <- tryCatch(curr$items, error = function(e) NULL)
-                    if (!is.null(items) && length(items) > 0) {
-                        if (clean %in% names(items)) return(items[[clean]])
-                        if (seg %in% names(items)) return(items[[seg]])
-                        for (it in items) {
-                            it_name <- tryCatch(it$name, error = function(e) NULL)
-                            it_key <- tryCatch(it$key, error = function(e) NULL)
-                            it_title <- tryCatch(it$title, error = function(e) NULL)
-                            if (identical(it_name, clean) || identical(it_name, seg) ||
-                                identical(it_key, clean) || identical(it_key, seg)) {
-                                return(it)
-                            }
-                        }
-                    }
-                    NULL
-                }
-
-                traverse <- function(node, segs) {
-                    if (is.null(node) || length(segs) == 0) return(node)
-                    child <- find_child(node, segs[1])
-                    if (!is.null(child)) {
-                        return(traverse(child, segs[-1]))
-                    }
-                    NULL
-                }
-
-                search_recursive <- function(node, segs) {
-                    if (is.null(node)) return(NULL)
-                    res <- traverse(node, segs)
-                    if (!is.null(res)) return(res)
-
-                    items <- tryCatch(node$items, error = function(e) NULL)
-                    if (!is.null(items) && length(items) > 0) {
-                        for (child in items) {
-                            if (inherits(child, 'Group') || inherits(child, 'Array')) {
-                                res <- search_recursive(child, segs)
-                                if (!is.null(res)) return(res)
-                            }
-                        }
-                    }
-                    NULL
-                }
-
-                norm_p <- gsub('\\[[\'"]?([^\'"]+?)[\'"]?\\]', '/\\1', p_str)
-                parts <- strsplit(norm_p, '/+', perl = TRUE)[[1]]
-                parts <- parts[parts != ""]
-                if (length(parts) == 0) return(NULL)
-
-                # Strip analysisId or 'results' prefix if present
-                if (length(parts) > 1 && (parts[1] == "results" || !is.na(suppressWarnings(as.integer(parts[1]))))) {
-                    if (is.null(find_child(results, parts[1]))) {
-                        parts <- parts[-1]
-                    }
-                }
-
-                target <- search_recursive(results, parts)
-                if (inherits(target, 'Array') && length(target$items) > 0) {
-                    target <- target$items[[1]]
-                }
-                target
-            }
-
-            element <- smart_lookup(self$results, part, self$options)
-            if (is.null(element)) {
-                return(FALSE)
-            }
-
-            if (inherits(element, 'Array')) {
-                if (length(element$items) > 0) {
-                    element <- element$items[[1]]
-                } else {
-                    return(FALSE)
-                }
-            }
-
-            if (inherits(element, 'Image')) {
-                if (is.null(element$state) && !is.null(element$parent$state)) {
-                    parent_state <- element$parent$state
-                    if (!is.null(parent_state$zph)) {
-                        var_name <- element$key
-                        var_idx <- if (!is.null(var_name) && var_name %in% rownames(parent_state$zph$table)) {
-                            which(rownames(parent_state$zph$table) == var_name)
-                        } else 1
-                        element$setState(list(zph = parent_state$zph, var_idx = var_idx, var_name = var_name))
-                    } else if (!is.null(element$key) && !is.null(parent_state[[element$key]])) {
-                        element$setState(parent_state[[element$key]])
-                    } else if (is.list(parent_state) && length(parent_state) > 0) {
-                        element$setState(parent_state[[1]])
-                    }
-                }
-            }
-
-            if (element$requiresData && is.function(private$.ensureData)) {
-                private$.ensureData()
-            }
-            save_ok <- tryCatch({
-                element$saveAs(path, ...)
-                file.exists(path) && file.info(path)$size > 0
-            }, error = function(e) {
-                tryCatch({
-                    element$saveAs(path)
-                    file.exists(path) && file.info(path)$size > 0
-                }, error = function(e2) {
-                    FALSE
-                })
-            })
-            return(save_ok)
-        }
-    ),
     private = list(
       .km_sig = NULL,
       .lr_sig = NULL,
@@ -228,14 +17,6 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
       .roc_sig = NULL,
       .cr_sig = NULL,
 
-      .ensureData = function() {
-          if (is.null(private$.data) || nrow(private$.data) == 0) {
-              d <- tryCatch(self$readDataset(headerOnly = FALSE), error = function(e) NULL)
-              if (!is.null(d) && nrow(d) > 0)
-                  private$.data <- d
-          }
-          return(!is.null(private$.data) && nrow(private$.data) > 0)
-      },
 
       .init = function() {
           # Add comments to tables with bold keywords
@@ -987,65 +768,106 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                                   s_sub <- c(s_sub, tail(s_sub, 1))
                                                   t_sub <- c(t_sub, tau)
                                               }
-                                              rmst_val <- sum(s_sub[-length(s_sub)] * diff(t_sub))
+                                               rmst_val <- sum(s_sub[-length(s_sub)] * diff(t_sub))
 
-                                              n_z <- sum(dat_adj$..adj_exp == z)
-                                              events_z <- sum(dat_adj$..event[dat_adj$..adj_exp == z] == 1)
+                                               n_z <- if (has_cluster) {
+                                                   length(unique(dat_adj$..cluster[dat_adj$..adj_exp == z]))
+                                               } else {
+                                                   sum(dat_adj$..adj_exp == z)
+                                               }
+                                               events_z <- if (has_cluster) {
+                                                   length(unique(dat_adj$..cluster[dat_adj$..adj_exp == z & dat_adj$..event == 1]))
+                                               } else {
+                                                   sum(dat_adj$..event[dat_adj$..adj_exp == z] == 1)
+                                               }
 
-                                              adjSummaryTable$addRow(rowKey = as.character(z), values = list(
-                                                  group  = as.character(z),
-                                                  n      = as.integer(n_z),
-                                                  events = as.integer(events_z),
-                                                  median = med_val,
-                                                  rmst   = rmst_val
-                                              ))
+                                               adjSummaryTable$addRow(rowKey = as.character(z), values = list(
+                                                   group  = as.character(z),
+                                                   n      = as.integer(n_z),
+                                                   events = as.integer(events_z),
+                                                   median = med_val,
+                                                   rmst   = rmst_val
+                                               ))
 
-                                              adj_curves[[z]] <- list(
-                                                  times = eval_times,
-                                                  surv  = s_eval,
-                                                  lower = NULL,
-                                                  upper = NULL
-                                              )
-                                          }
+                                               adj_curves[[z]] <- list(
+                                                   times = eval_times,
+                                                   surv  = s_eval,
+                                                   lower = NULL,
+                                                   upper = NULL
+                                               )
+                                           }
 
-                                          if (self$options$adjCI) {
-                                              B <- 100
-                                              boot_arr <- array(NA_real_, dim = c(B, length(eval_times), length(levels_z)),
-                                                                dimnames = list(NULL, NULL, levels_z))
-                                              set.seed(42)
-                                              N_adj <- nrow(dat_adj)
+                                           if (has_cluster) {
+                                               adjSummaryTable$setNote('cluster_note', jmvcore::.('Sample size (n) and events count unique subjects.'))
+                                           } else {
+                                               adjSummaryTable$setNote('cluster_note', NULL)
+                                           }
 
-                                              for (b in seq_len(B)) {
-                                                  if (b %% 10 == 0) private$.checkpoint()
-                                                  idx_b <- sample(N_adj, replace = TRUE)
-                                                  dat_b <- dat_adj[idx_b, ]
-                                                  fit_b <- try(survival::coxph(as.formula(formula_adj), data = dat_b, x = TRUE), silent = TRUE)
-                                                  if (inherits(fit_b, "try-error")) next
-                                                  bh_b <- try(survival::basehaz(fit_b, centered = FALSE), silent = TRUE)
-                                                  if (inherits(bh_b, "try-error") || nrow(bh_b) == 0) next
+                                           if (self$options$adjCI) {
+                                               B <- 100
+                                               boot_arr <- array(NA_real_, dim = c(B, length(eval_times), length(levels_z)),
+                                                                 dimnames = list(NULL, NULL, levels_z))
 
-                                                  h0_step_b <- stats::stepfun(bh_b$time[-1], bh_b$hazard)
-                                                  h0_eval_b <- c(0, h0_step_b(eval_times[-1]))
-                                                  coef_b <- stats::coef(fit_b)
+                                               old_seed <- if (exists('.Random.seed', envir = .GlobalEnv, inherits = FALSE)) get('.Random.seed', envir = .GlobalEnv) else NULL
+                                               on.exit({
+                                                   if (!is.null(old_seed)) {
+                                                       assign('.Random.seed', old_seed, envir = .GlobalEnv)
+                                                   } else if (exists('.Random.seed', envir = .GlobalEnv, inherits = FALSE)) {
+                                                       rm('.Random.seed', envir = .GlobalEnv)
+                                                   }
+                                               }, add = TRUE)
+                                               set.seed(42)
 
-                                                  for (z in levels_z) {
-                                                      df_b <- dat_b
-                                                      df_b$..adj_exp <- factor(z, levels = levels(dat_adj$..adj_exp))
-                                                      mm_b <- stats::model.matrix(tt, data = df_b)
-                                                      if ("(Intercept)" %in% colnames(mm_b)) {
-                                                          mm_b <- mm_b[, -which(colnames(mm_b) == "(Intercept)"), drop = FALSE]
-                                                      }
-                                                      common_cols_b <- intersect(names(coef_b), colnames(mm_b))
-                                                      eta_b <- as.vector(mm_b[, common_cols_b, drop = FALSE] %*% coef_b[common_cols_b])
-                                                      boot_arr[b, , z] <- rowMeans(exp(-outer(h0_eval_b, exp(eta_b), "*")))
-                                                  }
-                                              }
+                                               if (has_cluster) {
+                                                   cluster_ids <- unique(dat_adj$..cluster)
+                                                   n_clusters <- length(cluster_ids)
+                                                   split_indices <- split(seq_len(nrow(dat_adj)), dat_adj$..cluster)
+                                               } else {
+                                                   N_adj <- nrow(dat_adj)
+                                               }
 
-                                              for (z in levels_z) {
-                                                  adj_curves[[z]]$lower <- apply(boot_arr[, , z], 2, stats::quantile, probs = 0.025, na.rm = TRUE)
-                                                  adj_curves[[z]]$upper <- apply(boot_arr[, , z], 2, stats::quantile, probs = 0.975, na.rm = TRUE)
-                                              }
-                                          }
+                                               for (b in seq_len(B)) {
+                                                   if (b %% 10 == 0) private$.checkpoint()
+                                                   if (has_cluster) {
+                                                       sampled_clusters <- sample(cluster_ids, size = n_clusters, replace = TRUE)
+                                                       idx_b <- unlist(split_indices[as.character(sampled_clusters)], use.names = FALSE)
+                                                   } else {
+                                                       idx_b <- sample(N_adj, replace = TRUE)
+                                                   }
+                                                   dat_b <- dat_adj[idx_b, ]
+                                                   fit_b <- try(survival::coxph(as.formula(formula_adj), data = dat_b, x = TRUE), silent = TRUE)
+                                                   if (inherits(fit_b, 'try-error')) next
+                                                   bh_b <- try(survival::basehaz(fit_b, centered = FALSE), silent = TRUE)
+                                                   if (inherits(bh_b, 'try-error') || nrow(bh_b) == 0) next
+
+                                                   h0_step_b <- stats::stepfun(bh_b$time[-1], bh_b$hazard)
+                                                   h0_eval_b <- c(0, h0_step_b(eval_times[-1]))
+                                                   coef_b <- stats::coef(fit_b)
+
+                                                   for (z in levels_z) {
+                                                       df_b <- dat_b
+                                                       df_b$..adj_exp <- factor(z, levels = levels(dat_adj$..adj_exp))
+                                                       mm_b <- stats::model.matrix(tt, data = df_b)
+                                                       if ('(Intercept)' %in% colnames(mm_b)) {
+                                                           mm_b <- mm_b[, -which(colnames(mm_b) == '(Intercept)'), drop = FALSE]
+                                                       }
+                                                       common_cols_b <- intersect(names(coef_b), colnames(mm_b))
+                                                       eta_b <- as.vector(mm_b[, common_cols_b, drop = FALSE] %*% coef_b[common_cols_b])
+                                                       boot_arr[b, , z] <- rowMeans(exp(-outer(h0_eval_b, exp(eta_b), '*')))
+                                                   }
+                                               }
+
+                                               for (z in levels_z) {
+                                                   adj_curves[[z]]$lower <- apply(boot_arr[, , z], 2, stats::quantile, probs = 0.025, na.rm = TRUE)
+                                                   adj_curves[[z]]$upper <- apply(boot_arr[, , z], 2, stats::quantile, probs = 0.975, na.rm = TRUE)
+                                               }
+
+                                               if (!is.null(old_seed)) {
+                                                   assign('.Random.seed', old_seed, envir = .GlobalEnv)
+                                               } else if (exists('.Random.seed', envir = .GlobalEnv, inherits = FALSE)) {
+                                                   rm('.Random.seed', envir = .GlobalEnv)
+                                               }
+                                           }
 
                                           self$results$adjSection$adjPlot$setState(list(
                                               curves    = adj_curves,
@@ -1102,36 +924,68 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                   roc_plot_list <- list()
 
                   # Data check
-                  cols_to_check_roc <- c("..time", "..event", roc_preds)
+                  cols_to_check_roc <- c('..time', '..event', roc_preds)
+                  if (has_cluster) cols_to_check_roc <- c(cols_to_check_roc, '..cluster')
+                  if (has_tstart) cols_to_check_roc <- c(cols_to_check_roc, '..tstart')
                   dat_roc <- dat[stats::complete.cases(dat[, cols_to_check_roc, drop=FALSE]), ]
 
                   if (nrow(dat_roc) > 0) {
+                      if (has_cluster) {
+                          ord_idx <- if (has_tstart) order(dat_roc$..tstart) else seq_len(nrow(dat_roc))
+                          dat_roc_ord <- dat_roc[ord_idx, ]
+                          split_subj <- split(dat_roc_ord, dat_roc_ord$..cluster)
+
+                          subj_status <- vapply(split_subj, function(df_s) {
+                              if (any(df_s$..event == 1 & df_s$..time <= roc_time)) {
+                                  1L
+                              } else if (max(df_s$..time) > roc_time) {
+                                  0L
+                              } else {
+                                  NA_integer_
+                              }
+                          }, integer(1))
+
+                          rocTable$setNote('cluster_note', jmvcore::format(
+                              .("Multi-row data collapsed to unique subjects based on '{subjectId}' with baseline marker values."),
+                              subjectId = subject_id_var
+                          ))
+                      } else {
+                          rocTable$setNote('cluster_note', NULL)
+                      }
+
                       for (pred in roc_preds) {
                           private$.checkpoint()
-                          pred_col <- dat_roc[[pred]]
-                          time_col <- dat_roc$..time
-                          ev_col   <- dat_roc$..event
+                          if (has_cluster) {
+                              sub_pred_all <- vapply(split_subj, function(df_s) as.numeric(df_s[[pred]][1]), numeric(1))
+                              valid_idx <- !is.na(subj_status) & !is.na(sub_pred_all)
+                              sub_class <- subj_status[valid_idx]
+                              sub_pred  <- sub_pred_all[valid_idx]
+                          } else {
+                              pred_col <- dat_roc[[pred]]
+                              time_col <- dat_roc$..time
+                              ev_col   <- dat_roc$..event
 
-                          class_val <- rep(NA_integer_, length(time_col))
-                          # Case: Event occurred at or before t
-                          class_val[time_col <= roc_time & ev_col == 1] <- 1
-                          # Control: Survived past t
-                          class_val[time_col > roc_time] <- 0
+                              class_val <- rep(NA_integer_, length(time_col))
+                              # Case: Event occurred at or before t
+                              class_val[time_col <= roc_time & ev_col == 1] <- 1L
+                              # Control: Survived past t
+                              class_val[time_col > roc_time] <- 0L
 
-                          valid_idx <- !is.na(class_val)
-                          if (sum(valid_idx & class_val == 1) >= 1 && sum(valid_idx & class_val == 0) >= 1) {
+                              valid_idx <- !is.na(class_val) & !is.na(pred_col)
                               sub_class <- class_val[valid_idx]
                               sub_pred  <- pred_col[valid_idx]
+                          }
 
-                              roc_obj <- try(pROC::roc(response = sub_class, predictor = sub_pred, quiet = TRUE), silent = TRUE)
-                              if (!inherits(roc_obj, "try-error")) {
+                          if (sum(sub_class == 1) >= 1 && sum(sub_class == 0) >= 1) {
+                              roc_obj <- try(pROC::roc(response = sub_class, predictor = sub_pred, levels = c(0, 1), direction = '<', quiet = TRUE), silent = TRUE)
+                              if (!inherits(roc_obj, 'try-error')) {
                                   ci_width <- self$options$rocWidth / 100
                                   auc_ci <- try(pROC::ci.auc(roc_obj, conf.level = ci_width), silent = TRUE)
-                                  auc_lower <- if (inherits(auc_ci, "try-error")) NA else auc_ci[1]
-                                  auc_upper <- if (inherits(auc_ci, "try-error")) NA else auc_ci[3]
+                                  auc_lower <- if (inherits(auc_ci, 'try-error')) NA else auc_ci[1]
+                                  auc_upper <- if (inherits(auc_ci, 'try-error')) NA else auc_ci[3]
 
-                                  coords <- try(pROC::coords(roc_obj, "best", best.method = "youden",
-                                                             ret = c("threshold", "sensitivity", "specificity")), silent = TRUE)
+                                  coords <- try(pROC::coords(roc_obj, 'best', best.method = 'youden',
+                                                             ret = c('threshold', 'sensitivity', 'specificity')), silent = TRUE)
 
                                   cutoff <- NA; se <- NA; sp <- NA
                                   if (!is.null(coords) && !inherits(coords, "try-error")) {
@@ -1628,40 +1482,111 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
       .runCompetingRisks = function(dat, time_var, tstart_var, status_var, subject_id_var, group_var, covs, has_tstart, has_cluster) {
           status_col <- dat[[status_var]]
-          unique_vals <- if (is.factor(status_col)) levels(status_col) else unique(stats::na.omit(status_col))
+          if (is.character(status_col)) {
+              status_col <- as.factor(status_col)
+          }
+          status_present <- if (is.factor(status_col)) droplevels(status_col) else status_col
+          unique_vals <- if (is.factor(status_present)) levels(status_present) else sort(unique(stats::na.omit(status_present)))
+          unique_vals_chr <- as.character(unique_vals)
 
-          # Determine censored level
-          comp_censor_opt <- self$options$compCensor
-          if (!is.null(comp_censor_opt) && comp_censor_opt != "") {
-              censor_val <- comp_censor_opt
-          } else {
-              if ("0" %in% as.character(unique_vals)) {
-                  censor_val <- "0"
+          if (length(unique_vals_chr) < 2) {
+              jmvcore::reject(.("Status variable must have at least two distinct values for Competing Risks analysis."))
+          }
+
+          comp_censor_opt  <- self$options$compCensor
+          comp_event_opt   <- self$options$compEvent
+          status_event_opt <- self$options$statusEvent
+
+          has_censor_opt <- !is.null(comp_censor_opt) && comp_censor_opt != "" && (as.character(comp_censor_opt) %in% unique_vals_chr)
+          has_event_opt  <- !is.null(comp_event_opt)  && comp_event_opt != ""  && (as.character(comp_event_opt) %in% unique_vals_chr)
+
+          censor_regex <- "censor|alive|control|surv|none"
+          event_regex  <- "event|dead|death|relapse|recur|fail|prog|case|pos"
+
+          if (has_censor_opt && has_event_opt && as.character(comp_censor_opt) != as.character(comp_event_opt)) {
+              # Both explicitly specified and distinct
+              censor_val <- as.character(comp_censor_opt)
+              event_val  <- as.character(comp_event_opt)
+          } else if (has_censor_opt && !has_event_opt) {
+              # Only censor level explicitly specified
+              censor_val <- as.character(comp_censor_opt)
+              avail_events <- setdiff(unique_vals_chr, censor_val)
+              if (!is.null(status_event_opt) && as.character(status_event_opt) %in% avail_events) {
+                  event_val <- as.character(status_event_opt)
               } else {
-                  cen_match <- grep("censor", as.character(unique_vals), ignore.case = TRUE, value = TRUE)
-                  if (length(cen_match) > 0) censor_val <- cen_match[1]
-                  else censor_val <- as.character(unique_vals[1])
+                  ev_matches <- grep(event_regex, avail_events, ignore.case = TRUE, value = TRUE)
+                  if (length(ev_matches) > 0) {
+                      event_val <- ev_matches[1]
+                  } else if ("1" %in% avail_events) {
+                      event_val <- "1"
+                  } else {
+                      event_val <- avail_events[1]
+                  }
+              }
+          } else if (!has_censor_opt && has_event_opt) {
+              # Only event of interest explicitly specified
+              event_val <- as.character(comp_event_opt)
+              avail_censors <- setdiff(unique_vals_chr, event_val)
+              cen_matches <- grep(censor_regex, avail_censors, ignore.case = TRUE, value = TRUE)
+              if (length(cen_matches) > 0) {
+                  censor_val <- cen_matches[1]
+              } else if ("0" %in% avail_censors) {
+                  censor_val <- "0"
+              } else if (length(unique_vals_chr) == 2 && setequal(as.numeric(unique_vals_chr), c(1, 2)) && "1" %in% avail_censors) {
+                  censor_val <- "1"
+              } else {
+                  censor_val <- avail_censors[1]
+              }
+          } else {
+              # Neither specified or both set to same value (e.g., jamovi LevelSelector initial default)
+              # 1. Determine censor_val
+              cen_matches <- grep(censor_regex, unique_vals_chr, ignore.case = TRUE, value = TRUE)
+              ev_matches  <- grep(event_regex, unique_vals_chr, ignore.case = TRUE, value = TRUE)
+
+              if (length(cen_matches) > 0) {
+                  censor_val <- cen_matches[1]
+              } else if ("0" %in% unique_vals_chr) {
+                  censor_val <- "0"
+              } else if (length(unique_vals_chr) == 2 && setequal(as.numeric(unique_vals_chr), c(1, 2))) {
+                  censor_val <- "1"
+              } else if (length(ev_matches) > 0 && length(setdiff(unique_vals_chr, ev_matches[1])) > 0) {
+                  censor_candidates <- setdiff(unique_vals_chr, ev_matches)
+                  censor_val <- if (length(censor_candidates) > 0) censor_candidates[1] else setdiff(unique_vals_chr, ev_matches[1])[1]
+              } else if (!is.null(status_event_opt) && as.character(status_event_opt) %in% unique_vals_chr &&
+                         as.character(status_event_opt) != unique_vals_chr[1] &&
+                         length(setdiff(unique_vals_chr, as.character(status_event_opt))) > 0) {
+                  censor_val <- setdiff(unique_vals_chr, as.character(status_event_opt))[1]
+              } else {
+                  censor_val <- unique_vals_chr[1]
+              }
+
+              # 2. Determine event_val from remaining candidates
+              avail_events <- setdiff(unique_vals_chr, censor_val)
+              ev_matches_avail <- grep(event_regex, avail_events, ignore.case = TRUE, value = TRUE)
+
+              if (has_event_opt && as.character(comp_event_opt) %in% avail_events) {
+                  event_val <- as.character(comp_event_opt)
+              } else if (!is.null(status_event_opt) && as.character(status_event_opt) %in% avail_events &&
+                         (as.character(status_event_opt) != unique_vals_chr[1] || length(ev_matches_avail) == 0)) {
+                  event_val <- as.character(status_event_opt)
+              } else if (length(ev_matches_avail) > 0) {
+                  event_val <- ev_matches_avail[1]
+              } else if ("1" %in% avail_events) {
+                  event_val <- "1"
+              } else {
+                  event_val <- avail_events[1]
               }
           }
 
-          # Determine event of interest
-          comp_event_opt <- self$options$compEvent
-          if (!is.null(comp_event_opt) && comp_event_opt != "") {
-              event_val <- comp_event_opt
-          } else if (!is.null(self$options$statusEvent) && self$options$statusEvent != "") {
-              event_val <- self$options$statusEvent
-          } else {
-              if ("1" %in% as.character(unique_vals)) {
-                  event_val <- "1"
-              } else {
-                  non_cen <- setdiff(as.character(unique_vals), as.character(censor_val))
-                  if (length(non_cen) > 0) event_val <- non_cen[1]
-                  else event_val <- as.character(unique_vals[1])
-              }
+          if (as.character(censor_val) == as.character(event_val)) {
+              jmvcore::reject(jmvcore::format(
+                  .("Censored level ('{censor}') and Event of interest ('{event}') cannot be the same value. Please select distinct levels in Competing Risks options."),
+                  censor = as.character(censor_val), event = as.character(event_val)
+              ))
           }
 
           # Competing event levels
-          comp_vals <- setdiff(as.character(unique_vals), c(as.character(censor_val), as.character(event_val)))
+          comp_vals <- setdiff(unique_vals_chr, c(as.character(censor_val), as.character(event_val)))
 
           # Recode status into factor: "censor", event_val, comp_vals
           status_chr <- as.character(status_col)
@@ -1811,6 +1736,11 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
           grayTable$deleteRows()
 
           if (self$options$showGrayTest) {
+              if (has_tstart) {
+                  grayTable$setNote('tstart_note', .("Gray's test does not support delayed entry / left-truncation and evaluates event times from origin."))
+              } else {
+                  grayTable$setNote('tstart_note', NULL)
+              }
               if (is.null(group_var)) {
                   grayTable$setNote('no_grp', .("A grouping variable with at least 2 levels is required for Gray's test."))
               } else if (length(unique(stats::na.omit(dat_comp$..group))) < 2) {
@@ -1888,7 +1818,7 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                           cox_formula <- stats::as.formula(cox_form_str)
 
                           fg_fit <- if (has_cluster) {
-                              try(survival::coxph(cox_formula, weight = fgwt, data = pdata, cluster = pdata$id), silent = TRUE)
+                              try(survival::coxph(cox_formula, weight = fgwt, data = pdata, cluster = ..cluster), silent = TRUE)
                           } else {
                               try(survival::coxph(cox_formula, weight = fgwt, data = pdata), silent = TRUE)
                           }
@@ -2065,25 +1995,10 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
       },
 
       .graysTest = function(time, status, group, rho = 0) {
-          if (requireNamespace("cmprsk", quietly = TRUE)) {
-              fit_c <- try(cmprsk::cuminc(ftime = time, fstatus = status, group = group, rho = rho), silent = TRUE)
-              if (!inherits(fit_c, "try-error") && !is.null(fit_c$Tests)) {
-                  tests <- fit_c$Tests
-                  idx <- which(rownames(tests) %in% c("1", 1))
-                  if (length(idx) > 0) {
-                      return(list(
-                          statistic = as.numeric(tests[idx[1], "stat"]),
-                          df = as.integer(tests[idx[1], "df"]),
-                          p.value = as.numeric(tests[idx[1], "pv"])
-                      ))
-                  }
-              }
-          }
-
           valid <- !is.na(time) & !is.na(status) & !is.na(group)
           time <- as.numeric(time[valid])
           status <- as.integer(status[valid])
-          group <- as.factor(group[valid])
+          group <- droplevels(as.factor(group[valid]))
 
           groups <- levels(group)
           ng <- length(groups)
@@ -2091,6 +2006,20 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               return(list(statistic = NA_real_, df = NA_integer_, p.value = NA_real_))
           }
 
+          if (requireNamespace('cmprsk', quietly = TRUE)) {
+              fit_c <- try(cmprsk::cuminc(ftime = time, fstatus = status, group = group, rho = rho), silent = TRUE)
+              if (!inherits(fit_c, 'try-error') && !is.null(fit_c$Tests)) {
+                  tests <- fit_c$Tests
+                  idx <- which(rownames(tests) %in% c('1', 1))
+                  if (length(idx) > 0) {
+                      return(list(
+                          statistic = as.numeric(tests[idx[1], 'stat']),
+                          df = as.integer(tests[idx[1], 'df']),
+                          p.value = as.numeric(tests[idx[1], 'pv'])
+                      ))
+                  }
+              }
+          }
           ig <- as.integer(group)
           no <- length(time)
 

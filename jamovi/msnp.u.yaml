@@ -53,23 +53,17 @@ children:
         name: freqTable
       - type: CheckBox
         name: groupTable
-        enable: ({ return ui['outcome'].value() !== null; })
+        enable: (outcome)
         children:
           - type: CheckBox
             name: groupAlleles
-            enable: >-
-              ({ return ui['groupTable'].value() && ui['outcome'].value() !==
-              null; })
+            enable: (groupTable && outcome)
           - type: CheckBox
             name: polyDf1
-            enable: >-
-              ({ return ui['groupTable'].value() && ui['outcome'].value() !==
-              null; })
+            enable: (groupTable && outcome)
           - type: CheckBox
             name: groupTotal
-            enable: >-
-              ({ return ui['groupTable'].value() && ui['outcome'].value() !==
-              null; })
+            enable: (groupTable && outcome)
       - type: CheckBox
         name: freqPct
       - type: CheckBox
@@ -104,10 +98,10 @@ children:
         name: barPlot
       - type: CheckBox
         name: hweSplitOutcome
-        enable: ({ return ui['outcome'].value() !== null; })
+        enable: (outcome)
       - type: CheckBox
         name: xLinked
-        enable: ({ return ui['gender'].value() !== null; })
+        enable: (gender)
   - type: CollapseBox
     label: Phenotype Association Tests
     collapsed: false

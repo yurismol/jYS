@@ -3,232 +3,16 @@
 mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
     "mLRClass",
     inherit = mLRBase,
-    public = list(
-        .savePart = function(path, part, ...) {
-            smart_lookup <- function(results, p_str, options = NULL) {
-                if (is.null(results) || is.null(p_str)) return(NULL)
-                if (length(p_str) > 1) p_str <- paste(p_str, collapse = "/")
-                if (!nzchar(p_str)) return(NULL)
-
-                covs <- tryCatch(options$covariates, error = function(e) NULL)
-                group_var <- tryCatch(options$group, error = function(e) NULL)
-                vars <- tryCatch(options$vars, error = function(e) NULL)
-
-                find_child <- function(curr, seg) {
-                    if (is.null(curr) || is.null(seg) || !nzchar(seg)) return(NULL)
-                    clean <- gsub('^["\']|["\']$', '', seg)
-
-                    if (inherits(curr, 'Array')) {
-                        nxt <- tryCatch(curr$get(key = clean), error = function(e) NULL)
-                        if (!is.null(nxt)) return(nxt)
-
-                        nxt <- tryCatch(curr$get(name = paste0('"', clean, '"')), error = function(e) NULL)
-                        if (!is.null(nxt)) return(nxt)
-                        nxt <- tryCatch(curr$get(name = seg), error = function(e) NULL)
-                        if (!is.null(nxt)) return(nxt)
-                        nxt <- tryCatch(curr$get(name = clean), error = function(e) NULL)
-                        if (!is.null(nxt)) return(nxt)
-
-                        items <- tryCatch(curr$items, error = function(e) NULL)
-                        if (!is.null(items) && length(items) > 0) {
-                            # 1. Exact match by key, name, or title
-                            for (it in items) {
-                                it_key <- tryCatch(it$key, error = function(e) NULL)
-                                it_name <- tryCatch(it$name, error = function(e) NULL)
-                                it_title <- tryCatch(it$title, error = function(e) NULL)
-                                if (identical(it_key, clean) || identical(it_key, seg) ||
-                                    identical(it_name, clean) || identical(it_name, seg) ||
-                                    identical(it_title, clean) || identical(it_title, seg)) {
-                                    return(it)
-                                }
-                            }
-
-                            # 2. Match covariate by index if clean is in covs or group_var
-                            if (!is.null(covs) && clean %in% covs) {
-                                c_idx <- which(covs == clean)
-                                target_key <- paste0("..cov_", c_idx, "_")
-                                for (it in items) {
-                                    if (identical(it$key, target_key) || grepl(paste0("^\\.\\.cov_", c_idx), as.character(it$key))) {
-                                        return(it)
-                                    }
-                                }
-                            }
-                            if (!is.null(group_var) && (clean == group_var || grepl(paste0("^", clean), group_var))) {
-                                for (it in items) {
-                                    if (identical(it$key, "..group") || grepl("^\\.\\.group", as.character(it$key))) {
-                                        return(it)
-                                    }
-                                }
-                            }
-
-                            # 3. Match suffix of title after dash
-                            for (it in items) {
-                                it_title <- tryCatch(as.character(it$title), error = function(e) "")
-                                title_var <- trimws(sub(".*[\u2013\u2014-]\\s*", "", it_title))
-                                title_var_clean <- gsub("[_()]", "", title_var)
-                                clean_nopunct <- gsub("[_()]", "", clean)
-                                if (nzchar(title_var) && (identical(title_var, clean) || identical(title_var_clean, clean_nopunct))) {
-                                    return(it)
-                                }
-                            }
-
-                            # 4. Word boundary match in title
-                            for (it in items) {
-                                it_title <- tryCatch(as.character(it$title), error = function(e) "")
-                                pattern <- paste0("(^|[^a-zA-Z0-9_])", clean, "([^a-zA-Z0-9_]|$)")
-                                if (grepl(pattern, it_title)) {
-                                    return(it)
-                                }
-                            }
-
-                            # 5. Check integer index
-                            idx <- suppressWarnings(as.integer(clean))
-                            if (!is.na(idx)) {
-                                items_len <- length(items)
-                                if (idx == 0 && items_len >= 1) return(items[[1]])
-                                if (idx >= 1 && idx <= items_len) return(items[[idx]])
-                            }
-                        }
-                    }
-
-                    nxt <- tryCatch(curr$.lookup(seg), error = function(e) NULL)
-                    if (!is.null(nxt)) return(nxt)
-                    if (seg != clean) {
-                        nxt <- tryCatch(curr$.lookup(clean), error = function(e) NULL)
-                        if (!is.null(nxt)) return(nxt)
-                    }
-
-                    if (inherits(curr, 'Group')) {
-                        nxt <- tryCatch(curr$get(clean), error = function(e) NULL)
-                        if (!is.null(nxt)) return(nxt)
-                        nxt <- tryCatch(curr$get(seg), error = function(e) NULL)
-                        if (!is.null(nxt)) return(nxt)
-                    }
-
-                    items <- tryCatch(curr$items, error = function(e) NULL)
-                    if (!is.null(items) && length(items) > 0) {
-                        if (clean %in% names(items)) return(items[[clean]])
-                        if (seg %in% names(items)) return(items[[seg]])
-                        for (it in items) {
-                            it_name <- tryCatch(it$name, error = function(e) NULL)
-                            it_key <- tryCatch(it$key, error = function(e) NULL)
-                            it_title <- tryCatch(it$title, error = function(e) NULL)
-                            if (identical(it_name, clean) || identical(it_name, seg) ||
-                                identical(it_key, clean) || identical(it_key, seg)) {
-                                return(it)
-                            }
-                        }
-                    }
-                    NULL
-                }
-
-                traverse <- function(node, segs) {
-                    if (is.null(node) || length(segs) == 0) return(node)
-                    child <- find_child(node, segs[1])
-                    if (!is.null(child)) {
-                        return(traverse(child, segs[-1]))
-                    }
-                    NULL
-                }
-
-                search_recursive <- function(node, segs) {
-                    if (is.null(node)) return(NULL)
-                    res <- traverse(node, segs)
-                    if (!is.null(res)) return(res)
-
-                    items <- tryCatch(node$items, error = function(e) NULL)
-                    if (!is.null(items) && length(items) > 0) {
-                        for (child in items) {
-                            if (inherits(child, 'Group') || inherits(child, 'Array')) {
-                                res <- search_recursive(child, segs)
-                                if (!is.null(res)) return(res)
-                            }
-                        }
-                    }
-                    NULL
-                }
-
-                norm_p <- gsub('\\[[\'"]?([^\'"]+?)[\'"]?\\]', '/\\1', p_str)
-                parts <- strsplit(norm_p, '/+', perl = TRUE)[[1]]
-                parts <- parts[parts != ""]
-                if (length(parts) == 0) return(NULL)
-
-                # Strip analysisId or 'results' prefix if present
-                if (length(parts) > 1 && (parts[1] == "results" || !is.na(suppressWarnings(as.integer(parts[1]))))) {
-                    if (is.null(find_child(results, parts[1]))) {
-                        parts <- parts[-1]
-                    }
-                }
-
-                target <- search_recursive(results, parts)
-                if (inherits(target, 'Array') && length(target$items) > 0) {
-                    target <- target$items[[1]]
-                }
-                target
-            }
-
-            element <- smart_lookup(self$results, part, self$options)
-            if (is.null(element)) {
-                return(FALSE)
-            }
-
-            if (inherits(element, 'Array')) {
-                if (length(element$items) > 0) {
-                    element <- element$items[[1]]
-                } else {
-                    return(FALSE)
-                }
-            }
-
-            if (inherits(element, 'Image')) {
-                if (is.null(element$state) && !is.null(element$parent$state)) {
-                    parent_state <- element$parent$state
-                    if (!is.null(parent_state$zph)) {
-                        var_name <- element$key
-                        var_idx <- if (!is.null(var_name) && var_name %in% rownames(parent_state$zph$table)) {
-                            which(rownames(parent_state$zph$table) == var_name)
-                        } else 1
-                        element$setState(list(zph = parent_state$zph, var_idx = var_idx, var_name = var_name))
-                    } else if (!is.null(element$key) && !is.null(parent_state[[element$key]])) {
-                        element$setState(parent_state[[element$key]])
-                    } else if (is.list(parent_state) && length(parent_state) > 0) {
-                        element$setState(parent_state[[1]])
-                    }
-                }
-            }
-
-            if (element$requiresData && is.function(private$.ensureData)) {
-                private$.ensureData()
-            }
-            save_ok <- tryCatch({
-                element$saveAs(path, ...)
-                file.exists(path) && file.info(path)$size > 0
-            }, error = function(e) {
-                tryCatch({
-                    element$saveAs(path)
-                    file.exists(path) && file.info(path)$size > 0
-                }, error = function(e2) {
-                    FALSE
-                })
-            })
-            return(save_ok)
-        }
-    ),
     private = list(
-        .ensureData = function() {
-            if (is.null(private$.data) || nrow(private$.data) == 0) {
-                d <- tryCatch(self$readDataset(headerOnly = FALSE), error = function(e) NULL)
-                if (!is.null(d) && nrow(d) > 0)
-                    private$.data <- d
-            }
-            return(!is.null(private$.data) && nrow(private$.data) > 0)
-        },
         
+        .step_fallback = FALSE,
+
         .init = function() {
             private$.initOutputs()
         },
         
         .run = function() {
+            private$.step_fallback <- FALSE
             dep <- self$options$dep
             covs <- self$options$covs
             factors <- self$options$factors
@@ -289,7 +73,9 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             # Build full model matrix X (intercept column dropped)
             formula_str <- jmvcore::composeFormula(NULL, c(covs, factors))
             X_all <- model.matrix(as.formula(formula_str), data = clean_data)
+            assign_attr <- attr(X_all, 'assign')[-1]
             X_all <- X_all[, -1, drop = FALSE] # Drop intercept
+            attr(X_all, 'assign') <- assign_attr
             colnames(X_all) <- gsub("^`|`$", "", colnames(X_all)) # Clean backticks
             
             method <- self$options$method
@@ -409,6 +195,7 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 
                 # Fit model on training fold (including feature selection on training partition!)
                 X_train_full <- X_all[train_idx, , drop = FALSE]
+                attr(X_train_full, 'assign') <- attr(X_all, 'assign')
                 y_train <- y_target[train_idx]
                 clean_data_train <- clean_data[train_idx, , drop = FALSE]
                 
@@ -465,6 +252,7 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         tr_idx <- setdiff(1:nrow(X_all), t_idx)
                         
                         X_tr_full <- X_all[tr_idx, , drop = FALSE]
+                        attr(X_tr_full, 'assign') <- attr(X_all, 'assign')
                         y_tr <- y_target[tr_idx]
                         clean_data_tr <- clean_data[tr_idx, , drop = FALSE]
                         
@@ -518,6 +306,7 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         tr_idx <- setdiff(1:nrow(X_all), t_idx)
                         
                         X_tr_full <- X_all[tr_idx, , drop = FALSE]
+                        attr(X_tr_full, 'assign') <- attr(X_all, 'assign')
                         y_tr <- y_num[tr_idx]
                         clean_data_tr <- clean_data[tr_idx, , drop = FALSE]
                         
@@ -579,6 +368,7 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                             tr_idx <- setdiff(1:nrow(X_all), t_idx)
                             
                             X_tr_full <- X_all[tr_idx, , drop = FALSE]
+                        attr(X_tr_full, 'assign') <- attr(X_all, 'assign')
                             y_tr <- y_target[tr_idx]
                             clean_data_tr <- clean_data[tr_idx, , drop = FALSE]
                             
@@ -636,6 +426,7 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                             tr_idx <- setdiff(1:nrow(X_all), t_idx)
                             
                             X_tr_full <- X_all[tr_idx, , drop = FALSE]
+                        attr(X_tr_full, 'assign') <- attr(X_all, 'assign')
                             y_tr <- y_num[tr_idx]
                             clean_data_tr <- clean_data[tr_idx, , drop = FALSE]
                             
@@ -1102,35 +893,43 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 # Perform stepwise selection
                 step_direction <- if (method == "forward") "forward" else "backward"
                 fit_step <- try(stats::step(
-                    object = if (method == "forward") null_model else full_model,
+                    object = if (method == 'forward') null_model else full_model,
                     scope = list(lower = null_model, upper = full_model),
                     direction = step_direction,
                     trace = 0
                 ), silent = TRUE)
-                
-                if (inherits(fit_step, "try-error")) {
+
+                if (inherits(fit_step, 'try-error')) {
+                    private$.step_fallback <- TRUE
                     return(all_features) # Fallback to all
                 }
-                
+
                 # Extract selected terms and reconstruct active columns in model matrix
-                selected_terms <- attr(terms(fit_step), "term.labels")
-                
-                # Find all columns of model matrix X that correspond to the selected terms
-                active_cols <- c()
-                for (term in selected_terms) {
-                    # Handle factor dummy variable prefixes or direct matching
-                    matches <- grep(paste0("^", term), all_features, value = TRUE)
-                    # If direct match or prefix dummy match
-                    if (length(matches) > 0) {
-                        active_cols <- c(active_cols, matches)
-                    }
+                selected_terms <- attr(terms(fit_step), 'term.labels')
+                full_term_labels <- attr(terms(full_model), 'term.labels')
+
+                # Structural matching using model-matrix 'assign' attribute
+                assign_vec <- attr(X, 'assign')
+                if (is.null(assign_vec)) {
+                    assign_vec <- attr(model.matrix(full_model), 'assign')[-1]
                 }
-                
-                active_cols <- unique(active_cols)
-                if (length(active_cols) == 0) return(all_features) # Fallback to all if empty
+
+                selected_term_indices <- match(selected_terms, full_term_labels)
+                selected_term_indices <- selected_term_indices[!is.na(selected_term_indices)]
+
+                if (length(selected_term_indices) > 0 && !is.null(assign_vec)) {
+                    active_cols <- colnames(X)[assign_vec %in% selected_term_indices]
+                } else {
+                    active_cols <- character(0)
+                }
+
+                if (length(active_cols) == 0) {
+                    private$.step_fallback <- TRUE
+                    return(all_features) # Fallback to all if empty
+                }
                 return(active_cols)
             }
-            
+
             if (method %in% c("lasso", "elastic")) {
                 # Regularized Selection using glmnet
                 # Alpha = 1 is Lasso, Alpha = [0, 1] is ElasticNet
@@ -1386,6 +1185,12 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             }
             
             try(coeff_table$addFootnote(col = "level", note = ref_msg, rowNo = 1), silent = TRUE)
+            if (isTRUE(private$.step_fallback)) {
+                fallback_note <- .("Stepwise selection failed to retain any predictors or encountered an error; falling back to all predictors.")
+                try(coeff_table$setNote('fallback_note', fallback_note), silent = TRUE)
+            } else {
+                try(coeff_table$setNote('fallback_note', NULL), silent = TRUE)
+            }
         },
         
         # ----------------------------------------------------

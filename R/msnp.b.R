@@ -2,226 +2,7 @@
 mSNPClass <- R6::R6Class(
     "mSNPClass",
     inherit = mSNPBase,
-    public = list(
-        .savePart = function(path, part, ...) {
-            smart_lookup <- function(results, p_str, options = NULL) {
-                if (is.null(results) || is.null(p_str)) return(NULL)
-                if (length(p_str) > 1) p_str <- paste(p_str, collapse = "/")
-                if (!nzchar(p_str)) return(NULL)
-
-                covs <- tryCatch(options$covariates, error = function(e) NULL)
-                group_var <- tryCatch(options$group, error = function(e) NULL)
-                vars <- tryCatch(options$vars, error = function(e) NULL)
-
-                find_child <- function(curr, seg) {
-                    if (is.null(curr) || is.null(seg) || !nzchar(seg)) return(NULL)
-                    clean <- gsub('^["\']|["\']$', '', seg)
-
-                    if (inherits(curr, 'Array')) {
-                        nxt <- tryCatch(curr$get(key = clean), error = function(e) NULL)
-                        if (!is.null(nxt)) return(nxt)
-
-                        nxt <- tryCatch(curr$get(name = paste0('"', clean, '"')), error = function(e) NULL)
-                        if (!is.null(nxt)) return(nxt)
-                        nxt <- tryCatch(curr$get(name = seg), error = function(e) NULL)
-                        if (!is.null(nxt)) return(nxt)
-                        nxt <- tryCatch(curr$get(name = clean), error = function(e) NULL)
-                        if (!is.null(nxt)) return(nxt)
-
-                        items <- tryCatch(curr$items, error = function(e) NULL)
-                        if (!is.null(items) && length(items) > 0) {
-                            # 1. Exact match by key, name, or title
-                            for (it in items) {
-                                it_key <- tryCatch(it$key, error = function(e) NULL)
-                                it_name <- tryCatch(it$name, error = function(e) NULL)
-                                it_title <- tryCatch(it$title, error = function(e) NULL)
-                                if (identical(it_key, clean) || identical(it_key, seg) ||
-                                    identical(it_name, clean) || identical(it_name, seg) ||
-                                    identical(it_title, clean) || identical(it_title, seg)) {
-                                    return(it)
-                                }
-                            }
-
-                            # 2. Match covariate by index if clean is in covs or group_var
-                            if (!is.null(covs) && clean %in% covs) {
-                                c_idx <- which(covs == clean)
-                                target_key <- paste0("..cov_", c_idx, "_")
-                                for (it in items) {
-                                    if (identical(it$key, target_key) || grepl(paste0("^\\.\\.cov_", c_idx), as.character(it$key))) {
-                                        return(it)
-                                    }
-                                }
-                            }
-                            if (!is.null(group_var) && (clean == group_var || grepl(paste0("^", clean), group_var))) {
-                                for (it in items) {
-                                    if (identical(it$key, "..group") || grepl("^\\.\\.group", as.character(it$key))) {
-                                        return(it)
-                                    }
-                                }
-                            }
-
-                            # 3. Match suffix of title after dash
-                            for (it in items) {
-                                it_title <- tryCatch(as.character(it$title), error = function(e) "")
-                                title_var <- trimws(sub(".*[\u2013\u2014-]\\s*", "", it_title))
-                                title_var_clean <- gsub("[_()]", "", title_var)
-                                clean_nopunct <- gsub("[_()]", "", clean)
-                                if (nzchar(title_var) && (identical(title_var, clean) || identical(title_var_clean, clean_nopunct))) {
-                                    return(it)
-                                }
-                            }
-
-                            # 4. Word boundary match in title
-                            for (it in items) {
-                                it_title <- tryCatch(as.character(it$title), error = function(e) "")
-                                pattern <- paste0("(^|[^a-zA-Z0-9_])", clean, "([^a-zA-Z0-9_]|$)")
-                                if (grepl(pattern, it_title)) {
-                                    return(it)
-                                }
-                            }
-
-                            # 5. Check integer index
-                            idx <- suppressWarnings(as.integer(clean))
-                            if (!is.na(idx)) {
-                                items_len <- length(items)
-                                if (idx == 0 && items_len >= 1) return(items[[1]])
-                                if (idx >= 1 && idx <= items_len) return(items[[idx]])
-                            }
-                        }
-                    }
-
-                    nxt <- tryCatch(curr$.lookup(seg), error = function(e) NULL)
-                    if (!is.null(nxt)) return(nxt)
-                    if (seg != clean) {
-                        nxt <- tryCatch(curr$.lookup(clean), error = function(e) NULL)
-                        if (!is.null(nxt)) return(nxt)
-                    }
-
-                    if (inherits(curr, 'Group')) {
-                        nxt <- tryCatch(curr$get(clean), error = function(e) NULL)
-                        if (!is.null(nxt)) return(nxt)
-                        nxt <- tryCatch(curr$get(seg), error = function(e) NULL)
-                        if (!is.null(nxt)) return(nxt)
-                    }
-
-                    items <- tryCatch(curr$items, error = function(e) NULL)
-                    if (!is.null(items) && length(items) > 0) {
-                        if (clean %in% names(items)) return(items[[clean]])
-                        if (seg %in% names(items)) return(items[[seg]])
-                        for (it in items) {
-                            it_name <- tryCatch(it$name, error = function(e) NULL)
-                            it_key <- tryCatch(it$key, error = function(e) NULL)
-                            it_title <- tryCatch(it$title, error = function(e) NULL)
-                            if (identical(it_name, clean) || identical(it_name, seg) ||
-                                identical(it_key, clean) || identical(it_key, seg)) {
-                                return(it)
-                            }
-                        }
-                    }
-                    NULL
-                }
-
-                traverse <- function(node, segs) {
-                    if (is.null(node) || length(segs) == 0) return(node)
-                    child <- find_child(node, segs[1])
-                    if (!is.null(child)) {
-                        return(traverse(child, segs[-1]))
-                    }
-                    NULL
-                }
-
-                search_recursive <- function(node, segs) {
-                    if (is.null(node)) return(NULL)
-                    res <- traverse(node, segs)
-                    if (!is.null(res)) return(res)
-
-                    items <- tryCatch(node$items, error = function(e) NULL)
-                    if (!is.null(items) && length(items) > 0) {
-                        for (child in items) {
-                            if (inherits(child, 'Group') || inherits(child, 'Array')) {
-                                res <- search_recursive(child, segs)
-                                if (!is.null(res)) return(res)
-                            }
-                        }
-                    }
-                    NULL
-                }
-
-                norm_p <- gsub('\\[[\'"]?([^\'"]+?)[\'"]?\\]', '/\\1', p_str)
-                parts <- strsplit(norm_p, '/+', perl = TRUE)[[1]]
-                parts <- parts[parts != ""]
-                if (length(parts) == 0) return(NULL)
-
-                # Strip analysisId or 'results' prefix if present
-                if (length(parts) > 1 && (parts[1] == "results" || !is.na(suppressWarnings(as.integer(parts[1]))))) {
-                    if (is.null(find_child(results, parts[1]))) {
-                        parts <- parts[-1]
-                    }
-                }
-
-                target <- search_recursive(results, parts)
-                if (inherits(target, 'Array') && length(target$items) > 0) {
-                    target <- target$items[[1]]
-                }
-                target
-            }
-
-            element <- smart_lookup(self$results, part, self$options)
-            if (is.null(element)) {
-                return(FALSE)
-            }
-
-            if (inherits(element, 'Array')) {
-                if (length(element$items) > 0) {
-                    element <- element$items[[1]]
-                } else {
-                    return(FALSE)
-                }
-            }
-
-            if (inherits(element, 'Image')) {
-                if (is.null(element$state) && !is.null(element$parent$state)) {
-                    parent_state <- element$parent$state
-                    if (!is.null(parent_state$zph)) {
-                        var_name <- element$key
-                        var_idx <- if (!is.null(var_name) && var_name %in% rownames(parent_state$zph$table)) {
-                            which(rownames(parent_state$zph$table) == var_name)
-                        } else 1
-                        element$setState(list(zph = parent_state$zph, var_idx = var_idx, var_name = var_name))
-                    } else if (!is.null(element$key) && !is.null(parent_state[[element$key]])) {
-                        element$setState(parent_state[[element$key]])
-                    } else if (is.list(parent_state) && length(parent_state) > 0) {
-                        element$setState(parent_state[[1]])
-                    }
-                }
-            }
-
-            if (element$requiresData && is.function(private$.ensureData)) {
-                private$.ensureData()
-            }
-            save_ok <- tryCatch({
-                element$saveAs(path, ...)
-                file.exists(path) && file.info(path)$size > 0
-            }, error = function(e) {
-                tryCatch({
-                    element$saveAs(path)
-                    file.exists(path) && file.info(path)$size > 0
-                }, error = function(e2) {
-                    FALSE
-                })
-            })
-            return(save_ok)
-        }
-    ),
     private = list(
-        .ensureData = function() {
-            if (is.null(private$.data) || nrow(private$.data) == 0) {
-                d <- tryCatch(self$readDataset(headerOnly = FALSE), error = function(e) NULL)
-                if (!is.null(d) && nrow(d) > 0)
-                    private$.data <- d
-            }
-            return(!is.null(private$.data) && nrow(private$.data) > 0)
-        },
 
         # Internal state
         g_data = NULL,
@@ -473,6 +254,15 @@ mSNPClass <- R6::R6Class(
         },
         
         .parseGenotypes = function() {
+            is_missing_geno <- function(val) {
+                if (is.na(val)) return(TRUE)
+                s <- trimws(as.character(val))
+                if (s == "") return(TRUE)
+                if (grepl("^[Nn0\\-\\?\\.\\/\\|\\s]+$", s)) return(TRUE)
+                if (toupper(s) %in% c("NA", "NULL")) return(TRUE)
+                return(FALSE)
+            }
+
             for (marker in self$options$vars) {
                 x <- private$g_data[[marker]]
                 non_na <- na.omit(x)
@@ -480,14 +270,14 @@ mSNPClass <- R6::R6Class(
                 
                 if (length(non_na) == 0) {
                     private$g_alleles[[marker]] <- list(major="A", minor="B")
-                    private$g_classified[[marker]] <- rep(NA, length(x))
+                    private$g_classified[[marker]] <- rep(NA_character_, length(x))
                     next
                 }
                 
-                # Check for numeric 0, 1, 2 coding
-                is_numeric_coding <- all(as.character(non_na) %in% c("0", "1", "2"))
+                # Check for numeric 0, 1, 2 coding (additive dosage)
+                is_numeric_coding <- all(as.character(non_na) %in% c("0", "1", "2")) && any(as.character(non_na) %in% c("1", "2"))
                 if (is_numeric_coding) {
-                    classified <- rep(NA, length(x))
+                    classified <- rep(NA_character_, length(x))
                     classified[x == "0" | x == 0] <- "AA"
                     classified[x == "1" | x == 1] <- "AB"
                     classified[x == "2" | x == 2] <- "BB"
@@ -496,63 +286,63 @@ mSNPClass <- R6::R6Class(
                     next
                 }
                 
-                # Standard text character processing
-                # Extract all characters (alleles)
-                cleaned <- gsub("[^A-Za-z0-9]", "", as.character(non_na))
-                all_chars <- unlist(strsplit(cleaned, ""))
-                if (length(all_chars) == 0) {
+                # Filter out recognised missing codes before extracting alleles
+                valid_genotypes <- non_na[!sapply(non_na, is_missing_geno)]
+                if (length(valid_genotypes) == 0) {
                     private$g_alleles[[marker]] <- list(major="A", minor="B")
-                    private$g_classified[[marker]] <- rep(NA, length(x))
+                    private$g_classified[[marker]] <- rep(NA_character_, length(x))
                     next
                 }
                 
-                # Sorted allele frequency to define major / minor
+                # Standard text character processing
+                # Extract all characters (alleles) excluding missing symbols
+                cleaned <- gsub("[^A-Za-z0-9]", "", as.character(valid_genotypes))
+                all_chars <- unlist(strsplit(cleaned, ""))
+                all_chars <- all_chars[!all_chars %in% c("N", "n", "0", "-", "?", ".")]
+                if (length(all_chars) == 0) {
+                    private$g_alleles[[marker]] <- list(major="A", minor="B")
+                    private$g_classified[[marker]] <- rep(NA_character_, length(x))
+                    next
+                }
+                
+                # Check for multiallelic markers (> 2 distinct alleles)
+                distinct_alleles <- sort(unique(all_chars))
+                if (length(distinct_alleles) > 2) {
+                    jmvcore::reject(jmvcore::format(.("Marker '{marker}' has more than two distinct alleles ({alleles}). Only bi-allelic markers are supported."), marker=marker, alleles=paste(distinct_alleles, collapse=", ")))
+                }
+                
+                # Sorted allele frequency to define major (A) / minor (B)
                 allele_counts <- table(all_chars)
-                alleles_sorted <- names(sort(allele_counts, decreasing = TRUE))
+                allele_counts <- allele_counts[order(names(allele_counts))] # Deterministic alphabetical tie-breaking
+                allele_counts <- allele_counts[order(allele_counts, decreasing = TRUE)]
+                alleles_sorted <- names(allele_counts)
                 
-                # Find the heterozygote genotype and define major (wild-type) allele as its first character
-                user_wt <- NULL
-                unique_genotypes <- unique(as.character(non_na))
-                for (geno in unique_genotypes) {
-                    cleaned_geno <- gsub("[^A-Za-z0-9]", "", geno)
-                    geno_chars <- unlist(strsplit(cleaned_geno, ""))
-                    if (length(unique(geno_chars)) == 2) {
-                        if (nchar(cleaned_geno) >= 2) {
-                            user_wt <- substr(cleaned_geno, 1, 1)
-                            break
-                        }
-                    }
-                }
-                
-                if (!is.null(user_wt) && user_wt %in% names(allele_counts)) {
-                    major <- user_wt
-                    # Minor is the other allele (not the major one)
-                    other_alleles <- setdiff(names(allele_counts), major)
-                    minor <- if (length(other_alleles) > 0) other_alleles[1] else major
-                } else {
-                    major <- alleles_sorted[1]
-                    minor <- if (length(alleles_sorted) > 1) alleles_sorted[2] else major
-                }
-                
+                major <- alleles_sorted[1]
+                minor <- if (length(alleles_sorted) > 1) alleles_sorted[2] else major
                 private$g_alleles[[marker]] <- list(major=major, minor=minor)
                 
-                classified <- rep(NA, length(x))
+                classified <- rep(NA_character_, length(x))
                 for (i in seq_along(x)) {
                     val <- x[i]
-                    if (is.na(val) || val == "") next
+                    if (is_missing_geno(val)) next
                     val_clean <- gsub("[^A-Za-z0-9]", "", as.character(val))
                     chars <- unlist(strsplit(val_clean, ""))
+                    chars <- chars[!chars %in% c("N", "n", "0", "-", "?", ".")]
                     if (length(chars) == 0) next
                     
                     count_major <- sum(chars == major)
                     count_minor <- sum(chars == minor)
                     
-                    if (count_major == 2) {
+                    if (count_major == 2 && count_minor == 0) {
                         classified[i] <- "AA"
                     } else if (count_major == 1 && count_minor == 1) {
                         classified[i] <- "AB"
-                    } else if (count_minor == 2) {
+                    } else if (count_minor == 2 && count_major == 0) {
                         classified[i] <- "BB"
+                    } else if (length(chars) == 1) {
+                        # Hemizygous call (e.g. single allele on X chromosome in males)
+                        if (count_major == 1) classified[i] <- "A"
+                        else if (count_minor == 1) classified[i] <- "B"
                     }
                 }
                 private$g_classified[[marker]] <- classified
@@ -617,20 +407,30 @@ mSNPClass <- R6::R6Class(
                 is_x_linked <- isTRUE(self$options$xLinked) && !is.null(self$options$gender)
                 if (is_x_linked) {
                     gender_var <- private$g_data[[self$options$gender]]
-                    sex_levels <- private$.getSexLevels(gender_var)
+                    valid_idx <- which(!is.na(classified) & classified != "" & !is.na(gender_var))
+                    sub_class <- classified[valid_idx]
+                    sub_gender <- gender_var[valid_idx]
+                    
+                    sex_levels <- private$.getSexLevels(sub_gender)
                     female_level <- sex_levels$female
                     male_level <- sex_levels$male
-                    male_idx <- which(gender_var == male_level)
-                    female_idx <- which(gender_var == female_level)
+                    male_idx <- which(sub_gender == male_level)
+                    female_idx <- which(sub_gender == female_level)
                     
-                    obsA <- sum(classified[male_idx] == "AA" | classified[male_idx] == "A", na.rm=TRUE)
-                    obsB <- sum(classified[male_idx] == "BB" | classified[male_idx] == "B", na.rm=TRUE)
-                    obsAA <- sum(classified[female_idx] == "AA", na.rm=TRUE)
-                    obsAB <- sum(classified[female_idx] == "AB", na.rm=TRUE)
-                    obsBB <- sum(classified[female_idx] == "BB", na.rm=TRUE)
+                    male_geno <- sub_class[male_idx]
+                    female_geno <- sub_class[female_idx]
+                    
+                    # Exclude male heterozygotes from X-linked calculations
+                    male_geno <- male_geno[male_geno != "AB"]
+                    
+                    obsA <- sum(male_geno == "AA" | male_geno == "A", na.rm=TRUE)
+                    obsB <- sum(male_geno == "BB" | male_geno == "B", na.rm=TRUE)
+                    obsAA <- sum(female_geno == "AA", na.rm=TRUE)
+                    obsAB <- sum(female_geno == "AB", na.rm=TRUE)
+                    obsBB <- sum(female_geno == "BB", na.rm=TRUE)
                     
                     nA <- 2 * obsAA + obsAB + obsA
-                    total_alleles <- 2 * length(na.omit(classified[female_idx])) + length(na.omit(classified[male_idx]))
+                    total_alleles <- 2 * length(female_geno) + length(male_geno)
                 } else {
                     nA <- 2 * obsAA + obsAB
                     total_alleles <- 2 * length(non_na)
@@ -643,17 +443,21 @@ mSNPClass <- R6::R6Class(
                 # HWE p-value in controls or overall
                 hwe_p <- private$.getHWEpValForQC(marker, controls_idx)
                 
-                # Exclusions
-                status <- .("Passed")
+                # Exclusions with language-independent status code
+                status_code <- "passed"
+                status_label <- .("Passed")
                 if (call_rate < call_rate_thr) {
-                    status <- jmvcore::format(.("Excluded: Call Rate < {val}"), val = call_rate_thr)
+                    status_code <- "call_rate"
+                    status_label <- jmvcore::format(.("Excluded: Call Rate < {val}"), val = call_rate_thr)
                 } else if (maf < maf_thr) {
-                    status <- jmvcore::format(.("Excluded: MAF < {val}"), val = maf_thr)
+                    status_code <- "maf"
+                    status_label <- jmvcore::format(.("Excluded: MAF < {val}"), val = maf_thr)
                 } else if (hwe_p < hwe_thr) {
-                    status <- jmvcore::format(.("Excluded: HWE p < {val}"), val = hwe_thr)
+                    status_code <- "hwe"
+                    status_label <- jmvcore::format(.("Excluded: HWE p < {val}"), val = hwe_thr)
                 }
                 
-                private$g_qc_status[[marker]] <- status
+                private$g_qc_status[[marker]] <- list(passed = (status_code == "passed"), code = status_code, label = status_label)
                 
                 if (show_qc) {
                     row_val <- list(
@@ -661,7 +465,7 @@ mSNPClass <- R6::R6Class(
                         call_rate = call_rate,
                         maf = maf,
                         hwe_p = hwe_p,
-                        status = status
+                        status = status_label
                     )
                     qcTable$addRow(rowKey = marker, value = row_val)
                 }
@@ -670,15 +474,16 @@ mSNPClass <- R6::R6Class(
         
         .getHWEpValForQC = function(marker, indices) {
             classified <- private$g_classified[[marker]]
-            sub_class <- classified[indices]
-            sub_class <- na.omit(sub_class)
-            sub_class <- sub_class[sub_class != ""]
-            N <- length(sub_class)
-            if (N == 0) return(1.0)
+            if (is.null(indices)) indices <- seq_along(classified)
             
             is_x_linked <- isTRUE(self$options$xLinked) && !is.null(self$options$gender)
             if (is_x_linked) {
-                gender_var <- private$g_data[[self$options$gender]][indices]
+                gender_all <- private$g_data[[self$options$gender]]
+                valid_mask <- indices[!is.na(classified[indices]) & classified[indices] != "" & !is.na(gender_all[indices])]
+                if (length(valid_mask) == 0) return(1.0)
+                
+                sub_class <- classified[valid_mask]
+                gender_var <- gender_all[valid_mask]
                 sex_levels <- private$.getSexLevels(gender_var)
                 female_level <- sex_levels$female
                 male_level <- sex_levels$male
@@ -686,16 +491,26 @@ mSNPClass <- R6::R6Class(
                 male_idx <- which(gender_var == male_level)
                 female_idx <- which(gender_var == female_level)
                 
-                obsA <- sum(sub_class[male_idx] == "AA" | sub_class[male_idx] == "A", na.rm=TRUE)
-                obsB <- sum(sub_class[male_idx] == "BB" | sub_class[male_idx] == "B", na.rm=TRUE)
-                obsAA <- sum(sub_class[female_idx] == "AA", na.rm=TRUE)
-                obsAB <- sum(sub_class[female_idx] == "AB", na.rm=TRUE)
-                obsBB <- sum(sub_class[female_idx] == "BB", na.rm=TRUE)
+                male_geno <- sub_class[male_idx]
+                female_geno <- sub_class[female_idx]
+                
+                # Exclude male heterozygotes from X-linked test
+                male_geno <- male_geno[male_geno != "AB"]
+                
+                obsA <- sum(male_geno == "AA" | male_geno == "A", na.rm=TRUE)
+                obsB <- sum(male_geno == "BB" | male_geno == "B", na.rm=TRUE)
+                obsAA <- sum(female_geno == "AA", na.rm=TRUE)
+                obsAB <- sum(female_geno == "AB", na.rm=TRUE)
+                obsBB <- sum(female_geno == "BB", na.rm=TRUE)
                 
                 counts_vec <- c(A = obsA, B = obsB, AA = obsAA, AB = obsAB, BB = obsBB)
                 res <- tryCatch(HardyWeinberg::HWExactSex(counts_vec, verbose=FALSE), error = function(e) list(pval=1.0))
                 return(if (is.list(res)) res$pval else res)
             } else {
+                sub_class <- na.omit(classified[indices])
+                sub_class <- sub_class[sub_class != ""]
+                N <- length(sub_class)
+                if (N == 0) return(1.0)
                 obsAA <- sum(sub_class == "AA")
                 obsAB <- sum(sub_class == "AB")
                 obsBB <- sum(sub_class == "BB")
@@ -749,19 +564,22 @@ mSNPClass <- R6::R6Class(
             raw_p_perm <- numeric()
             keys <- list()
             
+            total_excluded_male_het <- 0
+            
             for (marker in self$options$vars) {
                 private$.checkpoint()
                 classified <- private$g_classified[[marker]]
                 for (g in names(subsets)) {
                     subset_idx <- subsets[[g]]
-                    sub_class <- classified[subset_idx]
-                    sub_class <- na.omit(sub_class)
-                    sub_class <- sub_class[sub_class != ""]
                     
                     is_x_linked <- isTRUE(self$options$xLinked) && !is.null(self$options$gender)
                     
                     if (is_x_linked) {
-                        gender_var <- private$g_data[[self$options$gender]][subset_idx]
+                        gender_all <- private$g_data[[self$options$gender]]
+                        valid_mask <- subset_idx[!is.na(classified[subset_idx]) & classified[subset_idx] != "" & !is.na(gender_all[subset_idx])]
+                        sub_class <- classified[valid_mask]
+                        gender_var <- gender_all[valid_mask]
+                        
                         sex_levels <- private$.getSexLevels(gender_var)
                         female_level <- sex_levels$female
                         male_level <- sex_levels$male
@@ -772,14 +590,21 @@ mSNPClass <- R6::R6Class(
                         male_geno <- sub_class[male_idx]
                         female_geno <- sub_class[female_idx]
                         
+                        # Count and exclude male heterozygotes (errors)
+                        n_male_ab <- sum(male_geno == "AB", na.rm = TRUE)
+                        if (n_male_ab > 0) {
+                            total_excluded_male_het <- total_excluded_male_het + n_male_ab
+                            male_geno <- male_geno[male_geno != "AB"]
+                        }
+                        
                         obsA <- sum(male_geno == "AA" | male_geno == "A", na.rm=TRUE)
                         obsB <- sum(male_geno == "BB" | male_geno == "B", na.rm=TRUE)
                         obsAA <- sum(female_geno == "AA", na.rm=TRUE)
                         obsAB <- sum(female_geno == "AB", na.rm=TRUE)
                         obsBB <- sum(female_geno == "BB", na.rm=TRUE)
                         
-                        N_females <- length(na.omit(female_geno))
-                        N_males <- length(na.omit(male_geno))
+                        N_females <- length(female_geno)
+                        N_males <- length(male_geno)
                         N <- N_females + N_males
                         total_alleles <- 2 * N_females + N_males
                         
@@ -796,6 +621,9 @@ mSNPClass <- R6::R6Class(
                         h_obs <- if (N_females > 0) obsAB / N_females else 0
                         h_exp <- 2 * p_freq * q_freq
                     } else {
+                        sub_class <- classified[subset_idx]
+                        sub_class <- na.omit(sub_class)
+                        sub_class <- sub_class[sub_class != ""]
                         obsAA <- sum(sub_class == "AA")
                         obsAB <- sum(sub_class == "AB")
                         obsBB <- sum(sub_class == "BB")
@@ -1016,12 +844,15 @@ mSNPClass <- R6::R6Class(
                     
                     # Highlight if marker failed QC
                     marker_status <- private$g_qc_status[[k$marker]]
-                    if (!is.null(marker_status) && marker_status != "Passed") {
-                        hwTable$addFootnote(rowKey = k$row_key, col = "marker", paste0(.("Failed QC"), " (", marker_status, ")"))
+                    if (!is.null(marker_status) && !isTRUE(marker_status$passed)) {
+                        hwTable$addFootnote(rowKey = k$row_key, col = "marker", paste0(.("Failed QC"), " (", marker_status$label, ")"))
                     }
                 }
                 if (isTRUE(self$options$signifMarkers)) {
                     hwTable$setNote('signif_legend', '* p < .05, ** p < .01, *** p < .001')
+                }
+                if (total_excluded_male_het > 0) {
+                    hwTable$setNote('x_male_het', jmvcore::format(.("Excluded {n} heterozygous male genotype call(s) for X-linked analysis."), n = total_excluded_male_het))
                 }
             }
             private$.prepareTernaryState(subsets)
@@ -1084,7 +915,7 @@ mSNPClass <- R6::R6Class(
             maf_thr <- switch(self$options$qcMaf, "0.01" = 0.01, "0.05" = 0.05, "0.10" = 0.10, "none" = 0)
             hwe_thr <- switch(self$options$qcHwe, "0.05" = 0.05, "0.01" = 0.01, "0.001" = 0.001, "0.0001" = 0.0001, "none" = 0)
             if (call_rate_thr > 0 || maf_thr > 0 || hwe_thr > 0) {
-                analyzed_vars <- Filter(function(m) private$g_qc_status[[m]] == "Passed", self$options$vars)
+                analyzed_vars <- Filter(function(m) isTRUE(private$g_qc_status[[m]]$passed), self$options$vars)
             }
             
             raw_p_vals <- numeric()
@@ -1179,17 +1010,18 @@ mSNPClass <- R6::R6Class(
                     
                     if (model == "Allelic" && !is_continuous) {
                         # Allelic test (2x2) - unadjusted
-                        a <- 2 * cases_AA + cases_AB
-                        b <- 2 * cases_BB + cases_AB
-                        c <- 2 * ctrls_AA + ctrls_AB
-                        d <- 2 * ctrls_BB + ctrls_AB
+                        a <- 2 * cases_AA + cases_AB  # Major allele (A) in cases
+                        b <- 2 * cases_BB + cases_AB  # Minor allele (B) in cases
+                        c <- 2 * ctrls_AA + ctrls_AB  # Major allele (A) in controls
+                        d <- 2 * ctrls_BB + ctrls_AB  # Minor allele (B) in controls
                         
-                        tbl2x2 <- matrix(c(a, b, c, d), nrow=2, byrow=TRUE)
+                        tbl2x2 <- matrix(c(b, a, d, c), nrow=2, byrow=TRUE)
                         if (sum(tbl2x2) > 0) {
                             res_test <- tryCatch(stats::chisq.test(tbl2x2, correct=FALSE), error = function(e) list(p.value=NA))
                             p_val <- res_test$p.value
-                            if (b * c > 0) {
-                                or_val <- (a * d) / (b * c)
+                            if (a * d > 0) {
+                                # Odds ratio for minor allele (B) vs major allele (A) in cases vs controls
+                                or_val <- (b * c) / (a * d)
                                 log_or <- log(or_val)
                                 se_log_or <- sqrt(1/max(1, a) + 1/max(1, b) + 1/max(1, c) + 1/max(1, d))
                                 or_lower <- exp(log_or - 1.96 * se_log_or)
@@ -1230,7 +1062,7 @@ mSNPClass <- R6::R6Class(
                         if (is_continuous) {
                             res_fit <- tryCatch(lm(formula_obj, data=model_df), error=function(e) NULL)
                         } else {
-                            model_df$y <- as.factor(model_df$y)
+                            model_df$y <- factor(model_df$y, levels = c("Control", "Case"))
                             res_fit <- tryCatch(glm(formula_obj, data=model_df, family=binomial), error=function(e) NULL)
                         }
                         
@@ -1333,7 +1165,7 @@ mSNPClass <- R6::R6Class(
             maf_qc_thr <- switch(self$options$qcMaf, "0.01" = 0.01, "0.05" = 0.05, "0.10" = 0.10, "none" = 0)
             hwe_thr <- switch(self$options$qcHwe, "0.05" = 0.05, "0.01" = 0.01, "0.001" = 0.001, "0.0001" = 0.0001, "none" = 0)
             if (call_rate_thr > 0 || maf_qc_thr > 0 || hwe_thr > 0) {
-                analyzed_vars <- Filter(function(m) private$g_qc_status[[m]] == "Passed", self$options$vars)
+                analyzed_vars <- Filter(function(m) isTRUE(private$g_qc_status[[m]]$passed), self$options$vars)
             }
             
             for (marker in analyzed_vars) {
@@ -1410,15 +1242,19 @@ mSNPClass <- R6::R6Class(
             outcome_col <- self$options$outcome
             outcome_var <- private$g_data[[outcome_col]]
             
-            levels_out <- levels(outcome_var)
+            outcome_fact <- as.factor(outcome_var)
+            levels_out <- levels(outcome_fact)
             if (length(levels_out) < 2) return()
+            if (length(levels_out) > 2) {
+                jmvcore::reject(jmvcore::format(.("MDR analysis requires a binary outcome (2 levels), but '{var}' has {n} levels."), var = outcome_col, n = length(levels_out)))
+            }
             
             case_level <- levels_out[2]
             control_level <- levels_out[1]
             
             # Stratified CV setup
             df <- private$g_data
-            df$outcome_mdr <- ifelse(df[[outcome_col]] == case_level, "Case", "Control")
+            df$outcome_mdr <- ifelse(outcome_fact == case_level, "Case", "Control")
             
             # Map SNP genotypes to 1, 2, 3
             # Ensure complete cases for MDR
@@ -1427,7 +1263,7 @@ mSNPClass <- R6::R6Class(
             maf_thr <- switch(self$options$qcMaf, "0.01" = 0.01, "0.05" = 0.05, "0.10" = 0.10, "none" = 0)
             hwe_thr <- switch(self$options$qcHwe, "0.05" = 0.05, "0.01" = 0.01, "0.001" = 0.001, "0.0001" = 0.0001, "none" = 0)
             if (call_rate_thr > 0 || maf_thr > 0 || hwe_thr > 0) {
-                snps <- Filter(function(m) private$g_qc_status[[m]] == "Passed", snps)
+                snps <- Filter(function(m) isTRUE(private$g_qc_status[[m]]$passed), snps)
             }
             if (length(snps) == 0) return()
             complete_cases <- complete.cases(df[, c(snps, "outcome_mdr")])
@@ -1449,6 +1285,15 @@ mSNPClass <- R6::R6Class(
             
             outcome_vec <- df_comp$outcome_mdr
             
+            old_seed <- if (exists(".Random.seed", envir = .GlobalEnv)) get(".Random.seed", envir = .GlobalEnv) else NULL
+            has_old_seed <- !is.null(old_seed)
+            on.exit({
+                if (has_old_seed) {
+                    assign(".Random.seed", old_seed, envir = .GlobalEnv)
+                } else if (exists(".Random.seed", envir = .GlobalEnv)) {
+                    rm(".Random.seed", envir = .GlobalEnv)
+                }
+            }, add = TRUE)
             set.seed(seed)
             case_idx <- which(outcome_vec == "Case")
             ctrl_idx <- which(outcome_vec == "Control")
@@ -1642,7 +1487,7 @@ mSNPClass <- R6::R6Class(
                 # Assign p-values and update table
                 for (ord in 1:max_order) {
                     obs_test_ba <- best_models[[ord]]$test_ba
-                    p_val <- sum(perm_test_bas[ord, ] >= obs_test_ba) / n_perm
+                    p_val <- (sum(perm_test_bas[ord, ] >= obs_test_ba) + 1) / (n_perm + 1)
                     best_models[[ord]]$p_val <- p_val
                     mdrBestTable$setRow(rowKey = as.character(ord), values = list(p_val = p_val))
                     if (isTRUE(self$options$signifMarkers)) {
@@ -1717,7 +1562,7 @@ mSNPClass <- R6::R6Class(
             maf_thr <- switch(self$options$qcMaf, "0.01" = 0.01, "0.05" = 0.05, "0.10" = 0.10, "none" = 0)
             hwe_thr <- switch(self$options$qcHwe, "0.05" = 0.05, "0.01" = 0.01, "0.001" = 0.001, "0.0001" = 0.0001, "none" = 0)
             if (call_rate_thr > 0 || maf_thr > 0 || hwe_thr > 0) {
-                snps <- Filter(function(m) private$g_qc_status[[m]] == "Passed", snps)
+                snps <- Filter(function(m) isTRUE(private$g_qc_status[[m]]$passed), snps)
             }
             if (length(snps) < 2) return()
             
@@ -1933,11 +1778,11 @@ mSNPClass <- R6::R6Class(
                     )
                     
                     if (gt == "AA") {
-                        row_val$genotype_model <- .("Dominant abbreviation")
+                        row_val$genotype_model <- "D"
                     } else if (gt == "AB") {
-                        row_val$genotype_model <- .("Overdominant abbreviation")
+                        row_val$genotype_model <- "OD"
                     } else if (gt == "BB") {
-                        row_val$genotype_model <- .("Recessive abbreviation")
+                        row_val$genotype_model <- "R"
                     }
                     
                     # Group columns
@@ -2008,7 +1853,7 @@ mSNPClass <- R6::R6Class(
                         row_val$poly_chi <- NA
                         row_val$poly_p <- NA
                         
-                        row_val$genotype_model <- .("Allelic abbreviation")
+                        row_val$genotype_model <- "A"
                         
                         groupTable$addRow(rowKey = row_key, value = row_val)
                         if (isTRUE(self$options$signifMarkers)) {
@@ -2777,27 +2622,53 @@ mSNPClass <- R6::R6Class(
             N_ind <- nrow(private$g_data)
             scores <- rep(0, N_ind)
             
+            outcome_col <- self$options$outcome
+            if (is.null(outcome_col)) {
+                jmvcore::reject(.("Calculating Polygenic Risk Score (PRS) requires specifying a dependent/outcome variable to estimate SNP weights."))
+            }
+            
+            outcome_var <- private$g_data[[outcome_col]]
+            is_continuous <- is.numeric(outcome_var) && length(unique(na.omit(outcome_var))) > 2
+            
             weights <- numeric(length(markers))
             names(weights) <- markers
-            
-            is_continuous <- FALSE
-            outcome_col <- self$options$outcome
-            if (!is.null(outcome_col)) {
-                outcome_var <- private$g_data[[outcome_col]]
-                if (is.numeric(outcome_var) && length(unique(na.omit(outcome_var))) > 2) {
-                    is_continuous <- TRUE
-                }
-            }
             
             for (m in markers) {
                 row_key <- paste(m, "Log-additive", sep="_")
                 row <- private$g_assoc_results[[row_key]]
                 w <- 0.0
-                if (!is.null(row) && !is.na(row$or_val)) {
-                    if (is_continuous) {
-                        w <- row$or_val
-                    } else {
-                        w <- log(row$or_val)
+                if (!is.null(row) && !is.na(row$or_val) && (is_continuous || row$or_val > 0)) {
+                    w <- if (is_continuous) row$or_val else log(row$or_val)
+                } else {
+                    # Fit log-additive model directly to estimate weight
+                    class_m <- private$g_classified[[m]]
+                    dosage_m <- rep(NA_real_, length(class_m))
+                    dosage_m[class_m == "AA"] <- 0
+                    dosage_m[class_m == "AB"] <- 1
+                    dosage_m[class_m == "BB"] <- 2
+                    
+                    df_fit <- data.frame(y = outcome_var, x = dosage_m)
+                    df_fit <- df_fit[complete.cases(df_fit), ]
+                    if (nrow(df_fit) >= 10 && length(unique(df_fit$x)) > 1) {
+                        if (is_continuous) {
+                            fit_m <- tryCatch(stats::lm(y ~ x, data = df_fit), error = function(e) NULL)
+                            if (!is.null(fit_m)) {
+                                cfs <- stats::coef(fit_m)
+                                if ("x" %in% names(cfs) && !is.na(cfs["x"])) w <- unname(cfs["x"])
+                            }
+                        } else {
+                            df_fit$y_bin <- factor(df_fit$y)
+                            lvls <- levels(df_fit$y_bin)
+                            if (length(lvls) == 2) {
+                                # Level 1 = Control, Level 2 = Case
+                                df_fit$y_bin <- factor(df_fit$y_bin, levels = lvls)
+                                fit_m <- tryCatch(stats::glm(y_bin ~ x, data = df_fit, family = stats::binomial), error = function(e) NULL)
+                                if (!is.null(fit_m)) {
+                                    cfs <- stats::coef(fit_m)
+                                    if ("x" %in% names(cfs) && !is.na(cfs["x"])) w <- unname(cfs["x"])
+                                }
+                            }
+                        }
                     }
                 }
                 weights[m] <- w
@@ -2820,6 +2691,7 @@ mSNPClass <- R6::R6Class(
                 scores[i] <- if (valid_snps > 0) ind_score else NA
             }
             
+            self$results$prsOutput$setRowNums(rownames(self$data))
             self$results$prsOutput$setValues(scores)
         }
     )
