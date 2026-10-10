@@ -52,6 +52,35 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
           timeDepTable <- self$results$coxSection$timeDepTable
           timeDepTable$setNote('timedep_note', .('<b>Time-dependent Cox regression</b> models non-proportional hazards by interacting covariates with a function of time (Therneau & Grambsch, 2000). The hazard function is modeled as \u03bb(t; z) = \u03bb\u2080(t) exp(\u03b2\u2080 z + \u03b2_td [z \u00d7 f(t)]). A statistically significant time interaction (\u03b2_td, p < 0.05) indicates that the hazard ratio changes over time: \u03b2_td < 0 indicates diminishing relative risk, while \u03b2_td > 0 indicates increasing relative risk.'))
+
+          if (self$options$showCox && self$options$coxAssump && self$options$showSchoenfeldPlot) {
+              schoenfeldPlots <- self$results$coxSection$schoenfeldPlots
+              group_var <- self$options$group
+              covs <- self$options$covariates
+              plot_keys <- character()
+              if (!is.null(group_var) && nzchar(group_var)) {
+                  plot_keys <- c(plot_keys, "..group")
+              }
+              if (!is.null(covs) && length(covs) > 0) {
+                  for (i in seq_along(covs)) {
+                      plot_keys <- c(plot_keys, paste0("..cov_", i, "_"))
+                  }
+              }
+              existing_keys <- unlist(schoenfeldPlots$itemKeys, use.names = FALSE)
+              for (pk in plot_keys) {
+                  if (!pk %in% existing_keys) {
+                      item <- schoenfeldPlots$addItem(key = pk)
+                      clean_pk <- pk
+                      if (pk == "..group") {
+                          clean_pk <- group_var
+                      } else if (grepl("^\\.\\.cov_([0-9]+)_", pk)) {
+                          m_idx <- as.integer(gsub("^\\.\\.cov_([0-9]+)_", "\\1", pk))
+                          clean_pk <- if (m_idx >= 1 && m_idx <= length(covs)) covs[m_idx] else paste0("cov_", m_idx)
+                      }
+                      item$setTitle(paste0(jmvcore::.("Schoenfeld residuals"), " \u2013 ", clean_pk))
+                  }
+              }
+          }
       },
 
       .run = function() {
@@ -558,10 +587,14 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                               schoenfeldPlots <- self$results$coxSection$schoenfeldPlots
                               if (self$options$showSchoenfeldPlot) {
                                   plot_vars <- zph_rows[zph_rows != "GLOBAL"]
-                                  schoenfeldPlots$clear()
-                                  for (pv in plot_vars) {
-                                      schoenfeldPlots$addItem(key = pv)
+                                  existing_keys <- unlist(schoenfeldPlots$itemKeys, use.names = FALSE)
+                                  if (!identical(existing_keys, plot_vars)) {
+                                      schoenfeldPlots$clear()
+                                      for (pv in plot_vars) {
+                                          schoenfeldPlots$addItem(key = pv)
+                                      }
                                   }
+                                  parent_state <- list()
                                   for (pv in plot_vars) {
                                       clean_pv <- pv
                                       if (grepl("^\\.\\.group", pv)) {
@@ -599,7 +632,9 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                               y_raw <- zph[var_idx]$y
                                               pts_df <- data.frame(time = pts_time, resid = as.numeric(if (is.matrix(y_raw)) y_raw[, 1] else y_raw))
                                               smooth_df <- data.frame(time = pred_time, yhat = as.numeric(sm$y[, 1]), yup = as.numeric(sm$y[, 2]), ylow = as.numeric(sm$y[, 3]))
-                                              item$setState(list(pts = pts_df, smooth = smooth_df, var_name = clean_pv))
+                                              item_state <- list(pts = pts_df, smooth = smooth_df, var_name = clean_pv)
+                                              item$setState(item_state)
+                                              parent_state[[pv]] <- item_state
                                           } else {
                                               item$setState(NULL)
                                           }
@@ -607,6 +642,7 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                           item$setState(NULL)
                                       }
                                   }
+                                  schoenfeldPlots$setState(parent_state)
                               } else {
                                   if (length(schoenfeldPlots$items) > 0 || !is.null(schoenfeldPlots$state)) {
                                       schoenfeldPlots$clear()
@@ -1324,6 +1360,25 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
       .schoenfeldPlot = function(image, ggtheme, theme, ...) {
           state <- image$state
+          if (is.null(state) || is.null(state$pts) || is.null(state$smooth)) {
+              if (!is.null(image$parent) && !is.null(image$parent$state)) {
+                  parent_state <- image$parent$state
+                  key <- image$key
+                  if (!is.null(key) && !is.null(parent_state[[key]])) {
+                      state <- parent_state[[key]]
+                  } else if (length(parent_state) > 0) {
+                      for (pk in names(parent_state)) {
+                          if (identical(pk, key) || identical(gsub("^\"|\"$", "", pk), key)) {
+                              state <- parent_state[[pk]]
+                              break
+                          }
+                      }
+                  }
+                  if (!is.null(state)) {
+                      image$setState(state)
+                  }
+              }
+          }
           if (is.null(state) || is.null(state$pts) || is.null(state$smooth)) return(FALSE)
 
           pts_df <- state$pts
@@ -2348,5 +2403,107 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               timeDepTable$setNote('cp_note', NULL)
           }
       }
+    ),
+    public = list(
+        .savePart = function(path, part, ...) {
+            m <- gregexpr("\"[^\"]+\"|([^/]+)", part)[[1]]
+            l <- attr(m, "match.length")
+            partPath <- vapply(seq_along(m), function(i) substr(part, m[i], m[i] + l[i] - 1), "")
+
+            element <- try(self$results$.lookup(partPath), silent = TRUE)
+            if (inherits(element, "try-error") || is.null(element)) {
+                curr <- self$results
+                for (p in partPath) {
+                    if (is.null(curr)) break
+                    clean_p <- gsub('^"|"$', '', p)
+                    if (inherits(curr, "Array")) {
+                        found <- NULL
+                        item_keys <- unlist(curr$itemKeys, use.names = FALSE)
+                        if (clean_p %in% item_keys) {
+                            found <- try(curr$get(key = clean_p), silent = TRUE)
+                        } else if (p %in% item_keys) {
+                            found <- try(curr$get(key = p), silent = TRUE)
+                        }
+                        if (is.null(found) || inherits(found, "try-error")) {
+                            found <- try(curr$get(name = p), silent = TRUE)
+                        }
+                        if (is.null(found) || inherits(found, "try-error")) {
+                            found <- try(curr$get(name = paste0('"', clean_p, '"')), silent = TRUE)
+                        }
+                        if ((is.null(found) || inherits(found, "try-error")) && grepl("^[0-9]+$", clean_p)) {
+                            idx <- as.integer(clean_p)
+                            if (idx >= 1 && idx <= length(curr$items)) {
+                                found <- curr$items[[idx]]
+                            }
+                        }
+                        if (!is.null(found) && !inherits(found, "try-error")) {
+                            curr <- found
+                        } else {
+                            curr <- NULL
+                        }
+                    } else if (inherits(curr, "Group")) {
+                        found <- try(curr$get(clean_p), silent = TRUE)
+                        if (inherits(found, "try-error") || is.null(found)) {
+                            found <- try(curr$get(p), silent = TRUE)
+                        }
+                        if (!is.null(found) && !inherits(found, "try-error")) {
+                            curr <- found
+                        } else {
+                            curr <- NULL
+                        }
+                    } else {
+                        curr <- NULL
+                    }
+                }
+                element <- curr
+            }
+
+            if (is.null(element) || inherits(element, "try-error")) {
+                jmvcore::reject(paste0("Could not resolve part: ", part))
+            }
+
+            if (inherits(element, "Array")) {
+                if (length(element$items) == 0) return()
+                if (endsWith(tolower(path), ".pdf")) {
+                    w <- 400
+                    h <- 300
+                    if (!is.null(element$items[[1]]$width)) w <- element$items[[1]]$width
+                    if (!is.null(element$items[[1]]$height)) h <- element$items[[1]]$height
+                    grDevices::cairo_pdf(file = path, width = w / 72, height = h / 72, onefile = TRUE)
+                    on.exit(grDevices::dev.off(), add = TRUE)
+                    for (item in element$items) {
+                        if (is.null(item$state) && !is.null(element$state) && !is.null(element$state[[item$key]])) {
+                            item$setState(element$state[[item$key]])
+                        }
+                        item$.render(...)
+                    }
+                    return()
+                } else {
+                    element <- element$items[[1]]
+                }
+            }
+
+            dataRequired <- FALSE
+            if (element$requiresData && is.null(private$.data)) {
+                dataRequired <- TRUE
+                private$.data <- self$readDataset()
+            }
+
+            if (inherits(element, "Image") && is.null(element$state)) {
+                if (!is.null(element$parent) && !is.null(element$parent$state) && !is.null(element$key)) {
+                    if (!is.null(element$parent$state[[element$key]])) {
+                        element$setState(element$parent$state[[element$key]])
+                    }
+                }
+                if (is.null(element$state) && !identical(self$status, "complete")) {
+                    self$run(noThrow = TRUE)
+                }
+            }
+
+            element$saveAs(path, ...)
+            if (dataRequired) {
+                private$.data <- NULL
+            }
+        }
     )
 )

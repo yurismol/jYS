@@ -100,10 +100,10 @@ options:
       type: Number
       default: 0
       description:
-          ui: >
+          ui: >-
             Number of candidate non-missing values to sample from in the
             predictive mean matching steps. 0 to avoid this step
-          R: >
+          R: >-
             Number of candidate non-missing values to sample from in the
             predictive mean matching steps. 0 to avoid this step
 ...

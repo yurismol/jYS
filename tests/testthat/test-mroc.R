@@ -1,4 +1,9 @@
 test_that("mROC works", {
+    if (!exists(".", envir = .GlobalEnv, mode = "function")) .GlobalEnv$. <- jmvcore::.
+    r_files <- list.files(c("R", "../../R", "../R"), pattern = "^mroc\\.[hb]\\.R$", full.names = TRUE)
+    for (rf in sort(r_files)) source(rf)
+    mROC_fn <- mROC
+
     set.seed(42)
     class_val <- sample(c("A", "B"), 100, replace = TRUE)
     df <- data.frame(
@@ -8,7 +13,7 @@ test_that("mROC works", {
     )
     
     # Test mROC (ROC classification)
-    res <- jYS::mROC(
+    res <- mROC_fn(
         data = df,
         vars = c("x1", "x2"),
         class = "class",

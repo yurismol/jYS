@@ -1,4 +1,9 @@
 test_that("mMOUT works", {
+    if (!exists(".", envir = .GlobalEnv, mode = "function")) .GlobalEnv$. <- jmvcore::.
+    r_files <- list.files(c("R", "../../R", "../R"), pattern = "^mmout\\.[hb]\\.R$", full.names = TRUE)
+    for (rf in sort(r_files)) source(rf)
+    mMOUT_fn <- mMOUT
+
     set.seed(42)
     n <- 80
     df <- data.frame(
@@ -12,7 +17,7 @@ test_that("mMOUT works", {
     df$x2[c(1, 2)] <- c(10, -10)
     
     # 1. Test robust MCD method without grouping
-    res_robust <- jYS::mMOUT(
+    res_robust <- mMOUT_fn(
         data = df,
         vars = c("x1", "x2", "x3"),
         group = NULL,
@@ -28,7 +33,7 @@ test_that("mMOUT works", {
     expect_equal(res_robust$oind$rowCount, 1)
     
     # 2. Test classical Mahalanobis distance with grouping
-    res_classic <- jYS::mMOUT(
+    res_classic <- mMOUT_fn(
         data = df,
         vars = c("x1", "x2", "x3"),
         group = "grp",

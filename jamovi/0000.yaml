@@ -8,7 +8,7 @@ authors:
 maintainer: Yuri Smolyakov <smolyakov@rambler.ru>
 date: '2026-09-20'
 type: R
-description: >
+description: >-
   Extensions of the functionality of popular data analysis methods: correlation
   clustering, ROC classification, missing values estimation and imputation,
   univariate and multivariate outliers identification and removal, Uncertain

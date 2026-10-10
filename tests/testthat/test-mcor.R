@@ -1,4 +1,9 @@
 test_that("mCOR works", {
+    if (!exists(".", envir = .GlobalEnv, mode = "function")) .GlobalEnv$. <- jmvcore::.
+    r_files <- list.files(c("R", "../../R", "../R"), pattern = "^mcor\\.[hb]\\.R$", full.names = TRUE)
+    for (rf in sort(r_files)) source(rf)
+    mCOR_fn <- mCOR
+
     set.seed(42)
     df <- data.frame(
         x1 = rnorm(50),
@@ -8,7 +13,7 @@ test_that("mCOR works", {
     )
     
     # Run basic mCOR
-    res <- jYS::mCOR(
+    res <- mCOR_fn(
         data = df,
         vars = c("x1", "x2", "x3", "x4"),
         group = NULL,
@@ -20,7 +25,7 @@ test_that("mCOR works", {
     expect_equal(res$matrix$rowCount, 4)
     
     # Test GLASSO and Hub table
-    res_glasso <- jYS::mCOR(
+    res_glasso <- mCOR_fn(
         data = df,
         vars = c("x1", "x2", "x3", "x4"),
         group = NULL,

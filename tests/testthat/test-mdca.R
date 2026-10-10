@@ -1,4 +1,9 @@
 test_that("mDCA works", {
+    if (!exists(".", envir = .GlobalEnv, mode = "function")) .GlobalEnv$. <- jmvcore::.
+    r_files <- list.files(c("R", "../../R", "../R"), pattern = "^mdca\\.[hb]\\.R$", full.names = TRUE)
+    for (rf in sort(r_files)) source(rf)
+    mDCA_fn <- mDCA
+
     set.seed(42)
     n <- 120
     x <- rnorm(n)
@@ -12,7 +17,7 @@ test_that("mDCA works", {
     )
     
     # 1. Basic DCA with probability and score predictors
-    res <- jYS::mDCA(
+    res <- mDCA_fn(
         data = df,
         dep = "outcome",
         targetLevel = "1",
@@ -35,7 +40,7 @@ test_that("mDCA works", {
     expect_true(res$calTable$rowCount > 0)
     
     # 2. DCA with recalibration and non-zero harm
-    res_harm <- jYS::mDCA(
+    res_harm <- mDCA_fn(
         data = df,
         dep = "outcome",
         targetLevel = "1",

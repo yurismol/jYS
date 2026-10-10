@@ -937,7 +937,7 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
           # Determine title based on method
           plot_title <- if (subs > "") {
-              paste0(.("Network ("), subs, ")")
+              paste0(.("Network"), " (", subs, ")")
           } else if (self$options$netMethod == "glasso") {
               .("Partial Correlation Network (GLASSO)")
           } else if (self$options$netMethod == "classic") {

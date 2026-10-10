@@ -147,7 +147,29 @@ test_that("mSRV works and supports kmMaxTime", {
     expect_true(all(!is.na(fg_df$shr) & fg_df$shr > 0))
     expect_true(all(!is.na(fg_df$p) & fg_df$p >= 0 & fg_df$p <= 1))
 
-    # 4b. Test Competing Risks auto-resolves identical initial default levels
+    # 4b. Test Gray's test is bypassed and tstart_note is set when tstart is specified (Item 10)
+    df_cr_tstart <- df_cr
+    df_cr_tstart$t0 <- 0
+    res_cr_tstart <- mSRV_fn(
+        data = df_cr_tstart,
+        tstart = "t0",
+        elapsed = "time",
+        status = "status",
+        group = "sex",
+        covariates = "age",
+        showKm = FALSE,
+        showCox = FALSE,
+        showCompRisks = TRUE,
+        compEvent = "pcm",
+        compCensor = "censor",
+        showGrayTest = TRUE
+    )
+    expect_s3_class(res_cr_tstart, "mSRVResults")
+    gray_tbl <- res_cr_tstart$compRisksSection$grayTestTable
+    expect_equal(gray_tbl$rowCount, 0)
+    expect_true("tstart_note" %in% names(gray_tbl$notes))
+
+    # 4c. Test Competing Risks auto-resolves identical initial default levels
     df_cr_default <- data.frame(
         time = etime,
         status = factor(event, levels = 0:2, labels = c("Alive", "pcm", "death")),
@@ -277,4 +299,83 @@ test_that("mSRV works and supports kmMaxTime", {
     expect_s3_class(res_td_only$coxSection$timeDepTable, "Table")
     expect_true(res_td_only$coxSection$timeDepTable$rowCount >= 2)
 })
+
+test_that("mSRV Schoenfeld residuals plots persist state and export properly", {
+    if (!exists(".", envir = .GlobalEnv, mode = "function")) .GlobalEnv$. <- jmvcore::.
+    if (!exists("mSRV", mode = "function") || !exists("mSRVClass")) {
+        r_files <- list.files(c("R", "../../R", "../R"), pattern = "^msrv\\.[hb]\\.R$", full.names = TRUE)
+        for (rf in sort(r_files)) source(rf, encoding = "UTF-8")
+    }
+    mSRV_fn <- if (exists("mSRV", mode = "function")) mSRV else jYS::mSRV
+
+    set.seed(42)
+    n <- 80
+    df <- data.frame(
+        time = rexp(n, rate = 0.05),
+        status = sample(c(0, 1), n, replace = TRUE, prob = c(0.3, 0.7)),
+        grp = sample(c("Control", "Treatment"), n, replace = TRUE),
+        cov1 = rnorm(n)
+    )
+
+    opts <- mSRVOptions$new(
+        elapsed = "time",
+        status = "status",
+        group = "grp",
+        covariates = "cov1",
+        showCox = TRUE,
+        coxAssump = TRUE,
+        showSchoenfeldPlot = TRUE
+    )
+
+    an <- mSRVClass$new(options = opts, data = df)
+    an$init()
+
+    # Pre-population check in .init()
+    sp_init <- an$results$coxSection$schoenfeldPlots
+    expect_s3_class(sp_init, "Array")
+    expect_true(length(sp_init$itemKeys) >= 2)
+
+    an$run()
+
+    sp <- an$results$coxSection$schoenfeldPlots
+    expect_true(length(sp$items) >= 2)
+    expect_false(is.null(sp$state))
+
+    # Verify item state contains pts and smooth data frames
+    grp_item <- sp$get(key = "..group")
+    expect_false(is.null(grp_item$state))
+    expect_true(is.data.frame(grp_item$state$pts))
+    expect_true(is.data.frame(grp_item$state$smooth))
+
+    # Verify PDF export via saveAs
+    tmp_pdf1 <- tempfile(fileext = ".pdf")
+    on.exit(unlink(c(tmp_pdf1)), add = TRUE)
+    grp_item$saveAs(tmp_pdf1)
+    expect_true(file.exists(tmp_pdf1))
+    expect_gt(file.info(tmp_pdf1)$size, 1000)
+
+    # Verify .savePart lookup with unquoted key
+    tmp_pdf2 <- tempfile(fileext = ".pdf")
+    on.exit(unlink(c(tmp_pdf2)), add = TRUE)
+    an$.savePart(tmp_pdf2, "coxSection/schoenfeldPlots/..group")
+    expect_true(file.exists(tmp_pdf2))
+    expect_gt(file.info(tmp_pdf2)$size, 1000)
+
+    # Verify .savePart lookup with array
+    tmp_pdf3 <- tempfile(fileext = ".pdf")
+    on.exit(unlink(c(tmp_pdf3)), add = TRUE)
+    an$.savePart(tmp_pdf3, "coxSection/schoenfeldPlots")
+    expect_true(file.exists(tmp_pdf3))
+    expect_gt(file.info(tmp_pdf3)$size, 1000)
+
+    # Verify state hydration from parent when item state is NULL
+    grp_item$setState(NULL)
+    expect_null(grp_item$state)
+    tmp_pdf4 <- tempfile(fileext = ".pdf")
+    on.exit(unlink(c(tmp_pdf4)), add = TRUE)
+    an$.savePart(tmp_pdf4, "coxSection/schoenfeldPlots/..group")
+    expect_true(file.exists(tmp_pdf4))
+    expect_gt(file.info(tmp_pdf4)$size, 1000)
+})
+
 

@@ -128,9 +128,9 @@ options:
       type: Bool
       default: false
       description:
-          ui: >
+          ui: >-
             provide a correlation matrix plot.
-          R: >
+          R: >-
             `TRUE` or `FALSE` (default), provide a correlation matrix plot
 
     - name: signif

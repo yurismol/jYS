@@ -1,4 +1,13 @@
 test_that("mMLP works and binary CV accuracy matches encoding", {
+    if (!exists(".", envir = .GlobalEnv, mode = "function")) .GlobalEnv$. <- jmvcore::.
+    if (!exists(".renderClassifierRocPlot", mode = "function")) {
+        r_roc <- list.files(c("R", "../../R", "../R"), pattern = "^classifier_roc\\.R$", full.names = TRUE)
+        if (length(r_roc) > 0) source(r_roc[1])
+    }
+    r_files <- list.files(c("R", "../../R", "../R"), pattern = "^mmlp\\.[hb]\\.R$", full.names = TRUE)
+    for (rf in sort(r_files)) source(rf)
+    mMLP_fn <- mMLP
+
     set.seed(42)
     x1 <- rnorm(100)
     x2 <- rnorm(100)
@@ -7,7 +16,7 @@ test_that("mMLP works and binary CV accuracy matches encoding", {
     df <- data.frame(y = y, x1 = x1, x2 = x2)
     
     # Test mMLP classifier
-    res <- jYS::mMLP(
+    res <- mMLP_fn(
         data = df,
         dep = "y",
         covs = c("x1", "x2"),
@@ -34,4 +43,40 @@ test_that("mMLP works and binary CV accuracy matches encoding", {
     
     expect_true(!is.na(cv_acc) && cv_acc > 50)
     expect_true(abs(train_acc - cv_acc) < 25)
+})
+
+test_that("mMLP saves predictions with missing/filtered rows (Item 3)", {
+    if (!exists(".", envir = .GlobalEnv, mode = "function")) .GlobalEnv$. <- jmvcore::.
+    if (!exists(".renderClassifierRocPlot", mode = "function")) {
+        r_roc <- list.files(c("R", "../../R", "../R"), pattern = "^classifier_roc\\.R$", full.names = TRUE)
+        if (length(r_roc) > 0) source(r_roc[1])
+    }
+    r_files <- list.files(c("R", "../../R", "../R"), pattern = "^mmlp\\.[hb]\\.R$", full.names = TRUE)
+    for (rf in sort(r_files)) source(rf)
+
+    set.seed(42)
+    x1 <- rnorm(100)
+    x2 <- rnorm(100)
+    x1[1:10] <- NA # 10 missing rows
+    y <- factor(sample(c("A", "B"), 100, replace = TRUE), levels = c("A", "B"))
+    df_missing <- data.frame(y = y, x1 = x1, x2 = x2)
+
+    opts <- mMLPOptions$new(
+        dep = "y",
+        covs = c("x1", "x2"),
+        partition = "holdout",
+        val_split = 20,
+        maxit = 50,
+        seed = 42
+    )
+    opt_pc <- opts$option("predClass")
+    opt_pc$value <- list(value = TRUE)
+    opt_pp <- opts$option("predProb")
+    opt_pp$value <- list(value = TRUE)
+
+    analysis <- mMLPClass$new(options = opts, data = df_missing)
+    analysis$run()
+
+    expect_true(analysis$results$predClass$isFilled())
+    expect_true(analysis$results$predProb$isFilled())
 })
