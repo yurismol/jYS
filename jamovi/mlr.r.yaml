@@ -277,6 +277,7 @@ items:
       type: Output
       clearWith:
           - dep
+          - refLevel
           - covs
           - factors
           - method
@@ -286,6 +287,7 @@ items:
           - val_split
           - cv_folds
           - cv_repeats
+          - seed
           - group
           - selgroup
 
@@ -294,6 +296,7 @@ items:
       type: Output
       clearWith:
           - dep
+          - refLevel
           - covs
           - factors
           - method
@@ -303,6 +306,7 @@ items:
           - val_split
           - cv_folds
           - cv_repeats
+          - seed
           - group
           - selgroup
 ...

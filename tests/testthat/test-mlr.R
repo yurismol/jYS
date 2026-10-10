@@ -11,29 +11,37 @@ test_that("mLR works", {
     res <- jYS::mLR(
         data = df,
         dep = "y",
+        refLevel = NULL,
         covs = c("x1", "x2", "x3"),
+        factors = NULL,
+        group = NULL,
+        selgroup = NULL,
         method = "manual",
         partition = "kfold",
         cv_folds = 3,
         show_formula = TRUE
     )
     
-    expect_s3_class(res, "mLRClass")
-    expect_s3_class(res$results$infoTable, "Table")
-    expect_s3_class(res$results$coeffTable, "Table")
-    expect_s3_class(res$results$formulaHtml, "Html")
+    expect_s3_class(res, "mLRResults")
+    expect_s3_class(res$infoTable, "Table")
+    expect_s3_class(res$coeffTable, "Table")
+    expect_s3_class(res$formulaHtml, "Html")
     
     # Test ElasticNet and holdout validation
     res_elastic <- jYS::mLR(
         data = df,
         dep = "y",
+        refLevel = NULL,
         covs = c("x1", "x2", "x3"),
+        factors = NULL,
+        group = NULL,
+        selgroup = NULL,
         method = "elastic",
         elastic_alpha = 0.5,
         partition = "holdout",
         val_split = 30
     )
     
-    expect_s3_class(res_elastic, "mLRClass")
-    expect_s3_class(res_elastic$results$coeffTable, "Table")
+    expect_s3_class(res_elastic, "mLRResults")
+    expect_s3_class(res_elastic$coeffTable, "Table")
 })

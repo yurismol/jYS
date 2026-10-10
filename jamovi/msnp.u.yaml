@@ -44,6 +44,8 @@ children:
           - type: LevelSelector
             name: femaleLevel
             enable: (gender)
+  - type: ComboBox
+    name: adjust
   - type: CollapseBox
     label: Frequency Tables
     collapsed: false
@@ -112,9 +114,6 @@ children:
         children:
           - type: ComboBox
             name: geneticModel
-            enable: (assocEnable)
-          - type: ComboBox
-            name: adjust
             enable: (assocEnable)
           - type: CheckBox
             name: assocForest

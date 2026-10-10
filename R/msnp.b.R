@@ -897,7 +897,9 @@ mSNPClass <- R6::R6Class(
                 # Clean outcome to Case/Control binary
                 levels_out <- levels(factor(outcome_var))
                 if (length(levels_out) < 2) {
-                    # We need case/control binary outcome
+                    self$results$insert(1, jmvcore::Notice$new(self$options, name="assocOutcomeLevels",
+                        type=jmvcore::NoticeType$WARNING,
+                        content=jmvcore::.("Outcome variable must have at least 2 levels for association tests.")))
                     return()
                 }
                 case_level <- levels_out[2]
@@ -916,6 +918,12 @@ mSNPClass <- R6::R6Class(
             hwe_thr <- switch(self$options$qcHwe, "0.05" = 0.05, "0.01" = 0.01, "0.001" = 0.001, "0.0001" = 0.0001, "none" = 0)
             if (call_rate_thr > 0 || maf_thr > 0 || hwe_thr > 0) {
                 analyzed_vars <- Filter(function(m) isTRUE(private$g_qc_status[[m]]$passed), self$options$vars)
+            }
+            if (length(analyzed_vars) == 0) {
+                self$results$insert(1, jmvcore::Notice$new(self$options, name="assocNoSnps",
+                    type=jmvcore::NoticeType$WARNING,
+                    content=jmvcore::.("No markers remained after Quality Control filters for association analysis.")))
+                return()
             }
             
             raw_p_vals <- numeric()
@@ -1244,7 +1252,12 @@ mSNPClass <- R6::R6Class(
             
             outcome_fact <- as.factor(outcome_var)
             levels_out <- levels(outcome_fact)
-            if (length(levels_out) < 2) return()
+            if (length(levels_out) < 2) {
+                self$results$insert(1, jmvcore::Notice$new(self$options, name="mdrOutcomeLevels",
+                    type=jmvcore::NoticeType$WARNING,
+                    content=jmvcore::.("Outcome variable must have 2 levels for MDR analysis.")))
+                return()
+            }
             if (length(levels_out) > 2) {
                 jmvcore::reject(jmvcore::format(.("MDR analysis requires a binary outcome (2 levels), but '{var}' has {n} levels."), var = outcome_col, n = length(levels_out)))
             }
@@ -1265,11 +1278,21 @@ mSNPClass <- R6::R6Class(
             if (call_rate_thr > 0 || maf_thr > 0 || hwe_thr > 0) {
                 snps <- Filter(function(m) isTRUE(private$g_qc_status[[m]]$passed), snps)
             }
-            if (length(snps) == 0) return()
+            if (length(snps) == 0) {
+                self$results$insert(1, jmvcore::Notice$new(self$options, name="mdrNoSnps",
+                    type=jmvcore::NoticeType$WARNING,
+                    content=jmvcore::.("No markers remained after Quality Control filters for MDR analysis.")))
+                return()
+            }
             complete_cases <- complete.cases(df[, c(snps, "outcome_mdr")])
             df_comp <- df[complete_cases, ]
             
-            if (nrow(df_comp) < 10) return()
+            if (nrow(df_comp) < 10) {
+                self$results$insert(1, jmvcore::Notice$new(self$options, name="mdrTooFewCases",
+                    type=jmvcore::NoticeType$WARNING,
+                    content=jmvcore::.("Fewer than 10 complete cases available; MDR analysis cannot be reliably performed.")))
+                return()
+            }
             
             # Build integer matrix of genotypes: AA=1, AB=2, BB=3
             geno_mat <- matrix(0, nrow=nrow(df_comp), ncol=length(snps))
@@ -1303,9 +1326,19 @@ mSNPClass <- R6::R6Class(
             
             fold_ids <- rep(0, nrow(df_comp))
             fold_ids[case_idx] <- case_folds
-            fold_ids[ctrl_idx] <- ctrl_folds
+            user_order <- as.integer(self$options$mdrOrder)
+            max_order <- min(user_order, length(snps))
             
-            max_order <- as.integer(self$options$mdrOrder)
+            if (max_order < 1) return()
+            
+            if (user_order > length(snps)) {
+                self$results$mdrGroup$mdrBestTable$setNote('order_note', jmvcore::format(
+                    .("Maximum interaction order was reduced from {user_ord} to {max_ord} (the number of available markers)."),
+                    user_ord = user_order, max_ord = max_order
+                ))
+            } else {
+                self$results$mdrGroup$mdrBestTable$setNote('order_note', NULL)
+            }
             
             best_models <- list()
             private$g_mdr_results <- list()
@@ -1417,10 +1450,11 @@ mSNPClass <- R6::R6Class(
             # 4.1 Run Permutation test if selected
             if (self$options$mdrPermTest) {
                 n_perm <- as.integer(self$options$nPermMDR)
-                perm_test_bas <- matrix(0, nrow=max_order, ncol=n_perm)
-                
-                # Perform permutations
-                for (p in 1:n_perm) {
+                if (n_perm > 0) {
+                    perm_test_bas <- matrix(0, nrow=max_order, ncol=n_perm)
+                    
+                    # Perform permutations
+                    for (p in seq_len(n_perm)) {
                     private$.checkpoint()
                     perm_y <- sample(outcome_vec)
                     
@@ -1499,6 +1533,7 @@ mSNPClass <- R6::R6Class(
                 if (isTRUE(self$options$signifMarkers)) {
                     mdrBestTable$setNote('signif_legend', '* p < .05, ** p < .01, *** p < .001')
                 }
+                }
             }
             
             # Save best models state for cells table and plot
@@ -1564,7 +1599,12 @@ mSNPClass <- R6::R6Class(
             if (call_rate_thr > 0 || maf_thr > 0 || hwe_thr > 0) {
                 snps <- Filter(function(m) isTRUE(private$g_qc_status[[m]]$passed), snps)
             }
-            if (length(snps) < 2) return()
+            if (length(snps) < 2) {
+                self$results$insert(1, jmvcore::Notice$new(self$options, name="ldTooFewSnps",
+                    type=jmvcore::NoticeType$WARNING,
+                    content=jmvcore::.("At least 2 markers passing Quality Control are required for Linkage Disequilibrium analysis.")))
+                return()
+            }
             
             pairs <- combn(snps, 2, simplify=FALSE)
             

@@ -83,7 +83,6 @@ mMLPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 out_activation,
                 options=list(
                     "sigmoid",
-                    "identity",
                     "softmax"),
                 default="sigmoid")
             private$..decay <- jmvcore::OptionNumber$new(
@@ -707,7 +706,8 @@ mMLPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "rang",
                     "partition",
                     "val_split",
-                    "cv_folds")))
+                    "cv_folds",
+                    "seed")))
             self$add(jmvcore::Output$new(
                 options=options,
                 name="predProb",
@@ -724,7 +724,8 @@ mMLPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "rang",
                     "partition",
                     "val_split",
-                    "cv_folds")))}))
+                    "cv_folds",
+                    "seed")))}))
 
 mMLPBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "mMLPBase",

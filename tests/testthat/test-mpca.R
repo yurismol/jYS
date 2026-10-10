@@ -12,19 +12,24 @@ test_that("mPCA works", {
     res <- jYS::mPCA(
         data = df,
         vars = c("x1", "x2", "x3", "x4"),
+        group = NULL,
+        selgroup = NULL,
+        classVar = NULL,
         npc = 2,
         screePlot = TRUE,
         loadingsTable = TRUE
     )
     
-    expect_s3_class(res, "mPCAClass")
-    expect_s3_class(res$results$loadingsTable, "Table")
-    expect_equal(res$results$loadingsTable$rowCount, 4)
+    expect_s3_class(res, "mPCAResults")
+    expect_s3_class(res$loadingsTable, "Table")
+    expect_equal(res$loadingsTable$rowCount, 4)
     
     # Test PCA with classVar (K-means comparison and CV regression)
     res_group <- jYS::mPCA(
         data = df,
         vars = c("x1", "x2", "x3", "x4"),
+        group = NULL,
+        selgroup = NULL,
         classVar = "g",
         npc = 2,
         kmeansTable = TRUE,
@@ -32,7 +37,7 @@ test_that("mPCA works", {
         regKFold = 3
     )
     
-    expect_s3_class(res_group, "mPCAClass")
-    expect_s3_class(res_group$results$kmeansTable, "Table")
-    expect_s3_class(res_group$results$regTable, "Table")
+    expect_s3_class(res_group, "mPCAResults")
+    expect_s3_class(res_group$kmeansTable, "Table")
+    expect_s3_class(res_group$regTable, "Table")
 })

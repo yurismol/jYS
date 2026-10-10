@@ -349,6 +349,7 @@ items:
           - partition
           - val_split
           - cv_folds
+          - seed
 
     - name: predProb
       title: Predicted Probability
@@ -366,4 +367,5 @@ items:
           - partition
           - val_split
           - cv_folds
+          - seed
 ...

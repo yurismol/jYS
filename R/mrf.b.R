@@ -97,15 +97,20 @@ mRFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 jmvcore::reject(jmvcore::format(.("Error during Random Forest fitting: {err}"), err = as.character(fit_full)))
             }
 
-            # Full model training predictions
-            train_prob_mat <- fit_full$predictions
-            train_pred_idx <- apply(train_prob_mat, 1, which.max)
+            # OOB probabilities & true classification accuracy
+            oob_prob_mat <- fit_full$predictions
+            oob_pred_idx <- max.col(oob_prob_mat, ties.method = "first")
+            oob_pred_labels <- y_levels[oob_pred_idx]
+            valid_oob <- !is.na(oob_pred_labels)
+            oob_acc <- if (any(valid_oob)) mean(oob_pred_labels[valid_oob] == as.character(y)[valid_oob]) * 100 else NA
+            oob_error <- if (!is.na(oob_acc)) 100 - oob_acc else NA
+
+            # Full model training (in-sample) predictions
+            train_pred_obj <- predict(fit_full, data = clean_data)
+            train_prob_mat <- train_pred_obj$predictions
+            train_pred_idx <- max.col(train_prob_mat, ties.method = "first")
             train_pred_labels <- y_levels[train_pred_idx]
             train_acc <- mean(train_pred_labels == as.character(y)) * 100
-
-            # OOB error
-            oob_error <- fit_full$prediction.error * 100
-            oob_acc <- 100 - oob_error
 
             # Effective mtry used
             mtry_used <- fit_full$mtry
@@ -148,7 +153,7 @@ mRFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 if (!inherits(fit_val, "try-error")) {
                     val_pred_obj <- predict(fit_val, data = clean_data[test_idx, , drop = FALSE])
                     val_prob <- val_pred_obj$predictions
-                    val_pred_idx <- apply(val_prob, 1, which.max)
+                    val_pred_idx <- max.col(val_prob, ties.method = "first")
                     val_pred <- y_levels[val_pred_idx]
                     val_acc <- mean(val_pred == as.character(y[test_idx])) * 100
                 }
@@ -193,7 +198,7 @@ mRFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     if (!inherits(fit_cv, "try-error")) {
                         p_obj <- predict(fit_cv, data = clean_data[t_idx, , drop = FALSE])
                         cv_pred_probs[t_idx, ] <- p_obj$predictions
-                        pred_idx <- apply(p_obj$predictions, 1, which.max)
+                        pred_idx <- max.col(p_obj$predictions, ties.method = "first")
                         cv_preds[t_idx] <- y_levels[pred_idx]
                     } else {
                         cv_errors <- cv_errors + 1
@@ -320,10 +325,16 @@ mRFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
                 oob_errors <- numeric(length(tree_seq))
                 for (t_idx in seq_along(tree_seq)) {
+                    private$.checkpoint()
+                    curr_ntree <- tree_seq[t_idx]
+                    if (curr_ntree == ntree && !is.na(oob_error)) {
+                        oob_errors[t_idx] <- oob_error
+                        next
+                    }
                     fit_tmp <- try(ranger::ranger(
                         formula = rf_formula,
                         data = clean_data,
-                        num.trees = tree_seq[t_idx],
+                        num.trees = curr_ntree,
                         mtry = mtry_val,
                         min.node.size = nodesize,
                         max.depth = if (maxdepth == 0) NULL else maxdepth,
@@ -332,7 +343,19 @@ mRFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         seed = seed_val
                     ), silent = TRUE)
                     if (!inherits(fit_tmp, "try-error")) {
-                        oob_errors[t_idx] <- fit_tmp$prediction.error * 100
+                        tmp_preds <- fit_tmp$predictions
+                        if (is.matrix(tmp_preds) && nrow(tmp_preds) > 0) {
+                            tmp_pred_idx <- max.col(tmp_preds, ties.method = "first")
+                            tmp_pred_labels <- y_levels[tmp_pred_idx]
+                            valid_oob <- !is.na(tmp_pred_labels)
+                            if (any(valid_oob)) {
+                                oob_errors[t_idx] <- mean(tmp_pred_labels[valid_oob] != as.character(y)[valid_oob]) * 100
+                            } else {
+                                oob_errors[t_idx] <- NA
+                            }
+                        } else {
+                            oob_errors[t_idx] <- NA
+                        }
                     } else {
                         oob_errors[t_idx] <- NA
                     }
@@ -351,7 +374,7 @@ mRFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 can_run_matrix <- FALSE
                 if (partition == "oob") {
                     actual_labels <- as.character(y)
-                    pred_labels <- train_pred_labels
+                    pred_labels <- oob_pred_labels
                     can_run_matrix <- TRUE
                 } else if (partition == "kfold" && cv_errors == 0) {
                     actual_labels <- as.character(y)
@@ -385,6 +408,13 @@ mRFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
                     # Performance statistics
                     calc_metrics_multiclass <- function(actual, predicted, class_levels) {
+                        valid_idx <- !is.na(actual) & !is.na(predicted)
+                        if (!any(valid_idx)) {
+                            return(list(acc = NA, sen = NA, spe = NA, prec = NA, f1 = NA, npv = NA))
+                        }
+                        actual <- actual[valid_idx]
+                        predicted <- predicted[valid_idx]
+
                         num_classes <- length(class_levels)
                         acc <- mean(actual == predicted)
 
@@ -785,25 +815,18 @@ mRFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             if ((self$options$predClass && self$results$predClass$isNotFilled()) ||
                 (self$options$predProb && self$results$predProb$isNotFilled())) {
 
-                pred_prob_col <- rep(NA, nrow(self$data))
-                pred_class_col <- rep(NA, nrow(self$data))
-
-                full_pred_idx <- apply(train_prob_mat, 1, which.max)
+                full_pred_idx <- max.col(train_prob_mat, ties.method = "first")
                 full_classes <- y_levels[full_pred_idx]
                 full_prob_val <- apply(train_prob_mat, 1, max)
 
-                complete_case_indices <- as.integer(rownames(clean_data))
-                pred_prob_col[complete_case_indices] <- full_prob_val
-                pred_class_col[complete_case_indices] <- full_classes
-
                 if (self$options$predClass && self$results$predClass$isNotFilled()) {
-                    self$results$predClass$setRowNums(rownames(self$data))
-                    self$results$predClass$setValues(index = 1, factor(pred_class_col, levels = y_levels))
+                    self$results$predClass$setRowNums(rownames(clean_data))
+                    self$results$predClass$setValues(index = 1, factor(full_classes, levels = y_levels))
                 }
 
                 if (self$options$predProb && self$results$predProb$isNotFilled()) {
-                    self$results$predProb$setRowNums(rownames(self$data))
-                    self$results$predProb$setValues(index = 1, pred_prob_col)
+                    self$results$predProb$setRowNums(rownames(clean_data))
+                    self$results$predProb$setValues(index = 1, as.numeric(full_prob_val))
                 }
             }
         },
@@ -843,7 +866,9 @@ mRFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
         .oobCurvePlot = function(image, ggtheme, theme, ...) {
             curve_data <- image$state
-            if (is.null(curve_data)) return(FALSE)
+            if (is.null(curve_data) || nrow(curve_data) == 0) return(FALSE)
+            curve_data <- curve_data[!is.na(curve_data$OOB_Error), , drop = FALSE]
+            if (nrow(curve_data) == 0) return(FALSE)
 
             p <- ggplot2::ggplot(curve_data, ggplot2::aes(x = Trees, y = OOB_Error)) +
                 ggplot2::geom_line(linewidth = 1.2, color = "#2E8B57") +

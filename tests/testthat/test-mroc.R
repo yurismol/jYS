@@ -12,11 +12,14 @@ test_that("mROC works", {
         data = df,
         vars = c("x1", "x2"),
         class = "class",
+        groups = NULL,
+        selgroup = NULL,
         theBest = "bssY",
-        cmpDeLong = "succ"
+        cmpDeLong = "succ",
+        showTable = TRUE
     )
     
-    expect_s3_class(res, "mROCClass")
-    expect_s3_class(res$results$estim, "Table")
-    expect_equal(res$results$estim$rowCount, 2)
+    expect_s3_class(res, "mROCResults")
+    expect_s3_class(res$rocTable, "Table")
+    expect_equal(res$rocTable$rowCount, 2)
 })

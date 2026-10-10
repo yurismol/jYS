@@ -16,9 +16,11 @@ items:
         visible: (showKm)
         clearWith:
           - elapsed
+          - tstart
           - status
           - statusEvent
           - group
+          - subjectId
         columns:
           - name: group
             title: Group
@@ -45,9 +47,11 @@ items:
         visible: (showKm && kmTable)
         clearWith:
           - elapsed
+          - tstart
           - status
           - statusEvent
           - group
+          - subjectId
           - kmMaxTime
         columns:
           - name: group
@@ -73,9 +77,11 @@ items:
         requiresData: true
         clearWith:
           - elapsed
+          - tstart
           - status
           - statusEvent
           - group
+          - subjectId
           - kmCI
           - kmTable
           - kmType
@@ -88,9 +94,11 @@ items:
     refs: [survival]
     clearWith:
       - elapsed
+      - tstart
       - status
       - statusEvent
       - group
+      - subjectId
     columns:
       - name: chisq
         title: Chi-Square
@@ -115,10 +123,12 @@ items:
         visible: (showCox && ((!is.null(covariates) && length(covariates) > 0) || (!is.null(group))))
         clearWith:
           - elapsed
+          - tstart
           - status
           - statusEvent
           - group
           - covariates
+          - subjectId
         columns:
           - name: test
             title: Test
@@ -140,10 +150,12 @@ items:
         visible: (showCox && ((!is.null(covariates) && length(covariates) > 0) || (!is.null(group))))
         clearWith:
           - elapsed
+          - tstart
           - status
           - statusEvent
           - group
           - covariates
+          - subjectId
         columns:
           - name: var
             title: Variable
@@ -221,10 +233,12 @@ items:
         visible: (showCox && coxForest && ((!is.null(covariates) && length(covariates) > 0) || (!is.null(group))))
         clearWith:
           - elapsed
+          - tstart
           - status
           - statusEvent
           - group
           - covariates
+          - subjectId
 
       - name: coxAssumpTable
         title: Proportional Hazards Assumption (Schoenfeld Residuals Test)
@@ -232,10 +246,12 @@ items:
         visible: (showCox && coxAssump && ((!is.null(covariates) && length(covariates) > 0) || (!is.null(group))))
         clearWith:
           - elapsed
+          - tstart
           - status
           - statusEvent
           - group
           - covariates
+          - subjectId
         columns:
           - name: var
             title: Variable
@@ -257,10 +273,12 @@ items:
         visible: (showCox && showSchoenfeldPlot && coxAssump && ((!is.null(covariates) && length(covariates) > 0) || (!is.null(group))))
         clearWith:
           - elapsed
+          - tstart
           - status
           - statusEvent
           - group
           - covariates
+          - subjectId
           - coxAssump
           - showSchoenfeldPlot
         template:
@@ -271,10 +289,12 @@ items:
           renderFun: .schoenfeldPlot
           clearWith:
             - elapsed
+            - tstart
             - status
             - statusEvent
             - group
             - covariates
+            - subjectId
             - coxAssump
             - showSchoenfeldPlot
 
@@ -290,10 +310,12 @@ items:
         visible: (showAdjCurves && ((!is.null(adjExposure)) || (!is.null(group))))
         clearWith:
           - elapsed
+          - tstart
           - status
           - statusEvent
           - group
           - covariates
+          - subjectId
           - adjExposure
           - kmMaxTime
         columns:
@@ -322,10 +344,12 @@ items:
         visible: (showAdjCurves && ((!is.null(adjExposure)) || (!is.null(group))))
         clearWith:
           - elapsed
+          - tstart
           - status
           - statusEvent
           - group
           - covariates
+          - subjectId
           - adjExposure
           - adjCI
           - kmMaxTime
@@ -342,10 +366,12 @@ items:
         visible: (showCompRisks && showCifTable)
         clearWith:
           - elapsed
+          - tstart
           - status
           - compEvent
           - compCensor
           - group
+          - subjectId
           - kmMaxTime
         columns:
           - name: group
@@ -382,10 +408,12 @@ items:
         visible: (showCompRisks && showCifPlot)
         clearWith:
           - elapsed
+          - tstart
           - status
           - compEvent
           - compCensor
           - group
+          - subjectId
           - cifCI
           - kmMaxTime
 
@@ -396,10 +424,12 @@ items:
         refs: [gray1988]
         clearWith:
           - elapsed
+          - tstart
           - status
           - compEvent
           - compCensor
           - group
+          - subjectId
         columns:
           - name: cause
             title: Cause / Event
@@ -422,11 +452,13 @@ items:
         refs: [survival, finegray1999]
         clearWith:
           - elapsed
+          - tstart
           - status
           - compEvent
           - compCensor
           - group
           - covariates
+          - subjectId
         columns:
           - name: var
             title: Predictor

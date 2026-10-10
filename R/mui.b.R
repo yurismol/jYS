@@ -172,25 +172,25 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
               if (self$options$isProp) {
                 t  <- t(statMCI$table)
-                Vr <- dat[[ref]]
-                Vt <- dat[[var]]
-                sw <- try(shapiro.test(Vt))
-                if (jmvcore::isError(sw)) norm0 <- ""
-                else norm <- sw$p.value
-                df <- subset(Vt, Vr==0)
-                sw <- try(shapiro.test(df))
-                if (jmvcore::isError(sw)) norm0 <- ""
-                else norm0 <- sw$p.value
-                df <- subset(Vt, Vr==1)
-                sw <- try(shapiro.test(df))
-                if (jmvcore::isError(sw)) norm1 <- ""
-                else norm1 <- sw$p.value
-                intable$addRow(rowKey=norm0, list(var=var, norm=norm0, lev=ref0,     mciL=t[1,1], ui=t[1,2], mciU=t[1,3], sum=t[1,1]+t[1,2]+t[1,3]))
-                if (norm0<0.05) intable$addSymbol(rowKey=norm0, "norm", '*')
-                intable$addRow(rowKey=norm1, list(var="", norm=norm1, lev=ref1,     mciL=t[2,1], ui=t[2,2], mciU=t[2,3], sum=t[2,1]+t[2,2]+t[2,3]))
-                if (norm1<0.05) intable$addSymbol(rowKey=norm1, "norm", '*')
-                intable$addRow(rowKey=norm,  list(var="", norm=norm,  lev=.("Sum"), mciL=t[3,1], ui=t[3,2], mciU=t[3,3], sum=t[3,1]+t[3,2]+t[3,3]))
-                if (norm<0.05) intable$addSymbol(rowKey=norm, "norm", '*')
+                sw <- try(shapiro.test(Vtest), silent = TRUE)
+                norm <- if (jmvcore::isError(sw)) NaN else sw$p.value
+                df0 <- Vtest[Vref == 0]
+                sw0 <- try(shapiro.test(df0), silent = TRUE)
+                norm0 <- if (jmvcore::isError(sw0)) NaN else sw0$p.value
+                df1 <- Vtest[Vref == 1]
+                sw1 <- try(shapiro.test(df1), silent = TRUE)
+                norm1 <- if (jmvcore::isError(sw1)) NaN else sw1$p.value
+
+                key0 <- paste0(var, "_0")
+                key1 <- paste0(var, "_1")
+                keysum <- paste0(var, "_sum")
+
+                intable$addRow(rowKey=key0, list(var=var, norm=norm0, lev=ref0,     mciL=t[1,1], ui=t[1,2], mciU=t[1,3], sum=t[1,1]+t[1,2]+t[1,3]))
+                if (!is.na(norm0) && norm0 < 0.05) intable$addSymbol(rowKey=key0, "norm", '*')
+                intable$addRow(rowKey=key1, list(var="", norm=norm1, lev=ref1,     mciL=t[2,1], ui=t[2,2], mciU=t[2,3], sum=t[2,1]+t[2,2]+t[2,3]))
+                if (!is.na(norm1) && norm1 < 0.05) intable$addSymbol(rowKey=key1, "norm", '*')
+                intable$addRow(rowKey=keysum, list(var="", norm=norm,  lev=.("Sum"), mciL=t[3,1], ui=t[3,2], mciU=t[3,3], sum=t[3,1]+t[3,2]+t[3,3]))
+                if (!is.na(norm) && norm < 0.05) intable$addSymbol(rowKey=keysum, "norm", '*')
               }
 
               if (lth!=uth) {

@@ -239,8 +239,8 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             self$results$scorePlot$setState(score_state)
             
             # 5. K-Means clustering comparison
-            try({
-                if (self$options$kmeansTable && !is.null(classVar) && classVar != "") {
+            if (self$options$kmeansTable && !is.null(classVar) && classVar != "") {
+                km_try <- try({
                     group_vec <- as.factor(dat_clean[[classVar]])
                     k_val <- self$options$kMeansK
                     km_res <- kmeans(pca_res$x[, 1:n_comp, drop=FALSE], centers=k_val, nstart=25)
@@ -276,11 +276,16 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         metric = .("Adjusted Rand Index (ARI)"),
                         value = sprintf("%.4f", ari_val)
                     ))
+                }, silent = TRUE)
+                if (inherits(km_try, "try-error")) {
+                    self$results$insert(1, jmvcore::Notice$new(self$options, name="kmeansError",
+                        type=jmvcore::NoticeType$WARNING,
+                        content=paste0(jmvcore::.("K-Means clustering failed:"), " ", jmvcore::extractErrorMessage(km_try))))
                 }
-            }, silent = TRUE)
+            }
             
             # 6. Regression Model & ROC & K-fold Validation
-            try({
+            reg_try <- try({
                 if (!is.null(classVar) && classVar != "") {
                     group_vec <- as.factor(dat_clean[[classVar]])
                     levels_present <- levels(group_vec)
@@ -452,13 +457,17 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     } else {
                         regTable <- self$results$regTable
                         regTable$deleteRows()
-                        regTable$addRow(rowKey="warn", values=list(
-                            fold = .("Warning: Grouping variable must have at least 2 levels."),
-                            accuracy = NaN, sensitivity = NaN, specificity = NaN, auc = NaN
-                        ))
+                        self$results$insert(1, jmvcore::Notice$new(self$options, name="regTableWarn",
+                            type=jmvcore::NoticeType$WARNING,
+                            content=jmvcore::.("Grouping variable must have at least 2 levels for regression and ROC analysis.")))
                     }
                 }
             }, silent = TRUE)
+            if (inherits(reg_try, "try-error")) {
+                self$results$insert(1, jmvcore::Notice$new(self$options, name="regError",
+                    type=jmvcore::NoticeType$WARNING,
+                    content=paste0(jmvcore::.("Regression and ROC validation failed:"), " ", jmvcore::extractErrorMessage(reg_try))))
+            }
         },
 
         .screePlot = function(image, ggtheme, theme, ...) {

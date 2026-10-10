@@ -20,7 +20,7 @@ test_that("mMF works", {
         seed = 42
     )
     
-    expect_s3_class(res, "mMFClass")
-    expect_s3_class(res$results$estim$mcar, "Table")
-    expect_s3_class(res$results$estim$mars, "Table")
+    expect_s3_class(res, "mMFResults")
+    expect_s3_class(res$estim$mcar, "Table")
+    expect_s3_class(res$estim$mars, "Table")
 })

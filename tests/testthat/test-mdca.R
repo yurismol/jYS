@@ -26,13 +26,13 @@ test_that("mDCA works", {
         showCalTable = TRUE
     )
     
-    expect_s3_class(res, "mDCAClass")
-    expect_s3_class(res$results$dcaTable, "Table")
-    expect_s3_class(res$results$windowTable, "Table")
-    expect_s3_class(res$results$calTable, "Table")
-    expect_true(res$results$dcaTable$rowCount > 0)
-    expect_true(res$results$windowTable$rowCount > 0)
-    expect_true(res$results$calTable$rowCount > 0)
+    expect_s3_class(res, "mDCAResults")
+    expect_s3_class(res$dcaTable, "Table")
+    expect_s3_class(res$windowTable, "Table")
+    expect_s3_class(res$calTable, "Table")
+    expect_true(res$dcaTable$rowCount > 0)
+    expect_true(res$windowTable$rowCount > 0)
+    expect_true(res$calTable$rowCount > 0)
     
     # 2. DCA with recalibration and non-zero harm
     res_harm <- jYS::mDCA(
@@ -40,13 +40,14 @@ test_that("mDCA works", {
         dep = "outcome",
         targetLevel = "1",
         probs = "prob",
+        scores = character(0),
         harm = 0.02,
         recalibrate = TRUE,
         showDcaTable = TRUE,
         showCalTable = TRUE
     )
     
-    expect_s3_class(res_harm, "mDCAClass")
-    expect_s3_class(res_harm$results$dcaTable, "Table")
-    expect_s3_class(res_harm$results$calTable, "Table")
+    expect_s3_class(res_harm, "mDCAResults")
+    expect_s3_class(res_harm$dcaTable, "Table")
+    expect_s3_class(res_harm$calTable, "Table")
 })

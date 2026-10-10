@@ -656,6 +656,7 @@ mLRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 title="Predicted Class",
                 clearWith=list(
                     "dep",
+                    "refLevel",
                     "covs",
                     "factors",
                     "method",
@@ -665,6 +666,7 @@ mLRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "val_split",
                     "cv_folds",
                     "cv_repeats",
+                    "seed",
                     "group",
                     "selgroup")))
             self$add(jmvcore::Output$new(
@@ -673,6 +675,7 @@ mLRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 title="Predicted Probability",
                 clearWith=list(
                     "dep",
+                    "refLevel",
                     "covs",
                     "factors",
                     "method",
@@ -682,6 +685,7 @@ mLRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "val_split",
                     "cv_folds",
                     "cv_repeats",
+                    "seed",
                     "group",
                     "selgroup")))}))
 

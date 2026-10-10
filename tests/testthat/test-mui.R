@@ -19,7 +19,9 @@ test_that("mUI works", {
         isProp = TRUE
     )
     
-    expect_s3_class(res, "mUIClass")
-    expect_s3_class(res$results$uitable, "Table")
-    expect_s3_class(res$results$mcitable, "Table")
+    expect_s3_class(res, "mUIResults")
+    expect_s3_class(res$stat$uistat, "Table")
+    expect_s3_class(res$stat$mcistat, "Table")
+    expect_s3_class(res$stat$intstat, "Table")
+    expect_equal(res$stat$intstat$rowCount, 3)
 })

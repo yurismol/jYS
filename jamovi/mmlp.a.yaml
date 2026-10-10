@@ -65,8 +65,6 @@ options:
       options:
         - name: sigmoid
           title: Sigmoid
-        - name: identity
-          title: Identity (Linear)
         - name: softmax
           title: Softmax
       default: sigmoid

@@ -346,7 +346,8 @@ mPCAResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 clearWith=list(
                     "vars",
                     "group",
-                    "selgroup")))
+                    "selgroup",
+                    "seed")))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="scorePlot",
@@ -376,6 +377,7 @@ mPCAResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "vars",
                     "group",
                     "selgroup",
+                    "classVar",
                     "pcX",
                     "pcY")))
             self$add(jmvcore::Table$new(
@@ -471,6 +473,8 @@ mPCAResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "selgroup",
                     "classVar",
                     "npc",
+                    "regKFold",
+                    "seed",
                     "roc_x",
                     "roc_unit",
                     "palBrewer",
@@ -515,6 +519,8 @@ mPCAResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "selgroup",
                     "classVar",
                     "npc",
+                    "regKFold",
+                    "seed",
                     "roc_x",
                     "roc_unit",
                     "palBrewer",

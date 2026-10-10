@@ -443,9 +443,11 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             visible="(showKm)",
                             clearWith=list(
                                 "elapsed",
+                                "tstart",
                                 "status",
                                 "statusEvent",
-                                "group"),
+                                "group",
+                                "subjectId"),
                             columns=list(
                                 list(
                                     `name`="group", 
@@ -478,9 +480,11 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             visible="(showKm && kmTable)",
                             clearWith=list(
                                 "elapsed",
+                                "tstart",
                                 "status",
                                 "statusEvent",
                                 "group",
+                                "subjectId",
                                 "kmMaxTime"),
                             columns=list(
                                 list(
@@ -510,9 +514,11 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             requiresData=TRUE,
                             clearWith=list(
                                 "elapsed",
+                                "tstart",
                                 "status",
                                 "statusEvent",
                                 "group",
+                                "subjectId",
                                 "kmCI",
                                 "kmTable",
                                 "kmType",
@@ -526,9 +532,11 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "survival"),
                 clearWith=list(
                     "elapsed",
+                    "tstart",
                     "status",
                     "statusEvent",
-                    "group"),
+                    "group",
+                    "subjectId"),
                 columns=list(
                     list(
                         `name`="chisq", 
@@ -571,10 +579,12 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             visible="(showCox && ((!is.null(covariates) && length(covariates) > 0) || (!is.null(group))))",
                             clearWith=list(
                                 "elapsed",
+                                "tstart",
                                 "status",
                                 "statusEvent",
                                 "group",
-                                "covariates"),
+                                "covariates",
+                                "subjectId"),
                             columns=list(
                                 list(
                                     `name`="test", 
@@ -600,10 +610,12 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             visible="(showCox && ((!is.null(covariates) && length(covariates) > 0) || (!is.null(group))))",
                             clearWith=list(
                                 "elapsed",
+                                "tstart",
                                 "status",
                                 "statusEvent",
                                 "group",
-                                "covariates"),
+                                "covariates",
+                                "subjectId"),
                             columns=list(
                                 list(
                                     `name`="var", 
@@ -697,10 +709,12 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             visible="(showCox && coxForest && ((!is.null(covariates) && length(covariates) > 0) || (!is.null(group))))",
                             clearWith=list(
                                 "elapsed",
+                                "tstart",
                                 "status",
                                 "statusEvent",
                                 "group",
-                                "covariates")))
+                                "covariates",
+                                "subjectId")))
                         self$add(jmvcore::Table$new(
                             options=options,
                             name="coxAssumpTable",
@@ -708,10 +722,12 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             visible="(showCox && coxAssump && ((!is.null(covariates) && length(covariates) > 0) || (!is.null(group))))",
                             clearWith=list(
                                 "elapsed",
+                                "tstart",
                                 "status",
                                 "statusEvent",
                                 "group",
-                                "covariates"),
+                                "covariates",
+                                "subjectId"),
                             columns=list(
                                 list(
                                     `name`="var", 
@@ -737,10 +753,12 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             visible="(showCox && showSchoenfeldPlot && coxAssump && ((!is.null(covariates) && length(covariates) > 0) || (!is.null(group))))",
                             clearWith=list(
                                 "elapsed",
+                                "tstart",
                                 "status",
                                 "statusEvent",
                                 "group",
                                 "covariates",
+                                "subjectId",
                                 "coxAssump",
                                 "showSchoenfeldPlot"),
                             template=jmvcore::Image$new(
@@ -751,10 +769,12 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 renderFun=".schoenfeldPlot",
                                 clearWith=list(
                                     "elapsed",
+                                    "tstart",
                                     "status",
                                     "statusEvent",
                                     "group",
                                     "covariates",
+                                    "subjectId",
                                     "coxAssump",
                                     "showSchoenfeldPlot"))))}))$new(options=options))
             self$add(R6::R6Class(
@@ -779,10 +799,12 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             visible="(showAdjCurves && ((!is.null(adjExposure)) || (!is.null(group))))",
                             clearWith=list(
                                 "elapsed",
+                                "tstart",
                                 "status",
                                 "statusEvent",
                                 "group",
                                 "covariates",
+                                "subjectId",
                                 "adjExposure",
                                 "kmMaxTime"),
                             columns=list(
@@ -816,10 +838,12 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             visible="(showAdjCurves && ((!is.null(adjExposure)) || (!is.null(group))))",
                             clearWith=list(
                                 "elapsed",
+                                "tstart",
                                 "status",
                                 "statusEvent",
                                 "group",
                                 "covariates",
+                                "subjectId",
                                 "adjExposure",
                                 "adjCI",
                                 "kmMaxTime")))}))$new(options=options))
@@ -849,10 +873,12 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             visible="(showCompRisks && showCifTable)",
                             clearWith=list(
                                 "elapsed",
+                                "tstart",
                                 "status",
                                 "compEvent",
                                 "compCensor",
                                 "group",
+                                "subjectId",
                                 "kmMaxTime"),
                             columns=list(
                                 list(
@@ -897,10 +923,12 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             visible="(showCompRisks && showCifPlot)",
                             clearWith=list(
                                 "elapsed",
+                                "tstart",
                                 "status",
                                 "compEvent",
                                 "compCensor",
                                 "group",
+                                "subjectId",
                                 "cifCI",
                                 "kmMaxTime")))
                         self$add(jmvcore::Table$new(
@@ -912,10 +940,12 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 "gray1988"),
                             clearWith=list(
                                 "elapsed",
+                                "tstart",
                                 "status",
                                 "compEvent",
                                 "compCensor",
-                                "group"),
+                                "group",
+                                "subjectId"),
                             columns=list(
                                 list(
                                     `name`="cause", 
@@ -944,11 +974,13 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 "finegray1999"),
                             clearWith=list(
                                 "elapsed",
+                                "tstart",
                                 "status",
                                 "compEvent",
                                 "compCensor",
                                 "group",
-                                "covariates"),
+                                "covariates",
+                                "subjectId"),
                             columns=list(
                                 list(
                                     `name`="var", 

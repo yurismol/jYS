@@ -115,7 +115,8 @@ options:
 
     - name: nPerm
       title: Number of permutations
-      type: Number
+      type: Integer
+      min: 1
       default: 1000
 
     - name: ternaryPlot
@@ -282,12 +283,14 @@ options:
 
     - name: nPermMDR
       title: Number of MDR permutations
-      type: Number
+      type: Integer
+      min: 1
       default: 100
 
     - name: mdrSeed
       title: Random seed
-      type: Number
+      type: Integer
+      min: 0
       default: 42
 
     - name: mdrCellTable

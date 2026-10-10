@@ -9,12 +9,13 @@ test_that("mOUT works", {
     res <- jYS::mOUT(
         data = df,
         vars = "x",
+        group = NULL,
         outlcheck = "IQR",
         fence = "1.5"
     )
     
-    expect_s3_class(res, "mOUTClass")
-    expect_s3_class(res$results$estim, "Table")
+    expect_s3_class(res, "mOUTResults")
+    expect_s3_class(res$stat$outstat, "Table")
     
     # Test mOUT (Z-score method) with grouping
     res_zs <- jYS::mOUT(
@@ -25,6 +26,6 @@ test_that("mOUT works", {
         tholdZS = "3.0"
     )
     
-    expect_s3_class(res_zs, "mOUTClass")
-    expect_s3_class(res_zs$results$estim, "Table")
+    expect_s3_class(res_zs, "mOUTResults")
+    expect_s3_class(res_zs$stat$outstat, "Table")
 })

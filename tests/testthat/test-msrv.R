@@ -147,6 +147,57 @@ test_that("mSRV works and supports kmMaxTime", {
     expect_true(all(!is.na(fg_df$shr) & fg_df$shr > 0))
     expect_true(all(!is.na(fg_df$p) & fg_df$p >= 0 & fg_df$p <= 1))
 
+    # 4b. Test Competing Risks auto-resolves identical initial default levels
+    df_cr_default <- data.frame(
+        time = etime,
+        status = factor(event, levels = 0:2, labels = c("Alive", "pcm", "death")),
+        sex = survival::mgus2$sex,
+        age = survival::mgus2$age
+    )
+
+    res_cr_default <- mSRV_fn(
+        data = df_cr_default,
+        elapsed = "time",
+        status = "status",
+        group = "sex",
+        covariates = "age",
+        showKm = FALSE,
+        showCox = FALSE,
+        showCompRisks = TRUE,
+        compEvent = "Alive",
+        compCensor = "Alive",
+        statusEvent = "Alive",
+        showCifTable = TRUE,
+        showCifPlot = TRUE
+    )
+    expect_s3_class(res_cr_default, "mSRVResults")
+    expect_s3_class(res_cr_default$compRisksSection$cifSummaryTable, "Table")
+    expect_true(res_cr_default$compRisksSection$cifSummaryTable$rowCount > 0)
+
+    # 4c. Test Competing Risks with single status level handles gracefully without error
+    df_single <- data.frame(
+        time = 1:10,
+        status = factor(rep("Alive", 10)),
+        sex = factor(rep(c("M", "F"), 5)),
+        age = 50
+    )
+    res_single <- mSRV_fn(
+        data = df_single,
+        elapsed = "time",
+        status = "status",
+        group = "sex",
+        covariates = "age",
+        showKm = FALSE,
+        showCox = FALSE,
+        showCompRisks = TRUE,
+        compEvent = "Alive",
+        compCensor = "Alive",
+        statusEvent = "Alive",
+        showCifTable = TRUE
+    )
+    expect_s3_class(res_single, "mSRVResults")
+    expect_equal(res_single$compRisksSection$cifSummaryTable$rowCount, 0)
+
     # 5. Test Counting Process Data (Start-Stop format, cluster)
     res_cp <- mSRV_fn(
         data = survival::heart,

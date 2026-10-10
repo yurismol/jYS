@@ -67,6 +67,7 @@ items:
           - vars
           - group
           - selgroup
+          - seed
 
     - name: scorePlot
       title: Object score distribution with 95% ellipses
@@ -96,6 +97,7 @@ items:
           - vars
           - group
           - selgroup
+          - classVar
           - pcX
           - pcY
 
@@ -183,6 +185,8 @@ items:
           - selgroup
           - classVar
           - npc
+          - regKFold
+          - seed
           - roc_x
           - roc_unit
           - palBrewer
@@ -221,6 +225,8 @@ items:
           - selgroup
           - classVar
           - npc
+          - regKFold
+          - seed
           - roc_x
           - roc_unit
           - palBrewer

@@ -62,12 +62,13 @@ children:
             maxItemCount: 1
             isTarget: true
       - type: TargetLayoutBox
-        label: Time-dependent Covariates (Cox)
+        label: Time-varying Effects (Cox)
         children:
           - type: VariablesListBox
             name: timeDepVars
             isTarget: true
             height: small
+            enable: (showCox && showTimeDepEffects)
 
   - type: VariableSupplier
     persistentItems: false

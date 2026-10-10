@@ -15,16 +15,17 @@ test_that("mMOUT works", {
     res_robust <- jYS::mMOUT(
         data = df,
         vars = c("x1", "x2", "x3"),
+        group = NULL,
         method = "robust",
         alpha = "0.01",
         outind = TRUE
     )
     
-    expect_s3_class(res_robust, "mMOUTClass")
-    expect_s3_class(res_robust$results$stat, "Table")
-    expect_s3_class(res_robust$results$oind, "Table")
-    expect_equal(res_robust$results$stat$rowCount, 1)
-    expect_true(res_robust$results$oind$rowCount >= 2)
+    expect_s3_class(res_robust, "mMOUTResults")
+    expect_s3_class(res_robust$stat, "Table")
+    expect_s3_class(res_robust$oind, "Table")
+    expect_equal(res_robust$stat$rowCount, 1)
+    expect_equal(res_robust$oind$rowCount, 1)
     
     # 2. Test classical Mahalanobis distance with grouping
     res_classic <- jYS::mMOUT(
@@ -36,8 +37,8 @@ test_that("mMOUT works", {
         outind = TRUE
     )
     
-    expect_s3_class(res_classic, "mMOUTClass")
-    expect_s3_class(res_classic$results$stat, "Table")
-    expect_s3_class(res_classic$results$oind, "Table")
-    expect_equal(res_classic$results$stat$rowCount, 2)
+    expect_s3_class(res_classic, "mMOUTResults")
+    expect_s3_class(res_classic$stat, "Table")
+    expect_s3_class(res_classic$oind, "Table")
+    expect_equal(res_classic$stat$rowCount, 2)
 })

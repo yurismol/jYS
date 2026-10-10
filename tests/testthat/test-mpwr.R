@@ -9,9 +9,9 @@ test_that("mPWR works", {
         alpha = 0.05
     )
     
-    expect_s3_class(res, "mPWRClass")
-    expect_s3_class(res$results$powerTable, "Table")
-    expect_equal(res$results$powerTable$rowCount, 1)
+    expect_s3_class(res, "mPWRResults")
+    expect_s3_class(res$powerTable, "Table")
+    expect_equal(res$powerTable$rowCount, 1)
     
     # Test power calculation for Welch
     res_welch <- jYS::mPWR(
@@ -23,6 +23,6 @@ test_that("mPWR works", {
         n_ratio = 1.2
     )
     
-    expect_s3_class(res_welch, "mPWRClass")
-    expect_s3_class(res_welch$results$powerTable, "Table")
+    expect_s3_class(res_welch, "mPWRResults")
+    expect_s3_class(res_welch$powerTable, "Table")
 })

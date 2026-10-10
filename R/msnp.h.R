@@ -145,9 +145,10 @@ mSNPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "hwPerm",
                 hwPerm,
                 default=FALSE)
-            private$..nPerm <- jmvcore::OptionNumber$new(
+            private$..nPerm <- jmvcore::OptionInteger$new(
                 "nPerm",
                 nPerm,
+                min=1,
                 default=1000)
             private$..ternaryPlot <- jmvcore::OptionBool$new(
                 "ternaryPlot",
@@ -263,13 +264,15 @@ mSNPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "mdrPermTest",
                 mdrPermTest,
                 default=FALSE)
-            private$..nPermMDR <- jmvcore::OptionNumber$new(
+            private$..nPermMDR <- jmvcore::OptionInteger$new(
                 "nPermMDR",
                 nPermMDR,
+                min=1,
                 default=100)
-            private$..mdrSeed <- jmvcore::OptionNumber$new(
+            private$..mdrSeed <- jmvcore::OptionInteger$new(
                 "mdrSeed",
                 mdrSeed,
+                min=0,
                 default=42)
             private$..mdrCellTable <- jmvcore::OptionBool$new(
                 "mdrCellTable",

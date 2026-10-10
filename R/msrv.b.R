@@ -263,6 +263,13 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                               }
                           }
                       }
+                  } else {
+                      self$results$kmSection$kmSummaryTable$deleteRows()
+                      self$results$kmSection$kmRiskTable$deleteRows()
+                      self$results$kmSection$kmPlot$setState(NULL)
+                      self$results$insert(1, jmvcore::Notice$new(self$options, name="kmFitError",
+                          type=jmvcore::NoticeType$WARNING,
+                          content=paste0(jmvcore::.("Kaplan–Meier estimation failed:"), " ", jmvcore::extractErrorMessage(km_fit))))
                   }
                   private$.km_sig <- km_sig
               } else {
@@ -481,6 +488,9 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                               private$.cox_model_sig <- NULL
                               self$results$coxSection$coxFitTable$deleteRows()
                               self$results$coxSection$coxCoefTable$deleteRows()
+                              self$results$insert(1, jmvcore::Notice$new(self$options, name="coxFitError",
+                                  type=jmvcore::NoticeType$WARNING,
+                                  content=paste0(jmvcore::.("Cox proportional hazards model fitting failed:"), " ", jmvcore::extractErrorMessage(cox_fit))))
                           }
                       } else {
                           private$.cached_cox_fit <- NULL
@@ -499,9 +509,7 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                   if (!is.null(cox_fit)) {
                       # Forest plot state
                       if (self$options$coxForest) {
-                          if (is.null(self$results$coxSection$coxForestPlot$state)) {
-                              self$results$coxSection$coxForestPlot$setState(list(fit = cox_fit, terms = terms))
-                          }
+                          self$results$coxSection$coxForestPlot$setState(list(fit = cox_fit, terms = terms))
                       } else {
                           self$results$coxSection$coxForestPlot$setState(NULL)
                       }
@@ -520,58 +528,83 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
                           if (!is.null(zph)) {
                               assumpTable <- self$results$coxSection$coxAssumpTable
+                              assumpTable$deleteRows()
                               zph_table <- zph$table
                               zph_rows <- private$.cached_zph_rows
 
-                              if (assumpTable$rowCount == 0) {
-                                  for (i in seq_along(zph_rows)) {
-                                      row_name <- zph_rows[i]
-                                      clean_name <- row_name
-                                      if (row_name == "GLOBAL") {
-                                          clean_name <- "GLOBAL"
-                                      } else if (grepl("^\\.\\.group", row_name)) {
-                                          lvl <- gsub("^\\.\\.group_?", "", row_name)
-                                          clean_name <- if (nzchar(lvl)) paste0(group_var, " (", lvl, ")") else group_var
-                                      } else if (grepl("^\\.\\.cov_([0-9]+)", row_name)) {
-                                          match_idx <- as.integer(gsub("^\\.\\.cov_([0-9]+).*", "\\1", row_name))
-                                          rem_suffix <- gsub(paste0("^\\.\\.cov_", match_idx, "_?"), "", row_name)
-                                          cov_name <- if (match_idx >= 1 && match_idx <= length(covs)) covs[match_idx] else paste0("cov_", match_idx)
-                                          clean_name <- if (nzchar(rem_suffix)) paste0(cov_name, " (", rem_suffix, ")") else cov_name
-                                      }
-
-                                      assumpTable$addRow(rowKey=row_name, values=list(
-                                          var    = clean_name,
-                                          chisq  = as.numeric(zph_table[i, "chisq"]),
-                                          df     = as.integer(zph_table[i, "df"]),
-                                          p      = as.numeric(zph_table[i, "p"])
-                                      ))
+                              for (i in seq_along(zph_rows)) {
+                                  row_name <- zph_rows[i]
+                                  clean_name <- row_name
+                                  if (row_name == "GLOBAL") {
+                                      clean_name <- "GLOBAL"
+                                  } else if (grepl("^\\.\\.group", row_name)) {
+                                      lvl <- gsub("^\\.\\.group_?", "", row_name)
+                                      clean_name <- if (nzchar(lvl)) paste0(group_var, " (", lvl, ")") else group_var
+                                  } else if (grepl("^\\.\\.cov_([0-9]+)", row_name)) {
+                                      match_idx <- as.integer(gsub("^\\.\\.cov_([0-9]+).*", "\\1", row_name))
+                                      rem_suffix <- gsub(paste0("^\\.\\.cov_", match_idx, "_?"), "", row_name)
+                                      cov_name <- if (match_idx >= 1 && match_idx <= length(covs)) covs[match_idx] else paste0("cov_", match_idx)
+                                      clean_name <- if (nzchar(rem_suffix)) paste0(cov_name, " (", rem_suffix, ")") else cov_name
                                   }
+
+                                  assumpTable$addRow(rowKey=row_name, values=list(
+                                      var    = clean_name,
+                                      chisq  = as.numeric(zph_table[i, "chisq"]),
+                                      df     = as.integer(zph_table[i, "df"]),
+                                      p      = as.numeric(zph_table[i, "p"])
+                                  ))
                               }
 
                               schoenfeldPlots <- self$results$coxSection$schoenfeldPlots
                               if (self$options$showSchoenfeldPlot) {
                                   plot_vars <- zph_rows[zph_rows != "GLOBAL"]
-                                  existing_keys <- names(schoenfeldPlots$items)
-                                  if (!identical(existing_keys, plot_vars) || is.null(schoenfeldPlots$state)) {
-                                      schoenfeldPlots$clear()
-                                      schoenfeldPlots$setState(list(zph = zph, row_names = zph_rows))
-                                      for (pv in plot_vars) {
-                                          schoenfeldPlots$addItem(key = pv)
+                                  schoenfeldPlots$clear()
+                                  for (pv in plot_vars) {
+                                      schoenfeldPlots$addItem(key = pv)
+                                  }
+                                  for (pv in plot_vars) {
+                                      clean_pv <- pv
+                                      if (grepl("^\\.\\.group", pv)) {
+                                          lvl <- gsub("^\\.\\.group_?", "", pv)
+                                          clean_pv <- if (nzchar(lvl)) paste0(group_var, " (", lvl, ")") else group_var
+                                      } else if (grepl("^\\.\\.cov_([0-9]+)", pv)) {
+                                          match_idx <- as.integer(gsub("^\\.\\.cov_([0-9]+).*", "\\1", pv))
+                                          rem_suffix <- gsub(paste0("^\\.\\.cov_", match_idx, "_?"), "", pv)
+                                          cov_name <- if (match_idx >= 1 && match_idx <= length(covs)) covs[match_idx] else paste0("cov_", match_idx)
+                                          clean_pv <- if (nzchar(rem_suffix)) paste0(cov_name, " (", rem_suffix, ")") else cov_name
                                       }
-                                      for (pv in plot_vars) {
-                                          clean_pv <- pv
-                                          if (grepl("^\\.\\.group", pv)) {
-                                              lvl <- gsub("^\\.\\.group_?", "", pv)
-                                              clean_pv <- if (nzchar(lvl)) paste0(group_var, " (", lvl, ")") else group_var
-                                          } else if (grepl("^\\.\\.cov_([0-9]+)", pv)) {
-                                              match_idx <- as.integer(gsub("^\\.\\.cov_([0-9]+).*", "\\1", pv))
-                                              rem_suffix <- gsub(paste0("^\\.\\.cov_", match_idx, "_?"), "", pv)
-                                              cov_name <- if (match_idx >= 1 && match_idx <= length(covs)) covs[match_idx] else paste0("cov_", match_idx)
-                                              clean_pv <- if (nzchar(rem_suffix)) paste0(cov_name, " (", rem_suffix, ")") else cov_name
+                                      item <- schoenfeldPlots$get(key=pv)
+                                      item$setTitle(paste0(jmvcore::.("Schoenfeld residuals"), " \u2013 ", clean_pv))
+
+                                      var_idx <- which(rownames(zph$table) == pv)
+                                      if (length(var_idx) > 0 && !is.na(var_idx) && var_idx >= 1 && var_idx <= nrow(zph$table)) {
+                                          sm <- try(plot(zph[var_idx], plot = FALSE), silent = TRUE)
+                                          if (!inherits(sm, "try-error") && !is.null(sm$x) && !is.null(sm$y)) {
+                                              xx <- zph[var_idx]$x
+                                              tt <- if (!is.null(zph[var_idx]$time)) zph[var_idx]$time else xx
+                                              if (is.null(zph$transform) || zph$transform == "identity") {
+                                                  pred_time <- sm$x
+                                                  pts_time <- xx
+                                              } else if (zph$transform == "log") {
+                                                  pred_time <- exp(sm$x)
+                                                  pts_time <- exp(xx)
+                                              } else {
+                                                  ord <- order(xx)
+                                                  xx_ord <- xx[ord]
+                                                  tt_ord <- tt[ord]
+                                                  nodup <- !duplicated(xx_ord)
+                                                  pred_time <- stats::approx(xx_ord[nodup], tt_ord[nodup], xout = sm$x, rule = 2)$y
+                                                  pts_time <- tt
+                                              }
+                                              y_raw <- zph[var_idx]$y
+                                              pts_df <- data.frame(time = pts_time, resid = as.numeric(if (is.matrix(y_raw)) y_raw[, 1] else y_raw))
+                                              smooth_df <- data.frame(time = pred_time, yhat = as.numeric(sm$y[, 1]), yup = as.numeric(sm$y[, 2]), ylow = as.numeric(sm$y[, 3]))
+                                              item$setState(list(pts = pts_df, smooth = smooth_df, var_name = clean_pv))
+                                          } else {
+                                              item$setState(NULL)
                                           }
-                                          item <- schoenfeldPlots$get(key=pv)
-                                          item$setTitle(paste0(jmvcore::.("Schoenfeld residuals"), " \u2013 ", clean_pv))
-                                          item$setState(list(zph = zph, var_idx = which(rownames(zph$table) == pv), var_name = pv))
+                                      } else {
+                                          item$setState(NULL)
                                       }
                                   }
                               } else {
@@ -876,19 +909,25 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                               time_var  = time_var,
                                               has_ci    = self$options$adjCI
                                           ))
-                                      } else {
-                                          self$results$adjSection$adjPlot$setState(NULL)
-                                      }
-                                  } else {
-                                      self$results$adjSection$adjPlot$setState(NULL)
-                                  }
-                              } else {
-                                  self$results$adjSection$adjPlot$setState(NULL)
-                              }
-                          }
-                      }
-                  }
-                  private$.adj_sig <- adj_sig
+                                       } else {
+                                           self$results$adjSection$adjPlot$setState(NULL)
+                                           self$results$insert(1, jmvcore::Notice$new(self$options, name="adjBhError",
+                                               type=jmvcore::NoticeType$WARNING,
+                                               content=paste0(jmvcore::.("Adjusted survival baseline hazard estimation failed:"), " ", jmvcore::extractErrorMessage(bh))))
+                                       }
+                                   } else {
+                                       self$results$adjSection$adjPlot$setState(NULL)
+                                       self$results$insert(1, jmvcore::Notice$new(self$options, name="adjFitError",
+                                           type=jmvcore::NoticeType$WARNING,
+                                           content=paste0(jmvcore::.("Adjusted survival curve model fitting failed:"), " ", jmvcore::extractErrorMessage(adj_fit))))
+                                   }
+                               } else {
+                                   self$results$adjSection$adjPlot$setState(NULL)
+                               }
+                           }
+                       }
+                   }
+                   private$.adj_sig <- adj_sig
               }
           } else {
               adjSummaryTable$deleteRows()
@@ -1285,40 +1324,27 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
       .schoenfeldPlot = function(image, ggtheme, theme, ...) {
           state <- image$state
-          if (is.null(state)) {
-              parent_state <- image$parent$state
-              if (!is.null(parent_state) && !is.null(parent_state$zph)) {
-                  zph <- parent_state$zph
-                  var_name <- image$key
-                  var_idx <- if (!is.null(var_name) && var_name %in% rownames(zph$table)) {
-                      which(rownames(zph$table) == var_name)
-                  } else {
-                      1
-                  }
-                  state <- list(zph = zph, var_idx = var_idx, var_name = var_name)
-              }
-          }
-          if (is.null(state) || is.null(state$zph)) return(FALSE)
+          if (is.null(state) || is.null(state$pts) || is.null(state$smooth)) return(FALSE)
 
-          zph <- state$zph
-          var_idx <- state$var_idx
-          if (is.null(var_idx) || length(var_idx) == 0 || is.na(var_idx)) {
-              var_name <- if (!is.null(state$var_name)) state$var_name else image$key
-              var_idx <- which(rownames(zph$table) == var_name)
-          }
-          if (length(var_idx) == 0 || is.na(var_idx)) var_idx <- 1
-          if (length(var_idx) == 0 || is.na(var_idx) || var_idx < 1 || var_idx > nrow(zph$table)) return(FALSE)
+          pts_df <- state$pts
+          smooth_df <- state$smooth
+          var_name <- if (!is.null(state$var_name)) state$var_name else image$key
 
-          # Plot base R plot.cox.zph
-          tryCatch({
-              survival:::plot.cox.zph(zph[var_idx], resid = TRUE, se = TRUE, df = 4, nsmo = 40, col = "#3366B2", lwd = 2)
-              abline(h = 0, col = "#E54028", lty = 2, lwd = 1.5)
-              TRUE
-          }, error = function(e) {
-              plot(zph[var_idx], resid = TRUE, se = TRUE, df = 4, nsmo = 40, col = "#3366B2", lwd = 2)
-              abline(h = 0, col = "#E54028", lty = 2, lwd = 1.5)
-              TRUE
-          })
+          p <- ggplot2::ggplot(pts_df, ggplot2::aes(x = time, y = resid)) +
+              ggplot2::geom_hline(yintercept = 0, linetype = "dashed", color = "#E54028", linewidth = 0.8) +
+              ggplot2::geom_ribbon(data = smooth_df, ggplot2::aes(x = time, y = yhat, ymin = ylow, ymax = yup), fill = "#3366B2", alpha = 0.2) +
+              ggplot2::geom_line(data = smooth_df, ggplot2::aes(x = time, y = yhat), color = "#3366B2", linewidth = 1.2) +
+              ggplot2::geom_point(color = "#3366B2", alpha = 0.45, size = 1.8) +
+              ggplot2::labs(
+                  x = self$options$elapsed,
+                  y = paste0("Beta(t) for ", var_name),
+                  title = paste0(jmvcore::.("Schoenfeld residuals"), " \u2013 ", var_name)
+              ) +
+              ggtheme +
+              ggplot2::theme(plot.title = ggplot2::element_text(face = "bold", size = 12))
+
+          print(p)
+          return(TRUE)
       },
       .rocPlot = function(image, ggtheme, theme, ...) {
           roc_list <- image$state
@@ -1490,99 +1516,57 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
           unique_vals_chr <- as.character(unique_vals)
 
           if (length(unique_vals_chr) < 2) {
-              jmvcore::reject(.("Status variable must have at least two distinct values for Competing Risks analysis."))
+              self$results$compRisksSection$cifSummaryTable$deleteRows()
+              self$results$compRisksSection$cifPlot$setState(NULL)
+              self$results$compRisksSection$grayTestTable$deleteRows()
+              self$results$compRisksSection$fineGrayTable$deleteRows()
+              self$results$insert(1, jmvcore::Notice$new(self$options, name="compRisksStatusLevels",
+                  type=jmvcore::NoticeType$WARNING,
+                  content=jmvcore::.("Status variable must have at least two distinct values for Competing Risks analysis.")))
+              self$results$compRisksSection$cifSummaryTable$setNote('cr_warn',
+                  jmvcore::.("Status variable must have at least two distinct values for Competing Risks analysis."))
+              return()
           }
 
           comp_censor_opt  <- self$options$compCensor
           comp_event_opt   <- self$options$compEvent
-          status_event_opt <- self$options$statusEvent
 
-          has_censor_opt <- !is.null(comp_censor_opt) && comp_censor_opt != "" && (as.character(comp_censor_opt) %in% unique_vals_chr)
-          has_event_opt  <- !is.null(comp_event_opt)  && comp_event_opt != ""  && (as.character(comp_event_opt) %in% unique_vals_chr)
+          censor_val <- if (!is.null(comp_censor_opt) && comp_censor_opt != "") as.character(comp_censor_opt) else NULL
+          event_val  <- if (!is.null(comp_event_opt) && comp_event_opt != "") as.character(comp_event_opt) else NULL
 
-          censor_regex <- "censor|alive|control|surv|none"
-          event_regex  <- "event|dead|death|relapse|recur|fail|prog|case|pos"
+          # If levels are not set or both selectors defaulted to the same level (standard jamovi LevelSelector initial behavior)
+          if (is.null(censor_val) || is.null(event_val) || censor_val == event_val ||
+              !(censor_val %in% unique_vals_chr) || !(event_val %in% unique_vals_chr)) {
 
-          if (has_censor_opt && has_event_opt && as.character(comp_censor_opt) != as.character(comp_event_opt)) {
-              # Both explicitly specified and distinct
-              censor_val <- as.character(comp_censor_opt)
-              event_val  <- as.character(comp_event_opt)
-          } else if (has_censor_opt && !has_event_opt) {
-              # Only censor level explicitly specified
-              censor_val <- as.character(comp_censor_opt)
-              avail_events <- setdiff(unique_vals_chr, censor_val)
-              if (!is.null(status_event_opt) && as.character(status_event_opt) %in% avail_events) {
-                  event_val <- as.character(status_event_opt)
+              auto_event <- if (!is.null(self$options$statusEvent) && self$options$statusEvent != "" && as.character(self$options$statusEvent) %in% unique_vals_chr) {
+                  as.character(self$options$statusEvent)
+              } else if (length(unique_vals_chr) >= 2) {
+                  unique_vals_chr[2]
               } else {
-                  ev_matches <- grep(event_regex, avail_events, ignore.case = TRUE, value = TRUE)
-                  if (length(ev_matches) > 0) {
-                      event_val <- ev_matches[1]
-                  } else if ("1" %in% avail_events) {
-                      event_val <- "1"
-                  } else {
-                      event_val <- avail_events[1]
-                  }
+                  unique_vals_chr[1]
               }
-          } else if (!has_censor_opt && has_event_opt) {
-              # Only event of interest explicitly specified
-              event_val <- as.character(comp_event_opt)
-              avail_censors <- setdiff(unique_vals_chr, event_val)
-              cen_matches <- grep(censor_regex, avail_censors, ignore.case = TRUE, value = TRUE)
-              if (length(cen_matches) > 0) {
-                  censor_val <- cen_matches[1]
-              } else if ("0" %in% avail_censors) {
-                  censor_val <- "0"
-              } else if (length(unique_vals_chr) == 2 && setequal(as.numeric(unique_vals_chr), c(1, 2)) && "1" %in% avail_censors) {
-                  censor_val <- "1"
+              auto_censor <- setdiff(unique_vals_chr, auto_event)[1]
+
+              if (!is.na(auto_censor) && auto_event != auto_censor) {
+                  event_val <- auto_event
+                  censor_val <- auto_censor
+                  self$results$insert(1, jmvcore::Notice$new(self$options, name="compRisksAutoLevels",
+                      type=jmvcore::NoticeType$INFO,
+                      content=paste0(jmvcore::.("Competing risks levels were automatically assigned:"), " ",
+                                     jmvcore::.("Event of interest"), " = '", event_val, "', ",
+                                     jmvcore::.("Censored level"), " = '", censor_val, "'.")))
               } else {
-                  censor_val <- avail_censors[1]
+                  self$results$compRisksSection$cifSummaryTable$deleteRows()
+                  self$results$compRisksSection$cifPlot$setState(NULL)
+                  self$results$compRisksSection$grayTestTable$deleteRows()
+                  self$results$compRisksSection$fineGrayTable$deleteRows()
+                  self$results$insert(1, jmvcore::Notice$new(self$options, name="compRisksLevelNotice",
+                      type=jmvcore::NoticeType$WARNING,
+                      content=jmvcore::.("Choose different levels for the censoring code and the event of interest.")))
+                  self$results$compRisksSection$cifSummaryTable$setNote('level_warn',
+                      jmvcore::.("Choose different levels for the censoring code and the event of interest."))
+                  return()
               }
-          } else {
-              # Neither specified or both set to same value (e.g., jamovi LevelSelector initial default)
-              # 1. Determine censor_val
-              cen_matches <- grep(censor_regex, unique_vals_chr, ignore.case = TRUE, value = TRUE)
-              ev_matches  <- grep(event_regex, unique_vals_chr, ignore.case = TRUE, value = TRUE)
-
-              if (length(cen_matches) > 0) {
-                  censor_val <- cen_matches[1]
-              } else if ("0" %in% unique_vals_chr) {
-                  censor_val <- "0"
-              } else if (length(unique_vals_chr) == 2 && setequal(as.numeric(unique_vals_chr), c(1, 2))) {
-                  censor_val <- "1"
-              } else if (length(ev_matches) > 0 && length(setdiff(unique_vals_chr, ev_matches[1])) > 0) {
-                  censor_candidates <- setdiff(unique_vals_chr, ev_matches)
-                  censor_val <- if (length(censor_candidates) > 0) censor_candidates[1] else setdiff(unique_vals_chr, ev_matches[1])[1]
-              } else if (!is.null(status_event_opt) && as.character(status_event_opt) %in% unique_vals_chr &&
-                         as.character(status_event_opt) != unique_vals_chr[1] &&
-                         length(setdiff(unique_vals_chr, as.character(status_event_opt))) > 0) {
-                  censor_val <- setdiff(unique_vals_chr, as.character(status_event_opt))[1]
-              } else {
-                  censor_val <- unique_vals_chr[1]
-              }
-
-              # 2. Determine event_val from remaining candidates
-              avail_events <- setdiff(unique_vals_chr, censor_val)
-              ev_matches_avail <- grep(event_regex, avail_events, ignore.case = TRUE, value = TRUE)
-
-              if (has_event_opt && as.character(comp_event_opt) %in% avail_events) {
-                  event_val <- as.character(comp_event_opt)
-              } else if (!is.null(status_event_opt) && as.character(status_event_opt) %in% avail_events &&
-                         (as.character(status_event_opt) != unique_vals_chr[1] || length(ev_matches_avail) == 0)) {
-                  event_val <- as.character(status_event_opt)
-              } else if (length(ev_matches_avail) > 0) {
-                  event_val <- ev_matches_avail[1]
-              } else if ("1" %in% avail_events) {
-                  event_val <- "1"
-              } else {
-                  event_val <- avail_events[1]
-              }
-          }
-
-          if (as.character(censor_val) == as.character(event_val)) {
-              jmvcore::reject(jmvcore::format(
-                  .("Censored level ('{censor}') and Event of interest ('{event}') cannot be the same value. Please select distinct levels in Competing Risks options."),
-                  censor = as.character(censor_val), event = as.character(event_val)
-              ))
           }
 
           # Competing event levels
@@ -1625,6 +1609,12 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               cif_fit <- try(survival::survfit(stats::as.formula(paste(surv_comp_str, "~ ..group")), data = dat_comp), silent = TRUE)
           } else {
               cif_fit <- try(survival::survfit(stats::as.formula(paste(surv_comp_str, "~ 1")), data = dat_comp), silent = TRUE)
+          }
+
+          if (inherits(cif_fit, "try-error")) {
+              self$results$insert(1, jmvcore::Notice$new(self$options, name="cifFitError",
+                  type=jmvcore::NoticeType$WARNING,
+                  content=paste0(jmvcore::.("Cumulative incidence (Aalen–Johansen) model fitting failed:"), " ", jmvcore::extractErrorMessage(cif_fit))))
           }
 
           causes <- if (!inherits(cif_fit, "try-error") && !is.null(cif_fit$states)) {
@@ -1737,28 +1727,28 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
           if (self$options$showGrayTest) {
               if (has_tstart) {
-                  grayTable$setNote('tstart_note', .("Gray's test does not support delayed entry / left-truncation and evaluates event times from origin."))
+                  grayTable$setNote('tstart_note', .("Gray's test is not supported for counting-process / delayed entry data (start time specified)."))
               } else {
                   grayTable$setNote('tstart_note', NULL)
-              }
-              if (is.null(group_var)) {
-                  grayTable$setNote('no_grp', .("A grouping variable with at least 2 levels is required for Gray's test."))
-              } else if (length(unique(stats::na.omit(dat_comp$..group))) < 2) {
-                  grayTable$setNote('few_grp', .("Grouping variable must have at least 2 levels for Gray's test."))
-              } else {
-                  grayTable$setNote('no_grp', NULL)
-                  grayTable$setNote('few_grp', NULL)
+                  if (is.null(group_var)) {
+                      grayTable$setNote('no_grp', .("A grouping variable with at least 2 levels is required for Gray's test."))
+                  } else if (length(unique(stats::na.omit(dat_comp$..group))) < 2) {
+                      grayTable$setNote('few_grp', .("Grouping variable must have at least 2 levels for Gray's test."))
+                  } else {
+                      grayTable$setNote('no_grp', NULL)
+                      grayTable$setNote('few_grp', NULL)
 
-                  for (cause in causes) {
-                      status_012 <- ifelse(dat_comp$..comp_event == cause, 1L,
-                                    ifelse(dat_comp$..comp_event == "censor", 0L, 2L))
-                      gt <- private$.graysTest(dat_comp$..time, status_012, dat_comp$..group)
-                      grayTable$addRow(rowKey = as.character(cause), values = list(
-                          cause = as.character(cause),
-                          stat  = gt$statistic,
-                          df    = gt$df,
-                          p     = gt$p.value
-                      ))
+                      for (cause in causes) {
+                          status_012 <- ifelse(dat_comp$..comp_event == cause, 1L,
+                                        ifelse(dat_comp$..comp_event == "censor", 0L, 2L))
+                          gt <- private$.graysTest(dat_comp$..time, status_012, dat_comp$..group)
+                          grayTable$addRow(rowKey = as.character(cause), values = list(
+                              cause = as.character(cause),
+                              stat  = gt$statistic,
+                              df    = gt$df,
+                              p     = gt$p.value
+                          ))
+                      }
                   }
               }
           }
@@ -1879,9 +1869,15 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                               }
                           } else {
                               fgTable$setNote('fit_error', .("Model fitting failed to converge."))
+                              self$results$insert(1, jmvcore::Notice$new(self$options, name="fgFitError",
+                                  type=jmvcore::NoticeType$WARNING,
+                                  content=jmvcore::.("Fine–Gray model fitting failed to converge.")))
                           }
                       } else {
                           fgTable$setNote('finegray_error', .("Data weighting for Fine–Gray model failed."))
+                          self$results$insert(1, jmvcore::Notice$new(self$options, name="finegrayError",
+                              type=jmvcore::NoticeType$WARNING,
+                              content=jmvcore::.("Data weighting for Fine–Gray model failed.")))
                       }
                   }
               }
@@ -2313,6 +2309,9 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
           if (inherits(td_fit, "try-error")) {
               err_msg <- as.character(attr(td_fit, "condition")$message)
               timeDepTable$setNote('fit_error', paste0(jmvcore::.("Model fitting failed to converge:"), " ", err_msg))
+              self$results$insert(1, jmvcore::Notice$new(self$options, name="tdFitError",
+                  type=jmvcore::NoticeType$WARNING,
+                  content=paste0(jmvcore::.("Time-varying effects model fitting failed to converge:"), " ", err_msg)))
               return()
           }
           timeDepTable$setNote('fit_error', NULL)

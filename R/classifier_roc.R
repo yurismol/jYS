@@ -432,6 +432,7 @@
         }
         return(TRUE)
     }, error = function(e) {
+        warning(paste0("Classifier ROC plot rendering failed: ", e$message))
         return(FALSE)
     })
     return(result)

@@ -384,6 +384,7 @@ mUIResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 items="(test)",
                 clearWith=list(
                     "ref",
+                    "refval",
                     "test",
                     "model",
                     "minSe",
@@ -398,6 +399,7 @@ mUIResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     requiresData=TRUE,
                     clearWith=list(
                         "ref",
+                        "refval",
                         "test",
                         "model",
                         "minSe",
@@ -411,9 +413,14 @@ mUIResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 items="(test)",
                 clearWith=list(
                     "ref",
+                    "refval",
                     "test",
                     "model",
                     "UImethod",
+                    "minSe",
+                    "minSp",
+                    "uiSe",
+                    "uiSp",
                     "polygon",
                     "youden"),
                 template=jmvcore::Image$new(
@@ -425,9 +432,14 @@ mUIResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     requiresData=TRUE,
                     clearWith=list(
                         "ref",
+                        "refval",
                         "test",
                         "model",
                         "UImethod",
+                        "minSe",
+                        "minSp",
+                        "uiSe",
+                        "uiSp",
                         "polygon",
                         "youden"))))
             self$add(jmvcore::Array$new(
@@ -438,6 +450,7 @@ mUIResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 items="(test)",
                 clearWith=list(
                     "ref",
+                    "refval",
                     "test",
                     "UImethod",
                     "show_roc_cut"),
@@ -450,6 +463,7 @@ mUIResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     requiresData=TRUE,
                     clearWith=list(
                         "ref",
+                        "refval",
                         "test",
                         "UImethod",
                         "show_roc_cut"))))

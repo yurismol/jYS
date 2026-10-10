@@ -81,7 +81,7 @@ options:
         - factor
 
     - name: timeDepVars
-      title: Time-dependent Covariates
+      title: Time-varying Effects (Cox)
       type: Variables
       required: false
       suggested:

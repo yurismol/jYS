@@ -65,7 +65,7 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
         hyp  <- self$options$get('hyp')
         flag <- self$options$get('flag')
         sign <- '* p < .05, ** p < .01, *** p < .001'
-        if (self$options$decSymbol==",") sign <- '* p < ,05; ** p < ,01; *** p < ,001'
+        if (isTRUE(tryCatch(self$options$decSymbol == ",", error = function(e) FALSE))) sign <- '* p < ,05; ** p < ,01; *** p < ,001'
         if (hyp=='pos') {
             matrix$setNote('hyp', .('<b>H\u2090</b> is positive correlation'))
             hyp <- 'greater'
@@ -462,7 +462,7 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
                  if (self$options$flag) {
                      sign <- '* p < .05, ** p < .01, *** p < .001'
-                     if (self$options$decSymbol == ",") sign <- '* p < ,05; ** p < ,01; *** p < ,001'
+                     if (isTRUE(tryCatch(self$options$decSymbol == ",", error = function(e) FALSE))) sign <- '* p < ,05; ** p < ,01; *** p < ,001'
                      glassoTable$setNote('flag', sign)
                  } else {
                      glassoTable$setNote('flag', NULL)

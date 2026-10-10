@@ -82,6 +82,18 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             alpha <- ifelse(method == "elastic", as.numeric(self$options$elastic_alpha), 1.0)
             lasso_choice <- self$options$lasso_penalty
             
+            # Save RNG state and set seed before feature selection
+            old_seed <- if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) get(".Random.seed", envir = .GlobalEnv, inherits = FALSE) else NULL
+            has_old_seed <- !is.null(old_seed)
+            on.exit({
+                if (has_old_seed) {
+                    assign(".Random.seed", old_seed, envir = .GlobalEnv)
+                } else if (exists(".Random.seed", envir = .GlobalEnv, inherits = FALSE)) {
+                    rm(".Random.seed", envir = .GlobalEnv)
+                }
+            }, add = TRUE)
+            set.seed(self$options$seed)
+            
             # Perform Feature Selection on Full Dataset
             selected_features <- private$.select_active_features(
                 X = X_all,
@@ -498,34 +510,26 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             if ((self$options$predClass && self$results$predClass$isNotFilled()) ||
                 (self$options$predProb && self$results$predProb$isNotFilled())) {
                 
-                # Fill predictions for all complete cases (keep missing rows as NA)
-                pred_prob_col <- rep(NA, nrow(self$data))
-                pred_class_col <- rep(NA, nrow(self$data))
-                
-                complete_case_indices <- as.integer(rownames(clean_data))
-                
                 if (is_multinomial) {
                     full_probs <- predict(fit_full, newdata = as.data.frame(X_selected), type = "probs")
                     full_classes <- predict(fit_full, newdata = as.data.frame(X_selected), type = "class")
-                    max_probs <- apply(full_probs, 1, max)
-                    pred_prob_col[complete_case_indices] <- max_probs
-                    pred_class_col[complete_case_indices] <- as.character(full_classes)
+                    pred_prob_vals <- apply(full_probs, 1, max)
+                    pred_class_vals <- as.character(full_classes)
                 } else {
                     full_probs <- predict(fit_full, newdata = as.data.frame(X_selected), type = "response")
-                    full_classes <- ifelse(full_probs >= 0.5, pos_class_label, neg_class_label)
-                    pred_prob_col[complete_case_indices] <- full_probs
-                    pred_class_col[complete_case_indices] <- full_classes
+                    pred_class_vals <- ifelse(full_probs >= 0.5, pos_class_label, neg_class_label)
+                    pred_prob_vals <- full_probs
                 }
                 
                 # Write to the spreadsheet
                 if (self$options$predClass && self$results$predClass$isNotFilled()) {
-                    self$results$predClass$setRowNums(rownames(self$data))
-                    self$results$predClass$setValues(index = 1, factor(pred_class_col, levels = y_levels))
+                    self$results$predClass$setRowNums(rownames(clean_data))
+                    self$results$predClass$setValues(index = 1, factor(pred_class_vals, levels = y_levels))
                 }
                 
                 if (self$options$predProb && self$results$predProb$isNotFilled()) {
-                    self$results$predProb$setRowNums(rownames(self$data))
-                    self$results$predProb$setValues(index = 1, pred_prob_col)
+                    self$results$predProb$setRowNums(rownames(clean_data))
+                    self$results$predProb$setValues(index = 1, as.numeric(pred_prob_vals))
                 }
             }
             

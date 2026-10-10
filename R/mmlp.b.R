@@ -240,7 +240,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 }
 
                 if (cv_errors == 0) {
-                    cv_acc <- get_accuracy(cv_preds, if (C == 2) y_num else y, C)
+                    cv_acc <- get_accuracy(cv_preds, y, C)
                 } else {
                     cv_acc <- NA
                 }
@@ -438,7 +438,7 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     
                     shuf_prob <- private$.predict_mlp(fit_full, X_shuffled)
                     shuf_pred <- get_predictions(shuf_prob, C)
-                    shuf_acc <- get_accuracy(shuf_pred, if (C == 2) y_num else y, C)
+                    shuf_acc <- get_accuracy(shuf_pred, y, C)
                     
                     # Permutation decrease in accuracy
                     imp_values[v_idx] <- max(0, train_acc - shuf_acc)
@@ -888,9 +888,6 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             if ((self$options$predClass && self$results$predClass$isNotFilled()) ||
                 (self$options$predProb && self$results$predProb$isNotFilled())) {
                 
-                pred_prob_col <- rep(NA, nrow(self$data))
-                pred_class_col <- rep(NA, nrow(self$data))
-                
                 full_probs <- private$.predict_mlp(fit_full, X_matrix)
                 full_prob_mat <- get_prob_mat(full_probs, C)
                 full_preds_idx <- get_predictions(full_probs, C)
@@ -898,18 +895,14 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 full_classes <- y_levels[full_preds_idx]
                 full_prob_val <- full_prob_mat[cbind(seq_along(full_preds_idx), full_preds_idx)]
                 
-                complete_case_indices <- as.integer(rownames(clean_data))
-                pred_prob_col[complete_case_indices] <- full_prob_val
-                pred_class_col[complete_case_indices] <- full_classes
-                
                 if (self$options$predClass && self$results$predClass$isNotFilled()) {
-                    self$results$predClass$setRowNums(rownames(self$data))
-                    self$results$predClass$setValues(index = 1, factor(pred_class_col, levels = y_levels))
+                    self$results$predClass$setRowNums(rownames(clean_data))
+                    self$results$predClass$setValues(index = 1, factor(full_classes, levels = y_levels))
                 }
                 
                 if (self$options$predProb && self$results$predProb$isNotFilled()) {
-                    self$results$predProb$setRowNums(rownames(self$data))
-                    self$results$predProb$setValues(index = 1, pred_prob_col)
+                    self$results$predProb$setRowNums(rownames(clean_data))
+                    self$results$predProb$setValues(index = 1, as.numeric(full_prob_val))
                 }
             }
         },
@@ -1147,8 +1140,8 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 if (name == "sigmoid") return(sigmoid(x))
                 if (name == "tanh") return(tanh_act(x))
                 if (name == "relu") return(relu(x))
-                if (name == "identity") return(identity_act(x))
                 if (name == "softmax") return(softmax(x))
+                if (name == "identity") return(sigmoid(x))
                 return(relu(x))
             }
             
@@ -1161,12 +1154,10 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     res[z <= 0] <- 0
                     return(res)
                 }
-                if (name == "identity") {
-                    res <- z
-                    res[] <- 1
-                    return(res)
-                }
                 if (name == "softmax") {
+                    return(a * (1 - a))
+                }
+                if (name == "identity") {
                     return(a * (1 - a))
                 }
                 res <- z
@@ -1288,8 +1279,8 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 if (name == "sigmoid") return(sigmoid(x))
                 if (name == "tanh") return(tanh_act(x))
                 if (name == "relu") return(relu(x))
-                if (name == "identity") return(identity_act(x))
                 if (name == "softmax") return(softmax(x))
+                if (name == "identity") return(sigmoid(x))
                 return(relu(x))
             }
             

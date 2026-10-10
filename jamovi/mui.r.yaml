@@ -147,6 +147,7 @@ items:
       items: (test)
       clearWith:
           - ref
+          - refval
           - test
           - model
           - minSe
@@ -161,6 +162,7 @@ items:
           requiresData: true
           clearWith:
               - ref
+              - refval
               - test
               - model
               - minSe
@@ -174,9 +176,14 @@ items:
       items: (test)
       clearWith:
           - ref
+          - refval
           - test
           - model
           - UImethod
+          - minSe
+          - minSp
+          - uiSe
+          - uiSp
           - polygon
           - youden
       template:
@@ -188,9 +195,14 @@ items:
           requiresData: true
           clearWith:
               - ref
+              - refval
               - test
               - model
               - UImethod
+              - minSe
+              - minSp
+              - uiSe
+              - uiSp
               - polygon
               - youden
 
@@ -201,6 +213,7 @@ items:
       items: (test)
       clearWith:
           - ref
+          - refval
           - test
           - UImethod
           - show_roc_cut
@@ -213,6 +226,7 @@ items:
           requiresData: true
           clearWith:
               - ref
+              - refval
               - test
               - UImethod
               - show_roc_cut
