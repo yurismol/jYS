@@ -114,17 +114,17 @@ children:
       - name: crt
         type: CheckBox
         label: "Cluster / Multilevel Randomized Trial (CRT/MST)"
-        enable: (design:independent || design:welch || design:paired || design:one.sample)
+        enable: (design:independent || design:welch || design:paired || design:one_sample)
       - name: cluster_size
         type: TextBox
         label: "Average cluster size (m)"
         format: number
-        enable: ((design:independent || design:welch || design:paired || design:one.sample) && crt)
+        enable: ((design:independent || design:welch || design:paired || design:one_sample) && crt)
       - name: icc
         type: TextBox
         label: "Intraclass correlation (ICC)"
         format: number
-        enable: ((design:independent || design:welch || design:paired || design:one.sample) && crt)
+        enable: ((design:independent || design:welch || design:paired || design:one_sample) && crt)
 
   - type: CollapseBox
     label: Plots

@@ -4,6 +4,11 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
     "mPWRClass",
     inherit = mPWRBase,
     private = list(
+        .normalizeDesign = function(design) {
+            if (identical(design, "one_sample")) return("one.sample")
+            if (identical(design, "one_sample_np")) return("one.sample_np")
+            return(design)
+        },
         
         .run = function() {
 
@@ -13,7 +18,7 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             }
 
             calc      <- self$options$calc
-            design    <- self$options$design
+            design    <- private$.normalizeDesign(self$options$design)
             es        <- self$options$es
             power     <- self$options$power
             n_g1      <- self$options$n
@@ -333,7 +338,7 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             if (!self$options$plot_err) return(FALSE)
             
             calc      <- self$options$calc
-            design    <- self$options$design
+            design    <- private$.normalizeDesign(self$options$design)
             es        <- self$options$es
             power     <- self$options$power
             n_g1      <- self$options$n
@@ -557,7 +562,7 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             if (!self$options$power_curve) return(FALSE)
             
             calc      <- self$options$calc
-            design    <- self$options$design
+            design    <- private$.normalizeDesign(self$options$design)
             es        <- self$options$es
             power_val <- self$options$power
             n_g1      <- self$options$n
@@ -762,7 +767,7 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             if (!self$options$power_es_curve) return(FALSE)
             
             calc      <- self$options$calc
-            design    <- self$options$design
+            design    <- private$.normalizeDesign(self$options$design)
             es        <- self$options$es
             power_val <- self$options$power
             n_g1      <- self$options$n
@@ -962,7 +967,7 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             if (!self$options$n_es_curve) return(FALSE)
             
             calc      <- self$options$calc
-            design    <- self$options$design
+            design    <- private$.normalizeDesign(self$options$design)
             es        <- self$options$es
             power_val <- self$options$power
             n_g1      <- self$options$n
@@ -1204,7 +1209,7 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             if (!self$options$power_es_alpha_curve) return(FALSE)
             
             calc      <- self$options$calc
-            design    <- self$options$design
+            design    <- private$.normalizeDesign(self$options$design)
             es        <- self$options$es
             power_val <- self$options$power
             n_g1      <- self$options$n
@@ -1373,6 +1378,7 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
         },
         
         .buildArgs = function(calc, design, es, power, n_g1, alt, alpha, n_ratio, var_ratio, include_n_es_power = TRUE) {
+            design       <- private$.normalizeDesign(design)
             is_cor       <- design %in% c("onecor", "onecor_np")
             is_spearman  <- design == "onecor_np"
             are_spearman <- 0.912
@@ -1534,4 +1540,4 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             ))
         }
     )
-)
+)

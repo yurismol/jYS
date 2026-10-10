@@ -33,9 +33,9 @@ options:
           title: "Paired Samples (Student)"
         - name: paired_np
           title: "Paired Samples (Wilcoxon)"
-        - name: one.sample
+        - name: one_sample
           title: "One Sample (Student)"
-        - name: one.sample_np
+        - name: one_sample_np
           title: "One Sample (Wilcoxon)"
         - name: onecor
           title: "One Sample Correlation (Pearson)"

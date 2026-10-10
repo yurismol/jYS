@@ -47,11 +47,11 @@ items:
         - name: k1
           title: Clusters 1
           type: integer
-          visible: (crt && (design:independent || design:welch || design:paired || design:one.sample))
+          visible: (crt && (design:independent || design:welch || design:paired || design:one_sample || design == 'one.sample'))
         - name: k2
           title: Clusters 2
           type: integer
-          visible: (crt && (design:independent || design:welch || design:paired || design:one.sample))
+          visible: (crt && (design:independent || design:welch || design:paired || design:one_sample || design == 'one.sample'))
         - name: power
           title: Power
           type: number
