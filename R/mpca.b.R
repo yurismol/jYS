@@ -218,7 +218,14 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         ssb / ssw
                     }
                     
-                    obs_ratio <- tryCatch(calc_ratio(group_vec), error = function(e) 0)
+                    obs_ratio <- tryCatch(calc_ratio(group_vec), error = function(e) {
+                        self$results$insert(1, jmvcore::Notice$new(self$options,
+                            name = "permRatioWarn",
+                            type = jmvcore::NoticeType$WARNING,
+                            content = jmvcore::format(.("Permutation separation test calculation failed: {err}"), err = conditionMessage(e))
+                        ))
+                        0
+                    })
                     if (obs_ratio > 0) {
                         perm_ratios <- replicate(999, {
                             calc_ratio(sample(group_vec))
@@ -412,12 +419,26 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                     y_p <- y_prob[complete_idx]
                                     
                                     r <- try(pROC::roc(y_t, y_p, quiet = TRUE), silent = TRUE)
-                                    if (inherits(r, "try-error")) return()
+                                    if (inherits(r, "try-error")) {
+                                        self$results$insert(1, jmvcore::Notice$new(self$options,
+                                            name = paste0("rocWarn_", gsub("[^a-zA-Z0-9]", "_", row_name)),
+                                            type = jmvcore::NoticeType$WARNING,
+                                            content = jmvcore::format(.("ROC analysis for '{part}' could not be computed: {err}"), part = row_name, err = as.character(r))
+                                        ))
+                                        return()
+                                    }
                                     
                                     auc_val <- as.numeric(pROC::auc(r)) * mult
                                     
                                     coords <- try(pROC::coords(r, x="best", best.method="youden", ret=c("threshold", "specificity", "sensitivity")), silent=TRUE)
-                                    if (inherits(coords, "try-error")) return()
+                                    if (inherits(coords, "try-error")) {
+                                        self$results$insert(1, jmvcore::Notice$new(self$options,
+                                            name = paste0("rocCoordWarn_", gsub("[^a-zA-Z0-9]", "_", row_name)),
+                                            type = jmvcore::NoticeType$WARNING,
+                                            content = jmvcore::format(.("Optimal cutoff for '{part}' could not be computed: {err}"), part = row_name, err = as.character(coords))
+                                        ))
+                                        return()
+                                    }
                                     
                                     # pROC::coords returns data.frame in newer versions, matrix in older
                                     if (is.data.frame(coords)) {
@@ -445,7 +466,11 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                         direction = direction
                                     ))
                                 }, error = function(e) {
-                                    # Silently skip if ROC table row fails
+                                    self$results$insert(1, jmvcore::Notice$new(self$options,
+                                        name = paste0("rocWarn_", gsub("[^a-zA-Z0-9]", "_", row_name)),
+                                        type = jmvcore::NoticeType$WARNING,
+                                        content = jmvcore::format(.("ROC table calculation for '{part}' failed: {err}"), part = row_name, err = conditionMessage(e))
+                                    ))
                                 })
                             }
                             

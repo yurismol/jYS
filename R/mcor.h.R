@@ -433,6 +433,7 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "mCORResults",
     inherit = jmvcore::Group,
     active = list(
+        text = function() private$.items[["text"]],
         matrix = function() private$.items[["matrix"]],
         treeplot = function() private$.items[["treeplot"]],
         plot = function() private$.items[["plot"]],
@@ -448,6 +449,12 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 refs=list(
                     "jys",
                     "corr"))
+            self$add(jmvcore::Html$new(
+                options=options,
+                name="text",
+                title="Correlations",
+                clearWith=list(
+                    "group")))
             self$add(jmvcore::Table$new(
                 options=options,
                 name="matrix",
@@ -558,17 +565,7 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=500,
                 height=400,
                 renderFun=".treeplot",
-                requiresData=TRUE,
-                clearWith=list(
-                    "vars",
-                    "group",
-                    "selgroup",
-                    "method",
-                    "hclust",
-                    "numClust",
-                    "clustMet",
-                    "clustCol",
-                    "clustMan")))
+                requiresData=TRUE))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="plot",
@@ -577,71 +574,16 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=500,
                 height=500,
                 renderFun=".plot",
-                requiresData=TRUE,
-                clearWith=list(
-                    "vars",
-                    "group",
-                    "selgroup",
-                    "hyp",
-                    "method",
-                    "adjust",
-                    "plots",
-                    "plotMetU",
-                    "plotMetL",
-                    "plotOrder",
-                    "signif",
-                    "ci",
-                    "pval",
-                    "n",
-                    "hclust",
-                    "numClust",
-                    "clustMet",
-                    "clustCol",
-                    "clustMan",
-                    "clPos")))
+                requiresData=TRUE))
             self$add(jmvcore::Array$new(
                 options=options,
                 name="rplots",
                 title="Intercluster Matrices",
                 visible="(plots && clustMat)",
-                clearWith=list(
-                    "vars",
-                    "group",
-                    "selgroup",
-                    "hyp",
-                    "method",
-                    "adjust",
-                    "plots",
-                    "clustMat",
-                    "hclust",
-                    "numClust",
-                    "clustMet",
-                    "clustCol",
-                    "clustMan",
-                    "plotMetU",
-                    "signif",
-                    "clPos"),
                 template=jmvcore::Image$new(
                     options=options,
                     renderFun=".rplot",
-                    requiresData=TRUE,
-                    clearWith=list(
-                        "vars",
-                        "group",
-                        "selgroup",
-                        "hyp",
-                        "method",
-                        "adjust",
-                        "plots",
-                        "clustMat",
-                        "hclust",
-                        "numClust",
-                        "clustMet",
-                        "clustCol",
-                        "clustMan",
-                        "plotMetU",
-                        "signif",
-                        "clPos"))))
+                    requiresData=TRUE)))
             self$add(R6::R6Class(
                 inherit = jmvcore::Group,
                 active = list(
@@ -943,6 +885,7 @@ mCORBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param glassoStabilityPlot .
 #' @return A results object containing:
 #' \tabular{llllll}{
+#'   \code{results$text} \tab \tab \tab \tab \tab a html \cr
 #'   \code{results$matrix} \tab \tab \tab \tab \tab a correlation matrix table \cr
 #'   \code{results$treeplot} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$plot} \tab \tab \tab \tab \tab an image \cr

@@ -119,3 +119,43 @@ test_that("mRF works, differentiates Training and OOB metrics, and supports filt
     expect_true(analysis$results$predClass$isFilled())
     expect_true(analysis$results$predProb$isFilled())
 })
+
+test_that("mRF default OOB partition produces an OOB row in the ROC table and distinct ROC curves", {
+    if (!exists(".", envir = .GlobalEnv, mode = "function")) .GlobalEnv$. <- jmvcore::.
+    if (!exists(".renderClassifierRocPlot", mode = "function")) {
+        r_roc <- list.files(c("R", "../../R", "../R"), pattern = "^classifier_roc\\.R$", full.names = TRUE)
+        if (length(r_roc) > 0) source(r_roc[1])
+    }
+    r_files <- list.files(c("R", "../../R", "../R"), pattern = "^mrf\\.[hb]\\.R$", full.names = TRUE)
+    for (rf in sort(r_files)) source(rf)
+    mRF_fn <- mRF
+
+    set.seed(42)
+    n <- 100
+    df <- data.frame(
+        y = factor(sample(c("ClassA", "ClassB"), n, replace = TRUE)),
+        x1 = rnorm(n),
+        x2 = rnorm(n)
+    )
+
+    res_oob_roc <- mRF_fn(
+        data = df,
+        dep = "y",
+        covs = c("x1", "x2"),
+        factors = NULL,
+        partition = "oob",
+        show_roc = TRUE,
+        show_roc_table = TRUE,
+        seed = 42
+    )
+
+    roc_df <- res_oob_roc$rocTable$asDF
+    expect_true(nrow(roc_df) >= 2)
+    expect_true(any(grepl("Out-of-Bag|OOB", roc_df$part, ignore.case = TRUE)))
+
+    # Verify ROC state has oob_prob
+    roc_item <- res_oob_roc$rocPlot$get(key = "binary")
+    expect_false(is.null(roc_item$state$oob_prob))
+    expect_equal(roc_item$state$partition, "oob")
+})
+

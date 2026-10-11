@@ -83,6 +83,7 @@ mMLPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 out_activation,
                 options=list(
                     "sigmoid",
+                    "identity",
                     "softmax"),
                 default="sigmoid")
             private$..decay <- jmvcore::OptionNumber$new(
@@ -309,6 +310,7 @@ mMLPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "mMLPResults",
     inherit = jmvcore::Group,
     active = list(
+        text = function() private$.items[["text"]],
         infoTable = function() private$.items[["infoTable"]],
         importanceTable = function() private$.items[["importanceTable"]],
         importancePlot = function() private$.items[["importancePlot"]],
@@ -334,6 +336,11 @@ mMLPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "rip",
                     "bish",
                     "adam"))
+            self$add(jmvcore::Html$new(
+                options=options,
+                name="text",
+                title="Conditions",
+                visible=FALSE))
             self$add(jmvcore::Table$new(
                 options=options,
                 name="infoTable",
@@ -652,25 +659,7 @@ mMLPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     width=500,
                     height=500,
                     renderFun=".rocPlot",
-                    clearWith=list(
-                        "dep",
-                        "covs",
-                        "factors",
-                        "hidden_structure",
-                        "activation",
-                        "out_activation",
-                        "decay",
-                        "maxit",
-                        "rang",
-                        "partition",
-                        "val_split",
-                        "cv_folds",
-                        "roc_x",
-                        "roc_unit",
-                        "multiclass_roc_type",
-                        "palBrewer",
-                        "show_roc_cut",
-                        "show_roc_table")),
+                    requiresData=TRUE),
                 clearWith=list(
                     "dep",
                     "covs",
@@ -706,8 +695,7 @@ mMLPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "rang",
                     "partition",
                     "val_split",
-                    "cv_folds",
-                    "seed")))
+                    "cv_folds")))
             self$add(jmvcore::Output$new(
                 options=options,
                 name="predProb",
@@ -724,8 +712,7 @@ mMLPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "rang",
                     "partition",
                     "val_split",
-                    "cv_folds",
-                    "seed")))}))
+                    "cv_folds")))}))
 
 mMLPBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "mMLPBase",
@@ -751,8 +738,7 @@ mMLPBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' MLP Classifier
 #'
 #' MLP Neural Network Classifier. Note that weight initialization and data 
-#' partitioning use a random seed (default 42, configurable under Validation 
-#' Settings) for reproducibility.
+#' partitioning use a hardcoded random seed (42) for reproducibility.
 #' @param data .
 #' @param dep .
 #' @param covs .
@@ -784,6 +770,7 @@ mMLPBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param seed .
 #' @return A results object containing:
 #' \tabular{llllll}{
+#'   \code{results$text} \tab \tab \tab \tab \tab a html \cr
 #'   \code{results$infoTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$importanceTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$importancePlot} \tab \tab \tab \tab \tab an image \cr

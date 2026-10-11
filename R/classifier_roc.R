@@ -166,6 +166,32 @@
                     print.thres.pattern = thres_pattern,
                     add = TRUE
                 )
+            } else if (partition == "oob") {
+                oob_p <- if (!is.null(roc_data$oob_prob)) as.numeric(roc_data$oob_prob) else if (!is.null(val_prob_bin)) val_prob_bin else cv_prob_bin
+                oob_y <- if (!is.null(roc_data$oob_y)) as.numeric(roc_data$oob_y) else if (!is.null(val_y_bin)) val_y_bin else cv_y_bin
+                if (!is.null(oob_p) && !is.null(oob_y) && length(oob_p) > 0 && length(unique(oob_y)) >= 2) {
+                    r_oob <- pROC::roc(oob_y, oob_p, percent = is_pct, quiet = TRUE)
+                    if (pal_brewer == "none") {
+                        cols <- c(cols, "#27AE60")
+                    }
+                    active_cols <- c(active_cols, cols[2])
+                    ltys <- c(ltys, 2)         # OOB is dashed
+                    auc_oob_val <- as.numeric(pROC::auc(r_oob))
+                    auc_oob_str <- if (is_pct) paste0(round(auc_oob_val, 1), "%") else round(auc_oob_val, 3)
+                    leg_labels <- c(leg_labels, paste0(tr("Out-of-Bag (AUC ="), " ", auc_oob_str, ")"))
+
+                    pROC::plot.roc(r_oob, col = cols[2],
+                        percent = is_pct,
+                        lwd = 3, lty = 2,
+                        legacy.axes = legacy_axes,
+                        print.thres = show_roc_cut,
+                        print.thres.col = cols[2],
+                        print.thres.pch = 19, print.thres.cex = 1.3,
+                        print.thres.best.method = "youden",
+                        print.thres.pattern = thres_pattern,
+                        add = TRUE
+                    )
+                }
             }
 
             legend("bottomright",
@@ -244,8 +270,8 @@
                                           defaultTrainColor = defaultTrainColor,
                                           defaultCvColor = defaultCvColor)
             leg_labels <- c()
-            plot_title <- if (partition %in% c("kfold", "repeated_kfold")) tr("Combined ROC - Cross-Validation") else tr("Combined ROC - Validation")
-            lty_val <- if (partition %in% c("kfold", "repeated_kfold")) 2 else 1
+            plot_title <- if (partition == "oob") tr("Combined ROC - Out-of-Bag (OOB)") else if (partition %in% c("kfold", "repeated_kfold")) tr("Combined ROC - Cross-Validation") else tr("Combined ROC - Validation")
+            lty_val <- if (partition %in% c("kfold", "repeated_kfold", "oob")) 2 else 1
 
             for (c in 1:C) {
                 lev <- y_levels[c]
@@ -285,7 +311,7 @@
                         print.thres.pattern = thres_pattern,
                         grid = (c == 1), add = (c > 1)
                     )
-                } else if (partition %in% c("kfold", "repeated_kfold") && !is.null(cv_prob) && !is.null(cv_y)) {
+                } else if (partition %in% c("kfold", "repeated_kfold", "oob") && !is.null(cv_prob) && !is.null(cv_y)) {
                     y_cv_c <- if (is.character(cv_y) || is.factor(cv_y)) {
                         as.numeric(as.character(cv_y) == as.character(lev))
                     } else if (all(cv_y %in% 1:C)) {
@@ -417,6 +443,32 @@
                     print.thres.pattern = thres_pattern,
                     add = TRUE
                 )
+            } else if (partition == "oob") {
+                oob_p <- if (!is.null(roc_data$oob_prob)) as.numeric(roc_data$oob_prob) else if (!is.null(val_prob_bin)) val_prob_bin else cv_prob_bin
+                oob_y <- if (!is.null(roc_data$oob_y)) as.numeric(roc_data$oob_y) else if (!is.null(val_y_bin)) val_y_bin else cv_y_bin
+                if (!is.null(oob_p) && !is.null(oob_y) && length(oob_p) > 0 && length(unique(oob_y)) >= 2) {
+                    r_oob <- pROC::roc(oob_y, oob_p, percent = is_pct, quiet = TRUE)
+                    if (pal_brewer == "none") {
+                        cols <- c(cols, "#27AE60")
+                    }
+                    active_cols <- c(active_cols, cols[2])
+                    ltys <- c(ltys, 2)
+                    auc_oob_val <- as.numeric(pROC::auc(r_oob))
+                    auc_oob_str <- if (is_pct) paste0(round(auc_oob_val, 1), "%") else round(auc_oob_val, 3)
+                    leg_labels <- c(leg_labels, paste0(tr("Out-of-Bag (AUC ="), " ", auc_oob_str, ")"))
+
+                    pROC::plot.roc(r_oob, col = cols[2],
+                        percent = is_pct,
+                        lwd = 3, lty = 2,
+                        legacy.axes = legacy_axes,
+                        print.thres = show_roc_cut,
+                        print.thres.col = cols[2],
+                        print.thres.pch = 19, print.thres.cex = 1.3,
+                        print.thres.best.method = "youden",
+                        print.thres.pattern = thres_pattern,
+                        add = TRUE
+                    )
+                }
             }
 
             legend("bottomright",
@@ -432,8 +484,7 @@
         }
         return(TRUE)
     }, error = function(e) {
-        warning(paste0("Classifier ROC plot rendering failed: ", e$message))
-        return(FALSE)
+        stop(paste0("Classifier ROC plot rendering failed: ", e$message))
     })
     return(result)
 }

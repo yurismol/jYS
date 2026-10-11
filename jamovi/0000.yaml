@@ -1,12 +1,12 @@
 ---
 title: jYS Extended Functions
 name: jYS
-version: 1.1.5
+version: 1.2.0
 jms: '1.0'
 authors:
   - Yuri Smolyakov
 maintainer: Yuri Smolyakov <smolyakov@rambler.ru>
-date: '2026-09-20'
+date: '2026-10-11'
 type: R
 description: >-
   Extensions of the functionality of popular data analysis methods: correlation
@@ -15,10 +15,11 @@ description: >-
   Interval (UI) threshold estimation, a priori power analysis, MLP neural
   network classifier, logistic regression with feature selection, Random Forest
   classifier, survival analysis (Kaplan-Meier, Cox regression, adjusted curves,
-  competing risks, time-dependent effects), Principal Component Analysis (PCA),
-  Single Nucleotide Polymorphism (SNP) association and Hardy-Weinberg
-  equilibrium analysis, and Decision Curve Analysis (DCA) with model
-  calibration.
+  competing risks, time-dependent effects), Principal
+  Component Analysis (PCA), Single Nucleotide Polymorphism (SNP) association and
+  Hardy-Weinberg equilibrium analysis, Decision Curve Analysis (DCA) with
+  model calibration, and Stability Analysis according to ICH Q1E guideline with
+  ANCOVA poolability testing and shelf life estimation.
 datasets:
   - name: Correlation clustering
     path: COR_BLOOD.omv
@@ -75,6 +76,11 @@ datasets:
     description: >-
       Decision Curve Analysis (DCA) and Model Calibration for CHD prediction
       models demonstration
+  - name: Stability Analysis ICH Q1E
+    path: STAB_ICH.omv
+    description: >-
+      Evaluation of stability data and shelf life estimation according to
+      ICH Q1E guideline demonstration
 analyses:
   - title: Correlation clustering
     name: mCOR
@@ -93,8 +99,7 @@ analyses:
     menuTitle: Principal Component Analysis
     description: >-
       Principal Component Analysis (PCA). Note that parallel analysis and
-      cross-validation use a random seed (default 42, configurable under PCA
-      Configuration) for reproducibility.
+      cross-validation use a random seed (default 42, configurable under PCA Configuration) for reproducibility.
   - title: Missing Values Estimation and Imputation
     name: mMF
     ns: jYS
@@ -126,8 +131,7 @@ analyses:
     menuTitle: Logistic Regression
     description: >-
       Logistic Regression with feature selection. Note that cross-validation
-      fold partitioning uses a random seed (default 42, configurable under
-      Validation Settings) for reproducibility.
+      fold partitioning uses a random seed (default 42, configurable under Validation Settings) for reproducibility.
   - title: Random Forest Classifier
     name: mRF
     ns: jYS
@@ -137,8 +141,7 @@ analyses:
     menuTitle: Random Forest Classifier
     description: >-
       Random Forest Classifier using the ranger package. Note that data
-      partitioning uses a random seed (default 42, configurable under Validation
-      Settings) for reproducibility.
+      partitioning uses a random seed (default 42, configurable under Validation Settings) for reproducibility.
   - title: MLP Classifier
     name: mMLP
     ns: jYS
@@ -148,8 +151,7 @@ analyses:
     menuTitle: MLP Classifier
     description: >-
       MLP Neural Network Classifier. Note that weight initialization and data
-      partitioning use a random seed (default 42, configurable under Validation
-      Settings) for reproducibility.
+      partitioning use a random seed (default 42, configurable under Validation Settings) for reproducibility.
   - title: Survival Analysis
     name: mSRV
     ns: jYS
@@ -159,8 +161,8 @@ analyses:
     menuTitle: Survival Analysis
     description: >-
       Survival Analysis including Kaplan-Meier curves, log-rank tests, Cox
-      proportional hazards regression, adjusted survival curves, competing risks
-      analysis (Aalen-Johansen CIF, Gray's test, Fine-Gray model),
+      proportional hazards regression, adjusted survival curves, competing
+      risks analysis (Aalen-Johansen CIF, Gray's test, Fine-Gray model),
       time-dependent covariates, and time-dependent ROC curves.
   - title: ROC classification
     name: mROC
@@ -205,6 +207,17 @@ analyses:
     menuGroup: Power
     menuTitle: A Priori Power Analysis
     menuSubgroup: jYS
+  - title: Stability Analysis (ICH Q1E)
+    name: mSTAB
+    ns: jYS
+    category: analyses
+    menuGroup: jYS
+    menuSubgroup: Regression & Classification
+    menuTitle: Stability Analysis (ICH Q1E)
+    description: >-
+      Evaluation of stability data and shelf life estimation according to
+      the ICH Q1E guideline using ANCOVA poolability testing and one-sided
+      95% confidence intervals.
 usesNative: true
 minApp: 2.3.0
 

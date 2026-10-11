@@ -414,4 +414,76 @@ refs:
         publisher: "Springer, New York"
         url: https://doi.org/10.1007/978-1-4757-3294-8
 
+    ichq1e:
+        type: 'book'
+        author: International Council for Harmonisation
+        year: 2003
+        title: "ICH Harmonised Tripartite Guideline: Evaluation of Stability Data Q1E"
+        publisher: "ICH"
+        url: https://database.ich.org/sites/default/files/Q1E_Guideline.pdf
+
+    chow2014:
+        type: 'book'
+        author: Chow, S.-C.
+        year: 2014
+        title: "Statistical Design and Analysis of Stability Studies"
+        publisher: "Chapman & Hall/CRC Biostatistics Series, Boca Raton, FL"
+        url: https://doi.org/10.1201/b17258
+
+    capen2018:
+        type: 'article'
+        author: Capen, R., Christopher, D., Forenzo, P., Huynh-Ba, K., O'Neill, J., et al.
+        year: 2018
+        title: "Evaluating Current Practices in Shelf Life Estimation"
+        publisher: "AAPS PharmSciTech"
+        volume: 19
+        issue: 2
+        pages: 527–537
+        url: https://doi.org/10.1208/s12249-017-0880-4
+
+    quinlan2013:
+        type: 'article'
+        author: Quinlan, M., Stroup, W., Schwenke, J., & Christopher, D.
+        year: 2013
+        title: "Evaluating the performance of the ICH guidelines for shelf life estimation"
+        publisher: "Journal of Biopharmaceutical Statistics"
+        volume: 23
+        issue: 4
+        pages: 843–864
+        url: https://doi.org/10.1080/10543406.2013.789889
+
+    mcmahon2021:
+        type: 'article'
+        author: McMahon, M. E., Abbott, A., Babayan, Y., Carhart, J., Diaz, D. A., et al.
+        year: 2021
+        title: "Considerations for Updates to ICH Q1 and Q5C Stability Guidelines: Embracing Current Technology and Risk Assessment Strategies"
+        publisher: "The AAPS Journal"
+        volume: 23
+        issue: 6
+        pages: '112'
+        url: https://doi.org/10.1208/s12248-021-00641-6
+
+    gonzalez2022:
+        type: 'article'
+        author: González-González, O., Ramirez, I. O., Ramirez, B. I., O'Connell, P., et al.
+        year: 2022
+        title: "Drug Stability: ICH versus Accelerated Predictive Stability Studies"
+        publisher: "Pharmaceutics"
+        volume: 14
+        issue: 11
+        pages: '2324'
+        url: https://doi.org/10.3390/pharmaceutics14112324
+
+    cordero2024:
+        type: 'article'
+        author: Cordero, M., Meinfelder, F., & Eilert, T.
+        year: 2024
+        title: "A Modern Approach to Stability Studies via Bayesian Linear Mixed Models Incorporating Auxiliary Effects"
+        publisher: "Journal of Pharmaceutical Sciences"
+        volume: 113
+        issue: 7
+        pages: 1832–1841
+        url: https://doi.org/10.1016/j.xphs.2024.02.020
+
+
 

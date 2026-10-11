@@ -1326,6 +1326,7 @@ mSNPClass <- R6::R6Class(
             
             fold_ids <- rep(0, nrow(df_comp))
             fold_ids[case_idx] <- case_folds
+            fold_ids[ctrl_idx] <- ctrl_folds
             user_order <- as.integer(self$options$mdrOrder)
             max_order <- min(user_order, length(snps))
             

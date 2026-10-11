@@ -359,8 +359,7 @@ mROCClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               print(p)
               return(TRUE)
           }, error = function(e) {
-              warning(paste0("ROC plot rendering failed: ", e$message))
-              return(FALSE)
+              stop(paste0("ROC plot rendering failed: ", e$message))
           })
           return(result)
       },

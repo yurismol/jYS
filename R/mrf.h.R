@@ -330,6 +330,7 @@ mRFResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "mRFResults",
     inherit = jmvcore::Group,
     active = list(
+        text = function() private$.items[["text"]],
         infoTable = function() private$.items[["infoTable"]],
         importanceTable = function() private$.items[["importanceTable"]],
         importancePlot = function() private$.items[["importancePlot"]],
@@ -355,6 +356,11 @@ mRFResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "rg",
                     "roc",
                     "breiman2001"))
+            self$add(jmvcore::Html$new(
+                options=options,
+                name="text",
+                title="Conditions",
+                visible=FALSE))
             self$add(jmvcore::Table$new(
                 options=options,
                 name="infoTable",
@@ -664,26 +670,7 @@ mRFResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     width=500,
                     height=500,
                     renderFun=".rocPlot",
-                    clearWith=list(
-                        "dep",
-                        "covs",
-                        "factors",
-                        "ntree",
-                        "mtry_method",
-                        "mtry_val",
-                        "nodesize",
-                        "maxdepth",
-                        "sample_fraction",
-                        "partition",
-                        "val_split",
-                        "cv_folds",
-                        "roc_x",
-                        "roc_unit",
-                        "multiclass_roc_type",
-                        "palBrewer",
-                        "show_roc_cut",
-                        "show_roc_table",
-                        "seed")),
+                    requiresData=TRUE),
                 clearWith=list(
                     "dep",
                     "covs",
@@ -714,19 +701,7 @@ mRFResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     width=550,
                     height=400,
                     renderFun=".pdpPlot",
-                    requiresData=TRUE,
-                    clearWith=list(
-                        "dep",
-                        "covs",
-                        "factors",
-                        "ntree",
-                        "mtry_method",
-                        "mtry_val",
-                        "nodesize",
-                        "maxdepth",
-                        "sample_fraction",
-                        "pdp_n_vars",
-                        "seed")),
+                    requiresData=TRUE),
                 clearWith=list(
                     "dep",
                     "covs",
@@ -800,8 +775,7 @@ mRFBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' Random Forest Classifier
 #'
 #' Random Forest Classifier using the ranger package. Note that data 
-#' partitioning uses a random seed (default 42, configurable under Validation 
-#' Settings) for reproducibility.
+#' partitioning uses a hardcoded random seed (42) for reproducibility.
 #' @param data .
 #' @param dep .
 #' @param covs .
@@ -835,6 +809,7 @@ mRFBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param seed .
 #' @return A results object containing:
 #' \tabular{llllll}{
+#'   \code{results$text} \tab \tab \tab \tab \tab a html \cr
 #'   \code{results$infoTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$importanceTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$importancePlot} \tab \tab \tab \tab \tab an image \cr

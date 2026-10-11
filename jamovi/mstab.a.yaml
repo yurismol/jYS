@@ -1,0 +1,171 @@
+---
+name:  mSTAB
+title: Stability Analysis (ICH Q1E)
+menuGroup: jYS
+menuSubgroup: Regression & Classification
+menuTitle: Stability Analysis (ICH Q1E)
+description:
+    main: Evaluation of stability data and shelf life estimation according to the ICH Q1E guideline using ANCOVA poolability testing and one-sided 95% confidence intervals.
+version: '1.0.0'
+jas: '1.2'
+
+options:
+    - name: data
+      type: Data
+
+    - name: dep
+      title: Quantitative Attribute / Response
+      type: Variable
+      suggested:
+        - continuous
+      permitted:
+        - numeric
+      required: true
+
+    - name: time
+      title: Time Variable
+      type: Variable
+      suggested:
+        - continuous
+      permitted:
+        - numeric
+      required: true
+
+    - name: batch
+      title: Batch / Lot
+      type: Variable
+      suggested:
+        - nominal
+        - ordinal
+      permitted:
+        - factor
+      required: true
+
+    - name: specType
+      title: Specification Limit Type
+      type: List
+      options:
+        - title: Lower limit only (Decreasing attribute / Assay)
+          name:  lower
+        - title: Upper limit only (Increasing attribute / Impurity)
+          name:  upper
+        - title: Both limits (Two-sided / Unknown direction)
+          name:  both
+      default: lower
+
+    - name: lsl
+      title: Lower Specification Limit (LSL)
+      type: Number
+      default: 90.0
+
+    - name: usl
+      title: Upper Specification Limit (USL)
+      type: Number
+      default: 105.0
+
+    - name: alphaPool
+      title: Poolability Alpha Level (α)
+      type: Number
+      min: 0.01
+      max: 0.50
+      default: 0.25
+
+    - name: confLevel
+      title: Confidence Level for Shelf Life
+      type: Number
+      min: 0.80
+      max: 0.99
+      default: 0.95
+
+    - name: modelChoice
+      title: Model Selection Strategy
+      type: List
+      options:
+        - title: Automatic (ICH Q1E Decision Tree)
+          name:  auto
+        - title: Separate slopes and separate intercepts (Model 1)
+          name:  sep_slopes_sep_int
+        - title: Common slope with separate intercepts (Model 2)
+          name:  common_slope_sep_int
+        - title: Common slope and common intercept (Model 3)
+          name:  common_slope_common_int
+      default: auto
+
+    - name: trans
+      title: Response Transformation
+      type: List
+      options:
+        - title: None (Zero-order linear kinetics)
+          name:  none
+        - title: Natural logarithm ln(Y) (First-order kinetics)
+          name:  log
+      default: none
+
+    - name: accelCondition
+      title: Accelerated Testing Support (ICH Q1E App. A)
+      type: List
+      options:
+        - title: No significant change at accelerated condition (Extrapolation allowed)
+          name:  no_change
+        - title: Significant change observed at accelerated condition (No extrapolation)
+          name:  change_observed
+        - title: Not evaluated / None
+          name:  none
+      default: no_change
+
+    - name: studyDuration
+      title: Long-term Study Duration (0 - auto)
+      type: Number
+      min: 0
+      default: 0
+
+    - name: showPoolTable
+      title: ANCOVA Poolability Testing Table
+      type: Bool
+      default: true
+
+    - name: showShelfTable
+      title: Shelf Life Summary Table
+      type: Bool
+      default: true
+
+    - name: showCoefTable
+      title: Regression Coefficients Table
+      type: Bool
+      default: true
+
+    - name: showDiagTable
+      title: Model Diagnostics & Assumptions Table
+      type: Bool
+      default: true
+
+    - name: showStabPlot
+      title: Stability & Shelf Life Plot
+      type: Bool
+      default: true
+
+    - name: showDiagPlot
+      title: Residual Diagnostics Plots
+      type: Bool
+      default: false
+
+    - name: showShelfPlot
+      title: Shelf Life Comparison & Horizon Plot
+      type: Bool
+      default: false
+
+    - name: showFacetPlot
+      title: Individual Batch Trajectories (Faceted)
+      type: Bool
+      default: false
+
+    - name: showRatePlot
+      title: Degradation Rates / Slopes Comparison
+      type: Bool
+      default: false
+
+    - name: showPredPlot
+      title: Prediction Intervals & Release Limits (SRL)
+      type: Bool
+      default: false
+...

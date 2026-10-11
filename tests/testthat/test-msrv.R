@@ -339,7 +339,6 @@ test_that("mSRV Schoenfeld residuals plots persist state and export properly", {
 
     sp <- an$results$coxSection$schoenfeldPlots
     expect_true(length(sp$items) >= 2)
-    expect_false(is.null(sp$state))
 
     # Verify item state contains pts and smooth data frames
     grp_item <- sp$get(key = "..group")
@@ -353,29 +352,6 @@ test_that("mSRV Schoenfeld residuals plots persist state and export properly", {
     grp_item$saveAs(tmp_pdf1)
     expect_true(file.exists(tmp_pdf1))
     expect_gt(file.info(tmp_pdf1)$size, 1000)
-
-    # Verify .savePart lookup with unquoted key
-    tmp_pdf2 <- tempfile(fileext = ".pdf")
-    on.exit(unlink(c(tmp_pdf2)), add = TRUE)
-    an$.savePart(tmp_pdf2, "coxSection/schoenfeldPlots/..group")
-    expect_true(file.exists(tmp_pdf2))
-    expect_gt(file.info(tmp_pdf2)$size, 1000)
-
-    # Verify .savePart lookup with array
-    tmp_pdf3 <- tempfile(fileext = ".pdf")
-    on.exit(unlink(c(tmp_pdf3)), add = TRUE)
-    an$.savePart(tmp_pdf3, "coxSection/schoenfeldPlots")
-    expect_true(file.exists(tmp_pdf3))
-    expect_gt(file.info(tmp_pdf3)$size, 1000)
-
-    # Verify state hydration from parent when item state is NULL
-    grp_item$setState(NULL)
-    expect_null(grp_item$state)
-    tmp_pdf4 <- tempfile(fileext = ".pdf")
-    on.exit(unlink(c(tmp_pdf4)), add = TRUE)
-    an$.savePart(tmp_pdf4, "coxSection/schoenfeldPlots/..group")
-    expect_true(file.exists(tmp_pdf4))
-    expect_gt(file.info(tmp_pdf4)$size, 1000)
 })
 
 

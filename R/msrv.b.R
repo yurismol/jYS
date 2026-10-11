@@ -344,6 +344,13 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                   p     = p_val
                               ))
                               logRankTable$setNote('cp_lr_note', .('Score (log-rank) test from Cox model is reported, as standard Mantel–Cox log-rank is not defined for counting process data.'))
+                          } else {
+                              err_msg <- if (!is.null(attr(fit_lr, "condition"))) conditionMessage(attr(fit_lr, "condition")) else as.character(fit_lr)
+                              self$results$insert(1, jmvcore::Notice$new(self$options,
+                                  name = "logRankWarn",
+                                  type = jmvcore::NoticeType$WARNING,
+                                  content = jmvcore::format(.("Log-rank test could not be computed: {err}"), err = err_msg)
+                              ))
                           }
                       } else {
                           sdiff <- try(survival::survdiff(survival::Surv(..time, ..event) ~ ..group, data = dat_km), silent = TRUE)
@@ -357,6 +364,13 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                   p     = pval
                               ))
                               logRankTable$setNote('cp_lr_note', NULL)
+                          } else {
+                              err_msg <- if (!is.null(attr(sdiff, "condition"))) conditionMessage(attr(sdiff, "condition")) else as.character(sdiff)
+                              self$results$insert(1, jmvcore::Notice$new(self$options,
+                                  name = "logRankWarn",
+                                  type = jmvcore::NoticeType$WARNING,
+                                  content = jmvcore::format(.("Log-rank test could not be computed: {err}"), err = err_msg)
+                              ))
                           }
                       }
                       private$.lr_sig <- lr_sig
@@ -594,7 +608,6 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                           schoenfeldPlots$addItem(key = pv)
                                       }
                                   }
-                                  parent_state <- list()
                                   for (pv in plot_vars) {
                                       clean_pv <- pv
                                       if (grepl("^\\.\\.group", pv)) {
@@ -611,30 +624,55 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
                                       var_idx <- which(rownames(zph$table) == pv)
                                       if (length(var_idx) > 0 && !is.na(var_idx) && var_idx >= 1 && var_idx <= nrow(zph$table)) {
-                                          sm <- try(plot(zph[var_idx], plot = FALSE), silent = TRUE)
-                                          if (!inherits(sm, "try-error") && !is.null(sm$x) && !is.null(sm$y)) {
-                                              xx <- zph[var_idx]$x
-                                              tt <- if (!is.null(zph[var_idx]$time)) zph[var_idx]$time else xx
-                                              if (is.null(zph$transform) || zph$transform == "identity") {
-                                                  pred_time <- sm$x
-                                                  pts_time <- xx
-                                              } else if (zph$transform == "log") {
-                                                  pred_time <- exp(sm$x)
-                                                  pts_time <- exp(xx)
+                                          xx <- zph$x
+                                          yy <- zph$y
+                                          y <- if (is.matrix(yy)) yy[, var_idx] else yy
+                                          keep <- !is.na(y)
+
+                                          nsmo <- 40
+                                          df_sp <- 4
+                                          pred_x <- seq(from = min(xx), to = max(xx), length.out = nsmo)
+                                          temp <- c(pred_x, xx)
+                                          lmat <- try(splines::ns(temp, df = df_sp, intercept = TRUE), silent = TRUE)
+
+                                          if (!inherits(lmat, "try-error") && sum(keep) >= df_sp) {
+                                              pmat <- lmat[1:nsmo, , drop = FALSE]
+                                              xmat <- lmat[-(1:nsmo), , drop = FALSE]
+                                              qmat <- qr(xmat[keep, , drop = FALSE])
+
+                                              if (qmat$rank >= df_sp) {
+                                                  yhat <- as.numeric(pmat %*% qr.coef(qmat, y[keep]))
+                                                  bk <- backsolve(qmat$qr[1:df_sp, 1:df_sp], diag(df_sp))
+                                                  xtx <- bk %*% t(bk)
+                                                  seval <- as.numeric(((pmat %*% xtx) * pmat) %*% rep(1, df_sp))
+                                                  var_val <- if (is.matrix(zph$var)) zph$var[var_idx, var_idx] else zph$var[var_idx]
+                                                  se_band <- 2 * sqrt(var_val * seval)
+                                                  yup <- as.numeric(yhat + se_band)
+                                                  ylow <- as.numeric(yhat - se_band)
+
+                                                  tt <- if (!is.null(zph$time)) zph$time else xx
+                                                  if (is.null(zph$transform) || zph$transform == "identity") {
+                                                      pred_time <- pred_x
+                                                      pts_time <- xx
+                                                  } else if (zph$transform == "log") {
+                                                      pred_time <- exp(pred_x)
+                                                      pts_time <- exp(xx)
+                                                  } else {
+                                                      ord <- order(xx)
+                                                      xx_ord <- xx[ord]
+                                                      tt_ord <- tt[ord]
+                                                      nodup <- !duplicated(xx_ord)
+                                                      pred_time <- stats::approx(xx_ord[nodup], tt_ord[nodup], xout = pred_x, rule = 2)$y
+                                                      pts_time <- tt
+                                                  }
+
+                                                  pts_df <- data.frame(time = pts_time[keep], resid = as.numeric(y[keep]))
+                                                  smooth_df <- data.frame(time = pred_time, yhat = yhat, yup = yup, ylow = ylow)
+                                                  item_state <- list(pts = pts_df, smooth = smooth_df, var_name = clean_pv)
+                                                  item$setState(item_state)
                                               } else {
-                                                  ord <- order(xx)
-                                                  xx_ord <- xx[ord]
-                                                  tt_ord <- tt[ord]
-                                                  nodup <- !duplicated(xx_ord)
-                                                  pred_time <- stats::approx(xx_ord[nodup], tt_ord[nodup], xout = sm$x, rule = 2)$y
-                                                  pts_time <- tt
+                                                  item$setState(NULL)
                                               }
-                                              y_raw <- zph[var_idx]$y
-                                              pts_df <- data.frame(time = pts_time, resid = as.numeric(if (is.matrix(y_raw)) y_raw[, 1] else y_raw))
-                                              smooth_df <- data.frame(time = pred_time, yhat = as.numeric(sm$y[, 1]), yup = as.numeric(sm$y[, 2]), ylow = as.numeric(sm$y[, 3]))
-                                              item_state <- list(pts = pts_df, smooth = smooth_df, var_name = clean_pv)
-                                              item$setState(item_state)
-                                              parent_state[[pv]] <- item_state
                                           } else {
                                               item$setState(NULL)
                                           }
@@ -642,11 +680,9 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                           item$setState(NULL)
                                       }
                                   }
-                                  schoenfeldPlots$setState(parent_state)
                               } else {
-                                  if (length(schoenfeldPlots$items) > 0 || !is.null(schoenfeldPlots$state)) {
+                                  if (length(schoenfeldPlots$items) > 0) {
                                       schoenfeldPlots$clear()
-                                      schoenfeldPlots$setState(NULL)
                                   }
                               }
                           }
@@ -798,7 +834,7 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                       if (!is.null(limit_time) && limit_time > 0) {
                                           tau <- min(tau, limit_time)
                                       }
-                                      adjSummaryTable$setNote('tau_note', jmvcore::format(.("Restricted mean survival time evaluated up to τ = {tau}."), tau = round(tau, 2)))
+                                      adjSummaryTable$setNote('tau_note', jmvcore::format(.("Restricted mean survival time evaluated up to \u03c4 = {tau}."), tau = round(tau, 2)))
 
                                       bh <- try(survival::basehaz(adj_fit, centered = FALSE), silent = TRUE)
                                       if (!inherits(bh, "try-error") && nrow(bh) > 0) {
@@ -1360,25 +1396,6 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
       .schoenfeldPlot = function(image, ggtheme, theme, ...) {
           state <- image$state
-          if (is.null(state) || is.null(state$pts) || is.null(state$smooth)) {
-              if (!is.null(image$parent) && !is.null(image$parent$state)) {
-                  parent_state <- image$parent$state
-                  key <- image$key
-                  if (!is.null(key) && !is.null(parent_state[[key]])) {
-                      state <- parent_state[[key]]
-                  } else if (length(parent_state) > 0) {
-                      for (pk in names(parent_state)) {
-                          if (identical(pk, key) || identical(gsub("^\"|\"$", "", pk), key)) {
-                              state <- parent_state[[pk]]
-                              break
-                          }
-                      }
-                  }
-                  if (!is.null(state)) {
-                      image$setState(state)
-                  }
-              }
-          }
           if (is.null(state) || is.null(state$pts) || is.null(state$smooth)) return(FALSE)
 
           pts_df <- state$pts
@@ -1578,8 +1595,6 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               self$results$insert(1, jmvcore::Notice$new(self$options, name="compRisksStatusLevels",
                   type=jmvcore::NoticeType$WARNING,
                   content=jmvcore::.("Status variable must have at least two distinct values for Competing Risks analysis.")))
-              self$results$compRisksSection$cifSummaryTable$setNote('cr_warn',
-                  jmvcore::.("Status variable must have at least two distinct values for Competing Risks analysis."))
               return()
           }
 
@@ -1618,8 +1633,6 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                   self$results$insert(1, jmvcore::Notice$new(self$options, name="compRisksLevelNotice",
                       type=jmvcore::NoticeType$WARNING,
                       content=jmvcore::.("Choose different levels for the censoring code and the event of interest.")))
-                  self$results$compRisksSection$cifSummaryTable$setNote('level_warn',
-                      jmvcore::.("Choose different levels for the censoring code and the event of interest."))
                   return()
               }
           }
@@ -1923,13 +1936,11 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                       stat = stat_str, df = df_val, p = p_str, nev = s_fg$nevent))
                               }
                           } else {
-                              fgTable$setNote('fit_error', .("Model fitting failed to converge."))
                               self$results$insert(1, jmvcore::Notice$new(self$options, name="fgFitError",
                                   type=jmvcore::NoticeType$WARNING,
                                   content=jmvcore::.("Fine–Gray model fitting failed to converge.")))
                           }
                       } else {
-                          fgTable$setNote('finegray_error', .("Data weighting for Fine–Gray model failed."))
                           self$results$insert(1, jmvcore::Notice$new(self$options, name="finegrayError",
                               type=jmvcore::NoticeType$WARNING,
                               content=jmvcore::.("Data weighting for Fine–Gray model failed.")))
@@ -2363,13 +2374,11 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
           if (inherits(td_fit, "try-error")) {
               err_msg <- as.character(attr(td_fit, "condition")$message)
-              timeDepTable$setNote('fit_error', paste0(jmvcore::.("Model fitting failed to converge:"), " ", err_msg))
               self$results$insert(1, jmvcore::Notice$new(self$options, name="tdFitError",
                   type=jmvcore::NoticeType$WARNING,
                   content=paste0(jmvcore::.("Time-varying effects model fitting failed to converge:"), " ", err_msg)))
               return()
           }
-          timeDepTable$setNote('fit_error', NULL)
 
           s_td <- summary(td_fit)
           coef_mat <- s_td$coefficients
@@ -2403,107 +2412,5 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               timeDepTable$setNote('cp_note', NULL)
           }
       }
-    ),
-    public = list(
-        .savePart = function(path, part, ...) {
-            m <- gregexpr("\"[^\"]+\"|([^/]+)", part)[[1]]
-            l <- attr(m, "match.length")
-            partPath <- vapply(seq_along(m), function(i) substr(part, m[i], m[i] + l[i] - 1), "")
-
-            element <- try(self$results$.lookup(partPath), silent = TRUE)
-            if (inherits(element, "try-error") || is.null(element)) {
-                curr <- self$results
-                for (p in partPath) {
-                    if (is.null(curr)) break
-                    clean_p <- gsub('^"|"$', '', p)
-                    if (inherits(curr, "Array")) {
-                        found <- NULL
-                        item_keys <- unlist(curr$itemKeys, use.names = FALSE)
-                        if (clean_p %in% item_keys) {
-                            found <- try(curr$get(key = clean_p), silent = TRUE)
-                        } else if (p %in% item_keys) {
-                            found <- try(curr$get(key = p), silent = TRUE)
-                        }
-                        if (is.null(found) || inherits(found, "try-error")) {
-                            found <- try(curr$get(name = p), silent = TRUE)
-                        }
-                        if (is.null(found) || inherits(found, "try-error")) {
-                            found <- try(curr$get(name = paste0('"', clean_p, '"')), silent = TRUE)
-                        }
-                        if ((is.null(found) || inherits(found, "try-error")) && grepl("^[0-9]+$", clean_p)) {
-                            idx <- as.integer(clean_p)
-                            if (idx >= 1 && idx <= length(curr$items)) {
-                                found <- curr$items[[idx]]
-                            }
-                        }
-                        if (!is.null(found) && !inherits(found, "try-error")) {
-                            curr <- found
-                        } else {
-                            curr <- NULL
-                        }
-                    } else if (inherits(curr, "Group")) {
-                        found <- try(curr$get(clean_p), silent = TRUE)
-                        if (inherits(found, "try-error") || is.null(found)) {
-                            found <- try(curr$get(p), silent = TRUE)
-                        }
-                        if (!is.null(found) && !inherits(found, "try-error")) {
-                            curr <- found
-                        } else {
-                            curr <- NULL
-                        }
-                    } else {
-                        curr <- NULL
-                    }
-                }
-                element <- curr
-            }
-
-            if (is.null(element) || inherits(element, "try-error")) {
-                jmvcore::reject(paste0("Could not resolve part: ", part))
-            }
-
-            if (inherits(element, "Array")) {
-                if (length(element$items) == 0) return()
-                if (endsWith(tolower(path), ".pdf")) {
-                    w <- 400
-                    h <- 300
-                    if (!is.null(element$items[[1]]$width)) w <- element$items[[1]]$width
-                    if (!is.null(element$items[[1]]$height)) h <- element$items[[1]]$height
-                    grDevices::cairo_pdf(file = path, width = w / 72, height = h / 72, onefile = TRUE)
-                    on.exit(grDevices::dev.off(), add = TRUE)
-                    for (item in element$items) {
-                        if (is.null(item$state) && !is.null(element$state) && !is.null(element$state[[item$key]])) {
-                            item$setState(element$state[[item$key]])
-                        }
-                        item$.render(...)
-                    }
-                    return()
-                } else {
-                    element <- element$items[[1]]
-                }
-            }
-
-            dataRequired <- FALSE
-            if (element$requiresData && is.null(private$.data)) {
-                dataRequired <- TRUE
-                private$.data <- self$readDataset()
-            }
-
-            if (inherits(element, "Image") && is.null(element$state)) {
-                if (!is.null(element$parent) && !is.null(element$parent$state) && !is.null(element$key)) {
-                    if (!is.null(element$parent$state[[element$key]])) {
-                        element$setState(element$parent$state[[element$key]])
-                    }
-                }
-                if (is.null(element$state) && !identical(self$status, "complete")) {
-                    self$run(noThrow = TRUE)
-                }
-            }
-
-            element$saveAs(path, ...)
-            if (dataRequired) {
-                private$.data <- NULL
-            }
-        }
     )
 )

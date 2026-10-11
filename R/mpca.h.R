@@ -258,6 +258,7 @@ mPCAResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "mPCAResults",
     inherit = jmvcore::Group,
     active = list(
+        text = function() private$.items[["text"]],
         varianceTable = function() private$.items[["varianceTable"]],
         loadingsTable = function() private$.items[["loadingsTable"]],
         loadingsHeatmap = function() private$.items[["loadingsHeatmap"]],
@@ -279,6 +280,13 @@ mPCAResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 title="Principal Component Analysis",
                 refs=list(
                     "jys"))
+            self$add(jmvcore::Html$new(
+                options=options,
+                name="text",
+                title="Info",
+                clearWith=list(
+                    "group",
+                    "selgroup")))
             self$add(jmvcore::Table$new(
                 options=options,
                 name="varianceTable",
@@ -346,8 +354,7 @@ mPCAResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 clearWith=list(
                     "vars",
                     "group",
-                    "selgroup",
-                    "seed")))
+                    "selgroup")))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="scorePlot",
@@ -377,7 +384,6 @@ mPCAResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "vars",
                     "group",
                     "selgroup",
-                    "classVar",
                     "pcX",
                     "pcY")))
             self$add(jmvcore::Table$new(
@@ -473,8 +479,6 @@ mPCAResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "selgroup",
                     "classVar",
                     "npc",
-                    "regKFold",
-                    "seed",
                     "roc_x",
                     "roc_unit",
                     "palBrewer",
@@ -513,14 +517,13 @@ mPCAResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=500,
                 height=500,
                 renderFun=".rocPlot",
+                requiresData=TRUE,
                 clearWith=list(
                     "vars",
                     "group",
                     "selgroup",
                     "classVar",
                     "npc",
-                    "regKFold",
-                    "seed",
                     "roc_x",
                     "roc_unit",
                     "palBrewer",
@@ -551,8 +554,7 @@ mPCABase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' Principal Component Analysis
 #'
 #' Principal Component Analysis (PCA). Note that parallel analysis and 
-#' cross-validation use a random seed (default 42, configurable under PCA 
-#' Configuration) for reproducibility.
+#' cross-validation use a hardcoded random seed (42) for reproducibility.
 #' @param data .
 #' @param vars .
 #' @param group .
@@ -581,6 +583,7 @@ mPCABase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param seed .
 #' @return A results object containing:
 #' \tabular{llllll}{
+#'   \code{results$text} \tab \tab \tab \tab \tab a html \cr
 #'   \code{results$varianceTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$loadingsTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$loadingsHeatmap} \tab \tab \tab \tab \tab an image \cr

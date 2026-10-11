@@ -1,0 +1,294 @@
+---
+name:  mSTAB
+title: Stability Analysis (ICH Q1E)
+jrs:   '1.1'
+refs: [jys, ichq1e, chow2014, capen2018, quinlan2013, mcmahon2021, gonzalez2022, cordero2024]
+
+items:
+    - name: instructions
+      title: Instructions
+      type: Html
+      visible: true
+
+    - name: poolTable
+      title: ANCOVA Poolability Testing and Model Selection
+      type: Table
+      visible: (showPoolTable)
+      clearWith:
+          - dep
+          - time
+          - batch
+          - specType
+          - lsl
+          - usl
+          - alphaPool
+          - confLevel
+          - modelChoice
+          - trans
+      columns:
+          - name: step
+            title: Test Step / Source
+            type: text
+          - name: df
+            title: df
+            type: integer
+          - name: ss
+            title: Sum of Squares
+            type: number
+            format: zto
+          - name: ms
+            title: Mean Square
+            type: number
+            format: zto
+          - name: f
+            title: F
+            type: number
+            format: zto
+          - name: p
+            title: p
+            type: number
+            format: zto
+          - name: decision
+            title: Statistical Decision (ICH Q1E)
+            type: text
+
+    - name: shelfTable
+      title: Shelf Life / Retest Period Estimation Summary
+      type: Table
+      visible: (showShelfTable)
+      clearWith:
+          - dep
+          - time
+          - batch
+          - specType
+          - lsl
+          - usl
+          - alphaPool
+          - confLevel
+          - modelChoice
+          - trans
+          - accelCondition
+          - studyDuration
+      columns:
+          - name: batch
+            title: Batch / Cohort
+            type: text
+          - name: model
+            title: Adopted Model
+            type: text
+          - name: intercept
+            title: Intercept (t = 0)
+            type: number
+            format: zto
+          - name: slope
+            title: Slope (rate / month)
+            type: number
+            format: zto
+          - name: statShelf
+            title: Statistical Shelf Life (months)
+            type: number
+            format: zto
+          - name: ichShelf
+            title: ICH Q1E Permitted Shelf Life (months)
+            type: number
+            format: zto
+          - name: limiting
+            title: Status / Limiting Factor
+            type: text
+
+    - name: coefTable
+      title: Regression Model Coefficients
+      type: Table
+      visible: (showCoefTable)
+      clearWith:
+          - dep
+          - time
+          - batch
+          - specType
+          - lsl
+          - usl
+          - alphaPool
+          - confLevel
+          - modelChoice
+          - trans
+      columns:
+          - name: term
+            title: Parameter
+            type: text
+          - name: est
+            title: Estimate
+            type: number
+            format: zto
+          - name: se
+            title: Std. Error
+            type: number
+            format: zto
+          - name: t
+            title: t
+            type: number
+            format: zto
+          - name: p
+            title: p
+            type: number
+            format: zto
+          - name: lower
+            title: 95% CI Lower
+            type: number
+            format: zto
+          - name: upper
+            title: 95% CI Upper
+            type: number
+            format: zto
+
+    - name: diagTable
+      title: Model Diagnostics & Goodness of Fit
+      type: Table
+      visible: (showDiagTable)
+      clearWith:
+          - dep
+          - time
+          - batch
+          - specType
+          - lsl
+          - usl
+          - alphaPool
+          - confLevel
+          - modelChoice
+          - trans
+      columns:
+          - name: metric
+            title: Diagnostic / Assumption Test
+            type: text
+          - name: value
+            title: Statistic / Value
+            type: number
+            format: zto
+          - name: df
+            title: df / Parameter
+            type: text
+          - name: p
+            title: p
+            type: number
+            format: zto
+          - name: note
+            title: Assessment / Criteria
+            type: text
+
+    - name: stabPlot
+      title: Stability Plot with Confidence Bounds and Specification Limits
+      type: Image
+      visible: (showStabPlot)
+      width:  680
+      height: 480
+      renderFun: .stabPlot
+      requiresData: true
+      clearWith:
+          - dep
+          - time
+          - batch
+          - specType
+          - lsl
+          - usl
+          - alphaPool
+          - confLevel
+          - modelChoice
+          - trans
+          - accelCondition
+          - studyDuration
+
+    - name: shelfPlot
+      title: Shelf Life Comparison & ICH Q1E Extrapolation Horizon
+      type: Image
+      visible: (showShelfPlot)
+      width:  660
+      height: 400
+      renderFun: .shelfPlot
+      requiresData: true
+      clearWith:
+          - dep
+          - time
+          - batch
+          - specType
+          - lsl
+          - usl
+          - alphaPool
+          - confLevel
+          - modelChoice
+          - trans
+          - accelCondition
+          - studyDuration
+
+    - name: facetPlot
+      title: Individual Batch Trajectories (Faceted)
+      type: Image
+      visible: (showFacetPlot)
+      width:  720
+      height: 500
+      renderFun: .facetPlot
+      requiresData: true
+      clearWith:
+          - dep
+          - time
+          - batch
+          - specType
+          - lsl
+          - usl
+          - alphaPool
+          - confLevel
+          - modelChoice
+          - trans
+          - accelCondition
+          - studyDuration
+
+    - name: ratePlot
+      title: Batch Degradation Rates & ANCOVA Slope Comparison
+      type: Image
+      visible: (showRatePlot)
+      width:  660
+      height: 380
+      renderFun: .ratePlot
+      requiresData: true
+      clearWith:
+          - dep
+          - time
+          - batch
+          - modelChoice
+          - trans
+          - alphaPool
+
+    - name: predPlot
+      title: Individual Prediction Intervals & Release Limits (SRL)
+      type: Image
+      visible: (showPredPlot)
+      width:  680
+      height: 480
+      renderFun: .predPlot
+      requiresData: true
+      clearWith:
+          - dep
+          - time
+          - batch
+          - specType
+          - lsl
+          - usl
+          - alphaPool
+          - confLevel
+          - modelChoice
+          - trans
+          - studyDuration
+
+    - name: diagPlot
+      title: Residual Diagnostic Plots
+      type: Image
+      visible: (showDiagPlot)
+      width:  700
+      height: 600
+      renderFun: .diagPlot
+      requiresData: true
+      clearWith:
+          - dep
+          - time
+          - batch
+          - modelChoice
+          - trans
+...

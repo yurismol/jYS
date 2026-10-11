@@ -1,0 +1,89 @@
+title: Stability Analysis (ICH Q1E)
+name: mSTAB
+jus: '3.0'
+stage: 0
+compilerMode: tame
+children:
+  - type: VariableSupplier
+    persistentItems: false
+    stretchFactor: 1
+    children:
+      - type: TargetLayoutBox
+        label: Quantitative Attribute / Response
+        children:
+          - type: VariablesListBox
+            name: dep
+            maxItemCount: 1
+            isTarget: true
+      - type: TargetLayoutBox
+        label: Time Variable
+        children:
+          - type: VariablesListBox
+            name: time
+            maxItemCount: 1
+            isTarget: true
+      - type: TargetLayoutBox
+        label: Batch / Lot
+        children:
+          - type: VariablesListBox
+            name: batch
+            maxItemCount: 1
+            isTarget: true
+  - type: CollapseBox
+    label: Specification Limits & Criteria
+    collapsed: false
+    stretchFactor: 1
+    children:
+      - type: ComboBox
+        name: specType
+      - type: TextBox
+        name: lsl
+        format: number
+      - type: TextBox
+        name: usl
+        format: number
+      - type: ComboBox
+        name: trans
+  - type: CollapseBox
+    label: Statistical & Regulatory Settings (ICH Q1E)
+    collapsed: false
+    stretchFactor: 1
+    children:
+      - type: ComboBox
+        name: modelChoice
+      - type: TextBox
+        name: alphaPool
+        format: number
+      - type: TextBox
+        name: confLevel
+        format: number
+      - type: ComboBox
+        name: accelCondition
+      - type: TextBox
+        name: studyDuration
+        format: number
+  - type: CollapseBox
+    label: Output Tables & Plots
+    collapsed: false
+    stretchFactor: 1
+    children:
+      - type: CheckBox
+        name: showPoolTable
+      - type: CheckBox
+        name: showShelfTable
+      - type: CheckBox
+        name: showCoefTable
+      - type: CheckBox
+        name: showDiagTable
+      - type: CheckBox
+        name: showStabPlot
+      - type: CheckBox
+        name: showShelfPlot
+      - type: CheckBox
+        name: showFacetPlot
+      - type: CheckBox
+        name: showRatePlot
+      - type: CheckBox
+        name: showPredPlot
+      - type: CheckBox
+        name: showDiagPlot

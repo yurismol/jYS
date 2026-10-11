@@ -44,8 +44,13 @@ children:
           - type: LevelSelector
             name: femaleLevel
             enable: (gender)
-  - type: ComboBox
-    name: adjust
+
+  - type: Label
+    label: Multiple Testing
+    children:
+      - type: ComboBox
+        name: adjust
+
   - type: CollapseBox
     label: Frequency Tables
     collapsed: false
@@ -70,9 +75,10 @@ children:
         name: freqPct
       - type: CheckBox
         name: signifMarkers
+
   - type: CollapseBox
     label: Hardy-Weinberg Equilibrium (HWE) Analysis
-    collapsed: false
+    collapsed: true
     stretchFactor: 1
     children:
       - type: CheckBox
@@ -84,7 +90,10 @@ children:
           - type: CheckBox
             name: hwPerm
             enable: (hwTests)
-            children: []
+            children:
+              - type: TextBox
+                name: nPerm
+                enable: (hwTests && hwPerm)
       - type: CheckBox
         name: ternaryPlot
         children:
@@ -104,9 +113,10 @@ children:
       - type: CheckBox
         name: xLinked
         enable: (gender)
+
   - type: CollapseBox
     label: Phenotype Association Tests
-    collapsed: false
+    collapsed: true
     stretchFactor: 1
     children:
       - type: CheckBox
@@ -125,15 +135,10 @@ children:
           - type: CheckBox
             name: manhattanPlot
             enable: (assocEnable)
-  - type: LayoutBox
-    margin: large
-    children:
-      - type: TextBox
-        name: nPerm
-        format: number
+
   - type: CollapseBox
     label: Population genetics metrics
-    collapsed: false
+    collapsed: true
     stretchFactor: 1
     children:
       - type: CheckBox
@@ -142,6 +147,7 @@ children:
           - type: ComboBox
             name: mafThreshold
             enable: (popMetrics)
+
   - type: CollapseBox
     label: Quality Control (QC) Filters
     collapsed: true
@@ -153,9 +159,10 @@ children:
         name: qcMaf
       - type: ComboBox
         name: qcHwe
+
   - type: CollapseBox
     label: Multifactor Dimensionality Reduction (MDR)
-    collapsed: false
+    collapsed: true
     stretchFactor: 1
     children:
       - type: CheckBox
@@ -167,10 +174,16 @@ children:
           - type: ComboBox
             name: mdrFolds
             enable: (mdrEnable)
+          - type: TextBox
+            name: mdrSeed
+            enable: (mdrEnable)
           - type: CheckBox
             name: mdrPermTest
             enable: (mdrEnable)
-            children: []
+            children:
+              - type: TextBox
+                name: nPermMDR
+                enable: (mdrEnable && mdrPermTest)
           - type: CheckBox
             name: mdrCellTable
             enable: (mdrEnable)
@@ -180,14 +193,10 @@ children:
           - type: CheckBox
             name: mdrBarPlot
             enable: (mdrEnable)
-  - type: LayoutBox
-    margin: large
-    children:
-      - type: Output
-        name: prsOutput
+
   - type: CollapseBox
     label: Linkage Disequilibrium (LD) Analysis
-    collapsed: false
+    collapsed: true
     stretchFactor: 1
     children:
       - type: CheckBox
@@ -203,15 +212,14 @@ children:
               - type: ComboBox
                 name: ldMetric
                 enable: (ldEnable && ldHeatmap)
-  - type: LayoutBox
-    margin: large
+
+  - type: CollapseBox
+    label: Save
+    collapsed: true
+    stretchFactor: 1
     children:
-      - type: TextBox
-        name: nPermMDR
-        format: number
-  - type: LayoutBox
-    margin: large
-    children:
-      - type: TextBox
-        name: mdrSeed
-        format: number
+      - type: CheckBox
+        name: prsOutput
+        enable: (outcome)
+
+...

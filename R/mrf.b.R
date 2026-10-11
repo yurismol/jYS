@@ -486,6 +486,14 @@ mRFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 }
             }
 
+            # Effective evaluation probabilities for downstream diagnostics (OOB if partition == "oob")
+            eval_prob_mat <- if (partition == "oob") oob_prob_mat else train_prob_mat
+            if (any(is.na(eval_prob_mat))) {
+                eval_prob_mat[is.na(eval_prob_mat)] <- train_prob_mat[is.na(eval_prob_mat)]
+            }
+            eval_pred_idx <- max.col(eval_prob_mat, ties.method = "first")
+            eval_pred_labels <- y_levels[eval_pred_idx]
+
             # 5.5 Misclassified Cases Table
             if (self$options$show_misclassified) {
                 misc_table <- self$results$misclassifiedTable
@@ -499,12 +507,12 @@ mRFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 
                 for (i in seq_along(actual_chars)) {
                     act_val <- actual_chars[i]
-                    pred_val <- train_pred_labels[i]
+                    pred_val <- eval_pred_labels[i]
                     
                     if (!is.na(act_val) && !is.na(pred_val) && act_val != pred_val) {
                         misc_count <- misc_count + 1
                         if (misc_count <= max_misc_rows) {
-                            max_p <- train_prob_mat[i, train_pred_idx[i]]
+                            max_p <- eval_prob_mat[i, eval_pred_idx[i]]
                             
                             err_str <- if (C == 2) {
                                 if (act_val == y_levels[1] && pred_val == y_levels[2]) {
@@ -553,7 +561,7 @@ mRFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 
                 if (length(y_levels) == 2) {
                     pos_level <- y_levels[2]
-                    pos_probs <- train_prob_mat[, pos_level]
+                    pos_probs <- eval_prob_mat[, pos_level]
                     y_pos <- (y == pos_level)
                     N_clean <- length(y)
                     
@@ -640,6 +648,8 @@ mRFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                 y_levels = y_levels,
                                 y = y_bin,
                                 train_prob = train_prob_bin,
+                                oob_prob = if (any(valid_oob)) oob_prob_mat[valid_oob, 2] else NULL,
+                                oob_y = if (any(valid_oob)) y_bin[valid_oob] else NULL,
                                 val_prob = NULL,
                                 val_y = NULL,
                                 cv_prob = NULL,
@@ -686,7 +696,7 @@ mRFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         parent_state[["binary"]] <- roc_data
 
                     } else if (multiclass_roc_type == "combined") {
-                        # Multiclass Combined: 2 plots (Training + Validation)
+                        # Multiclass Combined: 2 plots (Training + Validation/OOB)
                         roc_data_tr <- list(
                             type = "combined_training",
                             C = C,
@@ -704,7 +714,26 @@ mRFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         image_item_tr$setState(roc_data_tr)
                         parent_state[["combined_training"]] <- roc_data_tr
 
-                        if (partition == "holdout" && !is.null(val_prob)) {
+                        if (partition == "oob" && any(valid_oob)) {
+                            roc_data_va <- list(
+                                type = "combined_validation",
+                                C = C,
+                                y_levels = y_levels,
+                                val_prob = NULL,
+                                val_y = NULL,
+                                cv_prob = oob_prob_mat[valid_oob, , drop = FALSE],
+                                cv_y = as.integer(y)[valid_oob],
+                                partition = "oob",
+                                roc_x = self$options$roc_x,
+                                roc_unit = self$options$roc_unit,
+                                show_roc_cut = self$options$show_roc_cut
+                            )
+                            image_roc$addItem(key = "combined_validation")
+                            image_item_va <- image_roc$get(key = "combined_validation")
+                            image_item_va$setTitle(.("Combined ROC - Out-of-Bag (OOB)"))
+                            image_item_va$setState(roc_data_va)
+                            parent_state[["combined_validation"]] <- roc_data_va
+                        } else if (partition == "holdout" && !is.null(val_prob)) {
                             roc_data_va <- list(
                                 type = "combined_validation",
                                 C = C,
@@ -753,6 +782,8 @@ mRFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                 class_name = lev,
                                 train_y = as.numeric(as.integer(y) == c),
                                 train_prob = train_prob_mat[, c],
+                                oob_y = if (partition == "oob" && any(valid_oob)) as.numeric(as.integer(y)[valid_oob] == c) else NULL,
+                                oob_prob = if (partition == "oob" && any(valid_oob)) oob_prob_mat[valid_oob, c] else NULL,
                                 val_y = if (!is.null(val_prob)) as.numeric(as.integer(y)[test_idx] == c) else NULL,
                                 val_prob = if (!is.null(val_prob)) val_prob[, c] else NULL,
                                 cv_y = if (!is.null(cv_pred_probs)) as.numeric(as.integer(y) == c) else NULL,
@@ -777,7 +808,8 @@ mRFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         rocTable$deleteRows()
                         private$.fillRocTable(rocTable, C, y, y_levels, train_prob_mat,
                                               val_prob, test_idx, cv_pred_probs,
-                                              partition, cv_errors)
+                                              partition, cv_errors,
+                                              oob_prob_mat, valid_oob)
                     }
                 } else {
                     self$results$rocTable$deleteRows()
@@ -815,9 +847,9 @@ mRFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             if ((self$options$predClass && self$results$predClass$isNotFilled()) ||
                 (self$options$predProb && self$results$predProb$isNotFilled())) {
 
-                full_pred_idx <- max.col(train_prob_mat, ties.method = "first")
-                full_classes <- y_levels[full_pred_idx]
-                full_prob_val <- apply(train_prob_mat, 1, max)
+                full_pred_idx <- eval_pred_idx
+                full_classes <- eval_pred_labels
+                full_prob_val <- apply(eval_prob_mat, 1, max)
 
                 if (self$options$predClass && self$results$predClass$isNotFilled()) {
                     self$results$predClass$setRowNums(rownames(clean_data))
@@ -1017,7 +1049,8 @@ mRFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
         .fillRocTable = function(rocTable, C, y, y_levels, train_prob_mat,
                                   val_prob, test_idx, cv_pred_probs,
-                                  partition, cv_errors) {
+                                  partition, cv_errors,
+                                  oob_prob_mat = NULL, valid_oob = NULL) {
             is_pct <- self$options$roc_unit == "percent"
             mult <- if (is_pct) 100 else 1
 
@@ -1032,7 +1065,14 @@ mRFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     y_t <- y_true[complete_idx]
                     y_p <- y_prob[complete_idx]
                     r <- try(pROC::roc(y_t, y_p, quiet = TRUE), silent = TRUE)
-                    if (inherits(r, "try-error")) return()
+                    if (inherits(r, "try-error")) {
+                        self$results$insert(1, jmvcore::Notice$new(self$options,
+                            name = paste0("rocWarn_", gsub("[^a-zA-Z0-9]", "_", row_name)),
+                            type = jmvcore::NoticeType$WARNING,
+                            content = jmvcore::format(.("ROC analysis for '{part}' could not be computed: {err}"), part = row_name, err = as.character(r))
+                        ))
+                        return()
+                    }
                     auc_val <- as.numeric(pROC::auc(r)) * mult
                     coords <- try(pROC::coords(r, x="best", best.method="youden",
                         ret=c("threshold", "specificity", "sensitivity")), silent=TRUE)
@@ -1056,13 +1096,21 @@ mRFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         sp = sp,
                         direction = direction
                     ))
-                }, error = function(e) {})
+                }, error = function(e) {
+                    self$results$insert(1, jmvcore::Notice$new(self$options,
+                        name = paste0("rocWarn_", gsub("[^a-zA-Z0-9]", "_", row_name)),
+                        type = jmvcore::NoticeType$WARNING,
+                        content = jmvcore::format(.("ROC table calculation for '{part}' failed: {err}"), part = row_name, err = conditionMessage(e))
+                    ))
+                })
             }
 
             if (C == 2) {
                 y_bin <- as.numeric(y == y_levels[2])
                 add_roc_row(.("Training"), y_bin, train_prob_mat[, 2])
-                if (partition == "holdout" && !is.null(val_prob)) {
+                if (partition == "oob" && !is.null(oob_prob_mat) && !is.null(valid_oob) && any(valid_oob)) {
+                    add_roc_row(.("Out-of-Bag (OOB)"), as.numeric(y[valid_oob] == y_levels[2]), oob_prob_mat[valid_oob, 2])
+                } else if (partition == "holdout" && !is.null(val_prob)) {
                     add_roc_row(.("Hold-out Validation"), as.numeric(y[test_idx] == y_levels[2]), val_prob[, 2])
                 } else if (partition == "kfold" && cv_errors == 0 && !is.null(cv_pred_probs)) {
                     add_roc_row(.("K-Fold Cross-Validation"), y_bin, cv_pred_probs[, 2])
@@ -1072,7 +1120,12 @@ mRFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     lev <- y_levels[c]
                     add_roc_row(paste0(lev, " - ", .("Train")), as.numeric(as.integer(y) == c), train_prob_mat[, c])
                 }
-                if (partition == "holdout" && !is.null(val_prob)) {
+                if (partition == "oob" && !is.null(oob_prob_mat) && !is.null(valid_oob) && any(valid_oob)) {
+                    for (c in 1:C) {
+                        lev <- y_levels[c]
+                        add_roc_row(paste0(lev, " - ", .("OOB")), as.numeric(as.integer(y)[valid_oob] == c), oob_prob_mat[valid_oob, c])
+                    }
+                } else if (partition == "holdout" && !is.null(val_prob)) {
                     for (c in 1:C) {
                         lev <- y_levels[c]
                         add_roc_row(paste0(lev, " - ", .("Val")), as.numeric(as.integer(y)[test_idx] == c), val_prob[, c])

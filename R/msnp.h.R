@@ -28,7 +28,6 @@ mSNPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             barPlot = FALSE,
             hweSplitOutcome = FALSE,
             gender = NULL,
-            femaleLevel = NULL,
             xLinked = FALSE,
             assocEnable = FALSE,
             geneticModel = "all",
@@ -145,10 +144,9 @@ mSNPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "hwPerm",
                 hwPerm,
                 default=FALSE)
-            private$..nPerm <- jmvcore::OptionInteger$new(
+            private$..nPerm <- jmvcore::OptionNumber$new(
                 "nPerm",
                 nPerm,
-                min=1,
                 default=1000)
             private$..ternaryPlot <- jmvcore::OptionBool$new(
                 "ternaryPlot",
@@ -191,10 +189,6 @@ mSNPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "nominal"),
                 permitted=list(
                     "factor"))
-            private$..femaleLevel <- jmvcore::OptionLevel$new(
-                "femaleLevel",
-                femaleLevel,
-                variable="(gender)")
             private$..xLinked <- jmvcore::OptionBool$new(
                 "xLinked",
                 xLinked,
@@ -264,15 +258,13 @@ mSNPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "mdrPermTest",
                 mdrPermTest,
                 default=FALSE)
-            private$..nPermMDR <- jmvcore::OptionInteger$new(
+            private$..nPermMDR <- jmvcore::OptionNumber$new(
                 "nPermMDR",
                 nPermMDR,
-                min=1,
                 default=100)
-            private$..mdrSeed <- jmvcore::OptionInteger$new(
+            private$..mdrSeed <- jmvcore::OptionNumber$new(
                 "mdrSeed",
                 mdrSeed,
-                min=0,
                 default=42)
             private$..mdrCellTable <- jmvcore::OptionBool$new(
                 "mdrCellTable",
@@ -367,7 +359,6 @@ mSNPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..barPlot)
             self$.addOption(private$..hweSplitOutcome)
             self$.addOption(private$..gender)
-            self$.addOption(private$..femaleLevel)
             self$.addOption(private$..xLinked)
             self$.addOption(private$..assocEnable)
             self$.addOption(private$..geneticModel)
@@ -418,7 +409,6 @@ mSNPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         barPlot = function() private$..barPlot$value,
         hweSplitOutcome = function() private$..hweSplitOutcome$value,
         gender = function() private$..gender$value,
-        femaleLevel = function() private$..femaleLevel$value,
         xLinked = function() private$..xLinked$value,
         assocEnable = function() private$..assocEnable$value,
         geneticModel = function() private$..geneticModel$value,
@@ -468,7 +458,6 @@ mSNPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..barPlot = NA,
         ..hweSplitOutcome = NA,
         ..gender = NA,
-        ..femaleLevel = NA,
         ..xLinked = NA,
         ..assocEnable = NA,
         ..geneticModel = NA,
@@ -718,8 +707,8 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             width=600,
                             height=500,
                             renderFun=".plotTernary",
-                            visible="(ternaryPlot)",
                             requiresData=TRUE,
+                            visible="(ternaryPlot)",
                             clearWith=list(
                                 "vars",
                                 "group",
@@ -740,8 +729,8 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             width=550,
                             height=450,
                             renderFun=".plotQQ",
-                            visible="(qqPlot)",
                             requiresData=TRUE,
+                            visible="(qqPlot)",
                             clearWith=list(
                                 "vars",
                                 "group",
@@ -760,8 +749,8 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             width=650,
                             height=450,
                             renderFun=".plotBar",
-                            visible="(barPlot)",
                             requiresData=TRUE,
+                            visible="(barPlot)",
                             clearWith=list(
                                 "vars",
                                 "group",
@@ -847,8 +836,8 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             width=650,
                             height=500,
                             renderFun=".plotForest",
-                            visible="(assocEnable && assocForest)",
                             requiresData=TRUE,
+                            visible="(assocEnable && assocForest)",
                             clearWith=list(
                                 "vars",
                                 "outcome",
@@ -866,8 +855,8 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             width=650,
                             height=400,
                             renderFun=".plotManhattan",
-                            visible="(assocEnable && manhattanPlot)",
                             requiresData=TRUE,
+                            visible="(assocEnable && manhattanPlot)",
                             clearWith=list(
                                 "vars",
                                 "outcome",
@@ -1073,8 +1062,8 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             width=400,
                             height=340,
                             renderFun=".plotMDRHeatmap",
-                            visible="(mdrEnable && mdrHeatmap)",
                             requiresData=TRUE,
+                            visible="(mdrEnable && mdrHeatmap)",
                             clearWith=list(
                                 "vars",
                                 "outcome",
@@ -1091,8 +1080,8 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             width=400,
                             height=450,
                             renderFun=".plotMDRBar",
-                            visible="(mdrEnable && mdrBarPlot)",
                             requiresData=TRUE,
+                            visible="(mdrEnable && mdrBarPlot)",
                             clearWith=list(
                                 "vars",
                                 "outcome",
@@ -1158,8 +1147,8 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             width=600,
                             height=550,
                             renderFun=".plotLDHeatmap",
-                            visible="(ldEnable && ldHeatmap)",
                             requiresData=TRUE,
+                            visible="(ldEnable && ldHeatmap)",
                             clearWith=list(
                                 "vars",
                                 "ldMetric",
@@ -1218,7 +1207,6 @@ mSNPBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param barPlot .
 #' @param hweSplitOutcome .
 #' @param gender .
-#' @param femaleLevel .
 #' @param xLinked .
 #' @param assocEnable .
 #' @param geneticModel .
@@ -1291,7 +1279,6 @@ mSNP <- function(
     barPlot = FALSE,
     hweSplitOutcome = FALSE,
     gender,
-    femaleLevel,
     xLinked = FALSE,
     assocEnable = FALSE,
     geneticModel = "all",
@@ -1362,7 +1349,6 @@ mSNP <- function(
         barPlot = barPlot,
         hweSplitOutcome = hweSplitOutcome,
         gender = gender,
-        femaleLevel = femaleLevel,
         xLinked = xLinked,
         assocEnable = assocEnable,
         geneticModel = geneticModel,

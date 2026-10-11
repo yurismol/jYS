@@ -285,12 +285,7 @@ mMFResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             width=500,
                             height=500,
                             renderFun=".cplot",
-                            requiresData=TRUE,
-                            clearWith=list(
-                                "learnvar",
-                                "imputevar",
-                                "compinres",
-                                "anghead")))
+                            requiresData=TRUE))
                         self$add(jmvcore::Image$new(
                             options=options,
                             name="plot",
@@ -299,13 +294,7 @@ mMFResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             width=500,
                             height=500,
                             renderFun=".plot",
-                            requiresData=TRUE,
-                            clearWith=list(
-                                "learnvar",
-                                "imputevar",
-                                "compinres",
-                                "npat",
-                                "anghead")))
+                            requiresData=TRUE))
                         self$add(jmvcore::Image$new(
                             options=options,
                             name="fplot",
@@ -314,11 +303,7 @@ mMFResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             width=500,
                             height=550,
                             renderFun=".fplot",
-                            requiresData=TRUE,
-                            clearWith=list(
-                                "learnvar",
-                                "imputevar",
-                                "compinres")))}))$new(options=options))
+                            requiresData=TRUE))}))$new(options=options))
             self$add(R6::R6Class(
                 inherit = jmvcore::Group,
                 active = list(

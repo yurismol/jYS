@@ -128,3 +128,37 @@ test_that("mSNP safely caps MDR order and sets footnote when order > marker coun
     # Check that footnote note 'order_note' is present
     expect_true("order_note" %in% names(tbl$notes))
 })
+
+test_that("mSNP MDR properly assigns controls to test folds and evaluates testing balanced accuracy", {
+    if (!exists(".", envir = .GlobalEnv, mode = "function")) .GlobalEnv$. <- jmvcore::.
+    r_files <- list.files(c("R", "../../R", "../R"), pattern = "^msnp\\.[hb]\\.R$", full.names = TRUE)
+    for (rf in sort(r_files)) source(rf)
+    mSNP_fn <- mSNP
+
+    set.seed(123)
+    n <- 200
+    rs1 <- sample(c("AA", "AG", "GG"), n, replace = TRUE)
+    rs2 <- sample(c("AA", "AG", "GG"), n, replace = TRUE)
+    prob_case <- ifelse(rs1 == "GG" & rs2 == "GG", 0.95, ifelse(rs1 == "AA" & rs2 == "AA", 0.05, 0.5))
+    outcome <- factor(ifelse(runif(n) < prob_case, "1", "0"))
+
+    df <- data.frame(rs1 = factor(rs1), rs2 = factor(rs2), outcome = outcome)
+
+    res_mdr <- mSNP_fn(
+        data = df,
+        vars = c("rs1", "rs2"),
+        group = NULL,
+        outcome = "outcome",
+        covs = NULL,
+        gender = NULL,
+        mdrEnable = TRUE,
+        mdrOrder = 2,
+        mdrFolds = 5
+    )
+
+    tbl <- res_mdr$mdrGroup$mdrBestTable
+    expect_s3_class(tbl, "Table")
+    expect_equal(tbl$rowCount, 2)
+    test_ba <- tbl$getCell(rowNo = 2, "test_ba")$value
+    expect_true(!is.na(test_ba) && test_ba > 0.50)
+})
