@@ -44,13 +44,11 @@ children:
           - type: LevelSelector
             name: femaleLevel
             enable: (gender)
-
   - type: Label
     label: Multiple Testing
     children:
       - type: ComboBox
         name: adjust
-
   - type: CollapseBox
     label: Frequency Tables
     collapsed: false
@@ -75,7 +73,6 @@ children:
         name: freqPct
       - type: CheckBox
         name: signifMarkers
-
   - type: CollapseBox
     label: Hardy-Weinberg Equilibrium (HWE) Analysis
     collapsed: true
@@ -90,10 +87,7 @@ children:
           - type: CheckBox
             name: hwPerm
             enable: (hwTests)
-            children:
-              - type: TextBox
-                name: nPerm
-                enable: (hwTests && hwPerm)
+            children: []
       - type: CheckBox
         name: ternaryPlot
         children:
@@ -113,7 +107,6 @@ children:
       - type: CheckBox
         name: xLinked
         enable: (gender)
-
   - type: CollapseBox
     label: Phenotype Association Tests
     collapsed: true
@@ -135,7 +128,12 @@ children:
           - type: CheckBox
             name: manhattanPlot
             enable: (assocEnable)
-
+  - type: LayoutBox
+    margin: large
+    children:
+      - type: TextBox
+        name: nPerm
+        format: number
   - type: CollapseBox
     label: Population genetics metrics
     collapsed: true
@@ -147,7 +145,6 @@ children:
           - type: ComboBox
             name: mafThreshold
             enable: (popMetrics)
-
   - type: CollapseBox
     label: Quality Control (QC) Filters
     collapsed: true
@@ -159,7 +156,6 @@ children:
         name: qcMaf
       - type: ComboBox
         name: qcHwe
-
   - type: CollapseBox
     label: Multifactor Dimensionality Reduction (MDR)
     collapsed: true
@@ -174,16 +170,10 @@ children:
           - type: ComboBox
             name: mdrFolds
             enable: (mdrEnable)
-          - type: TextBox
-            name: mdrSeed
-            enable: (mdrEnable)
           - type: CheckBox
             name: mdrPermTest
             enable: (mdrEnable)
-            children:
-              - type: TextBox
-                name: nPermMDR
-                enable: (mdrEnable && mdrPermTest)
+            children: []
           - type: CheckBox
             name: mdrCellTable
             enable: (mdrEnable)
@@ -193,7 +183,11 @@ children:
           - type: CheckBox
             name: mdrBarPlot
             enable: (mdrEnable)
-
+  - type: LayoutBox
+    margin: large
+    children:
+      - type: Output
+        name: prsOutput
   - type: CollapseBox
     label: Linkage Disequilibrium (LD) Analysis
     collapsed: true
@@ -212,14 +206,15 @@ children:
               - type: ComboBox
                 name: ldMetric
                 enable: (ldEnable && ldHeatmap)
-
-  - type: CollapseBox
-    label: Save
-    collapsed: true
-    stretchFactor: 1
+  - type: LayoutBox
+    margin: large
     children:
-      - type: CheckBox
-        name: prsOutput
-        enable: (outcome)
-
-...
+      - type: TextBox
+        name: nPermMDR
+        format: number
+  - type: LayoutBox
+    margin: large
+    children:
+      - type: TextBox
+        name: mdrSeed
+        format: number

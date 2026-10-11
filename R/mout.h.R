@@ -198,13 +198,21 @@ mOUTResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 title="Boxplots with outliers",
                 visible="(boxpl)",
                 items="(vars)",
+                clearWith=list(
+                    "vars",
+                    "group",
+                    "fence"),
                 template=jmvcore::Image$new(
                     options=options,
                     title="$key",
                     width=500,
                     height=500,
                     renderFun=".plot",
-                    requiresData=TRUE)))}))
+                    requiresData=TRUE,
+                    clearWith=list(
+                        "vars",
+                        "group",
+                        "fence"))))}))
 
 mOUTBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "mOUTBase",

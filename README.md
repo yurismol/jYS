@@ -70,4 +70,15 @@ Some usefull [Jamovi](https://www.jamovi.org/) procedures for researchers
   - Multi-model evaluation across clinical risk thresholds (Random Forest, MLP, Logistic Regression, and raw continuous biomarkers)
   - Visualizations: ggplot2
 
+- Stability Analysis (ICH Q1E) (mSTAB)
+  - Shelf life estimation and retest period determination according to the ICH Q1E guideline
+  - ANCOVA batch poolability testing (testing equality of degradation slopes first, then intercepts, with α = 0.25)
+  - Three standard regression models: Model 1 (separate slopes and intercepts), Model 2 (common slope with separate intercepts), Model 3 (common slope and intercept)
+  - Pooled residual mean square error across batches when slopes differ
+  - One-sided 95% confidence bounds (lower for decreasing attributes, upper for increasing attributes) and two-sided bounds for unknown direction
+  - Conservative reporting of the shortest batch shelf life when batch-specific estimates remain
+  - ICH Q1E Appendix A decision tree and extrapolation horizon evaluation (distinguishing statistical estimate from permitted extrapolation up to 12 months)
+  - Individual batch prediction intervals and Specification Release Limits (SRL)
+  - Comprehensive visualizations and model diagnostics: stability curves with confidence bounds, degradation rate comparisons, faceted batch trajectories, prediction & release limits, regression diagnostics, and shelf life comparison / extrapolation horizon plots: ggplot2
+
 Author: [Yuri Smolyakov](https://t.me/jYSmol)
