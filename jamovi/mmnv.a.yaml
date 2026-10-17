@@ -1,0 +1,160 @@
+---
+name:  mMNV
+title: MANOVA & Repeated Measures
+menuGroup: jYS
+menuSubgroup: Classical & Advanced ANOVA
+menuTitle: MANOVA & Repeated Measures
+description:
+    main: Multivariate Analysis of Variance (MANOVA), Repeated Measures MANOVA without sphericity assumption (O'Brien & Kaiser, 1985), and Profile Analysis.
+version: '1.0.0'
+jas: '1.2'
+
+options:
+    - name: data
+      type: Data
+
+    - name: mode
+      title: Analysis Mode
+      type: List
+      options:
+        - title: Repeated Measures MANOVA (Within-Subjects / Mixed Design)
+          name:  rm
+        - title: Factorial MANOVA / MANCOVA (Between-Subjects Multiple DVs)
+          name:  factorial
+      default: rm
+
+    - name: rmCells
+      title: Repeated Measures Variables / Time Points
+      type: Variables
+      suggested:
+        - continuous
+      permitted:
+        - numeric
+      default: []
+
+    - name: rmFactorName
+      title: Within-Subjects Factor Name
+      type: String
+      default: Time
+
+    - name: deps
+      title: Dependent Variables (Factorial MANOVA)
+      type: Variables
+      suggested:
+        - continuous
+      permitted:
+        - numeric
+      default: []
+
+    - name: between
+      title: Between-Subjects Factors
+      type: Variables
+      suggested:
+        - nominal
+        - ordinal
+      permitted:
+        - factor
+      default: []
+
+    - name: covs
+      title: Covariates
+      type: Variables
+      suggested:
+        - continuous
+      permitted:
+        - numeric
+      default: []
+
+    - name: testPillai
+      title: Pillai's Trace
+      type: Bool
+      default: true
+
+    - name: testWilks
+      title: Wilks' Lambda
+      type: Bool
+      default: true
+
+    - name: testHotelling
+      title: Hotelling-Lawley Trace
+      type: Bool
+      default: true
+
+    - name: testRoy
+      title: Roy's Largest Root
+      type: Bool
+      default: true
+
+    - name: contrastType
+      title: Contrast Type
+      type: List
+      options:
+        - title: Polynomial (Linear, Quadratic, etc.)
+          name:  polynomial
+        - title: Difference (Reverse Helmert)
+          name:  difference
+        - title: Helmert
+          name:  helmert
+        - title: Repeated (Successive differences)
+          name:  repeated
+        - title: Treatment (Compare to baseline)
+          name:  treatment
+      default: polynomial
+
+    - name: showUnivariate
+      title: Univariate Tests (with Sphericity Corrections)
+      type: Bool
+      default: true
+
+    - name: showSphericity
+      title: Mauchly's Sphericity Test & Epsilon Estimates
+      type: Bool
+      default: true
+
+    - name: showProfileAnalysis
+      title: Profile Analysis (Parallelism, Coincidence, Flatness)
+      type: Bool
+      default: true
+
+    - name: showContrastsTable
+      title: Within-Subjects Contrasts Table
+      type: Bool
+      default: true
+
+    - name: showAssumptionChecks
+      title: Model Diagnostics & Assumption Checks
+      type: Bool
+      default: true
+
+    - name: showMeansTable
+      title: Marginal Means & Descriptives Table
+      type: Bool
+      default: true
+
+    - name: showProfilePlot
+      title: Trajectory / Profile Plot
+      type: Bool
+      default: true
+
+    - name: plotError
+      title: Plot Error Bars
+      type: List
+      options:
+        - title: 95% Confidence Interval
+          name:  ci
+        - title: Standard Error (SE)
+          name:  se
+        - title: None
+          name:  none
+      default: ci
+
+    - name: showHePlot
+      title: Hypothesis-Error (HE) Plot
+      type: Bool
+      default: false
+
+    - name: showOutlierPlot
+      title: Multivariate Outliers (Mahalanobis Distance) Plot
+      type: Bool
+      default: false
+...

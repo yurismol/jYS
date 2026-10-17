@@ -105,13 +105,15 @@ options:
       title: Accelerated Testing Support (ICH Q1E App. A)
       type: List
       options:
-        - title: No significant change at accelerated condition (Extrapolation allowed)
+        - title: No significant change at accelerated condition (Extrapolation up to 2X, max X + 12 mo)
           name:  no_change
-        - title: Significant change observed at accelerated condition (No extrapolation)
+        - title: Significant change at accelerated, none at intermediate (Extrapolation up to 1.5X, max X + 6 mo)
+          name:  intermediate_ok
+        - title: Significant change at accelerated condition (No extrapolation)
           name:  change_observed
-        - title: Not evaluated / None
+        - title: None / Not evaluated (No extrapolation)
           name:  none
-      default: no_change
+      default: none
 
     - name: studyDuration
       title: Long-term Study Duration (0 - auto)

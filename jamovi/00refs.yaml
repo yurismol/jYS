@@ -485,5 +485,91 @@ refs:
         pages: 1832–1841
         url: https://doi.org/10.1016/j.xphs.2024.02.020
 
+    obrien1985:
+        type: 'article'
+        author: O'Brien, R. G., & Kaiser, M. K.
+        year: 1985
+        title: "MANOVA method for analyzing repeated measures designs: An extensive primer"
+        publisher: "Psychological Bulletin"
+        volume: 97
+        issue: 2
+        pages: 316–333
+        url: https://doi.org/10.1037/0033-2909.97.2.316
+
+    fox2019:
+        type: 'book'
+        author: Fox, J., & Weisberg, S.
+        year: 2019
+        title: "An R Companion to Applied Regression"
+        edition: '3rd'
+        publisher: "Sage, Thousand Oaks, CA"
+        url: https://socialsciences.mcmaster.ca/jfox/Books/Companion/
+
+    greenhouse1959:
+        type: 'article'
+        author: Greenhouse, S. W., & Geisser, S.
+        year: 1959
+        title: "On methods in the analysis of profile data"
+        publisher: "Psychometrika"
+        volume: 24
+        issue: 2
+        pages: 95–112
+        url: https://doi.org/10.1007/BF02289823
+
+    huynh1976:
+        type: 'article'
+        author: Huynh, H., & Feldt, L. S.
+        year: 1976
+        title: "Estimation of the Box correction for degrees of freedom from sample data in randomized block and split-plot designs"
+        publisher: "Journal of Educational Statistics"
+        volume: 1
+        issue: 1
+        pages: 69–82
+        url: https://doi.org/10.2307/1164736
+
+    box1949:
+        type: 'article'
+        author: Box, G. E. P.
+        year: 1949
+        title: "A general distribution theory for a class of likelihood criteria"
+        publisher: "Biometrika"
+        volume: 36
+        issue: '3/4'
+        pages: 317–346
+        url: https://doi.org/10.1093/biomet/36.3-4.317
+
+    mardia1970:
+        type: 'article'
+        author: Mardia, K. V.
+        year: 1970
+        title: "Measures of multivariate skewness and kurtosis with applications"
+        publisher: "Biometrika"
+        volume: 57
+        issue: 3
+        pages: 519–530
+        url: https://doi.org/10.1093/biomet/57.3.519
+
+    olson1974:
+        type: 'article'
+        author: Olson, C. L.
+        year: 1974
+        title: "Comparative robustness of six tests in multivariate analysis of variance"
+        publisher: "Journal of the American Statistical Association"
+        volume: 69
+        issue: 348
+        pages: 894–908
+        url: https://doi.org/10.1080/01621459.1974.10480224
+
+    friendly2007:
+        type: 'article'
+        author: Friendly, M.
+        year: 2007
+        title: "HE plots for multivariate general linear models"
+        publisher: "Journal of Computational and Graphical Statistics"
+        volume: 16
+        issue: 2
+        pages: 421–444
+        url: https://doi.org/10.1198/106186007X208407
+
 
 

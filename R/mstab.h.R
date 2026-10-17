@@ -16,7 +16,7 @@ mSTABOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             confLevel = 0.95,
             modelChoice = "auto",
             trans = "none",
-            accelCondition = "no_change",
+            accelCondition = "none",
             studyDuration = 0,
             showPoolTable = TRUE,
             showShelfTable = TRUE,
@@ -109,9 +109,10 @@ mSTABOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 accelCondition,
                 options=list(
                     "no_change",
+                    "intermediate_ok",
                     "change_observed",
                     "none"),
-                default="no_change")
+                default="none")
             private$..studyDuration <- jmvcore::OptionNumber$new(
                 "studyDuration",
                 studyDuration,
@@ -657,7 +658,7 @@ mSTAB <- function(
     confLevel = 0.95,
     modelChoice = "auto",
     trans = "none",
-    accelCondition = "no_change",
+    accelCondition = "none",
     studyDuration = 0,
     showPoolTable = TRUE,
     showShelfTable = TRUE,

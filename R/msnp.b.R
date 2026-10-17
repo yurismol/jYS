@@ -24,7 +24,7 @@ mSNPClass <- R6::R6Class(
                 male_level <- setdiff(gender_levels, female_level)[1]
                 return(list(female = female_level, male = male_level))
             }
-            female_idx_g <- grep("f|w|\\u0436|female|girl|woman|2", gender_levels, ignore.case=TRUE)
+            female_idx_g <- grep("f|w|female|girl|woman|2", gender_levels, ignore.case=TRUE)
             if (length(female_idx_g) > 0) {
                 female_level <- gender_levels[female_idx_g[1]]
                 male_level <- gender_levels[-female_idx_g[1]][1]

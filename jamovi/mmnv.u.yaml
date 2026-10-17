@@ -1,0 +1,109 @@
+title: MANOVA & Repeated Measures
+name: mMNV
+jus: '3.0'
+stage: 0
+compilerMode: tame
+children:
+  - type: VariableSupplier
+    persistentItems: false
+    stretchFactor: 1
+    children:
+      - type: TargetLayoutBox
+        label: Repeated Measures Cells (Within-Subjects)
+        children:
+          - type: VariablesListBox
+            name: rmCells
+            isTarget: true
+      - type: TargetLayoutBox
+        label: Dependent Variables (Factorial MANOVA)
+        children:
+          - type: VariablesListBox
+            name: deps
+            isTarget: true
+            height: small
+      - type: TargetLayoutBox
+        label: Between-Subjects Factors
+        children:
+          - type: VariablesListBox
+            name: between
+            isTarget: true
+            height: small
+      - type: TargetLayoutBox
+        label: Covariates
+        children:
+          - type: VariablesListBox
+            name: covs
+            isTarget: true
+            height: small
+  - type: CollapseBox
+    label: Analysis Mode & Design
+    collapsed: false
+    stretchFactor: 1
+    children:
+      - type: ComboBox
+        name: mode
+      - type: TextBox
+        name: rmFactorName
+        format: string
+      - type: ComboBox
+        name: contrastType
+  - type: CollapseBox
+    label: Multivariate Tests
+    collapsed: false
+    stretchFactor: 1
+    children:
+      - type: LayoutBox
+        margin: large
+        children:
+          - type: CheckBox
+            name: testPillai
+          - type: CheckBox
+            name: testWilks
+          - type: CheckBox
+            name: testHotelling
+          - type: CheckBox
+            name: testRoy
+  - type: CollapseBox
+    label: Univariate Tests & Contrasts
+    collapsed: false
+    stretchFactor: 1
+    children:
+      - type: LayoutBox
+        margin: large
+        children:
+          - type: CheckBox
+            name: showUnivariate
+          - type: CheckBox
+            name: showSphericity
+          - type: CheckBox
+            name: showProfileAnalysis
+          - type: CheckBox
+            name: showContrastsTable
+  - type: CollapseBox
+    label: Assumptions & Diagnostics
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: LayoutBox
+        margin: large
+        children:
+          - type: CheckBox
+            name: showAssumptionChecks
+          - type: CheckBox
+            name: showOutlierPlot
+  - type: CollapseBox
+    label: Descriptives & Plots
+    collapsed: false
+    stretchFactor: 1
+    children:
+      - type: LayoutBox
+        margin: large
+        children:
+          - type: CheckBox
+            name: showMeansTable
+          - type: CheckBox
+            name: showProfilePlot
+          - type: ComboBox
+            name: plotError
+          - type: CheckBox
+            name: showHePlot

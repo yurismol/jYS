@@ -7,16 +7,9 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
         .formatNum = function(x, digits = 1) {
             if (is.null(x) || length(x) == 0) return("")
-            is_ru <- tryCatch({
-                .("months") == "мес." ||
-                grepl("ru", Sys.getenv("LANG"), ignore.case = TRUE) ||
-                grepl("Russian", Sys.getlocale(), ignore.case = TRUE)
-            }, error = function(e) FALSE)
             format_one <- function(v) {
                 if (is.na(v) || is.infinite(v)) return("")
-                v_rnd <- round(v, digits)
-                s <- as.character(v_rnd)
-                if (is_ru) gsub("\\.", ",", s) else s
+                as.character(round(v, digits))
             }
             if (length(x) == 1) {
                 format_one(x)
@@ -85,7 +78,7 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             )
             shelfTable$setNote(
                 "extrap_rule",
-                .("<b>ICH Q1E Appendix A Extrapolation</b>: Permitted shelf life may extend beyond real-time data if accelerated stability demonstrates little or no change. Under favorable conditions, maximum extrapolation is capped at 2x observed duration (up to Y + 12 months), or 1.5x observed duration (up to Y + 6 months) if accelerated data show change. Extrapolation is never permitted beyond the statistical intersection.")
+                .("<b>ICH Q1E Appendix A Extrapolation</b>: Permitted shelf life may extend beyond real-time data when supported by accelerated (and, if applicable, intermediate) stability data. Up to 2x observed duration (capped at X + 12 months) is allowed if accelerated data show no significant change; up to 1.5x (capped at X + 6 months) if significant change occurs at accelerated but not intermediate conditions. If not evaluated or change is observed without intermediate support, no extrapolation beyond observed duration X is permitted. Extrapolation is never permitted beyond the statistical estimate.")
             )
             shelfTable$setNote(
                 "retest_shelf",
@@ -132,35 +125,41 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
         },
 
         .run = function() {
+            if (is.null(self$options$dep) || is.null(self$options$time) || is.null(self$options$batch)) {
+                return()
+            }
+
             depName   <- self$options$dep
             timeName  <- self$options$time
             batchName <- self$options$batch
 
-            if (is.null(depName) || is.null(timeName) || is.null(batchName)) {
-                self$results$instructions$setVisible(TRUE)
+            data <- self$data
+            if (is.null(data) || nrow(data) == 0) {
                 return()
             }
 
-            self$results$instructions$setVisible(FALSE)
+            # Filter complete cases
+            cols <- c(depName, timeName, batchName)
+            dat  <- jmvcore::naOmit(data[, cols])
 
-            # Extract data
-            raw_data <- self$data
-            if (is.null(raw_data) || nrow(raw_data) == 0)
+            if (nrow(dat) < 3) {
+                jmvcore::reject(.("At least 3 valid observations are required for stability analysis."))
                 return()
+            }
 
-            dat <- data.frame(
-                Y     = jmvcore::toNumeric(raw_data[[depName]]),
-                Time  = jmvcore::toNumeric(raw_data[[timeName]]),
-                Batch = as.factor(raw_data[[batchName]]),
-                stringsAsFactors = FALSE
-            )
+            # Rename columns for internal formula simplicity
+            colnames(dat) <- c("Y", "Time", "Batch")
+            dat$Y     <- as.numeric(dat$Y)
+            dat$Time  <- as.numeric(dat$Time)
+            dat$Batch <- as.factor(dat$Batch)
 
-            # Complete cases
-            valid_idx <- stats::complete.cases(dat$Y, dat$Time, dat$Batch)
-            dat <- dat[valid_idx, , drop = FALSE]
+            if (any(!is.finite(dat$Y)) || any(!is.finite(dat$Time))) {
+                jmvcore::reject(.("Time and response variables must contain valid finite numbers."))
+                return()
+            }
 
-            if (nrow(dat) < 4) {
-                jmvcore::reject(.("Too few valid observations for stability analysis (at least 4 observations required)."))
+            if (any(dat$Time < 0)) {
+                jmvcore::reject(.("Time values cannot be negative."))
                 return()
             }
 
@@ -171,6 +170,13 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
             if (k < 1) {
                 jmvcore::reject(.("No valid batch levels found."))
+                return()
+            }
+
+            # Check distinct time points per batch
+            t_per_batch <- tapply(dat$Time, dat$Batch, function(tt) length(unique(tt)))
+            if (all(t_per_batch < 2)) {
+                jmvcore::reject(.("Shelf life cannot be estimated: at least 2 distinct time points per batch are required."))
                 return()
             }
 
@@ -203,61 +209,73 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             # Model 1: Separate slopes & intercepts: Y ~ Batch * Time
             # Model 2: Common slope & separate intercepts: Y ~ Batch + Time
             # Model 3: Common slope & common intercept: Y ~ Time
-            fit_full <- stats::lm(Y_trans ~ Batch * Time, data = dat)
-            fit_cs   <- stats::lm(Y_trans ~ Batch + Time, data = dat)
-            fit_cl   <- stats::lm(Y_trans ~ Time, data = dat)
+            if (k < 2) {
+                fit_cl   <- stats::lm(Y_trans ~ Time, data = dat)
+                fit_cs   <- fit_cl
+                fit_full <- fit_cl
 
-            # RSS and degrees of freedom
-            rss_full <- sum(stats::residuals(fit_full)^2)
-            df_full  <- stats::df.residual(fit_full)
-            mse_full <- if (df_full > 0) rss_full / df_full else NA_real_
+                rss_cl   <- sum(stats::residuals(fit_cl)^2)
+                df_cl    <- stats::df.residual(fit_cl)
+                mse_cl   <- if (df_cl > 0) rss_cl / df_cl else NA_real_
 
-            rss_cs   <- sum(stats::residuals(fit_cs)^2)
-            df_cs    <- stats::df.residual(fit_cs)
-            mse_cs   <- if (df_cs > 0) rss_cs / df_cs else NA_real_
+                rss_cs   <- rss_cl; df_cs <- df_cl; mse_cs <- mse_cl
+                rss_full <- rss_cl; df_full <- df_cl; mse_full <- mse_cl
 
-            rss_cl   <- sum(stats::residuals(fit_cl)^2)
-            df_cl    <- stats::df.residual(fit_cl)
-            mse_cl   <- if (df_cl > 0) rss_cl / df_cl else NA_real_
+                ss_slopes <- 0; df_slopes <- 0; ms_slopes <- 0; f_slopes <- NA_real_; p_slopes <- 1.0
+                ss_ints   <- 0; df_ints   <- 0; ms_ints   <- 0; f_ints   <- NA_real_; p_ints   <- 1.0
+            } else {
+                fit_full <- stats::lm(Y_trans ~ Batch * Time, data = dat)
+                fit_cs   <- stats::lm(Y_trans ~ Batch + Time, data = dat)
+                fit_cl   <- stats::lm(Y_trans ~ Time, data = dat)
+
+                rss_full <- sum(stats::residuals(fit_full)^2)
+                df_full  <- stats::df.residual(fit_full)
+                mse_full <- if (df_full > 0) rss_full / df_full else NA_real_
+
+                rss_cs   <- sum(stats::residuals(fit_cs)^2)
+                df_cs    <- stats::df.residual(fit_cs)
+                mse_cs   <- if (df_cs > 0) rss_cs / df_cs else NA_real_
+
+                rss_cl   <- sum(stats::residuals(fit_cl)^2)
+                df_cl    <- stats::df.residual(fit_cl)
+                mse_cl   <- if (df_cl > 0) rss_cl / df_cl else NA_real_
+
+                # Anova for slope equality
+                if (df_full > 0 && !is.na(mse_full) && mse_full > 0) {
+                    an_slopes <- stats::anova(fit_cs, fit_full)
+                    df_slopes <- an_slopes[2, "Df"]
+                    ss_slopes <- max(0, an_slopes[2, "Sum of Sq"])
+                    f_slopes  <- an_slopes[2, "F"]
+                    p_slopes  <- an_slopes[2, "Pr(>F)"]
+                    ms_slopes <- if (!is.na(df_slopes) && df_slopes > 0) ss_slopes / df_slopes else 0
+                } else {
+                    ss_slopes <- 0; df_slopes <- 0; ms_slopes <- 0; f_slopes <- NA_real_; p_slopes <- NA_real_
+                }
+
+                # Anova for intercept equality
+                if (df_cs > 0 && !is.na(mse_cs) && mse_cs > 0) {
+                    an_ints <- stats::anova(fit_cl, fit_cs)
+                    df_ints <- an_ints[2, "Df"]
+                    ss_ints <- max(0, an_ints[2, "Sum of Sq"])
+                    f_ints  <- an_ints[2, "F"]
+                    p_ints  <- an_ints[2, "Pr(>F)"]
+                    ms_ints <- if (!is.na(df_ints) && df_ints > 0) ss_ints / df_ints else 0
+                } else {
+                    ss_ints <- 0; df_ints <- 0; ms_ints <- 0; f_ints <- NA_real_; p_ints <- NA_real_
+                }
+            }
 
             alphaPool <- self$options$alphaPool
-
-            # Step 1: Slopes test
-            if (k >= 2 && df_full > 0 && !is.na(mse_full) && mse_full > 0) {
-                ss_slopes <- max(0, rss_cs - rss_full)
-                df_slopes <- k - 1
-                ms_slopes <- ss_slopes / df_slopes
-                f_slopes  <- ms_slopes / mse_full
-                p_slopes  <- 1 - stats::pf(f_slopes, df_slopes, df_full)
-            } else {
-                ss_slopes <- if (k >= 2) max(0, rss_cs - rss_full) else 0
-                df_slopes <- if (k >= 2) k - 1 else 0
-                ms_slopes <- if (df_slopes > 0) ss_slopes / df_slopes else 0
-                f_slopes  <- NA_real_
-                p_slopes  <- if (k < 2) 1.0 else NA_real_
-            }
-
-            # Step 2: Intercepts test
-            if (k >= 2 && df_cs > 0 && !is.na(mse_cs) && mse_cs > 0) {
-                ss_ints <- max(0, rss_cl - rss_cs)
-                df_ints <- k - 1
-                ms_ints <- ss_ints / df_ints
-                f_ints  <- ms_ints / mse_cs
-                p_ints  <- 1 - stats::pf(f_ints, df_ints, df_cs)
-            } else {
-                ss_ints <- if (k >= 2) max(0, rss_cl - rss_cs) else 0
-                df_ints <- if (k >= 2) k - 1 else 0
-                ms_ints <- if (df_ints > 0) ss_ints / df_ints else 0
-                f_ints  <- NA_real_
-                p_ints  <- if (k < 2) 1.0 else NA_real_
-            }
 
             # Model choice
             modelChoice <- self$options$modelChoice
             selectedModelCode <- 3
             adoptedModelName  <- .("Common slope & common intercept (Model 3)")
 
-            if (modelChoice == "sep_slopes_sep_int") {
+            if (k < 2) {
+                selectedModelCode <- 3
+                adoptedModelName  <- .("Single batch linear regression")
+            } else if (modelChoice == "sep_slopes_sep_int") {
                 selectedModelCode <- 1
                 adoptedModelName  <- .("Separate slopes & separate intercepts (Model 1)")
             } else if (modelChoice == "common_slope_sep_int") {
@@ -268,18 +286,18 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 adoptedModelName  <- .("Common slope & common intercept (Model 3)")
             } else {
                 # Automatic decision tree according to ICH Q1E Appendix B
-                if (k >= 2 && !is.na(p_slopes) && p_slopes <= alphaPool) {
+                if (is.na(p_slopes)) {
+                    jmvcore::reject(.("Cannot estimate shelf life: zero residual degrees of freedom in the full model."))
+                    return()
+                } else if (p_slopes <= alphaPool) {
                     selectedModelCode <- 1
                     adoptedModelName  <- .("Separate slopes & separate intercepts (Model 1)")
-                } else if (k >= 2 && !is.na(p_ints) && p_ints <= alphaPool) {
+                } else if (!is.na(p_ints) && p_ints <= alphaPool) {
                     selectedModelCode <- 2
                     adoptedModelName  <- .("Common slope & separate intercepts (Model 2)")
-                } else if (k >= 2 && !is.na(p_slopes) && !is.na(p_ints)) {
+                } else {
                     selectedModelCode <- 3
                     adoptedModelName  <- .("Common slope & common intercept (Model 3)")
-                } else {
-                    selectedModelCode <- 1
-                    adoptedModelName  <- .("Separate slopes & separate intercepts (Model 1)")
                 }
             }
 
@@ -289,6 +307,12 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 df_ints, ss_ints, ms_ints, f_ints, p_ints,
                 df_full, rss_full, mse_full, alphaPool, selectedModelCode
             )
+            if (k < 2) {
+                self$results$poolTable$setNote(
+                    "single_batch",
+                    .("Only a single batch provided; ANCOVA poolability is not evaluated. Single linear regression is fitted.")
+                )
+            }
 
             # Shelf life calculation
             shelfResults <- private$.computeShelfLife(
@@ -307,38 +331,38 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 trans = trans
             )
 
-            # Store computed details for plotting
-            plotState <- list(
+            # Store decoupled precomputed states for plotting (free of closures & lm objects)
+            chosenFit <- if (selectedModelCode == 1) fit_full else if (selectedModelCode == 2) fit_cs else fit_cl
+
+            private$.preparePlotStates(
                 dat = dat,
                 batchLevels = batchLevels,
                 selectedModelCode = selectedModelCode,
                 fit_full = fit_full,
                 fit_cs = fit_cs,
                 fit_cl = fit_cl,
+                chosenFit = chosenFit,
+                mse_full = mse_full,
+                df_full = df_full,
+                mse_cs = mse_cs,
+                df_cs = df_cs,
+                mse_cl = mse_cl,
+                df_cl = df_cl,
                 shelfResults = shelfResults,
                 specType = specType,
-                lsl = lsl_val,
-                usl = usl_val,
+                lsl_val = lsl_val,
+                usl_val = usl_val,
+                lsl_trans = lsl_trans,
+                usl_trans = usl_trans,
                 trans = trans,
                 depName = depName,
                 timeName = timeName,
                 batchName = batchName,
-                alphaPool = self$options$alphaPool,
-                confLevel = self$options$confLevel
+                alphaPool = alphaPool,
+                confLevel = self$options$confLevel,
+                p_slopes = p_slopes,
+                f_slopes = f_slopes
             )
-            self$results$stabPlot$setState(plotState)
-            self$results$shelfPlot$setState(plotState)
-            self$results$facetPlot$setState(plotState)
-            self$results$ratePlot$setState(plotState)
-            self$results$predPlot$setState(plotState)
-
-            # Store for diagnostic plot
-            chosenFit <- if (selectedModelCode == 1) fit_full else if (selectedModelCode == 2) fit_cs else fit_cl
-            self$results$diagPlot$setState(list(
-                fit = chosenFit,
-                dat = dat,
-                timeName = timeName
-            ))
 
             # Populate Shelf Life Table
             private$.populateShelfTable(shelfResults, adoptedModelName, dat)
@@ -411,7 +435,9 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             ))
 
             # Dynamic adopted model note
-            model_summary <- if (selectedModelCode == 1) {
+            model_summary <- if (k < 2) {
+                .("<b>Adopted Structure</b>: Single batch linear regression. No poolability testing.")
+            } else if (selectedModelCode == 1) {
                 .("<b>Adopted Structure</b>: Model 1 (Separate slopes and separate intercepts). Batches degrade at different rates.")
             } else if (selectedModelCode == 2) {
                 .("<b>Adopted Structure</b>: Model 2 (Common slope, separate intercepts). Batches degrade at a parallel rate but start at different initial levels.")
@@ -425,18 +451,11 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             dat, batchLevels, selectedModelCode, fit_full, fit_cs, fit_cl,
             mse_full, df_full, specType, lsl_trans, usl_trans, confLevel, trans
         ) {
-            # Critical t value for 95% one-sided (or two-sided) bound
+            # Critical t value for 95% bound
             alpha <- 1 - confLevel
-            resList <- list()
-
-            # Time range
             t_max_obs <- max(dat$Time, na.rm = TRUE)
 
-            # Function to calculate confidence bound for a given model and batch at time t
-            # Note: For Model 1 (separate slopes), user specification requires:
-            # "Where slopes differ, use the pooled residual mean square error across batches."
-            # df for t-statistic is df_full (pooled degrees of freedom).
-            calcBound <- function(batch_i, t_eval, modelCode, boundType) {
+            calcBound = function(batch_i, t_eval, modelCode, boundType) {
                 if (modelCode == 1) {
                     # Model 1: Separate slopes and separate intercepts with pooled MSE
                     sub_dat <- dat[dat$Batch == batch_i, , drop = FALSE]
@@ -444,17 +463,14 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     t_bar_i <- mean(sub_dat$Time)
                     S_tt_i <- sum((sub_dat$Time - t_bar_i)^2)
 
-                    # Fit batch-specific coefficients
+                    if (is.na(mse_full) || mse_full <= 0 || df_full <= 0 || S_tt_i <= 0) {
+                        return(rep(NA_real_, length(t_eval)))
+                    }
+
                     fit_i <- stats::lm(Y_trans ~ Time, data = sub_dat)
                     coef_i <- stats::coef(fit_i)
                     y_hat <- coef_i[1] + coef_i[2] * t_eval
-
-                    # SE using pooled MSE from full model
-                    if (is.na(mse_full) || mse_full <= 0 || df_full <= 0 || S_tt_i <= 0) {
-                        se_pred <- rep(NA_real_, length(t_eval))
-                    } else {
-                        se_pred <- sqrt(mse_full * (1 / n_i + (t_eval - t_bar_i)^2 / S_tt_i))
-                    }
+                    se_pred <- sqrt(mse_full * (1 / n_i + (t_eval - t_bar_i)^2 / S_tt_i))
                     df_val <- df_full
                 } else if (modelCode == 2) {
                     # Model 2: Common slope, separate intercepts
@@ -472,15 +488,17 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     df_val <- stats::df.residual(fit_cl)
                 }
 
+                # Critical value
+                # Two-sided 95% bound requires alpha / 2 on each tail
+                # One-sided 95% bound requires alpha on that tail
+                is_two_sided <- (specType == "both")
+                t_crit <- if (is_two_sided) stats::qt(1 - alpha / 2, df = df_val) else stats::qt(1 - alpha, df = df_val)
+
                 if (boundType == "lower") {
-                    t_crit <- stats::qt(1 - alpha, df = df_val)
                     return(y_hat - t_crit * se_pred)
                 } else if (boundType == "upper") {
-                    t_crit <- stats::qt(1 - alpha, df = df_val)
                     return(y_hat + t_crit * se_pred)
                 } else {
-                    # Two-sided 95%
-                    t_crit <- stats::qt(1 - alpha / 2, df = df_val)
                     return(list(
                         lower = y_hat - t_crit * se_pred,
                         upper = y_hat + t_crit * se_pred
@@ -488,82 +506,85 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 }
             }
 
-            # Solver to find earliest time t >= 0 where bound crosses specification limit
             findCrossing <- function(batch_i, modelCode) {
-                # Test crossing for lower bound
                 cross_lower <- NA_real_
                 cross_upper <- NA_real_
 
                 if (specType %in% c("lower", "both")) {
-                    b_0 <- calcBound(batch_i, 0, modelCode, "lower")
-                    if (!is.na(b_0) && b_0 < lsl_trans) {
+                    b_0   <- calcBound(batch_i, 0, modelCode, "lower")
+                    b_far <- calcBound(batch_i, 240, modelCode, "lower")
+                    if (is.na(b_0) || is.na(b_far)) {
+                        cross_lower <- NA_real_
+                    } else if (b_0 < lsl_trans) {
                         cross_lower <- 0.0 # Out of specification at time zero
+                    } else if (b_far <= lsl_trans) {
+                        tryCatch({
+                            f_root_lower <- function(t) calcBound(batch_i, t, modelCode, "lower") - lsl_trans
+                            r_res <- stats::uniroot(f_root_lower, interval = c(0, 240), tol = 1e-4)
+                            cross_lower <- r_res$root
+                        }, error = function(e) {
+                            cross_lower <- NA_real_
+                        })
                     } else {
-                        # Search for crossing in [0, 240] months
-                        f_root_lower <- function(t) calcBound(batch_i, t, modelCode, "lower") - lsl_trans
-                        b_far <- calcBound(batch_i, 240, modelCode, "lower")
-                        if (!is.na(b_far) && b_far <= lsl_trans) {
-                            tryCatch({
-                                r_res <- stats::uniroot(f_root_lower, interval = c(0, 240), tol = 1e-4)
-                                cross_lower <- r_res$root
-                            }, error = function(e) {
-                                cross_lower <- NA_real_
-                            })
-                        } else {
-                            cross_lower <- Inf # No crossing within 240 months
-                        }
+                        cross_lower <- Inf # No crossing within 240 months
                     }
                 }
 
                 if (specType %in% c("upper", "both")) {
-                    b_0 <- calcBound(batch_i, 0, modelCode, "upper")
-                    if (!is.na(b_0) && b_0 > usl_trans) {
+                    b_0   <- calcBound(batch_i, 0, modelCode, "upper")
+                    b_far <- calcBound(batch_i, 240, modelCode, "upper")
+                    if (is.na(b_0) || is.na(b_far)) {
+                        cross_upper <- NA_real_
+                    } else if (b_0 > usl_trans) {
                         cross_upper <- 0.0
+                    } else if (b_far >= usl_trans) {
+                        tryCatch({
+                            f_root_upper <- function(t) calcBound(batch_i, t, modelCode, "upper") - usl_trans
+                            r_res <- stats::uniroot(f_root_upper, interval = c(0, 240), tol = 1e-4)
+                            cross_upper <- r_res$root
+                        }, error = function(e) {
+                            cross_upper <- NA_real_
+                        })
                     } else {
-                        f_root_upper <- function(t) calcBound(batch_i, t, modelCode, "upper") - usl_trans
-                        b_far <- calcBound(batch_i, 240, modelCode, "upper")
-                        if (!is.na(b_far) && b_far >= usl_trans) {
-                            tryCatch({
-                                r_res <- stats::uniroot(f_root_upper, interval = c(0, 240), tol = 1e-4)
-                                cross_upper <- r_res$root
-                            }, error = function(e) {
-                                cross_upper <- NA_real_
-                            })
-                        } else {
-                            cross_upper <- Inf
-                        }
+                        cross_upper <- Inf
                     }
                 }
 
-                # Earliest crossing
-                cand <- c(cross_lower, cross_upper)
-                cand <- cand[!is.na(cand)]
-                if (length(cand) == 0) return(NA_real_)
-                return(min(cand))
+                if (specType == "lower") {
+                    return(cross_lower)
+                } else if (specType == "upper") {
+                    return(cross_upper)
+                } else {
+                    if (is.na(cross_lower) || is.na(cross_upper)) return(NA_real_)
+                    return(min(cross_lower, cross_upper))
+                }
             }
 
             # Calculate for each batch
             batchRows <- list()
             for (b in batchLevels) {
-                # Coefficients for display
                 sub_dat <- dat[dat$Batch == b, , drop = FALSE]
                 if (selectedModelCode == 1) {
-                    fit_b <- stats::lm(Y_trans ~ Time, data = sub_dat)
-                    cf <- stats::coef(fit_b)
-                    int_val  <- if (trans == "log") exp(cf[1]) else cf[1]
-                    slp_val  <- cf[2]
+                    if (length(unique(sub_dat$Time)) >= 2) {
+                        fit_b <- stats::lm(Y_trans ~ Time, data = sub_dat)
+                        cf <- stats::coef(fit_b)
+                        int_val <- if (trans == "log") exp(cf[1]) else cf[1]
+                        slp_val <- cf[2]
+                    } else {
+                        int_val <- if (trans == "log") exp(mean(sub_dat$Y_trans)) else mean(sub_dat$Y_trans)
+                        slp_val <- NA_real_
+                    }
                 } else if (selectedModelCode == 2) {
                     cf_cs <- stats::coef(fit_cs)
-                    # Baseline intercept + batch offset
                     batch_term <- paste0("Batch", b)
                     offset <- if (batch_term %in% names(cf_cs)) cf_cs[[batch_term]] else 0
                     int_raw <- cf_cs[1] + offset
-                    int_val  <- if (trans == "log") exp(int_raw) else int_raw
-                    slp_val  <- cf_cs["Time"]
+                    int_val <- if (trans == "log") exp(int_raw) else int_raw
+                    slp_val <- cf_cs["Time"]
                 } else {
                     cf_cl <- stats::coef(fit_cl)
-                    int_val  <- if (trans == "log") exp(cf_cl[1]) else cf_cl[1]
-                    slp_val  <- cf_cl["Time"]
+                    int_val <- if (trans == "log") exp(cf_cl[1]) else cf_cl[1]
+                    slp_val <- cf_cl["Time"]
                 }
 
                 stat_shelf <- findCrossing(b, selectedModelCode)
@@ -580,27 +601,28 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             t_dur <- if (!is.null(studyDur) && studyDur > 0) studyDur else t_max_obs
             accel <- self$options$accelCondition
 
-            if (accel == "change_observed") {
-                extrapCap <- t_dur
-            } else if (accel == "no_change") {
-                if (t_dur >= 12) {
-                    extrapCap <- min(2 * t_dur, t_dur + 12)
-                } else {
-                    extrapCap <- min(2 * t_dur, t_dur + 6)
-                }
+            if (accel == "no_change") {
+                extrapCap <- min(2 * t_dur, t_dur + 12)
+            } else if (accel == "intermediate_ok") {
+                extrapCap <- min(1.5 * t_dur, t_dur + 6)
             } else {
-                # None / not evaluated
                 extrapCap <- t_dur
             }
 
             # Identify limiting batch and overall shelf life
             all_stat_shelves <- sapply(batchRows, function(x) x$statShelf)
-            min_shelf <- min(all_stat_shelves, na.rm = TRUE)
-            min_batch_idx <- which(all_stat_shelves == min_shelf)
-            limiting_batch_name <- names(batchRows)[min_batch_idx[1]]
+            valid_shelves <- all_stat_shelves[!is.na(all_stat_shelves)]
 
-            overall_stat_shelf <- min_shelf
-            overall_ich_shelf  <- if (is.infinite(overall_stat_shelf)) extrapCap else min(overall_stat_shelf, extrapCap)
+            if (length(valid_shelves) == 0) {
+                overall_stat_shelf <- NA_real_
+                overall_ich_shelf  <- NA_real_
+                limiting_batch_name <- NA_character_
+            } else {
+                overall_stat_shelf <- min(valid_shelves)
+                min_batch_idx <- which(all_stat_shelves == overall_stat_shelf)
+                limiting_batch_name <- names(batchRows)[min_batch_idx[1]]
+                overall_ich_shelf  <- if (is.infinite(overall_stat_shelf)) extrapCap else min(overall_stat_shelf, extrapCap)
+            }
 
             return(list(
                 batchRows = batchRows,
@@ -608,9 +630,8 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 overallIchShelf = overall_ich_shelf,
                 limitingBatch = limiting_batch_name,
                 extrapCap = extrapCap,
-                extrapActive = isTRUE(overall_stat_shelf > extrapCap),
-                t_dur = t_dur,
-                calcBound = calcBound
+                extrapActive = isTRUE(!is.na(overall_stat_shelf) && overall_stat_shelf > extrapCap),
+                t_dur = t_dur
             ))
         },
 
@@ -624,17 +645,28 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             for (b in names(bRows)) {
                 item <- bRows[[b]]
                 s_stat <- item$statShelf
-                s_ich  <- if (is.infinite(s_stat)) extrapCap else min(s_stat, extrapCap)
 
-                is_limit <- (b == limitingBatch && length(bRows) > 1)
-                lim_text <- if (is_limit) .("Limiting batch") else .("Conforming")
-
-                stat_display <- if (is.infinite(s_stat)) 999.0 else s_stat
-                ich_display  <- if (is.infinite(s_ich)) extrapCap else s_ich
-                batch_val    <- as.character(b)
+                if (is.na(s_stat)) {
+                    stat_display <- NA_real_
+                    ich_display  <- NA_real_
+                    lim_text     <- .("Undetermined")
+                    table$setNote(
+                        paste0("na_batch_", b),
+                        jmvcore::format(
+                            .("Shelf life for batch '{batch}' cannot be computed (insufficient time points or degrees of freedom)."),
+                            batch = b
+                        )
+                    )
+                } else {
+                    stat_display <- if (is.infinite(s_stat)) 999.0 else s_stat
+                    s_ich        <- if (is.infinite(s_stat)) extrapCap else min(s_stat, extrapCap)
+                    ich_display  <- if (is.infinite(s_ich)) extrapCap else s_ich
+                    is_limit     <- (!is.na(limitingBatch) && b == limitingBatch && length(bRows) > 1)
+                    lim_text     <- if (is_limit) .("Limiting batch") else .("Conforming")
+                }
 
                 table$addRow(rowKey = b, values = list(
-                    batch = batch_val,
+                    batch = as.character(b),
                     model = adoptedModelName,
                     intercept = item$intercept,
                     slope = item$slope,
@@ -647,16 +679,23 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             # Overall row
             ov_stat <- shelfRes$overallStatShelf
             ov_ich  <- shelfRes$overallIchShelf
-            stat_disp <- if (is.infinite(ov_stat)) 999.0 else ov_stat
-            ich_disp  <- if (is.infinite(ov_ich)) extrapCap else ov_ich
-            lim_batch_val <- if (!is.null(limitingBatch)) as.character(limitingBatch) else ""
 
-            lim_reason <- if (ov_stat > extrapCap) {
-                paste0(.("Capped by ICH Q1E extrapolation limit"), " (", private$.formatNum(extrapCap, 1), " ", .("months"), ")")
-            } else if (length(bRows) > 1) {
-                paste0(.("Shortest batch"), ": ", lim_batch_val)
+            if (is.na(ov_stat)) {
+                stat_disp <- NA_real_
+                ich_disp  <- NA_real_
+                lim_reason <- .("Undetermined")
             } else {
-                .("Statistical intersection")
+                stat_disp <- if (is.infinite(ov_stat)) 999.0 else ov_stat
+                ich_disp  <- if (is.infinite(ov_ich)) extrapCap else ov_ich
+                lim_batch_val <- if (!is.na(limitingBatch)) as.character(limitingBatch) else ""
+
+                lim_reason <- if (ov_stat > extrapCap) {
+                    paste0(.("Capped by ICH Q1E extrapolation limit"), " (", private$.formatNum(extrapCap, 1), " ", .("months"), ")")
+                } else if (length(bRows) > 1) {
+                    paste0(.("Shortest batch"), ": ", lim_batch_val)
+                } else {
+                    .("Statistical intersection")
+                }
             }
 
             table$addRow(rowKey = "overall", values = list(
@@ -670,19 +709,355 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             ))
 
             # Dynamic notes for shelfTable
-            if (ov_stat > extrapCap) {
+            if (!is.na(ov_stat) && ov_stat > extrapCap) {
                 table$setNote("extrap_active", jmvcore::format(.("<b>Extrapolation Cap Active</b>: Statistical intersection ({stat} months) exceeds the allowable ICH Q1E extrapolation limit ({cap} months). Permitted shelf life is capped at {cap} months."), stat = private$.formatNum(ov_stat, 1), cap = private$.formatNum(extrapCap, 1)))
             } else {
                 table$setNote("extrap_active", NULL)
             }
 
-            if (length(bRows) > 1 && !is.null(limitingBatch)) {
-                table$setNote("limiting_batch_note", jmvcore::format(.("<b>Limiting Batch</b>: Overall shelf life is determined by {batch} ({months} months), which represents the earliest intersection among all batches."), batch = lim_batch_val, months = private$.formatNum(shelfRes$batchRows[[limitingBatch]]$statShelf, 1)))
+            if (length(bRows) > 1 && !is.na(limitingBatch) && !is.na(shelfRes$batchRows[[limitingBatch]]$statShelf)) {
+                table$setNote("limiting_batch_note", jmvcore::format(.("<b>Limiting Batch</b>: Overall shelf life is determined by {batch} ({months} months), which represents the earliest intersection among all batches."), batch = limitingBatch, months = private$.formatNum(shelfRes$batchRows[[limitingBatch]]$statShelf, 1)))
             } else {
                 table$setNote("limiting_batch_note", NULL)
             }
         },
 
+        .preparePlotStates = function(
+            dat, batchLevels, selectedModelCode, fit_full, fit_cs, fit_cl, chosenFit,
+            mse_full, df_full, mse_cs, df_cs, mse_cl, df_cl,
+            shelfResults, specType, lsl_val, usl_val, lsl_trans, usl_trans, trans,
+            depName, timeName, batchName, alphaPool, confLevel, p_slopes, f_slopes
+        ) {
+            ov_ich   <- shelfResults$overallIchShelf
+            ov_stat  <- shelfResults$overallStatShelf
+            t_dur    <- shelfResults$t_dur
+            extrapCap <- shelfResults$extrapCap
+            extrapActive <- shelfResults$extrapActive
+            b_lim    <- shelfResults$limitingBatch
+            lim_stat <- if (!is.na(b_lim)) shelfResults$batchRows[[b_lim]]$statShelf else NA_real_
+            k        <- length(batchLevels)
+
+            t_max_plot <- max(t_dur * 1.25, if (!is.na(ov_ich) && !is.infinite(ov_ich)) ov_ich * 1.25 else 36, 12)
+            t_grid <- seq(0, t_max_plot, length.out = 150)
+            alpha  <- 1 - confLevel
+            is_two_sided <- (specType == "both")
+
+            # Precalculate predictions and bounds for stabPlot and facetPlot
+            pred_list <- list()
+            for (b in batchLevels) {
+                sub_d <- dat[dat$Batch == b, , drop = FALSE]
+                n_i   <- nrow(sub_d)
+                t_bar_i <- mean(sub_d$Time)
+                S_tt_i  <- sum((sub_d$Time - t_bar_i)^2)
+
+                if (selectedModelCode == 1) {
+                    if (S_tt_i > 0) {
+                        fit_b <- stats::lm(Y_trans ~ Time, data = sub_d)
+                        cf_b  <- stats::coef(fit_b)
+                        y_mean <- cf_b[1] + cf_b[2] * t_grid
+                    } else {
+                        y_mean <- rep(mean(sub_d$Y_trans), length(t_grid))
+                    }
+                    if (!is.na(mse_full) && mse_full > 0 && df_full > 0 && S_tt_i > 0) {
+                        se_mean <- sqrt(mse_full * (1 / n_i + (t_grid - t_bar_i)^2 / S_tt_i))
+                    } else {
+                        se_mean <- rep(NA_real_, length(t_grid))
+                    }
+                    df_b_val <- df_full
+                } else if (selectedModelCode == 2) {
+                    new_df <- data.frame(Batch = factor(b, levels = batchLevels), Time = t_grid)
+                    pred_res <- stats::predict(fit_cs, newdata = new_df, se.fit = TRUE)
+                    y_mean <- pred_res$fit
+                    se_mean <- pred_res$se.fit
+                    df_b_val <- df_cs
+                } else {
+                    new_df <- data.frame(Time = t_grid)
+                    pred_res <- stats::predict(fit_cl, newdata = new_df, se.fit = TRUE)
+                    y_mean <- pred_res$fit
+                    se_mean <- pred_res$se.fit
+                    df_b_val <- df_cl
+                }
+
+                tcrit_plot <- if (is_two_sided) stats::qt(1 - alpha / 2, df = df_b_val) else stats::qt(1 - alpha, df = df_b_val)
+
+                if (specType == "lower") {
+                    b_lower <- y_mean - tcrit_plot * se_mean
+                    b_upper <- y_mean
+                } else if (specType == "upper") {
+                    b_lower <- y_mean
+                    b_upper <- y_mean + tcrit_plot * se_mean
+                } else {
+                    b_lower <- y_mean - tcrit_plot * se_mean
+                    b_upper <- y_mean + tcrit_plot * se_mean
+                }
+
+                if (trans == "log") {
+                    y_disp <- exp(y_mean)
+                    l_disp <- exp(b_lower)
+                    u_disp <- exp(b_upper)
+                } else {
+                    y_disp <- y_mean
+                    l_disp <- b_lower
+                    u_disp <- b_upper
+                }
+
+                pred_list[[b]] <- data.frame(
+                    Time = t_grid,
+                    Batch = factor(b, levels = batchLevels),
+                    Fit = y_disp,
+                    Lower = l_disp,
+                    Upper = u_disp
+                )
+            }
+            pred_df <- do.call(rbind, pred_list)
+            obs_df  <- data.frame(Time = dat$Time, Y = dat$Y, Batch = dat$Batch)
+
+            # 1. stabPlotState
+            stabPlotState <- list(
+                obs_df = obs_df,
+                pred_df = pred_df,
+                specType = specType,
+                lsl = lsl_val,
+                usl = usl_val,
+                ov_ich = ov_ich,
+                ov_stat = ov_stat,
+                limitingBatch = b_lim,
+                limiting_stat_shelf = lim_stat,
+                extrapCap = extrapCap,
+                extrapActive = extrapActive,
+                modelCode = selectedModelCode,
+                timeName = timeName,
+                depName = depName,
+                batchName = batchName,
+                batchLevels = batchLevels
+            )
+            self$results$stabPlot$setState(stabPlotState)
+
+            # 2. shelfPlotState
+            shelf_batch_list <- list()
+            for (b in names(shelfResults$batchRows)) {
+                it <- shelfResults$batchRows[[b]]
+                s_stat_val <- if (is.na(it$statShelf)) NA_real_ else if (is.infinite(it$statShelf)) 999.0 else it$statShelf
+                s_ich_val  <- if (is.na(it$statShelf)) NA_real_ else if (is.infinite(it$statShelf)) extrapCap else min(it$statShelf, extrapCap)
+                is_lim_b   <- (!is.na(b_lim) && b == b_lim && length(shelfResults$batchRows) > 1)
+
+                shelf_batch_list[[b]] <- data.frame(
+                    Batch = b,
+                    StatShelf = s_stat_val,
+                    IchShelf  = s_ich_val,
+                    Limiting  = is_lim_b,
+                    stringsAsFactors = FALSE
+                )
+            }
+            shelf_batch_df <- do.call(rbind, shelf_batch_list)
+
+            shelfPlotState <- list(
+                shelf_batch_df = shelf_batch_df,
+                ov_stat = ov_stat,
+                ov_ich = ov_ich,
+                limitingBatch = b_lim,
+                extrapCap = extrapCap,
+                extrapActive = extrapActive,
+                t_dur = t_dur,
+                batchLevels = batchLevels,
+                batchName = batchName,
+                timeName = timeName
+            )
+            self$results$shelfPlot$setState(shelfPlotState)
+
+            # 3. facetPlotState
+            facetPlotState <- list(
+                obs_df = obs_df,
+                pred_df = pred_df,
+                specType = specType,
+                lsl = lsl_val,
+                usl = usl_val,
+                batchLevels = batchLevels,
+                depName = depName,
+                timeName = timeName,
+                batchName = batchName
+            )
+            self$results$facetPlot$setState(facetPlotState)
+
+            # 4. ratePlotState
+            batch_rate_list <- list()
+            for (b in batchLevels) {
+                sub_d <- dat[dat$Batch == b, , drop = FALSE]
+                if (length(unique(sub_d$Time)) >= 2) {
+                    fit_b <- stats::lm(Y_trans ~ Time, data = sub_d)
+                    sm_b  <- summary(fit_b)$coefficients
+                    if ("Time" %in% rownames(sm_b)) {
+                        b_slope <- sm_b["Time", "Estimate"]
+                        b_se    <- sm_b["Time", "Std. Error"]
+                        df_b    <- fit_b$df.residual
+                        tcrit_b <- if (df_b > 0) stats::qt(0.975, df = df_b) else 1.96
+                        b_low   <- b_slope - tcrit_b * b_se
+                        b_upp   <- b_slope + tcrit_b * b_se
+                    } else {
+                        b_slope <- NA_real_; b_low <- NA_real_; b_upp <- NA_real_
+                    }
+                } else {
+                    b_slope <- NA_real_; b_low <- NA_real_; b_upp <- NA_real_
+                }
+                batch_rate_list[[b]] <- data.frame(
+                    Batch = b,
+                    Slope = b_slope,
+                    Lower = b_low,
+                    Upper = b_upp,
+                    Type = .("Individual Batch"),
+                    stringsAsFactors = FALSE
+                )
+            }
+            df_rates <- do.call(rbind, batch_rate_list)
+
+            if (k >= 2 && "Time" %in% names(stats::coef(fit_cs))) {
+                sm_cs    <- summary(fit_cs)$coefficients
+                cs_slope <- sm_cs["Time", "Estimate"]
+                cs_se    <- sm_cs["Time", "Std. Error"]
+                df_cs_r  <- fit_cs$df.residual
+                tcrit_cs <- if (df_cs_r > 0) stats::qt(0.975, df = df_cs_r) else 1.96
+                cs_low   <- cs_slope - tcrit_cs * cs_se
+                cs_upp   <- cs_slope + tcrit_cs * cs_se
+            } else if (k == 1 && "Time" %in% names(stats::coef(fit_cl))) {
+                sm_cl    <- summary(fit_cl)$coefficients
+                cs_slope <- sm_cl["Time", "Estimate"]
+                cs_se    <- sm_cl["Time", "Std. Error"]
+                df_cl_r  <- fit_cl$df.residual
+                tcrit_cs <- if (df_cl_r > 0) stats::qt(0.975, df = df_cl_r) else 1.96
+                cs_low   <- cs_slope - tcrit_cs * cs_se
+                cs_upp   <- cs_slope + tcrit_cs * cs_se
+            } else {
+                cs_slope <- NA_real_; cs_low <- NA_real_; cs_upp <- NA_real_
+            }
+
+            ratePlotState <- list(
+                df_rates = df_rates,
+                cs_slope = cs_slope,
+                cs_low = cs_low,
+                cs_upp = cs_upp,
+                p_slopes = p_slopes,
+                f_slopes = f_slopes,
+                alphaPool = alphaPool,
+                k = k,
+                depName = depName,
+                timeName = timeName,
+                batchName = batchName,
+                batchLevels = batchLevels
+            )
+            self$results$ratePlot$setState(ratePlotState)
+
+            # 5. predPlotState (Prediction intervals and SRL)
+            b_target <- if (!is.na(b_lim)) b_lim else batchLevels[1]
+            t_star   <- if (!is.na(ov_ich) && !is.infinite(ov_ich) && ov_ich > 0) ov_ich else t_dur
+
+            if (selectedModelCode == 1) {
+                sub_lim <- dat[dat$Batch == b_target, , drop = FALSE]
+                fit_lim <- stats::lm(Y_trans ~ Time, data = sub_lim)
+                pred_lim <- stats::predict(fit_lim, newdata = data.frame(Time = t_grid), se.fit = TRUE)
+                slope_lim <- stats::coef(fit_lim)["Time"]
+                pred_star <- stats::predict(fit_lim, newdata = data.frame(Time = t_star), se.fit = TRUE)
+                mse_pi  <- mse_full
+                df_pi   <- df_full
+            } else if (selectedModelCode == 2) {
+                new_grid <- data.frame(Batch = factor(b_target, levels = batchLevels), Time = t_grid)
+                pred_lim <- stats::predict(fit_cs, newdata = new_grid, se.fit = TRUE)
+                slope_lim <- stats::coef(fit_cs)["Time"]
+                pred_star <- stats::predict(fit_cs, newdata = data.frame(Batch = factor(b_target, levels = batchLevels), Time = t_star), se.fit = TRUE)
+                mse_pi  <- mse_cs
+                df_pi   <- df_cs
+            } else {
+                pred_lim <- stats::predict(fit_cl, newdata = data.frame(Time = t_grid), se.fit = TRUE)
+                slope_lim <- stats::coef(fit_cl)["Time"]
+                pred_star <- stats::predict(fit_cl, newdata = data.frame(Time = t_star), se.fit = TRUE)
+                mse_pi  <- mse_cl
+                df_pi   <- df_cl
+            }
+
+            tcrit_pi <- if (is_two_sided) {
+                if (df_pi > 0) stats::qt(1 - (1 - confLevel) / 2, df = df_pi) else 1.96
+            } else {
+                if (df_pi > 0) stats::qt(confLevel, df = df_pi) else 1.645
+            }
+
+            y_fit_pi <- pred_lim$fit
+            se_mean_pi <- pred_lim$se.fit
+            se_pred_pi <- if (!is.na(mse_pi) && mse_pi > 0) sqrt(mse_pi + se_mean_pi^2) else se_mean_pi
+
+            ci_low_pi <- y_fit_pi - tcrit_pi * se_mean_pi
+            ci_upp_pi <- y_fit_pi + tcrit_pi * se_mean_pi
+            pi_low_pi <- y_fit_pi - tcrit_pi * se_pred_pi
+            pi_upp_pi <- y_fit_pi + tcrit_pi * se_pred_pi
+
+            if (trans == "log") {
+                y_fit_pi  <- exp(y_fit_pi)
+                ci_low_pi <- exp(ci_low_pi)
+                ci_upp_pi <- exp(ci_upp_pi)
+                pi_low_pi <- exp(pi_low_pi)
+                pi_upp_pi <- exp(pi_upp_pi)
+            }
+
+            df_env <- data.frame(
+                Time = t_grid,
+                Fit = y_fit_pi,
+                CI_Low = ci_low_pi,
+                CI_Upp = ci_upp_pi,
+                PI_Low = pi_low_pi,
+                PI_Upp = pi_upp_pi
+            )
+
+            # SRL calculation on transformed scale
+            se_star_pi <- if (!is.na(mse_pi) && mse_pi > 0) sqrt(mse_pi + pred_star$se.fit^2) else pred_star$se.fit
+            margin_srl <- tcrit_pi * se_star_pi
+            srl_lower <- NULL
+            srl_upper <- NULL
+
+            if (specType %in% c("lower", "both") && !is.null(lsl_val) && is.finite(lsl_trans)) {
+                srl_l_t <- lsl_trans - slope_lim * t_star + margin_srl
+                srl_lower <- if (trans == "log") exp(srl_l_t) else srl_l_t
+            }
+            if (specType %in% c("upper", "both") && !is.null(usl_val) && is.finite(usl_trans)) {
+                srl_u_t <- usl_trans - slope_lim * t_star - margin_srl
+                srl_upper <- if (trans == "log") exp(srl_u_t) else srl_u_t
+            }
+
+            predPlotState <- list(
+                obs_df = obs_df,
+                df_env = df_env,
+                srl_lower = srl_lower,
+                srl_upper = srl_upper,
+                specType = specType,
+                lsl = lsl_val,
+                usl = usl_val,
+                ov_ich = ov_ich,
+                t_star = t_star,
+                b_lim = b_target,
+                depName = depName,
+                timeName = timeName,
+                batchName = batchName
+            )
+            self$results$predPlot$setState(predPlotState)
+
+            # 6. diagPlotState
+            diag_fitted <- stats::fitted(chosenFit)
+            diag_resid  <- stats::residuals(chosenFit)
+            diag_rstandard <- tryCatch(stats::rstandard(chosenFit), error = function(e) diag_resid / stats::sd(diag_resid))
+            df_diag <- data.frame(
+                Fitted = diag_fitted,
+                Residuals = diag_resid,
+                StdResiduals = diag_rstandard,
+                SqrtAbsStdRes = sqrt(abs(diag_rstandard)),
+                Time = dat$Time,
+                Batch = dat$Batch
+            )
+
+            diagPlotState <- list(
+                df_diag = df_diag,
+                timeName = timeName,
+                depName = depName,
+                batchName = batchName
+            )
+            self$results$diagPlot$setState(diagPlotState)
+        },
         .populateCoefTable = function(fit) {
             table <- self$results$coefTable
             table$deleteRows()
@@ -693,7 +1068,7 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             terms <- rownames(cf)
             for (i in seq_along(terms)) {
                 t_name <- terms[i]
-                clean_name <- gsub("Batch(?=(batch|серия|партия|lot))", "", t_name, ignore.case = TRUE, perl = TRUE)
+                clean_name <- gsub("Batch(?=(batch|lot))", "", t_name, ignore.case = TRUE, perl = TRUE)
                 clean_name <- gsub("Batch([0-9]+)", "Batch \\1", clean_name)
                 
                 est_val <- if (is.nan(cf[i, 1])) NA_real_ else cf[i, 1]
@@ -841,74 +1216,18 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             state <- image$state
             if (is.null(state)) return(FALSE)
 
-            dat <- state$dat
-            batchLevels <- state$batchLevels
-            modelCode   <- state$selectedModelCode
-            shelfRes    <- state$shelfResults
-            specType    <- state$specType
-            lsl         <- state$lsl
-            usl         <- state$usl
-            trans       <- state$trans
-            depName     <- state$depName
-            timeName    <- state$timeName
-            batchName   <- state$batchName
+            pred_df <- state$pred_df
+            obs_df  <- state$obs_df
+            specType <- state$specType
+            lsl <- state$lsl
+            usl <- state$usl
+            ov_ich <- state$ov_ich
+            modelCode <- state$modelCode
+            timeName <- state$timeName
+            depName <- state$depName
+            batchName <- state$batchName
 
-            calcBound   <- shelfRes$calcBound
-            ov_ich      <- shelfRes$overallIchShelf
-            t_dur       <- shelfRes$t_dur
-
-            # Determine plot time range: from 0 up to max(t_dur, ov_ich * 1.25, 36)
-            t_max_plot <- max(t_dur * 1.25, if (!is.infinite(ov_ich)) ov_ich * 1.25 else 36, 12)
-            t_grid <- seq(0, t_max_plot, length.out = 150)
-
-            # Build prediction dataframe for lines and ribbons
-            pred_list <- list()
-            for (b in batchLevels) {
-                if (modelCode == 1) {
-                    sub_d <- dat[dat$Batch == b, , drop = FALSE]
-                    fit_b <- stats::lm(Y_trans ~ Time, data = sub_d)
-                    y_mean <- stats::predict(fit_b, newdata = data.frame(Time = t_grid))
-                } else if (modelCode == 2) {
-                    y_mean <- stats::predict(state$fit_cs, newdata = data.frame(Batch = factor(b, levels = batchLevels), Time = t_grid))
-                } else {
-                    y_mean <- stats::predict(state$fit_cl, newdata = data.frame(Time = t_grid))
-                }
-
-                # Confidence bounds
-                if (specType == "lower") {
-                    b_lower <- calcBound(b, t_grid, modelCode, "lower")
-                    b_upper <- y_mean
-                } else if (specType == "upper") {
-                    b_lower <- y_mean
-                    b_upper <- calcBound(b, t_grid, modelCode, "upper")
-                } else {
-                    bounds <- calcBound(b, t_grid, modelCode, "both")
-                    b_lower <- bounds$lower
-                    b_upper <- bounds$upper
-                }
-
-                if (trans == "log") {
-                    y_disp <- exp(y_mean)
-                    l_disp <- exp(b_lower)
-                    u_disp <- exp(b_upper)
-                } else {
-                    y_disp <- y_mean
-                    l_disp <- b_lower
-                    u_disp <- b_upper
-                }
-
-                pred_list[[b]] <- data.frame(
-                    Time = t_grid,
-                    Batch = factor(b, levels = batchLevels),
-                    Fit = y_disp,
-                    Lower = l_disp,
-                    Upper = u_disp
-                )
-            }
-            pred_df <- do.call(rbind, pred_list)
-
-            # Base ggplot
-            p <- ggplot2::ggplot(dat, ggplot2::aes(x = Time, y = Y, color = Batch)) +
+            p <- ggplot2::ggplot(obs_df, ggplot2::aes(x = Time, y = Y, color = Batch)) +
                 ggplot2::geom_point(size = 2.5, alpha = 0.85) +
                 ggplot2::geom_line(data = pred_df, ggplot2::aes(x = Time, y = Fit, color = Batch), linewidth = 1.0) +
                 ggplot2::labs(
@@ -916,7 +1235,7 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     subtitle = paste0(
                         .("Adopted:"), " ",
                         if (modelCode == 1) .("Separate slopes & intercepts") else if (modelCode == 2) .("Common slope & separate intercepts") else .("Common slope & intercept (Pooled)"),
-                        "  |  ", .("Permitted Shelf Life:"), " ", private$.formatNum(ov_ich, 1), " ", .("months")
+                        if (!is.na(ov_ich)) paste0("  |  ", .("Permitted Shelf Life:"), " ", private$.formatNum(ov_ich, 1), " ", .("months")) else ""
                     ),
                     x = timeName,
                     y = depName,
@@ -924,100 +1243,74 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     fill = batchName
                 )
 
-            if (!is.null(ggtheme)) {
-                p <- p + ggtheme
-            } else {
-                p <- p + ggplot2::theme_bw(base_size = 12)
-            }
-
-            p <- p + ggplot2::theme(
-                plot.title = ggplot2::element_text(face = "bold", color = "#1B365D", size = 14),
-                plot.subtitle = ggplot2::element_text(color = "#2C3E50", size = 11, margin = ggplot2::margin(b = 10)),
-                legend.position = "bottom",
-                legend.direction = "horizontal",
-                legend.box = "horizontal",
-                legend.justification = "center",
-                panel.grid.minor = ggplot2::element_blank()
-            )
-
-            # Add confidence ribbon
+            # Confidence bands
             if (specType == "lower") {
                 p <- p + ggplot2::geom_ribbon(
-                    data = pred_df,
-                    ggplot2::aes(x = Time, ymin = Lower, ymax = Fit, fill = Batch),
-                    alpha = 0.18, color = NA, inherit.aes = FALSE, show.legend = FALSE
+                    data = pred_df, ggplot2::aes(x = Time, ymin = Lower, ymax = Fit, fill = Batch),
+                    alpha = 0.15, linetype = "dashed", linewidth = 0.4, inherit.aes = FALSE
                 )
             } else if (specType == "upper") {
                 p <- p + ggplot2::geom_ribbon(
-                    data = pred_df,
-                    ggplot2::aes(x = Time, ymin = Fit, ymax = Upper, fill = Batch),
-                    alpha = 0.18, color = NA, inherit.aes = FALSE, show.legend = FALSE
+                    data = pred_df, ggplot2::aes(x = Time, ymin = Fit, ymax = Upper, fill = Batch),
+                    alpha = 0.15, linetype = "dashed", linewidth = 0.4, inherit.aes = FALSE
                 )
             } else {
                 p <- p + ggplot2::geom_ribbon(
-                    data = pred_df,
-                    ggplot2::aes(x = Time, ymin = Lower, ymax = Upper, fill = Batch),
-                    alpha = 0.18, color = NA, inherit.aes = FALSE, show.legend = FALSE
+                    data = pred_df, ggplot2::aes(x = Time, ymin = Lower, ymax = Upper, fill = Batch),
+                    alpha = 0.15, linetype = "dashed", linewidth = 0.4, inherit.aes = FALSE
                 )
             }
 
-            # Specification limit horizontal lines
+            # Specification limits
             if (specType %in% c("lower", "both") && !is.null(lsl)) {
                 p <- p + ggplot2::geom_hline(
-                    yintercept = lsl,
-                    linetype = "dashed",
-                    color = "#C0392B",
-                    linewidth = 0.9
+                    yintercept = lsl, linetype = "solid", color = "#C0392B", linewidth = 0.9
                 ) + ggplot2::annotate(
-                    "text", x = 1, y = lsl, label = paste0("LSL = ", private$.formatNum(lsl, 1)),
-                    vjust = -0.5, hjust = 0, color = "#C0392B", fontface = "bold", size = 3.8
+                    "text", x = 0, y = lsl, label = paste0("LSL = ", lsl),
+                    hjust = -0.05, vjust = -0.5, size = 3.3, color = "#C0392B", fontface = "bold"
                 )
             }
-
             if (specType %in% c("upper", "both") && !is.null(usl)) {
                 p <- p + ggplot2::geom_hline(
-                    yintercept = usl,
-                    linetype = "dashed",
-                    color = "#C0392B",
-                    linewidth = 0.9
+                    yintercept = usl, linetype = "solid", color = "#C0392B", linewidth = 0.9
                 ) + ggplot2::annotate(
-                    "text", x = 1, y = usl, label = paste0("USL = ", private$.formatNum(usl, 1)),
-                    vjust = 1.3, hjust = 0, color = "#C0392B", fontface = "bold", size = 3.8
+                    "text", x = 0, y = usl, label = paste0("USL = ", usl),
+                    hjust = -0.05, vjust = 1.3, size = 3.3, color = "#C0392B", fontface = "bold"
                 )
             }
 
-            # Mark Observed study duration (Real-time data boundary)
-            p <- p + ggplot2::geom_vline(
-                xintercept = t_dur,
-                linetype = "dotted",
-                color = "#7F8C8D",
-                linewidth = 0.8
-            ) + ggplot2::annotate(
-                "text", x = t_dur, y = Inf, label = paste0(.("Observed"), ": ", private$.formatNum(t_dur, 1), " ", .("months")),
-                vjust = 1.5, hjust = 1.05, color = "#7F8C8D", size = 3.4
-            )
-
-            # Mark Permitted Shelf Life
-            if (!is.infinite(ov_ich) && ov_ich > 0) {
+            # Extrapolation cap vertical line
+            if (isTRUE(state$extrapActive) && !is.na(state$extrapCap) && !is.infinite(state$extrapCap)) {
                 p <- p + ggplot2::geom_vline(
-                    xintercept = ov_ich,
-                    linetype = "longdash",
-                    color = "#27AE60",
-                    linewidth = 1.0
+                    xintercept = state$extrapCap, linetype = "dotdash", color = "#7D3C98", linewidth = 0.8
+                ) + ggplot2::annotate(
+                    "label", x = state$extrapCap, y = Inf,
+                    label = paste0(.("Extrapolation Limit:"), " ", private$.formatNum(state$extrapCap, 1), " ", .("mo")),
+                    vjust = 1.3, hjust = 1.05, fill = "white", color = "#7D3C98", size = 3.2,
+                    label.padding = ggplot2::unit(0.18, "lines"), label.r = ggplot2::unit(0.15, "lines")
+                )
+            }
+
+            # Shelf life vertical line
+            if (!is.na(ov_ich) && !is.infinite(ov_ich) && ov_ich > 0) {
+                p <- p + ggplot2::geom_vline(
+                    xintercept = ov_ich, linetype = "longdash", color = "#27AE60", linewidth = 1.0
                 ) + ggplot2::annotate(
                     "label", x = ov_ich, y = -Inf,
                     label = paste0(.("Shelf Life"), ": ", private$.formatNum(ov_ich, 1), " ", .("months")),
-                    vjust = -0.4, hjust = 1.05,
-                    fill = "white", color = "#27AE60", fontface = "bold", size = 3.6,
+                    vjust = -0.4, hjust = 1.05, fill = "white", color = "#27AE60", fontface = "bold", size = 3.6,
                     label.padding = ggplot2::unit(0.2, "lines"), label.r = ggplot2::unit(0.15, "lines")
                 )
             }
 
+            if (!is.null(ggtheme)) p <- p + ggtheme else p <- p + ggplot2::theme_bw(base_size = 12)
             p <- p + ggplot2::theme(
                 legend.position = "bottom",
                 legend.direction = "horizontal",
                 legend.box = "horizontal",
-                legend.justification = "center"
+                legend.justification = "center",
+                plot.title = ggplot2::element_text(face = "bold", color = "#1B365D", size = 13),
+                plot.subtitle = ggplot2::element_text(color = "#2C3E50", size = 10.5, margin = ggplot2::margin(b = 10))
             )
 
             print(p)
@@ -1028,72 +1321,122 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             state <- image$state
             if (is.null(state)) return(FALSE)
 
-            batchLevels <- state$batchLevels
-            shelfRes    <- state$shelfResults
-            ov_ich      <- shelfRes$overallIchShelf
-            t_dur       <- shelfRes$t_dur
-            extrapCap   <- shelfRes$extrapCap
+            batch_df    <- state$shelf_batch_df
+            ov_ich      <- state$ov_ich
+            ov_stat     <- state$ov_stat
+            t_dur       <- state$t_dur
+            extrapCap   <- state$extrapCap
+            extrapActive <- isTRUE(state$extrapActive)
+            b_lim       <- state$limitingBatch
             batchName   <- state$batchName
+            batchLevels <- state$batchLevels
 
-            batchRows <- shelfRes$batchRows
-            shelves <- sapply(batchLevels, function(b) {
-                s <- batchRows[[b]]$statShelf
-                if (is.null(s) || is.na(s)) 0 else s
-            })
+            if (is.null(batch_df) || nrow(batch_df) == 0) return(FALSE)
 
-            is_lim <- sapply(batchLevels, function(b) {
-                if (!is.null(shelfRes$limitingBatch) && b == shelfRes$limitingBatch) TRUE else FALSE
-            })
+            batch_df$Batch <- factor(batch_df$Batch, levels = rev(batchLevels))
 
-            df_shelf <- data.frame(
-                Batch = factor(batchLevels, levels = rev(batchLevels)),
-                ShelfLife = as.numeric(shelves),
-                Limiting = factor(ifelse(is_lim, .("Limiting batch"), .("Other batches")), levels = c(.("Limiting batch"), .("Other batches")))
+            lim_label   <- .("Limiting batch")
+            other_label <- .("Other batches")
+            batch_df$Status <- factor(
+                ifelse(batch_df$Limiting, lim_label, other_label),
+                levels = c(lim_label, other_label)
             )
 
-            p <- ggplot2::ggplot(df_shelf, ggplot2::aes(x = ShelfLife, y = Batch)) +
-                ggplot2::geom_segment(ggplot2::aes(x = 0, xend = ShelfLife, y = Batch, yend = Batch), linewidth = 1.2, color = "#2C3E50") +
-                ggplot2::geom_point(ggplot2::aes(color = Limiting), size = 4.5) +
-                ggplot2::geom_text(
-                    ggplot2::aes(label = paste0(private$.formatNum(ShelfLife, 1), " ", .("months"))),
-                    hjust = -0.2, size = 3.5, fontface = "bold", color = "#2C3E50"
+            valid_df <- batch_df[!is.na(batch_df$StatShelf), , drop = FALSE]
+            na_df    <- batch_df[is.na(batch_df$StatShelf), , drop = FALSE]
+
+            val_shelf <- valid_df$StatShelf[valid_df$StatShelf < 900]
+            max_stat  <- if (length(val_shelf) > 0) max(val_shelf, na.rm = TRUE) else t_dur
+            max_ref   <- max(c(max_stat, t_dur, if (!is.na(extrapCap) && !is.infinite(extrapCap)) extrapCap else 0, if (!is.na(ov_ich) && !is.infinite(ov_ich)) ov_ich else 0), na.rm = TRUE)
+            max_x     <- max_ref * 1.30
+
+            p <- ggplot2::ggplot(batch_df, ggplot2::aes(y = Batch))
+
+            if (nrow(valid_df) > 0) {
+                plot_valid <- valid_df
+                plot_valid$PlotShelf <- ifelse(plot_valid$StatShelf >= 900, max_x * 0.92, plot_valid$StatShelf)
+                plot_valid$LabelText <- ifelse(
+                    plot_valid$StatShelf >= 900,
+                    paste0("> ", private$.formatNum(max_stat, 0), " ", .("months")),
+                    paste0(private$.formatNum(plot_valid$StatShelf, 1), " ", .("months"))
                 )
 
-            # Reference line: Observed duration
+                p <- p + ggplot2::geom_segment(
+                    data = plot_valid,
+                    ggplot2::aes(x = 0, xend = PlotShelf, y = Batch, yend = Batch),
+                    linewidth = 1.2, color = "#2C3E50"
+                ) +
+                ggplot2::geom_point(
+                    data = plot_valid,
+                    ggplot2::aes(x = PlotShelf, color = Status),
+                    size = 4.5
+                ) +
+                ggplot2::geom_text(
+                    data = plot_valid,
+                    ggplot2::aes(x = PlotShelf, label = LabelText),
+                    hjust = -0.2, size = 3.5, fontface = "bold", color = "#2C3E50"
+                )
+            }
+
+            if (nrow(na_df) > 0) {
+                p <- p + ggplot2::geom_point(
+                    data = na_df,
+                    ggplot2::aes(x = 0),
+                    color = "#95A5A6", size = 4.0, shape = 4, stroke = 1.5
+                ) +
+                ggplot2::geom_text(
+                    data = na_df,
+                    ggplot2::aes(x = 0, label = paste0("  [", .("Undetermined"), "]")),
+                    hjust = 0, size = 3.3, fontface = "italic", color = "#7F8C8D"
+                )
+            }
+
+            # Reference line 1: Observed duration
             p <- p + ggplot2::geom_vline(xintercept = t_dur, linetype = "dotted", color = "#7F8C8D", linewidth = 0.9) +
                 ggplot2::annotate(
-                    "text", x = t_dur, y = Inf, label = paste0(.("Observed"), ": ", private$.formatNum(t_dur, 1), " ", .("months")),
+                    "text", x = t_dur, y = Inf,
+                    label = paste0(.("Observed"), ": ", private$.formatNum(t_dur, 1), " ", .("months")),
                     vjust = 1.5, hjust = 1.05, color = "#7F8C8D", size = 3.2
                 )
 
-            # Reference line: Extrapolation Cap
-            if (!is.infinite(extrapCap) && extrapCap > 0) {
+            # Reference line 2: Extrapolation Cap (when extrapCap > t_dur and finite)
+            if (!is.na(extrapCap) && !is.infinite(extrapCap) && extrapCap > t_dur) {
                 p <- p + ggplot2::geom_vline(xintercept = extrapCap, linetype = "dashed", color = "#2980B9", linewidth = 0.9) +
                     ggplot2::annotate(
-                        "text", x = extrapCap, y = Inf, label = paste0(.("Extrapolation Cap"), ": ", private$.formatNum(extrapCap, 1), " ", .("months")),
+                        "text", x = extrapCap, y = Inf,
+                        label = paste0(.("Extrapolation Cap"), ": ", private$.formatNum(extrapCap, 1), " ", .("months")),
                         vjust = 1.5, hjust = -0.05, color = "#2980B9", size = 3.2
                     )
             }
 
-            # Reference line: Permitted Shelf Life
-            if (!is.infinite(ov_ich) && ov_ich > 0) {
+            # Reference line 3: Permitted Shelf Life
+            if (!is.na(ov_ich) && !is.infinite(ov_ich) && ov_ich > 0) {
                 p <- p + ggplot2::geom_vline(xintercept = ov_ich, linetype = "solid", color = "#27AE60", linewidth = 1.1) +
                     ggplot2::annotate(
-                        "text", x = ov_ich, y = -Inf, label = paste0(.("Permitted Shelf Life"), ": ", private$.formatNum(ov_ich, 1), " ", .("months")),
+                        "text", x = ov_ich, y = -Inf,
+                        label = paste0(.("Permitted Shelf Life"), ": ", private$.formatNum(ov_ich, 1), " ", .("months")),
                         vjust = -0.8, hjust = -0.05, color = "#27AE60", fontface = "bold", size = 3.5
                     )
             }
 
-            max_x <- max(c(df_shelf$ShelfLife, t_dur, if (!is.infinite(extrapCap)) extrapCap else 0, if (!is.infinite(ov_ich)) ov_ich else 0), na.rm = TRUE)
-            p <- p + ggplot2::coord_cartesian(xlim = c(0, max_x * 1.25))
+            p <- p + ggplot2::coord_cartesian(xlim = c(0, max_x), clip = "off")
+
+            lim_info <- if (extrapActive) {
+                .("Capped by extrapolation rule")
+            } else if (!is.null(b_lim) && !is.na(b_lim)) {
+                paste0(.("Limiting Batch:"), " ", b_lim)
+            } else ""
+
+            sub_text <- if (!is.na(ov_ich)) {
+                paste0(
+                    .("Permitted Shelf Life:"), " ", private$.formatNum(ov_ich, 1), " ", .("months"),
+                    if (length(batchLevels) > 1 && nzchar(lim_info)) paste0("  |  ", lim_info) else ""
+                )
+            } else ""
 
             p <- p + ggplot2::labs(
                 title = paste0(.("Shelf Life Comparison & Extrapolation Horizon"), " (ICH Q1E)"),
-                subtitle = paste0(
-                    .("Permitted Shelf Life:"), " ", private$.formatNum(ov_ich, 1), " ", .("months"),
-                    "  |  ",
-                    if (isTRUE(shelfRes$extrapActive)) .("Capped by extrapolation rule") else paste0(.("Limiting Batch:"), " ", shelfRes$limitingBatch)
-                ),
+                subtitle = sub_text,
                 x = .("Shelf Life (months)"),
                 y = batchName,
                 color = ""
@@ -1102,16 +1445,18 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             if (!is.null(ggtheme)) p <- p + ggtheme else p <- p + ggplot2::theme_bw(base_size = 12)
             p <- p + ggplot2::scale_color_manual(
                 name = "",
-                values = stats::setNames(c("#C0392B", "#1B365D"), c(.("Limiting batch"), .("Other batches")))
+                values = stats::setNames(c("#C0392B", "#1B365D"), c(lim_label, other_label)),
+                drop = FALSE
             )
             p <- p + ggplot2::theme(
                 plot.title = ggplot2::element_text(face = "bold", color = "#1B365D", size = 13),
-                plot.subtitle = ggplot2::element_text(color = "#2C3E50", size = 11, margin = ggplot2::margin(b = 10)),
+                plot.subtitle = ggplot2::element_text(color = "#2C3E50", size = 10.5, margin = ggplot2::margin(b = 10)),
                 legend.position = "bottom",
                 legend.direction = "horizontal",
                 legend.box = "horizontal",
                 legend.justification = "center",
-                panel.grid.minor = ggplot2::element_blank()
+                panel.grid.minor = ggplot2::element_blank(),
+                plot.margin = ggplot2::margin(t = 8, r = 25, b = 8, l = 8)
             )
 
             print(p)
@@ -1122,118 +1467,56 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             state <- image$state
             if (is.null(state)) return(FALSE)
 
-            dat <- state$dat
-            batchLevels <- state$batchLevels
-            modelCode   <- state$selectedModelCode
-            shelfRes    <- state$shelfResults
-            specType    <- state$specType
-            lsl         <- state$lsl
-            usl         <- state$usl
-            trans       <- state$trans
-            depName     <- state$depName
-            timeName    <- state$timeName
-            batchName   <- state$batchName
+            obs_df   <- state$obs_df
+            pred_df  <- state$pred_df
+            specType <- state$specType
+            lsl      <- state$lsl
+            usl      <- state$usl
+            depName  <- state$depName
+            timeName <- state$timeName
 
-            calcBound   <- shelfRes$calcBound
-            t_dur       <- shelfRes$t_dur
-            ov_ich      <- shelfRes$overallIchShelf
-
-            t_max_plot <- max(t_dur * 1.25, if (!is.infinite(ov_ich)) ov_ich * 1.25 else 36, 12)
-            t_grid <- seq(0, t_max_plot, length.out = 150)
-
-            pred_list <- list()
-            for (b in batchLevels) {
-                if (modelCode == 1) {
-                    sub_d <- dat[dat$Batch == b, , drop = FALSE]
-                    fit_b <- stats::lm(Y_trans ~ Time, data = sub_d)
-                    y_mean <- stats::predict(fit_b, newdata = data.frame(Time = t_grid))
-                } else if (modelCode == 2) {
-                    y_mean <- stats::predict(state$fit_cs, newdata = data.frame(Batch = factor(b, levels = batchLevels), Time = t_grid))
-                } else {
-                    y_mean <- stats::predict(state$fit_cl, newdata = data.frame(Time = t_grid))
-                }
-
-                if (specType == "lower") {
-                    b_lower <- calcBound(b, t_grid, modelCode, "lower")
-                    b_upper <- y_mean
-                } else if (specType == "upper") {
-                    b_lower <- y_mean
-                    b_upper <- calcBound(b, t_grid, modelCode, "upper")
-                } else {
-                    bounds <- calcBound(b, t_grid, modelCode, "both")
-                    b_lower <- bounds$lower
-                    b_upper <- bounds$upper
-                }
-
-                if (trans == "log") {
-                    y_disp <- exp(y_mean)
-                    l_disp <- exp(b_lower)
-                    u_disp <- exp(b_upper)
-                } else {
-                    y_disp <- y_mean
-                    l_disp <- b_lower
-                    u_disp <- b_upper
-                }
-
-                pred_list[[b]] <- data.frame(
-                    Time = t_grid,
-                    Batch = factor(b, levels = batchLevels),
-                    Fit = y_disp,
-                    Lower = l_disp,
-                    Upper = u_disp
-                )
-            }
-            pred_df <- do.call(rbind, pred_list)
-
-            p <- ggplot2::ggplot(dat, ggplot2::aes(x = Time, y = Y)) +
-                ggplot2::geom_point(color = "#1B365D", size = 2, alpha = 0.8) +
-                ggplot2::geom_line(data = pred_df, ggplot2::aes(x = Time, y = Fit), color = "#2980B9", linewidth = 0.9, inherit.aes = FALSE)
+            p <- ggplot2::ggplot(obs_df, ggplot2::aes(x = Time, y = Y)) +
+                ggplot2::geom_point(color = "#2C3E50", size = 2.2, alpha = 0.8) +
+                ggplot2::geom_line(data = pred_df, ggplot2::aes(x = Time, y = Fit), color = "#2980B9", linewidth = 0.95)
 
             if (specType == "lower") {
-                p <- p + ggplot2::geom_ribbon(data = pred_df, ggplot2::aes(x = Time, ymin = Lower, ymax = Fit), alpha = 0.2, fill = "#2980B9", inherit.aes = FALSE)
+                p <- p + ggplot2::geom_ribbon(
+                    data = pred_df, ggplot2::aes(x = Time, ymin = Lower, ymax = Fit),
+                    fill = "#2980B9", alpha = 0.18, linetype = "dashed", linewidth = 0.35, inherit.aes = FALSE
+                )
             } else if (specType == "upper") {
-                p <- p + ggplot2::geom_ribbon(data = pred_df, ggplot2::aes(x = Time, ymin = Fit, ymax = Upper), alpha = 0.2, fill = "#2980B9", inherit.aes = FALSE)
+                p <- p + ggplot2::geom_ribbon(
+                    data = pred_df, ggplot2::aes(x = Time, ymin = Fit, ymax = Upper),
+                    fill = "#2980B9", alpha = 0.18, linetype = "dashed", linewidth = 0.35, inherit.aes = FALSE
+                )
             } else {
-                p <- p + ggplot2::geom_ribbon(data = pred_df, ggplot2::aes(x = Time, ymin = Lower, ymax = Upper), alpha = 0.2, fill = "#2980B9", inherit.aes = FALSE)
+                p <- p + ggplot2::geom_ribbon(
+                    data = pred_df, ggplot2::aes(x = Time, ymin = Lower, ymax = Upper),
+                    fill = "#2980B9", alpha = 0.18, linetype = "dashed", linewidth = 0.35, inherit.aes = FALSE
+                )
             }
 
             if (specType %in% c("lower", "both") && !is.null(lsl)) {
-                p <- p + ggplot2::geom_hline(yintercept = lsl, linetype = "dashed", color = "#C0392B", linewidth = 0.8)
+                p <- p + ggplot2::geom_hline(yintercept = lsl, linetype = "solid", color = "#C0392B", linewidth = 0.75)
             }
             if (specType %in% c("upper", "both") && !is.null(usl)) {
-                p <- p + ggplot2::geom_hline(yintercept = usl, linetype = "dashed", color = "#C0392B", linewidth = 0.8)
+                p <- p + ggplot2::geom_hline(yintercept = usl, linetype = "solid", color = "#C0392B", linewidth = 0.75)
             }
 
-            batch_shelf_df <- data.frame(
-                Batch = factor(batchLevels, levels = batchLevels),
-                StatShelf = sapply(batchLevels, function(b) shelfRes$batchRows[[b]]$statShelf)
-            )
-            batch_shelf_df <- batch_shelf_df[!is.infinite(batch_shelf_df$StatShelf) & batch_shelf_df$StatShelf > 0, ]
-            if (nrow(batch_shelf_df) > 0) {
-                p <- p + ggplot2::geom_vline(data = batch_shelf_df, ggplot2::aes(xintercept = StatShelf), linetype = "longdash", color = "#27AE60", linewidth = 0.8, inherit.aes = FALSE)
-            }
-
-            p <- p + ggplot2::facet_wrap(~ Batch, labeller = ggplot2::label_both)
-
-            p <- p + ggplot2::labs(
-                title = paste0(.("Individual Batch Trajectories"), " (ICH Q1E)"),
-                subtitle = paste0(
-                    .("Adopted:"), " ",
-                    if (modelCode == 1) .("Separate slopes & intercepts") else if (modelCode == 2) .("Common slope & separate intercepts") else .("Common slope & intercept (Pooled)")
-                ),
-                x = timeName,
-                y = depName
-            )
+            p <- p + ggplot2::facet_wrap(~ Batch, scales = "fixed") +
+                ggplot2::labs(
+                    title = paste0(.("Individual Batch Stability Trajectories"), " (ICH Q1E)"),
+                    subtitle = .("Observed data, regression fits, and 95% confidence bands per batch"),
+                    x = timeName,
+                    y = depName
+                )
 
             if (!is.null(ggtheme)) p <- p + ggtheme else p <- p + ggplot2::theme_bw(base_size = 11)
             p <- p + ggplot2::theme(
-                plot.title = ggplot2::element_text(face = "bold", color = "#1B365D", size = 13),
+                plot.title = ggplot2::element_text(face = "bold", color = "#1B365D", size = 12.5),
                 plot.subtitle = ggplot2::element_text(color = "#2C3E50", size = 10, margin = ggplot2::margin(b = 8)),
-                legend.position = "bottom",
-                legend.direction = "horizontal",
-                legend.box = "horizontal",
-                legend.justification = "center",
-                panel.grid.minor = ggplot2::element_blank()
+                strip.background = ggplot2::element_rect(fill = "#EAECEE", color = "#BDC3C7"),
+                strip.text = ggplot2::element_text(face = "bold", size = 10)
             )
 
             print(p)
@@ -1244,90 +1527,72 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             state <- image$state
             if (is.null(state)) return(FALSE)
 
-            dat <- state$dat
-            batchLevels <- state$batchLevels
-            alphaPool   <- state$alphaPool
-            depName     <- state$depName
-            timeName    <- state$timeName
-            batchName   <- state$batchName
+            df_rates  <- state$df_rates
+            cs_slope  <- state$cs_slope
+            cs_low    <- state$cs_low
+            cs_upp    <- state$cs_upp
+            p_slopes  <- state$p_slopes
+            f_slopes  <- state$f_slopes
+            alphaPool <- state$alphaPool
+            k         <- state$k
+            depName   <- state$depName
+            timeName  <- state$timeName
+            batchName <- state$batchName
 
-            # Calculate individual batch slopes with 95% CIs
-            batch_rate_list <- list()
-            for (b in batchLevels) {
-                sub_d <- dat[dat$Batch == b, , drop = FALSE]
-                fit_b <- stats::lm(Y_trans ~ Time, data = sub_d)
-                sm_b  <- summary(fit_b)$coefficients
-                b_slope <- sm_b["Time", "Estimate"]
-                b_se    <- sm_b["Time", "Std. Error"]
-                df_b    <- fit_b$df.residual
-                tcrit_b <- if (df_b > 0) stats::qt(0.975, df = df_b) else 1.96
-                batch_rate_list[[b]] <- data.frame(
-                    Batch = b,
-                    Slope = b_slope,
-                    Lower = b_slope - tcrit_b * b_se,
-                    Upper = b_slope + tcrit_b * b_se,
-                    Type = .("Individual Batch"),
+            # Combine individual rates with pooled slope if k >= 2
+            if (k >= 2 && !is.na(cs_slope)) {
+                row_cs <- data.frame(
+                    Batch = .("Pooled Slope"),
+                    Slope = cs_slope,
+                    Lower = cs_low,
+                    Upper = cs_upp,
+                    Type = .("Pooled slope"),
                     stringsAsFactors = FALSE
                 )
+                plot_data <- rbind(df_rates, row_cs)
+                plot_data$Batch <- factor(plot_data$Batch, levels = rev(c(state$batchLevels, .("Pooled Slope"))))
+            } else {
+                plot_data <- df_rates
+                plot_data$Batch <- factor(plot_data$Batch, levels = rev(state$batchLevels))
             }
-            df_rates <- do.call(rbind, batch_rate_list)
 
-            # Common slope estimate from CS model
-            fit_cs <- stats::lm(Y_trans ~ Batch + Time, data = dat)
-            sm_cs  <- summary(fit_cs)$coefficients
-            cs_slope <- sm_cs["Time", "Estimate"]
-            cs_se    <- sm_cs["Time", "Std. Error"]
-            df_cs    <- fit_cs$df.residual
-            tcrit_cs <- if (df_cs > 0) stats::qt(0.975, df = df_cs) else 1.96
-
-            pooled_row <- data.frame(
-                Batch = .("Pooled Slope"),
-                Slope = cs_slope,
-                Lower = cs_slope - tcrit_cs * cs_se,
-                Upper = cs_slope + tcrit_cs * cs_se,
-                Type = .("Pooled Slope"),
-                stringsAsFactors = FALSE
-            )
-            df_rates <- rbind(df_rates, pooled_row)
-            df_rates$Batch <- factor(df_rates$Batch, levels = rev(c(batchLevels, .("Pooled Slope"))))
-            df_rates$Type <- factor(df_rates$Type, levels = c(.("Individual Batch"), .("Pooled Slope")))
-
-            # Equality of slopes F-test
-            fit_sep <- stats::lm(Y_trans ~ Batch * Time, data = dat)
-            an_slopes <- stats::anova(fit_cs, fit_sep)
-            f_slope <- an_slopes$F[2]
-            p_slope <- an_slopes[["Pr(>F)"]][2]
-
-            p <- ggplot2::ggplot(df_rates, ggplot2::aes(x = Slope, y = Batch, color = Type)) +
-                ggplot2::geom_vline(xintercept = 0, linetype = "dashed", color = "#7F8C8D") +
-                ggplot2::geom_vline(xintercept = cs_slope, linetype = "dotted", color = "#2980B9", linewidth = 0.8) +
-                ggplot2::geom_errorbar(ggplot2::aes(xmin = Lower, xmax = Upper), width = 0.25, linewidth = 0.9) +
+            p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = Slope, y = Batch, color = Type)) +
                 ggplot2::geom_point(size = 3.5) +
-                ggplot2::labs(
-                    title = paste0(.("Batch Degradation Rates & ANCOVA Slope Comparison"), " (ICH Q1E)"),
-                    subtitle = paste0(
-                        .("Equality of Slopes:"), " F = ", private$.formatNum(f_slope, 2),
-                        ", p = ", private$.formatNum(p_slope, 4),
-                        " (", if (!is.na(p_slope) && p_slope >= alphaPool) .("Slopes are poolable") else .("Slopes differ significantly"), ")"
-                    ),
-                    x = paste0(.("Degradation Rate"), " (", depName, " / ", timeName, ")"),
-                    y = batchName,
-                    color = ""
+                ggplot2::geom_errorbarh(ggplot2::aes(xmin = Lower, xmax = Upper), height = 0.25, linewidth = 0.8) +
+                ggplot2::geom_vline(xintercept = 0, linetype = "dashed", color = "#7F8C8D")
+
+            if (k >= 2 && !is.na(cs_slope)) {
+                p <- p + ggplot2::geom_vline(xintercept = cs_slope, linetype = "dotted", color = "#8E44AD", linewidth = 0.7)
+            }
+
+            subtitle_text <- if (k < 2) {
+                .("Single batch degradation rate with 95% confidence interval")
+            } else if (!is.na(p_slopes)) {
+                paste0(
+                    .("Slopes ANCOVA Test:"), " F = ", private$.formatNum(f_slopes, 2),
+                    ", p = ", private$.formatNum(p_slopes, 4),
+                    " (", if (p_slopes >= alphaPool) .("Slopes are poolable") else .("Slopes differ significantly"), ")"
                 )
+            } else {
+                .("Degradation rates across evaluated batches")
+            }
+
+            p <- p + ggplot2::labs(
+                title = paste0(.("Degradation Rates / Slopes Comparison"), " (95% CI)"),
+                subtitle = subtitle_text,
+                x = paste0(.("Rate of Change"), " (", depName, " / ", timeName, ")"),
+                y = batchName,
+                color = .("Type")
+            )
 
             if (!is.null(ggtheme)) p <- p + ggtheme else p <- p + ggplot2::theme_bw(base_size = 12)
-            p <- p + ggplot2::scale_color_manual(
-                name = "",
-                values = stats::setNames(c("#1B365D", "#27AE60"), c(.("Individual Batch"), .("Pooled Slope")))
-            )
             p <- p + ggplot2::theme(
                 plot.title = ggplot2::element_text(face = "bold", color = "#1B365D", size = 13),
-                plot.subtitle = ggplot2::element_text(color = "#2C3E50", size = 11, margin = ggplot2::margin(b = 10)),
+                plot.subtitle = ggplot2::element_text(color = "#2C3E50", size = 10, margin = ggplot2::margin(b = 10)),
                 legend.position = "bottom",
                 legend.direction = "horizontal",
                 legend.box = "horizontal",
-                legend.justification = "center",
-                panel.grid.minor = ggplot2::element_blank()
+                legend.justification = "center"
             )
 
             print(p)
@@ -1338,97 +1603,31 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             state <- image$state
             if (is.null(state)) return(FALSE)
 
-            dat <- state$dat
-            batchLevels <- state$batchLevels
-            modelCode   <- state$selectedModelCode
-            shelfRes    <- state$shelfResults
-            specType    <- state$specType
-            lsl         <- state$lsl
-            usl         <- state$usl
-            trans       <- state$trans
-            depName     <- state$depName
-            timeName    <- state$timeName
-            batchName   <- state$batchName
-            confLevel   <- state$confLevel
+            obs_df    <- state$obs_df
+            df_env    <- state$df_env
+            srl_lower <- state$srl_lower
+            srl_upper <- state$srl_upper
+            specType  <- state$specType
+            lsl       <- state$lsl
+            usl       <- state$usl
+            ov_ich    <- state$ov_ich
+            t_star    <- state$t_star
+            b_lim     <- state$b_lim
+            depName   <- state$depName
+            timeName  <- state$timeName
+            batchName <- state$batchName
 
-            ov_ich <- shelfRes$overallIchShelf
-            t_dur  <- shelfRes$t_dur
-            b_lim  <- if (!is.null(shelfRes$limitingBatch)) shelfRes$limitingBatch else batchLevels[1]
-
-            t_max_plot <- max(t_dur * 1.25, if (!is.infinite(ov_ich)) ov_ich * 1.25 else 36, 12)
-            t_grid <- seq(0, t_max_plot, length.out = 150)
-
-            # Fit for limiting batch
-            if (modelCode == 1) {
-                fit_lim <- stats::lm(Y_trans ~ Time, data = dat[dat$Batch == b_lim, , drop = FALSE])
-                pred_lim <- stats::predict(fit_lim, newdata = data.frame(Time = t_grid), se.fit = TRUE)
-                mse_lim <- summary(fit_lim)$sigma^2
-                df_lim  <- fit_lim$df.residual
-                slope_lim <- stats::coef(fit_lim)["Time"]
-                pred_star <- stats::predict(fit_lim, newdata = data.frame(Time = if (!is.infinite(ov_ich) && ov_ich > 0) ov_ich else t_dur), se.fit = TRUE)
-            } else if (modelCode == 2) {
-                pred_lim <- stats::predict(state$fit_cs, newdata = data.frame(Batch = factor(b_lim, levels = batchLevels), Time = t_grid), se.fit = TRUE)
-                mse_lim <- summary(state$fit_cs)$sigma^2
-                df_lim  <- state$fit_cs$df.residual
-                slope_lim <- stats::coef(state$fit_cs)["Time"]
-                pred_star <- stats::predict(state$fit_cs, newdata = data.frame(Batch = factor(b_lim, levels = batchLevels), Time = if (!is.infinite(ov_ich) && ov_ich > 0) ov_ich else t_dur), se.fit = TRUE)
-            } else {
-                pred_lim <- stats::predict(state$fit_cl, newdata = data.frame(Time = t_grid), se.fit = TRUE)
-                mse_lim <- summary(state$fit_cl)$sigma^2
-                df_lim  <- state$fit_cl$df.residual
-                slope_lim <- stats::coef(state$fit_cl)["Time"]
-                pred_star <- stats::predict(state$fit_cl, newdata = data.frame(Time = if (!is.infinite(ov_ich) && ov_ich > 0) ov_ich else t_dur), se.fit = TRUE)
-            }
-
-            tcrit_ci <- if (df_lim > 0) stats::qt(confLevel, df = df_lim) else 1.645
-            y_fit   <- pred_lim$fit
-            se_mean <- pred_lim$se.fit
-            se_pred <- sqrt(mse_lim + se_mean^2)
-
-            ci_low <- y_fit - tcrit_ci * se_mean
-            ci_upp <- y_fit + tcrit_ci * se_mean
-            pi_low <- y_fit - tcrit_ci * se_pred
-            pi_upp <- y_fit + tcrit_ci * se_pred
-
-            if (trans == "log") {
-                y_fit  <- exp(y_fit)
-                ci_low <- exp(ci_low)
-                ci_upp <- exp(ci_upp)
-                pi_low <- exp(pi_low)
-                pi_upp <- exp(pi_upp)
-            }
-
-            df_env <- data.frame(
-                Time = t_grid,
-                Fit = y_fit,
-                CI_Low = ci_low,
-                CI_Upp = ci_upp,
-                PI_Low = pi_low,
-                PI_Upp = pi_upp
-            )
-
-            # Calculate SRL (Release Limit)
-            t_star <- if (!is.infinite(ov_ich) && ov_ich > 0) ov_ich else t_dur
-            se_pred_star <- sqrt(mse_lim + pred_star$se.fit^2)
-            margin_pi <- tcrit_ci * se_pred_star
-            srl_val <- NULL
-            if (specType %in% c("lower", "both") && !is.null(lsl)) {
-                srl_val <- lsl - slope_lim * t_star + margin_pi
-            } else if (specType == "upper" && !is.null(usl)) {
-                srl_val <- usl - slope_lim * t_star - margin_pi
-            }
-
-            p <- ggplot2::ggplot(dat, ggplot2::aes(x = Time, y = Y)) +
+            p <- ggplot2::ggplot(obs_df, ggplot2::aes(x = Time, y = Y)) +
                 ggplot2::geom_point(ggplot2::aes(color = Batch), size = 2.2, alpha = 0.7)
 
-            # Prediction interval ribbon (wider, outer)
+            # Prediction interval ribbon (wider)
             if (specType == "lower") {
                 p <- p + ggplot2::geom_ribbon(
                     data = df_env, ggplot2::aes(x = Time, ymin = PI_Low, ymax = Fit),
                     fill = "#85C1E9", alpha = 0.25, inherit.aes = FALSE
                 ) + ggplot2::geom_ribbon(
                     data = df_env, ggplot2::aes(x = Time, ymin = CI_Low, ymax = Fit),
-                    fill = "#2980B9", alpha = 0.35, inherit.aes = FALSE
+                    fill = "#2E86C1", alpha = 0.35, inherit.aes = FALSE
                 )
             } else if (specType == "upper") {
                 p <- p + ggplot2::geom_ribbon(
@@ -1436,7 +1635,7 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     fill = "#85C1E9", alpha = 0.25, inherit.aes = FALSE
                 ) + ggplot2::geom_ribbon(
                     data = df_env, ggplot2::aes(x = Time, ymin = Fit, ymax = CI_Upp),
-                    fill = "#2980B9", alpha = 0.35, inherit.aes = FALSE
+                    fill = "#2E86C1", alpha = 0.35, inherit.aes = FALSE
                 )
             } else {
                 p <- p + ggplot2::geom_ribbon(
@@ -1444,51 +1643,63 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     fill = "#85C1E9", alpha = 0.25, inherit.aes = FALSE
                 ) + ggplot2::geom_ribbon(
                     data = df_env, ggplot2::aes(x = Time, ymin = CI_Low, ymax = CI_Upp),
-                    fill = "#2980B9", alpha = 0.35, inherit.aes = FALSE
+                    fill = "#2E86C1", alpha = 0.35, inherit.aes = FALSE
                 )
             }
 
-            p <- p + ggplot2::geom_line(data = df_env, ggplot2::aes(x = Time, y = Fit), color = "#1B365D", linewidth = 1.0)
+            p <- p + ggplot2::geom_line(data = df_env, ggplot2::aes(x = Time, y = Fit), color = "#1B4F72", linewidth = 1.0)
 
-            # Specification Limit Line
+            # Specification limit lines
             if (specType %in% c("lower", "both") && !is.null(lsl)) {
-                p <- p + ggplot2::geom_hline(yintercept = lsl, linetype = "dashed", color = "#C0392B", linewidth = 0.9) +
-                    ggplot2::annotate("text", x = 1, y = lsl, label = paste0("LSL = ", private$.formatNum(lsl, 1)), vjust = -0.5, hjust = 0, color = "#C0392B", fontface = "bold", size = 3.6)
+                p <- p + ggplot2::geom_hline(yintercept = lsl, linetype = "solid", color = "#C0392B", linewidth = 0.85)
             }
             if (specType %in% c("upper", "both") && !is.null(usl)) {
-                p <- p + ggplot2::geom_hline(yintercept = usl, linetype = "dashed", color = "#C0392B", linewidth = 0.9) +
-                    ggplot2::annotate("text", x = 1, y = usl, label = paste0("USL = ", private$.formatNum(usl, 1)), vjust = 1.3, hjust = 0, color = "#C0392B", fontface = "bold", size = 3.6)
+                p <- p + ggplot2::geom_hline(yintercept = usl, linetype = "solid", color = "#C0392B", linewidth = 0.85)
             }
 
-            # SRL horizontal marker from t=0 to t*
-            if (!is.null(srl_val) && is.finite(srl_val)) {
-                p <- p + ggplot2::geom_segment(
-                    ggplot2::aes(x = 0, xend = t_star, y = srl_val, yend = srl_val),
-                    linetype = "dotdash", color = "#8E44AD", linewidth = 0.9, inherit.aes = FALSE
+            # Draw SRL lines
+            if (!is.null(srl_lower) && is.finite(srl_lower)) {
+                p <- p + ggplot2::geom_hline(
+                    yintercept = srl_lower, linetype = "dashed", color = "#E67E22", linewidth = 0.85
                 ) + ggplot2::annotate(
-                    "text", x = 0.5, y = srl_val, label = paste0(.("Release Limit (SRL)"), " = ", private$.formatNum(srl_val, 1)),
-                    vjust = -0.5, hjust = 0, color = "#8E44AD", fontface = "bold", size = 3.6
+                    "text", x = 0, y = srl_lower,
+                    label = paste0(.("Lower SRL:"), " ", private$.formatNum(srl_lower, 2)),
+                    hjust = -0.05, vjust = -0.5, size = 3.2, color = "#D35400"
+                )
+            }
+            if (!is.null(srl_upper) && is.finite(srl_upper)) {
+                p <- p + ggplot2::geom_hline(
+                    yintercept = srl_upper, linetype = "dashed", color = "#E67E22", linewidth = 0.85
+                ) + ggplot2::annotate(
+                    "text", x = 0, y = srl_upper,
+                    label = paste0(.("Upper SRL:"), " ", private$.formatNum(srl_upper, 2)),
+                    hjust = -0.05, vjust = 1.3, size = 3.2, color = "#D35400"
                 )
             }
 
-            # Shelf life vertical line
-            if (!is.infinite(ov_ich) && ov_ich > 0) {
-                p <- p + ggplot2::geom_vline(xintercept = ov_ich, linetype = "longdash", color = "#27AE60", linewidth = 1.0) +
-                    ggplot2::annotate(
-                        "label", x = ov_ich, y = -Inf,
-                        label = paste0(.("Shelf Life"), ": ", private$.formatNum(ov_ich, 1), " ", .("months")),
-                        vjust = -0.4, hjust = 1.05,
-                        fill = "white", color = "#27AE60", fontface = "bold", size = 3.6,
-                        label.padding = ggplot2::unit(0.2, "lines"), label.r = ggplot2::unit(0.15, "lines")
-                    )
+            # Mark Permitted Shelf Life
+            if (!is.na(ov_ich) && !is.infinite(ov_ich) && ov_ich > 0) {
+                p <- p + ggplot2::geom_vline(
+                    xintercept = ov_ich, linetype = "longdash", color = "#27AE60", linewidth = 1.0
+                ) + ggplot2::annotate(
+                    "label", x = ov_ich, y = -Inf,
+                    label = paste0(.("Shelf Life"), ": ", private$.formatNum(ov_ich, 1), " ", .("months")),
+                    vjust = -0.4, hjust = 1.05, fill = "white", color = "#27AE60", fontface = "bold", size = 3.6,
+                    label.padding = ggplot2::unit(0.2, "lines"), label.r = ggplot2::unit(0.15, "lines")
+                )
             }
+
+            srl_sub <- c()
+            if (!is.null(srl_lower) && is.finite(srl_lower)) srl_sub <- c(srl_sub, paste0(.("Lower SRL:"), " ", private$.formatNum(srl_lower, 1)))
+            if (!is.null(srl_upper) && is.finite(srl_upper)) srl_sub <- c(srl_sub, paste0(.("Upper SRL:"), " ", private$.formatNum(srl_upper, 1)))
+            srl_text <- if (length(srl_sub) > 0) paste0("  |  ", paste(srl_sub, collapse = ", ")) else ""
 
             p <- p + ggplot2::labs(
                 title = paste0(.("Prediction Intervals & Shelf-Life Release Limits (SRL)"), " (ICH Q1E)"),
                 subtitle = paste0(
                     .("Limiting Batch:"), " ", b_lim,
-                    "  |  ", .("Permitted Shelf Life:"), " ", private$.formatNum(ov_ich, 1), " ", .("months"),
-                    if (!is.null(srl_val) && is.finite(srl_val)) paste0("  |  ", .("Calculated SRL:"), " ", private$.formatNum(srl_val, 1)) else ""
+                    if (!is.na(ov_ich)) paste0("  |  ", .("Permitted Shelf Life:"), " ", private$.formatNum(ov_ich, 1), " ", .("months")) else "",
+                    srl_text
                 ),
                 x = timeName,
                 y = depName,
@@ -1512,76 +1723,55 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
         .diagPlot = function(image, ggtheme = NULL, theme = NULL, ...) {
             state <- image$state
-            if (is.null(state) || is.null(state$fit)) return(FALSE)
+            if (is.null(state) || is.null(state$df_diag)) return(FALSE)
 
-            fit <- state$fit
-            dat <- state$dat
+            df_diag  <- state$df_diag
             timeName <- if (!is.null(state$timeName)) state$timeName else "Time"
+            depName  <- if (!is.null(state$depName)) state$depName else "Residuals"
 
-            res <- stats::residuals(fit)
-            fitted_vals <- stats::fitted(fit)
-            std_res <- stats::rstandard(fit)
-            sqrt_abs_std_res <- sqrt(abs(std_res))
+            p1 <- ggplot2::ggplot(df_diag, ggplot2::aes(x = Fitted, y = Residuals)) +
+                ggplot2::geom_point(color = "#2C3E50", alpha = 0.8, size = 2) +
+                ggplot2::geom_hline(yintercept = 0, linetype = "dashed", color = "#E74C3C") +
+                ggplot2::geom_smooth(method = "loess", formula = y ~ x, se = FALSE, color = "#2980B9", linewidth = 0.8) +
+                ggplot2::labs(title = .("Residuals vs Fitted"), x = .("Fitted values"), y = .("Residuals"))
 
-            df_diag <- data.frame(
-                Fitted = fitted_vals,
-                Residuals = res,
-                StdResiduals = std_res,
-                SqrtAbsStdRes = sqrt_abs_std_res,
-                Time = if (!is.null(dat) && "Time" %in% names(dat)) dat$Time else seq_along(res),
-                Batch = if (!is.null(dat) && "Batch" %in% names(dat)) dat$Batch else factor(rep("1", length(res)))
-            )
+            p2 <- ggplot2::ggplot(df_diag, ggplot2::aes(sample = StdResiduals)) +
+                ggplot2::stat_qq(color = "#2C3E50", alpha = 0.8, size = 2) +
+                ggplot2::stat_qq_line(color = "#E74C3C", linewidth = 0.8) +
+                ggplot2::labs(title = .("Normal Q-Q"), x = .("Theoretical Quantiles"), y = .("Standardized Residuals"))
 
-            use_theme <- if (!is.null(ggtheme)) ggtheme else ggplot2::theme_bw(base_size = 10)
+            p3 <- ggplot2::ggplot(df_diag, ggplot2::aes(x = Time, y = Residuals)) +
+                ggplot2::geom_point(color = "#2C3E50", alpha = 0.8, size = 2) +
+                ggplot2::geom_hline(yintercept = 0, linetype = "dashed", color = "#E74C3C") +
+                ggplot2::geom_smooth(method = "loess", formula = y ~ x, se = FALSE, color = "#27AE60", linewidth = 0.8) +
+                ggplot2::labs(title = .("Residuals vs Time"), x = timeName, y = .("Residuals"))
 
-            apply_theme <- function(p_sub, show_legend = FALSE) {
-                p_sub <- p_sub + use_theme + ggplot2::theme(
-                    plot.title = ggplot2::element_text(face = "bold", size = 11, color = "#1B365D"),
-                    legend.position = if (show_legend) "bottom" else "none",
-                    legend.direction = "horizontal",
-                    legend.box = "horizontal",
-                    legend.justification = "center"
-                )
-                p_sub
+            p4 <- ggplot2::ggplot(df_diag, ggplot2::aes(x = Fitted, y = SqrtAbsStdRes)) +
+                ggplot2::geom_point(color = "#2C3E50", alpha = 0.8, size = 2) +
+                ggplot2::geom_smooth(method = "loess", formula = y ~ x, se = FALSE, color = "#8E44AD", linewidth = 0.8) +
+                ggplot2::labs(title = .("Scale-Location"), x = .("Fitted values"), y = paste0("\u221a|", .("Standardized Residuals"), "|"))
+
+            apply_theme <- function(p) {
+                if (!is.null(ggtheme)) p <- p + ggtheme else p <- p + ggplot2::theme_bw(base_size = 10)
+                p + ggplot2::theme(plot.title = ggplot2::element_text(face = "bold", size = 11, hjust = 0.5))
             }
 
-            # 1. Residuals vs Fitted
-            p1 <- ggplot2::ggplot(df_diag, ggplot2::aes(x = Fitted, y = Residuals)) +
-                ggplot2::geom_point(color = "#2C3E50", size = 2, alpha = 0.8) +
-                ggplot2::geom_hline(yintercept = 0, linetype = "dashed", color = "#C0392B") +
-                ggplot2::geom_smooth(method = "loess", formula = y ~ x, color = "#2980B9", se = FALSE, linewidth = 0.8) +
-                ggplot2::labs(title = .("Residuals vs Fitted"), x = .("Fitted values"), y = .("Residuals"))
             p1 <- apply_theme(p1)
-
-            # 2. Normal Q-Q
-            p2 <- ggplot2::ggplot(df_diag, ggplot2::aes(sample = StdResiduals)) +
-                ggplot2::stat_qq(color = "#2C3E50", size = 2, alpha = 0.8) +
-                ggplot2::stat_qq_line(color = "#C0392B", linetype = "dashed", linewidth = 0.8) +
-                ggplot2::labs(title = .("Normal Q-Q"), x = .("Theoretical Quantiles"), y = .("Standardized Residuals"))
             p2 <- apply_theme(p2)
-
-            # 3. Residuals vs Time
-            batchName <- if (!is.null(state$batchName)) state$batchName else .("Batch")
-            p3 <- ggplot2::ggplot(df_diag, ggplot2::aes(x = Time, y = Residuals, color = Batch)) +
-                ggplot2::geom_point(size = 2, alpha = 0.8) +
-                ggplot2::geom_hline(yintercept = 0, linetype = "dashed", color = "#C0392B") +
-                ggplot2::labs(title = .("Residuals vs Time"), x = timeName, y = .("Residuals"), color = batchName)
-            p3 <- apply_theme(p3, show_legend = TRUE)
-
-            # 4. Scale-Location
-            p4 <- ggplot2::ggplot(df_diag, ggplot2::aes(x = Fitted, y = SqrtAbsStdRes)) +
-                ggplot2::geom_point(color = "#2C3E50", size = 2, alpha = 0.8) +
-                ggplot2::geom_smooth(method = "loess", formula = y ~ x, color = "#2980B9", se = FALSE, linewidth = 0.8) +
-                ggplot2::labs(title = .("Scale-Location"), x = .("Fitted values"), y = expression(sqrt("|Standardized Residuals|")))
+            p3 <- apply_theme(p3)
             p4 <- apply_theme(p4)
 
-            # Multiplot layout
-            grid::grid.newpage()
-            grid::pushViewport(grid::viewport(layout = grid::grid.layout(2, 2)))
-            print(p1, vp = grid::viewport(layout.pos.row = 1, layout.pos.col = 1))
-            print(p2, vp = grid::viewport(layout.pos.row = 1, layout.pos.col = 2))
-            print(p3, vp = grid::viewport(layout.pos.row = 2, layout.pos.col = 1))
-            print(p4, vp = grid::viewport(layout.pos.row = 2, layout.pos.col = 2))
+            grid_plot <- tryCatch({
+                cowplot::plot_grid(p1, p2, p3, p4, ncol = 2)
+            }, error = function(e) {
+                tryCatch({
+                    patchwork::wrap_plots(p1, p2, p3, p4, ncol = 2)
+                }, error = function(e2) {
+                    p1
+                })
+            })
+
+            print(grid_plot)
             TRUE
         }
     )

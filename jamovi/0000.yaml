@@ -81,6 +81,11 @@ datasets:
     description: >-
       Evaluation of stability data and shelf life estimation according to ICH
       Q1E guideline demonstration
+  - name: MANOVA & Repeated Measures
+    path: MNV_TRIAL.omv
+    description: >-
+      Multivariate Analysis of Variance (MANOVA), Repeated Measures, and Profile
+      Analysis demonstration
 analyses:
   - title: Correlation clustering
     name: mCOR
@@ -222,6 +227,17 @@ analyses:
       Evaluation of stability data and shelf life estimation according to the
       ICH Q1E guideline using ANCOVA poolability testing and one-sided 95%
       confidence intervals.
+  - title: MANOVA & Repeated Measures
+    name: mMNV
+    ns: jYS
+    category: analyses
+    menuGroup: jYS
+    menuSubgroup: Classical & Advanced ANOVA
+    menuTitle: MANOVA & Repeated Measures
+    description: >-
+      Multivariate Analysis of Variance (MANOVA), Repeated Measures MANOVA
+      without sphericity assumption (O'Brien & Kaiser, 1985), and Profile
+      Analysis.
 usesNative: true
 minApp: 2.3.0
 

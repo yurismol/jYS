@@ -12,9 +12,11 @@ Description: Extensions of the functionality of popular data analysis methods:
   Forest classifier, survival analysis (Kaplan-Meier, Cox regression,
   competing risks, and time-dependent covariates), Principal Component
   Analysis (PCA), Single Nucleotide Polymorphism (SNP) association and
-  Hardy-Weinberg equilibrium analysis, Decision Curve Analysis (DCA)
-  with model calibration, and Stability Analysis according to ICH Q1E
-  guideline with ANCOVA poolability testing and shelf life estimation.
+  Decision Curve Analysis (DCA) with model calibration,
+  Stability Analysis according to ICH Q1E guideline with ANCOVA
+  poolability testing and shelf life estimation, and Multivariate
+  Analysis of Variance (MANOVA, Repeated Measures MANOVA without
+  sphericity assumption, and Profile Analysis).
 License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true

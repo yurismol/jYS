@@ -1,0 +1,359 @@
+---
+name:  mMNV
+title: MANOVA & Repeated Measures
+jrs:   '1.1'
+refs: [jys, obrien1985, fox2019, greenhouse1959, huynh1976, box1949, mardia1970, olson1974, friendly2007]
+
+items:
+    - name: instructions
+      title: Instructions & Methodological Guidance
+      type: Html
+      visible: true
+
+    - name: multivariateTable
+      title: Multivariate Tests (MANOVA)
+      type: Table
+      visible: true
+      refs: [obrien1985, fox2019, olson1974]
+      clearWith:
+          - mode
+          - rmCells
+          - rmFactorName
+          - deps
+          - between
+          - covs
+          - testPillai
+          - testWilks
+          - testHotelling
+          - testRoy
+          - contrastType
+      columns:
+          - name: term
+            title: Effect / Source
+            type: text
+          - name: test
+            title: Multiv. Test
+            type: text
+          - name: stat
+            title: Value
+            type: number
+            format: zto
+          - name: f
+            title: F
+            type: number
+            format: zto
+          - name: df1
+            title: df1
+            type: integer
+          - name: df2
+            title: df2
+            type: number
+            format: zto
+          - name: p
+            title: p
+            type: number
+            format: zto
+          - name: etaSqP
+            title: Partial η²
+            type: number
+            format: zto
+
+    - name: univariateTable
+      title: Tests of Within-Subjects Effects (Univariate ANOVA)
+      type: Table
+      visible: (showUnivariate)
+      refs: [greenhouse1959, huynh1976]
+      clearWith:
+          - mode
+          - rmCells
+          - rmFactorName
+          - deps
+          - between
+          - covs
+      columns:
+          - name: term
+            title: Effect / Source
+            type: text
+          - name: correction
+            title: Sphericity Correction
+            type: text
+          - name: ss
+            title: Sum of Squares
+            type: number
+            format: zto
+          - name: df
+            title: df
+            type: number
+            format: zto
+          - name: ms
+            title: Mean Square
+            type: number
+            format: zto
+          - name: f
+            title: F
+            type: number
+            format: zto
+          - name: p
+            title: p
+            type: number
+            format: zto
+          - name: etaSqP
+            title: Partial η²
+            type: number
+            format: zto
+
+    - name: sphericityTable
+      title: Mauchly's Sphericity Test & Epsilon Estimates
+      type: Table
+      visible: (showSphericity)
+      refs: [obrien1985]
+      clearWith:
+          - mode
+          - rmCells
+          - rmFactorName
+          - deps
+          - between
+          - covs
+      columns:
+          - name: term
+            title: Within-Subjects Effect
+            type: text
+          - name: mauchlyW
+            title: Mauchly's W
+            type: number
+            format: zto
+          - name: chisq
+            title: Approx. χ²
+            type: number
+            format: zto
+          - name: df
+            title: df
+            type: integer
+          - name: p
+            title: p
+            type: number
+            format: zto
+          - name: gg
+            title: Greenhouse-Geisser ε
+            type: number
+            format: zto
+          - name: hf
+            title: Huynh-Feldt ε
+            type: number
+            format: zto
+          - name: lower
+            title: Lower Bound ε
+            type: number
+            format: zto
+
+    - name: profileTable
+      title: Profile Analysis Summary
+      type: Table
+      visible: (showProfileAnalysis)
+      refs: [obrien1985]
+      clearWith:
+          - mode
+          - rmCells
+          - rmFactorName
+          - deps
+          - between
+          - covs
+      columns:
+          - name: hypothesis
+            title: Hypothesis / Question
+            type: text
+          - name: test
+            title: Test Method
+            type: text
+          - name: stat
+            title: Value
+            type: number
+            format: zto
+          - name: f
+            title: F
+            type: number
+            format: zto
+          - name: df1
+            title: df1
+            type: integer
+          - name: df2
+            title: df2
+            type: number
+            format: zto
+          - name: p
+            title: p
+            type: number
+            format: zto
+          - name: conclusion
+            title: Interpretation & Decision
+            type: text
+
+    - name: contrastsTable
+      title: Tests of Within-Subjects Contrasts
+      type: Table
+      visible: (showContrastsTable)
+      clearWith:
+          - mode
+          - rmCells
+          - rmFactorName
+          - deps
+          - between
+          - covs
+          - contrastType
+      columns:
+          - name: contrast
+            title: Contrast / Trend
+            type: text
+          - name: ss
+            title: Sum of Squares
+            type: number
+            format: zto
+          - name: df
+            title: df
+            type: integer
+          - name: ms
+            title: Mean Square
+            type: number
+            format: zto
+          - name: f
+            title: F
+            type: number
+            format: zto
+          - name: p
+            title: p
+            type: number
+            format: zto
+          - name: etaSqP
+            title: Partial η²
+            type: number
+            format: zto
+
+    - name: assumptionsTable
+      title: Model Diagnostics & Assumption Checks
+      type: Table
+      visible: (showAssumptionChecks)
+      refs: [box1949, mardia1970]
+      clearWith:
+          - mode
+          - rmCells
+          - rmFactorName
+          - deps
+          - between
+          - covs
+      columns:
+          - name: test
+            title: Diagnostic Test
+            type: text
+          - name: stat
+            title: Statistic
+            type: number
+            format: zto
+          - name: fOrChisq
+            title: F / χ²
+            type: number
+            format: zto
+          - name: df1
+            title: df1
+            type: number
+            format: zto
+          - name: df2
+            title: df2
+            type: number
+            format: zto
+          - name: p
+            title: p
+            type: number
+            format: zto
+          - name: assessment
+            title: Assessment & Recommendation
+            type: text
+
+    - name: meansTable
+      title: Marginal Means & Descriptives
+      type: Table
+      visible: (showMeansTable)
+      clearWith:
+          - mode
+          - rmCells
+          - rmFactorName
+          - deps
+          - between
+          - covs
+      columns:
+          - name: factor
+            title: Group
+            type: text
+          - name: time
+            title: Time / Condition
+            type: text
+          - name: n
+            title: N
+            type: integer
+          - name: mean
+            title: Mean
+            type: number
+            format: zto
+          - name: se
+            title: SE
+            type: number
+            format: zto
+          - name: sd
+            title: SD
+            type: number
+            format: zto
+          - name: ciLower
+            title: 95% CI Lower
+            type: number
+            format: zto
+          - name: ciUpper
+            title: 95% CI Upper
+            type: number
+            format: zto
+
+    - name: profilePlot
+      title: Trajectory / Profile Plot
+      type: Image
+      visible: (showProfilePlot)
+      width: 650
+      height: 450
+      renderFun: .plotProfile
+      clearWith:
+          - mode
+          - rmCells
+          - rmFactorName
+          - deps
+          - between
+          - covs
+          - plotError
+
+    - name: hePlot
+      title: Hypothesis-Error (HE) Plot
+      type: Image
+      visible: (showHePlot)
+      refs: [friendly2007]
+      width: 550
+      height: 450
+      renderFun: .plotHe
+      clearWith:
+          - mode
+          - rmCells
+          - rmFactorName
+          - deps
+          - between
+          - covs
+
+    - name: outlierPlot
+      title: Multivariate Outliers (Mahalanobis Distance) Plot
+      type: Image
+      visible: (showOutlierPlot)
+      width: 550
+      height: 400
+      renderFun: .plotOutlier
+      clearWith:
+          - mode
+          - rmCells
+          - rmFactorName
+          - deps
+          - between
+          - covs
+...
