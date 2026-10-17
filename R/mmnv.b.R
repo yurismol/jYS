@@ -655,6 +655,9 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             poly_mat <- stats::contr.poly(k)
             c_names <- c(.("Linear"), .("Quadratic"), .("Cubic"), .("Quartic"), .("Quintic"))
 
+            old_contr <- options(contrasts = c("contr.sum", "contr.poly"))
+            on.exit(options(old_contr), add = TRUE)
+
             for (degree in 1:(k - 1)) {
                 c_weight <- poly_mat[, degree]
                 Y_c <- Y %*% c_weight
@@ -663,23 +666,40 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 # Test within-subjects contrast
                 rhs <- if (!is.null(between) && length(between) > 0) paste(between, collapse = " * ") else "1"
                 c_fit <- stats::lm(stats::as.formula(paste("Y_c ~", rhs)), data = dat_clean)
-                aov_c <- stats::anova(c_fit)
 
-                # Contrast main effect
-                ss_intercept <- aov_c["(Intercept)", "Sum Sq"]
-                df_intercept <- 1
-                ms_intercept <- ss_intercept
-                ss_res <- aov_c["Residuals", "Sum Sq"]
-                df_res <- aov_c["Residuals", "Df"]
-                ms_res <- ss_res / df_res
-                f_val <- ms_intercept / ms_res
-                p_val <- stats::pf(f_val, 1, df_res, lower.tail = FALSE)
-                eta_p <- ss_intercept / (ss_intercept + ss_res)
+                aov_c <- tryCatch(
+                    car::Anova(c_fit, type = "III"),
+                    error = function(e) NULL
+                )
+
+                if (is.null(aov_c) || !("(Intercept)" %in% rownames(aov_c))) {
+                    sm <- summary(c_fit)
+                    t_val <- sm$coefficients["(Intercept)", "t value"]
+                    f_val <- t_val^2
+                    df_intercept <- 1
+                    df_res <- c_fit$df.residual
+                    ss_res <- sum(residuals(c_fit)^2)
+                    ms_res <- ss_res / df_res
+                    ss_intercept <- f_val * ms_res
+                    ms_intercept <- ss_intercept
+                    p_val <- stats::pf(f_val, 1, df_res, lower.tail = FALSE)
+                    eta_p <- ss_intercept / (ss_intercept + ss_res)
+                } else {
+                    ss_intercept <- aov_c["(Intercept)", "Sum Sq"]
+                    df_intercept <- aov_c["(Intercept)", "Df"]
+                    ms_intercept <- ss_intercept / df_intercept
+                    ss_res <- aov_c["Residuals", "Sum Sq"]
+                    df_res <- aov_c["Residuals", "Df"]
+                    ms_res <- ss_res / df_res
+                    f_val <- aov_c["(Intercept)", "F value"]
+                    p_val <- aov_c["(Intercept)", "Pr(>F)"]
+                    eta_p <- ss_intercept / (ss_intercept + ss_res)
+                }
 
                 table$addRow(rowKey = paste0("poly_", degree), values = list(
                     contrast = paste0(rmFactorName, " (", c_label, ")"),
                     ss = ss_intercept,
-                    df = 1,
+                    df = as.integer(df_intercept),
                     ms = ms_intercept,
                     f = f_val,
                     p = p_val,
@@ -687,26 +707,27 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 ))
 
                 # Contrast x Between interaction
-                if (!is.null(between) && length(between) > 0) {
-                    for (b in between) {
-                        if (b %in% rownames(aov_c)) {
-                            ss_b <- aov_c[b, "Sum Sq"]
-                            df_b <- aov_c[b, "Df"]
-                            ms_b <- ss_b / df_b
-                            f_b <- ms_b / ms_res
-                            p_b <- stats::pf(f_b, df_b, df_res, lower.tail = FALSE)
-                            eta_b <- ss_b / (ss_b + ss_res)
+                if (!is.null(between) && length(between) > 0 && !is.null(aov_c)) {
+                    b_terms <- setdiff(rownames(aov_c), c("(Intercept)", "Residuals"))
+                    for (term_b in b_terms) {
+                        ss_b <- aov_c[term_b, "Sum Sq"]
+                        df_b <- aov_c[term_b, "Df"]
+                        ms_b <- ss_b / df_b
+                        f_b  <- aov_c[term_b, "F value"]
+                        p_b  <- aov_c[term_b, "Pr(>F)"]
+                        eta_b <- ss_b / (ss_b + ss_res)
 
-                            table$addRow(rowKey = paste0("poly_", degree, "_", b), values = list(
-                                contrast = paste0(rmFactorName, " (", c_label, ") \u00D7 ", b),
-                                ss = ss_b,
-                                df = as.integer(df_b),
-                                ms = ms_b,
-                                f = f_b,
-                                p = p_b,
-                                etaSqP = eta_b
-                            ))
-                        }
+                        term_label <- gsub(":", " \u00D7 ", term_b)
+
+                        table$addRow(rowKey = paste0("poly_", degree, "_", term_b), values = list(
+                            contrast = paste0(rmFactorName, " (", c_label, ") \u00D7 ", term_label),
+                            ss = ss_b,
+                            df = as.integer(df_b),
+                            ms = ms_b,
+                            f = f_b,
+                            p = p_b,
+                            etaSqP = eta_b
+                        ))
                     }
                 }
             }
