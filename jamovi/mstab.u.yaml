@@ -9,7 +9,7 @@ children:
     stretchFactor: 1
     children:
       - type: TargetLayoutBox
-        label: Quantitative Attribute / Response
+        label: Attribute 1 (Primary / Assay)
         children:
           - type: VariablesListBox
             name: dep
@@ -29,8 +29,44 @@ children:
             name: batch
             maxItemCount: 1
             isTarget: true
+      - type: TargetLayoutBox
+        label: Attribute 2 (Impurities / Degradants)
+        children:
+          - type: VariablesListBox
+            name: dep2
+            maxItemCount: 1
+            isTarget: true
+      - type: TargetLayoutBox
+        label: Attribute 3 (Dissolution / Physical)
+        children:
+          - type: VariablesListBox
+            name: dep3
+            maxItemCount: 1
+            isTarget: true
+      - type: TargetLayoutBox
+        label: Attribute 4 (Optional)
+        children:
+          - type: VariablesListBox
+            name: dep4
+            maxItemCount: 1
+            isTarget: true
+      - type: TargetLayoutBox
+        label: Attribute 5 (Optional)
+        children:
+          - type: VariablesListBox
+            name: dep5
+            maxItemCount: 1
+            isTarget: true
+      - type: TargetLayoutBox
+        label: Temperature (°C) (Arrhenius, Optional)
+        children:
+          - type: VariablesListBox
+            name: tempVar
+            maxItemCount: 1
+            isTarget: true
+            enable: (showArrh)
   - type: CollapseBox
-    label: Specification Limits & Criteria
+    label: Attribute 1 Specifications (Assay / Primary)
     collapsed: false
     stretchFactor: 1
     children:
@@ -44,6 +80,115 @@ children:
         format: number
       - type: ComboBox
         name: trans
+  - type: CollapseBox
+    label: Attribute 2 Specifications (Impurities / Degradants)
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: ComboBox
+        name: specType2
+      - type: TextBox
+        name: lsl2
+        format: number
+      - type: TextBox
+        name: usl2
+        format: number
+      - type: ComboBox
+        name: trans2
+  - type: CollapseBox
+    label: Attribute 3 Specifications (Dissolution / Physical)
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: ComboBox
+        name: specType3
+      - type: TextBox
+        name: lsl3
+        format: number
+      - type: TextBox
+        name: usl3
+        format: number
+      - type: ComboBox
+        name: trans3
+  - type: CollapseBox
+    label: Attributes 4 & 5 Specifications (Optional)
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: ComboBox
+        name: specType4
+      - type: TextBox
+        name: lsl4
+        format: number
+      - type: TextBox
+        name: usl4
+        format: number
+      - type: ComboBox
+        name: trans4
+      - type: ComboBox
+        name: specType5
+      - type: TextBox
+        name: lsl5
+        format: number
+      - type: TextBox
+        name: usl5
+        format: number
+      - type: ComboBox
+        name: trans5
+  - type: CollapseBox
+    label: Multi-Attribute Shelf-Life & Worst-Case Options
+    collapsed: false
+    stretchFactor: 1
+    children:
+      - type: CheckBox
+        name: showMultiShelfTable
+      - type: CheckBox
+        name: showMultiBatchTable
+      - type: CheckBox
+        name: showMultiShelfPlot
+      - type: ComboBox
+        name: detailAttr
+  - type: CollapseBox
+    label: Arrhenius Accelerated Kinetics (ICH Q1A / ASAP)
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: CheckBox
+        name: showArrh
+        children:
+          - type: TextBox
+            name: arrhEa
+            format: number
+            enable: (showArrh)
+          - type: TextBox
+            name: arrhTempAcc
+            format: number
+            enable: (showArrh)
+          - type: TextBox
+            name: arrhRhAcc
+            format: number
+            enable: (showArrh)
+          - type: TextBox
+            name: arrhTempLong
+            format: number
+            enable: (showArrh)
+          - type: TextBox
+            name: arrhRhLong
+            format: number
+            enable: (showArrh)
+          - type: TextBox
+            name: arrhB
+            format: number
+            enable: (showArrh)
+          - type: CheckBox
+            name: showArrhSens
+            enable: (showArrh)
+          - type: CheckBox
+            name: showArrhPlot
+            enable: (showArrh)
+          - type: CheckBox
+            name: showArrhTrajPlot
+            enable: (showArrh)
   - type: CollapseBox
     label: Statistical & Regulatory Settings (ICH Q1E)
     collapsed: false
@@ -63,7 +208,7 @@ children:
         name: studyDuration
         format: number
   - type: CollapseBox
-    label: Output Tables & Plots
+    label: Single Attribute Detailed Tables & Plots
     collapsed: false
     stretchFactor: 1
     children:

@@ -14,7 +14,7 @@ options:
       type: Data
 
     - name: dep
-      title: Quantitative Attribute / Response
+      title: Attribute / Response
       type: Variable
       suggested:
         - continuous
@@ -100,6 +100,267 @@ options:
         - title: Natural logarithm ln(Y) (First-order kinetics)
           name:  log
       default: none
+
+    - name: dep2
+      title: Attribute 2 (Impurities / Degradants)
+      type: Variable
+      suggested:
+        - continuous
+      permitted:
+        - numeric
+
+    - name: specType2
+      title: Specification Limit Type (Attribute 2)
+      type: List
+      options:
+        - title: Upper limit only (Increasing attribute / Impurity)
+          name:  upper
+        - title: Lower limit only (Decreasing attribute / Assay)
+          name:  lower
+        - title: Both limits (Two-sided / Unknown direction)
+          name:  both
+      default: upper
+
+    - name: lsl2
+      title: Lower Specification Limit (LSL 2)
+      type: Number
+      default: 0.0
+
+    - name: usl2
+      title: Upper Specification Limit (USL 2)
+      type: Number
+      default: 1.0
+
+    - name: trans2
+      title: Response Transformation (Attribute 2)
+      type: List
+      options:
+        - title: None (Zero-order linear kinetics)
+          name:  none
+        - title: Natural logarithm ln(Y) (First-order kinetics)
+          name:  log
+      default: none
+
+    - name: dep3
+      title: Attribute 3 (Dissolution / Physical)
+      type: Variable
+      suggested:
+        - continuous
+      permitted:
+        - numeric
+
+    - name: specType3
+      title: Specification Limit Type (Attribute 3)
+      type: List
+      options:
+        - title: Lower limit only (Decreasing attribute / Dissolution)
+          name:  lower
+        - title: Upper limit only (Increasing attribute / Degradant)
+          name:  upper
+        - title: Both limits (Two-sided / Unknown direction)
+          name:  both
+      default: lower
+
+    - name: lsl3
+      title: Lower Specification Limit (LSL 3)
+      type: Number
+      default: 80.0
+
+    - name: usl3
+      title: Upper Specification Limit (USL 3)
+      type: Number
+      default: 100.0
+
+    - name: trans3
+      title: Response Transformation (Attribute 3)
+      type: List
+      options:
+        - title: None (Zero-order linear kinetics)
+          name:  none
+        - title: Natural logarithm ln(Y) (First-order kinetics)
+          name:  log
+      default: none
+
+    - name: dep4
+      title: Attribute 4 (Optional)
+      type: Variable
+      suggested:
+        - continuous
+      permitted:
+        - numeric
+
+    - name: specType4
+      title: Specification Limit Type (Attribute 4)
+      type: List
+      options:
+        - title: Lower limit only (Decreasing attribute)
+          name:  lower
+        - title: Upper limit only (Increasing attribute)
+          name:  upper
+        - title: Both limits (Two-sided)
+          name:  both
+      default: lower
+
+    - name: lsl4
+      title: Lower Specification Limit (LSL 4)
+      type: Number
+      default: 90.0
+
+    - name: usl4
+      title: Upper Specification Limit (USL 4)
+      type: Number
+      default: 110.0
+
+    - name: trans4
+      title: Response Transformation (Attribute 4)
+      type: List
+      options:
+        - title: None (Zero-order linear kinetics)
+          name:  none
+        - title: Natural logarithm ln(Y) (First-order kinetics)
+          name:  log
+      default: none
+
+    - name: dep5
+      title: Attribute 5 (Optional)
+      type: Variable
+      suggested:
+        - continuous
+      permitted:
+        - numeric
+
+    - name: specType5
+      title: Specification Limit Type (Attribute 5)
+      type: List
+      options:
+        - title: Upper limit only (Increasing attribute)
+          name:  upper
+        - title: Lower limit only (Decreasing attribute)
+          name:  lower
+        - title: Both limits (Two-sided)
+          name:  both
+      default: upper
+
+    - name: lsl5
+      title: Lower Specification Limit (LSL 5)
+      type: Number
+      default: 0.0
+
+    - name: usl5
+      title: Upper Specification Limit (USL 5)
+      type: Number
+      default: 5.0
+
+    - name: trans5
+      title: Response Transformation (Attribute 5)
+      type: List
+      options:
+        - title: None (Zero-order linear kinetics)
+          name:  none
+        - title: Natural logarithm ln(Y) (First-order kinetics)
+          name:  log
+      default: none
+
+    - name: showMultiShelfTable
+      title: Multi-Attribute Shelf Life Summary Table
+      type: Bool
+      default: true
+
+    - name: showMultiBatchTable
+      title: Multi-Attribute Batch Evaluation Matrix
+      type: Bool
+      default: true
+
+    - name: showMultiShelfPlot
+      title: Multi-Attribute Shelf Life Comparison & Horizon Plot
+      type: Bool
+      default: true
+
+    - name: detailAttr
+      title: Detailed Analysis Display
+      type: List
+      options:
+        - title: Governing Worst-Case Attribute
+          name:  worst
+        - title: Attribute 1 (Assay / Primary)
+          name:  dep
+        - title: Attribute 2
+          name:  dep2
+        - title: Attribute 3
+          name:  dep3
+        - title: Attribute 4
+          name:  dep4
+        - title: Attribute 5
+          name:  dep5
+        - title: All Attributes (Sequential Tables)
+          name:  all
+      default: worst
+
+    - name: showArrh
+      title: Arrhenius Accelerated Stability Kinetics Recalculation
+      type: Bool
+      default: false
+
+    - name: tempVar
+      title: Temperature (°C)
+      type: Variable
+      suggested:
+        - continuous
+      permitted:
+        - numeric
+
+    - name: arrhEa
+      title: Activation Energy Ea (kJ/mol)
+      type: Number
+      min: 10.0
+      max: 300.0
+      default: 83.14
+
+    - name: arrhTempAcc
+      title: Accelerated Study Temperature (°C)
+      type: Number
+      default: 40.0
+
+    - name: arrhRhAcc
+      title: Accelerated Relative Humidity (%)
+      type: Number
+      min: 0.0
+      max: 100.0
+      default: 75.0
+
+    - name: arrhTempLong
+      title: Long-Term Storage Temperature (°C)
+      type: Number
+      default: 25.0
+
+    - name: arrhRhLong
+      title: Long-Term Storage Relative Humidity (%)
+      type: Number
+      min: 0.0
+      max: 100.0
+      default: 60.0
+
+    - name: arrhB
+      title: Moisture Sensitivity Factor B (% RH^-1)
+      type: Number
+      min: 0.0
+      max: 0.5
+      default: 0.0
+
+    - name: showArrhSens
+      title: Activation Energy (Ea) Sensitivity Analysis Table
+      type: Bool
+      default: true
+
+    - name: showArrhPlot
+      title: Arrhenius Degradation Kinetics Plot (ln(k) vs 1000/T)
+      type: Bool
+      default: true
+
+    - name: showArrhTrajPlot
+      title: Projected Degradation Trajectories Across Temperatures Plot
+      type: Bool
+      default: true
 
     - name: accelCondition
       title: Accelerated Testing Support (ICH Q1E App. A)

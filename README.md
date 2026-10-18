@@ -40,8 +40,9 @@ Some usefull [Jamovi](https://www.jamovi.org/) procedures for researchers
   - pROC (Xavier Robin et al.)
   - ggplot2 (Hadley Wickham et al.)
 
-- Logistic Regression with LASSO L1 & L2 regularization, K-Fold cross-validation, and Forest Plot of Odds Ratios
+- Logistic Regression with LASSO L1 & L2 regularization, Firth's penalized likelihood, K-Fold cross-validation, and Forest Plot of Odds Ratios
   - glmnet (Jerome Friedman et al.)
+  - logistf (Georg Heinze et al.)
   - nnet (Brian Ripley)
   - pROC (Xavier Robin et al.)
   - ggplot2 (Hadley Wickham et al.)
@@ -52,8 +53,9 @@ Some usefull [Jamovi](https://www.jamovi.org/) procedures for researchers
   - ggrepel (Kamil Slowikowski)
   - reshape2 (Hadley Wickham)
 
-- Survival Analysis (Kaplan-Meier estimation, log-rank test, Cox regression, and time-dependent ROC curves)
+- Survival Analysis (Kaplan-Meier estimation, log-rank test, Cox regression, Firth's penalized likelihood, and time-dependent ROC curves)
   - survival (Terry M. Therneau)
+  - coxphf (Georg Heinze et al.)
   - ggsurvfit (Daniel D. Sjoberg)
   - pROC (Xavier Robin et al.)
 

@@ -2,7 +2,7 @@
 name:  mSTAB
 title: Stability Analysis (ICH Q1E)
 jrs:   '1.1'
-refs: [jys, ichq1e, chow2014, capen2018, quinlan2013, mcmahon2021, gonzalez2022, cordero2024]
+refs: [jys, ichq1e, chow2014, capen2018, quinlan2013, mcmahon2021, gonzalez2022, cordero2024, waterman2005, waterman2007, connors1986, zahn2006]
 
 items:
     - name: instructions
@@ -291,4 +291,177 @@ items:
           - batch
           - modelChoice
           - trans
+
+    - name: multiShelfTable
+      title: Multi-Attribute Shelf Life Summary Table
+      type: Table
+      visible: (showMultiShelfTable && ((length(dep2) > 0 && dep2 != "") || (length(dep3) > 0 && dep3 != "") || (length(dep4) > 0 && dep4 != "") || (length(dep5) > 0 && dep5 != "")))
+      columns:
+          - name: attr
+            title: Attribute / Parameter
+            type: text
+          - name: spec
+            title: Acceptance Criteria
+            type: text
+          - name: model
+            title: Adopted Model
+            type: text
+          - name: limitingBatch
+            title: Governing Batch
+            type: text
+          - name: statShelf
+            title: Statistical Shelf Life (months)
+            type: number
+            format: zto
+          - name: ichShelf
+            title: ICH Q1E Permitted Shelf Life (months)
+            type: number
+            format: zto
+          - name: status
+            title: Status / Limiting Role
+            type: text
+
+    - name: multiBatchTable
+      title: Multi-Attribute Batch Evaluation Matrix
+      type: Table
+      visible: (showMultiBatchTable && ((length(dep2) > 0 && dep2 != "") || (length(dep3) > 0 && dep3 != "") || (length(dep4) > 0 && dep4 != "") || (length(dep5) > 0 && dep5 != "")))
+      columns:
+          - name: batch
+            title: Batch / Cohort
+            type: text
+          - name: attr1
+            title: Attribute 1 (months)
+            type: number
+            format: zto
+          - name: attr2
+            title: Attribute 2 (months)
+            type: number
+            format: zto
+          - name: attr3
+            title: Attribute 3 (months)
+            type: number
+            format: zto
+          - name: attr4
+            title: Attribute 4 (months)
+            type: number
+            format: zto
+          - name: attr5
+            title: Attribute 5 (months)
+            type: number
+            format: zto
+          - name: worstShelf
+            title: Batch Minimum Shelf Life (months)
+            type: number
+            format: zto
+          - name: limitingAttr
+            title: Limiting Attribute
+            type: text
+
+    - name: multiShelfPlot
+      title: Multi-Attribute Shelf Life Comparison & Horizon Plot
+      type: Image
+      visible: (showMultiShelfPlot && ((length(dep2) > 0 && dep2 != "") || (length(dep3) > 0 && dep3 != "") || (length(dep4) > 0 && dep4 != "") || (length(dep5) > 0 && dep5 != "")))
+      width:  700
+      height: 420
+      renderFun: .multiShelfPlot
+      requiresData: true
+
+    - name: arrhTable
+      title: Arrhenius Accelerated Stability Recalculation Table
+      type: Table
+      visible: (showArrh)
+      columns:
+          - name: zone
+            title: Storage Condition / Climatic Zone
+            type: text
+          - name: temp
+            title: Temperature (°C)
+            type: number
+            format: zto
+          - name: rh
+            title: RH (%)
+            type: number
+            format: zto
+          - name: af
+            title: Acceleration Factor (AF)
+            type: number
+            format: zto
+          - name: rate
+            title: Degradation Rate (k / month)
+            type: number
+            format: zto
+          - name: predShelf
+            title: Predicted Shelf Life (months)
+            type: number
+            format: zto
+          - name: extrapNote
+            title: Projection & Regulatory Assessment
+            type: text
+
+    - name: arrhSensTable
+      title: Activation Energy (Ea) Sensitivity Analysis Table
+      type: Table
+      visible: (showArrh && showArrhSens)
+      columns:
+          - name: ea
+            title: Assumed Ea (kJ/mol)
+            type: number
+            format: zto
+          - name: af
+            title: Relative AF (vs 25°C)
+            type: number
+            format: zto
+          - name: predShelf
+            title: Predicted Shelf Life at 25°C (months)
+            type: number
+            format: zto
+          - name: assessment
+            title: Risk Profile / Assessment
+            type: text
+
+    - name: arrhRegTable
+      title: Arrhenius Multi-Temperature Regression Model
+      type: Table
+      visible: (showArrh && (length(tempVar) > 0 && tempVar != ""))
+      columns:
+          - name: param
+            title: Kinetic Parameter
+            type: text
+          - name: est
+            title: Estimate
+            type: number
+            format: zto
+          - name: se
+            title: Std. Error
+            type: number
+            format: zto
+          - name: t
+            title: t
+            type: number
+            format: zto
+          - name: p
+            title: p
+            type: number
+            format: zto
+          - name: ci
+            title: 95% Confidence Interval
+            type: text
+
+    - name: arrhPlot
+      title: Arrhenius Degradation Kinetics Plot (ln(k) vs 1000/T)
+      type: Image
+      visible: (showArrh && showArrhPlot)
+      width:  680
+      height: 440
+      renderFun: .arrhPlot
+      requiresData: true
+
+    - name: arrhTrajPlot
+      title: Projected Degradation Trajectories Across Temperatures Plot
+      type: Image
+      visible: (showArrh && showArrhTrajPlot)
+      width:  700
+      height: 460
+      renderFun: .arrhTrajPlot
+      requiresData: true
 ...

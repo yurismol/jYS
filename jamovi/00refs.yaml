@@ -485,6 +485,45 @@ refs:
         pages: 1832–1841
         url: https://doi.org/10.1016/j.xphs.2024.02.020
 
+    waterman2005:
+        type: 'article'
+        author: Waterman, K. C., Adami, R. C., Alsante, K. M., Antipas, A. S., et al.
+        year: 2005
+        title: "Accelerated Aging: Prediction of Chemical Stability of Pharmaceuticals"
+        publisher: "International Journal of Pharmaceutics"
+        volume: 293
+        issue: 1–2
+        pages: 101–125
+        url: https://doi.org/10.1016/j.ijpharm.2004.12.013
+
+    waterman2007:
+        type: 'article'
+        author: Waterman, K. C., & MacDonald, B. C.
+        year: 2007
+        title: "Package Selection for Moisture-Sensitive Pharmaceutical Products"
+        publisher: "Journal of Pharmaceutical Sciences"
+        volume: 96
+        issue: 9
+        pages: 2478–2488
+        url: https://doi.org/10.1002/jps.20897
+
+    connors1986:
+        type: 'book'
+        author: Connors, K. A., Amidon, G. L., & Stella, V. J.
+        year: 1986
+        title: "Chemical Stability of Pharmaceuticals: A Handbook for Pharmacists"
+        publisher: "John Wiley & Sons, New York"
+        url: https://books.google.com/books?id=0XtrAAAAMAAJ
+
+    zahn2006:
+        type: 'chapter'
+        author: Zahn, M., et al.
+        year: 2006
+        title: "Evaluation of Stability Data and Shelf Life Modeling"
+        publisher: "In: Huynh-Ba, K. (Ed.), Handbook of Stability Testing in Pharmaceutical Development. Springer, New York"
+        pages: 181–204
+        url: https://doi.org/10.1007/978-0-387-85627-8_9
+
     obrien1985:
         type: 'article'
         author: O'Brien, R. G., & Kaiser, M. K.
