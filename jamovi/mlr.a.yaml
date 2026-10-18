@@ -93,6 +93,11 @@ options:
           title: Lambda 1SE (Most Sparse Model)
       default: min
 
+    - name: firth
+      title: Firth's penalized likelihood
+      type: Bool
+      default: false
+
     - name: partition
       title: Validation Method
       type: List

@@ -15,6 +15,7 @@ mLROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             method = "manual",
             elastic_alpha = 0.5,
             lasso_penalty = "min",
+            firth = FALSE,
             partition = "kfold",
             val_split = 30,
             cv_folds = 5,
@@ -107,6 +108,10 @@ mLROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "min",
                     "1se"),
                 default="min")
+            private$..firth <- jmvcore::OptionBool$new(
+                "firth",
+                firth,
+                default=FALSE)
             private$..partition <- jmvcore::OptionList$new(
                 "partition",
                 partition,
@@ -235,6 +240,7 @@ mLROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..group)
             self$.addOption(private$..selgroup)
             self$.addOption(private$..method)
+            self$.addOption(private$..firth)
             self$.addOption(private$..elastic_alpha)
             self$.addOption(private$..lasso_penalty)
             self$.addOption(private$..partition)
@@ -269,6 +275,7 @@ mLROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         group = function() private$..group$value,
         selgroup = function() private$..selgroup$value,
         method = function() private$..method$value,
+        firth = function() private$..firth$value,
         elastic_alpha = function() private$..elastic_alpha$value,
         lasso_penalty = function() private$..lasso_penalty$value,
         partition = function() private$..partition$value,
@@ -302,6 +309,7 @@ mLROptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..group = NA,
         ..selgroup = NA,
         ..method = NA,
+        ..firth = NA,
         ..elastic_alpha = NA,
         ..lasso_penalty = NA,
         ..partition = NA,
@@ -333,6 +341,7 @@ mLRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "mLRResults",
     inherit = jmvcore::Group,
     active = list(
+        text = function() private$.items[["text"]],
         infoTable = function() private$.items[["infoTable"]],
         coeffTable = function() private$.items[["coeffTable"]],
         formulaHtml = function() private$.items[["formulaHtml"]],
@@ -353,7 +362,14 @@ mLRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 refs=list(
                     "jys",
                     "roc",
-                    "glmnet"))
+                    "glmnet",
+                    "firth1993",
+                    "logistf"))
+            self$add(jmvcore::Html$new(
+                options=options,
+                name="text",
+                title="Conditions & Diagnostics",
+                visible=FALSE))
             self$add(jmvcore::Table$new(
                 options=options,
                 name="infoTable",
@@ -527,25 +543,7 @@ mLRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     width=500,
                     height=500,
                     renderFun=".rocPlot",
-                    clearWith=list(
-                        "dep",
-                        "covs",
-                        "factors",
-                        "method",
-                        "elastic_alpha",
-                        "lasso_penalty",
-                        "partition",
-                        "val_split",
-                        "cv_folds",
-                        "cv_repeats",
-                        "roc_x",
-                        "roc_unit",
-                        "palBrewer",
-                        "group",
-                        "selgroup",
-                        "show_roc_cut",
-                        "show_roc_table",
-                        "multiclass_roc_type")),
+                    requiresData=TRUE),
                 clearWith=list(
                     "dep",
                     "covs",
@@ -656,7 +654,6 @@ mLRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 title="Predicted Class",
                 clearWith=list(
                     "dep",
-                    "refLevel",
                     "covs",
                     "factors",
                     "method",
@@ -666,7 +663,6 @@ mLRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "val_split",
                     "cv_folds",
                     "cv_repeats",
-                    "seed",
                     "group",
                     "selgroup")))
             self$add(jmvcore::Output$new(
@@ -675,7 +671,6 @@ mLRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 title="Predicted Probability",
                 clearWith=list(
                     "dep",
-                    "refLevel",
                     "covs",
                     "factors",
                     "method",
@@ -685,7 +680,6 @@ mLRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "val_split",
                     "cv_folds",
                     "cv_repeats",
-                    "seed",
                     "group",
                     "selgroup")))}))
 
@@ -713,8 +707,7 @@ mLRBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' Logistic Regression
 #'
 #' Logistic Regression with feature selection. Note that cross-validation fold 
-#' partitioning uses a random seed (default 42, configurable under Validation 
-#' Settings) for reproducibility.
+#' partitioning uses a hardcoded random seed (42) for reproducibility.
 #' @param data .
 #' @param dep .
 #' @param refLevel .
@@ -748,6 +741,7 @@ mLRBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param seed .
 #' @return A results object containing:
 #' \tabular{llllll}{
+#'   \code{results$text} \tab \tab \tab \tab \tab a html \cr
 #'   \code{results$infoTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$coeffTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$formulaHtml} \tab \tab \tab \tab \tab a html \cr
@@ -778,6 +772,7 @@ mLR <- function(
     method = "manual",
     elastic_alpha = 0.5,
     lasso_penalty = "min",
+    firth = FALSE,
     partition = "kfold",
     val_split = 30,
     cv_folds = 5,
@@ -829,6 +824,7 @@ mLR <- function(
         method = method,
         elastic_alpha = elastic_alpha,
         lasso_penalty = lasso_penalty,
+        firth = firth,
         partition = partition,
         val_split = val_split,
         cv_folds = cv_folds,

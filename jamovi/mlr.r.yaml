@@ -2,7 +2,7 @@
 name:  mLR
 title: Logistic Regression
 jrs:   '1.1'
-refs: [jys, roc, glmnet]
+refs: [jys, roc, glmnet, firth1993, logistf]
 
 items:
     - name: infoTable
@@ -14,6 +14,7 @@ items:
           - covs
           - factors
           - method
+          - firth
           - elastic_alpha
           - lasso_penalty
           - partition
@@ -38,6 +39,7 @@ items:
           - covs
           - factors
           - method
+          - firth
           - elastic_alpha
           - lasso_penalty
           - group
@@ -84,6 +86,7 @@ items:
           - covs
           - factors
           - method
+          - firth
           - elastic_alpha
           - lasso_penalty
           - group
@@ -102,6 +105,7 @@ items:
           - covs
           - factors
           - method
+          - firth
           - elastic_alpha
           - lasso_penalty
           - group
@@ -119,6 +123,7 @@ items:
           - covs
           - factors
           - method
+          - firth
           - elastic_alpha
           - lasso_penalty
           - partition
@@ -164,6 +169,7 @@ items:
               - covs
               - factors
               - method
+              - firth
               - elastic_alpha
               - lasso_penalty
               - partition
@@ -183,6 +189,7 @@ items:
           - covs
           - factors
           - method
+          - firth
           - elastic_alpha
           - lasso_penalty
           - partition
@@ -207,6 +214,7 @@ items:
           - covs
           - factors
           - method
+          - firth
           - elastic_alpha
           - lasso_penalty
           - partition
@@ -246,6 +254,7 @@ items:
           - covs
           - factors
           - method
+          - firth
           - elastic_alpha
           - lasso_penalty
           - partition
@@ -281,6 +290,7 @@ items:
           - covs
           - factors
           - method
+          - firth
           - elastic_alpha
           - lasso_penalty
           - partition
@@ -300,6 +310,7 @@ items:
           - covs
           - factors
           - method
+          - firth
           - elastic_alpha
           - lasso_penalty
           - partition

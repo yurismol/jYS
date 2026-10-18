@@ -138,6 +138,11 @@ options:
       type: Bool
       default: true
 
+    - name: coxFirth
+      title: Firth's penalized likelihood
+      type: Bool
+      default: false
+
     - name: coxForest
       title: Forest Plot of Hazard Ratios
       type: Bool

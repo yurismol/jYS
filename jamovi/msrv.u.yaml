@@ -126,6 +126,10 @@ children:
         name: showCox
         children:
           - type: CheckBox
+            name: coxFirth
+            label: Firth's penalized likelihood
+            enable: (showCox)
+          - type: CheckBox
             name: coxForest
             enable: (showCox)
           - type: CheckBox

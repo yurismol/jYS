@@ -426,6 +426,7 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                       group_var,
                       covs,
                       subject_id_var,
+                      self$options$coxFirth,
                       nrow(dat_cox)
                   )
 
@@ -437,8 +438,17 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                       if (nrow(dat_cox) > 0) {
                           surv_cox_str <- if (has_tstart) "survival::Surv(..tstart, ..time, ..event)" else "survival::Surv(..time, ..event)"
                           formula_cox <- paste(surv_cox_str, "~", paste(terms, collapse = " + "))
-                          cluster_arg <- if (has_cluster) dat_cox$..cluster else NULL
-                          cox_fit <- try(survival::coxph(as.formula(formula_cox), data = dat_cox, cluster = cluster_arg, x = TRUE), silent = TRUE)
+
+                          if (isTRUE(self$options$coxFirth)) {
+                              if ( ! requireNamespace("coxphf", quietly = TRUE)) {
+                                  cox_fit <- try(stop(jmvcore::.("The 'coxphf' package is required for Firth's penalized likelihood Cox regression. Please install it with install.packages('coxphf').")), silent = TRUE)
+                              } else {
+                                  cox_fit <- try(coxphf::coxphf(as.formula(formula_cox), data = dat_cox, pl = TRUE), silent = TRUE)
+                              }
+                          } else {
+                              cluster_arg <- if (has_cluster) dat_cox$..cluster else NULL
+                              cox_fit <- try(survival::coxph(as.formula(formula_cox), data = dat_cox, cluster = cluster_arg, x = TRUE), silent = TRUE)
+                          }
 
                           if (!inherits(cox_fit, "try-error")) {
                               private$.cached_cox_fit <- cox_fit
@@ -447,48 +457,40 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                               private$.cached_zph <- NULL
                               private$.cached_zph_rows <- NULL
 
-                              # Model fit summaries
-                              sum_cox <- summary(cox_fit)
                               fitTable <- self$results$coxSection$coxFitTable
                               fitTable$deleteRows()
-
-                              if (!is.null(sum_cox$logtest)) {
-                                  fitTable$addRow(rowKey="lr", values=list(
-                                      test = jmvcore::.("Likelihood Ratio Test"),
-                                      stat = as.numeric(sum_cox$logtest["test"]),
-                                      df   = as.integer(sum_cox$logtest["df"]),
-                                      p    = as.numeric(sum_cox$logtest["pvalue"])
-                                  ))
-                              }
-                              if (!is.null(sum_cox$waldtest)) {
-                                  fitTable$addRow(rowKey="wald", values=list(
-                                      test = jmvcore::.("Wald Test"),
-                                      stat = as.numeric(sum_cox$waldtest["test"]),
-                                      df   = as.integer(sum_cox$waldtest["df"]),
-                                      p    = as.numeric(sum_cox$waldtest["pvalue"])
-                                  ))
-                              }
-                              if (!is.null(sum_cox$sctest)) {
-                                  fitTable$addRow(rowKey="score", values=list(
-                                      test = jmvcore::.("Score (Log-rank) Test"),
-                                      stat = as.numeric(sum_cox$sctest["test"]),
-                                      df   = as.integer(sum_cox$sctest["df"]),
-                                      p    = as.numeric(sum_cox$sctest["pvalue"])
-                                  ))
-                              }
-
-                              # Coefficients
                               coefTable <- self$results$coxSection$coxCoefTable
                               coefTable$deleteRows()
 
-                              coefs <- sum_cox$coefficients
-                              conf_int <- sum_cox$conf.int
+                              if (inherits(cox_fit, "coxphf")) {
+                                  stat_lr <- 2 * (cox_fit$loglik[2] - cox_fit$loglik[1])
+                                  df_lr <- as.integer(cox_fit$df)
+                                  p_lr <- as.numeric(1 - stats::pchisq(stat_lr, df_lr))
 
-                              if (!is.null(coefs)) {
-                                  row_names <- rownames(coefs)
-                                  se_col <- if ("robust se" %in% colnames(coefs)) "robust se" else "se(coef)"
-                                  for (i in seq_along(row_names)) {
-                                      raw_name <- row_names[i]
+                                  fitTable$addRow(rowKey="lr", values=list(
+                                      test = jmvcore::.("Likelihood Ratio Test"),
+                                      stat = as.numeric(stat_lr),
+                                      df   = df_lr,
+                                      p    = as.numeric(p_lr)
+                                  ))
+
+                                  stat_wald <- try(as.numeric(t(cox_fit$coefficients) %*% solve(cox_fit$var) %*% cox_fit$coefficients), silent = TRUE)
+                                  if (!inherits(stat_wald, "try-error") && !is.na(stat_wald)) {
+                                      fitTable$addRow(rowKey="wald", values=list(
+                                          test = jmvcore::.("Wald Test"),
+                                          stat = as.numeric(stat_wald),
+                                          df   = df_lr,
+                                          p    = as.numeric(1 - stats::pchisq(stat_wald, df_lr))
+                                      ))
+                                  }
+
+                                  fitTable$setNote("firth_fit_note", jmvcore::.("<b>Firth's penalized likelihood</b>: Likelihood Ratio and Wald tests assess the overall significance of the model (joint effect of all predictors) using penalized likelihood."))
+
+                                  coef_names <- names(cox_fit$coefficients)
+                                  se_vec <- sqrt(diag(cox_fit$var))
+
+                                  for (i in seq_along(coef_names)) {
+                                      raw_name <- coef_names[i]
                                       clean_name <- raw_name
                                       if (grepl("^\\.\\.group", raw_name)) {
                                           lvl <- gsub("^\\.\\.group_?", "", raw_name)
@@ -500,20 +502,25 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                           clean_name <- if (nzchar(rem_suffix)) paste0(cov_name, " (", rem_suffix, ")") else cov_name
                                       }
 
+                                      coef_val <- as.numeric(cox_fit$coefficients[i])
+                                      se_val <- as.numeric(se_vec[i])
+                                      z_val <- if (!is.na(se_val) && se_val > 0) coef_val / se_val else NA_real_
+
                                       coefTable$addRow(rowKey=raw_name, values=list(
                                           var     = clean_name,
-                                          coef    = as.numeric(coefs[i, "coef"]),
-                                          se      = as.numeric(coefs[i, se_col]),
-                                          z       = as.numeric(coefs[i, "z"]),
-                                          p       = as.numeric(coefs[i, "Pr(>|z|)"]),
-                                          hr      = as.numeric(conf_int[i, "exp(coef)"]),
-                                          hrLower = as.numeric(conf_int[i, "lower .95"]),
-                                          hrUpper = as.numeric(conf_int[i, "upper .95"])
+                                          coef    = coef_val,
+                                          se      = se_val,
+                                          z       = z_val,
+                                          p       = as.numeric(cox_fit$prob[i]),
+                                          hr      = as.numeric(exp(coef_val)),
+                                          hrLower = as.numeric(cox_fit$ci.lower[i]),
+                                          hrUpper = as.numeric(cox_fit$ci.upper[i])
                                       ))
                                   }
 
+                                  coefTable$setNote("firth_note", jmvcore::.("<b>Firth's penalized likelihood</b> (Firth, 1993) reduces small-sample bias and addresses monotone likelihood (separation) in Cox regression. Parameters and 95% hazard ratio confidence intervals are estimated using penalized profile likelihood."))
                                   if (has_cluster) {
-                                      coefTable$setNote("cluster_note", paste0(jmvcore::.("Standard errors and confidence intervals are adjusted for clustering by"), " ", subject_id_var, " (", jmvcore::.("Huber–White robust sandwich estimator"), ")."))
+                                      coefTable$setNote("cluster_note", jmvcore::.("Clustering is not supported with Firth's penalized Cox regression; cluster adjustment was omitted."))
                                   } else {
                                       coefTable$setNote("cluster_note", NULL)
                                   }
@@ -521,6 +528,81 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                       coefTable$setNote("cp_note", jmvcore::.("Counting process formulation with left-truncation (tstart, elapsed)."))
                                   } else {
                                       coefTable$setNote("cp_note", NULL)
+                                  }
+                              } else {
+                                  fitTable$setNote("firth_fit_note", NULL)
+                                  coefTable$setNote("firth_note", NULL)
+
+                                  # Model fit summaries
+                                  sum_cox <- summary(cox_fit)
+
+                                  if (!is.null(sum_cox$logtest)) {
+                                      fitTable$addRow(rowKey="lr", values=list(
+                                          test = jmvcore::.("Likelihood Ratio Test"),
+                                          stat = as.numeric(sum_cox$logtest["test"]),
+                                          df   = as.integer(sum_cox$logtest["df"]),
+                                          p    = as.numeric(sum_cox$logtest["pvalue"])
+                                      ))
+                                  }
+                                  if (!is.null(sum_cox$waldtest)) {
+                                      fitTable$addRow(rowKey="wald", values=list(
+                                          test = jmvcore::.("Wald Test"),
+                                          stat = as.numeric(sum_cox$waldtest["test"]),
+                                          df   = as.integer(sum_cox$waldtest["df"]),
+                                          p    = as.numeric(sum_cox$waldtest["pvalue"])
+                                      ))
+                                  }
+                                  if (!is.null(sum_cox$sctest)) {
+                                      fitTable$addRow(rowKey="score", values=list(
+                                          test = jmvcore::.("Score (Log-rank) Test"),
+                                          stat = as.numeric(sum_cox$sctest["test"]),
+                                          df   = as.integer(sum_cox$sctest["df"]),
+                                          p    = as.numeric(sum_cox$sctest["pvalue"])
+                                      ))
+                                  }
+
+                                  # Coefficients
+                                  coefs <- sum_cox$coefficients
+                                  conf_int <- sum_cox$conf.int
+
+                                  if (!is.null(coefs)) {
+                                      row_names <- rownames(coefs)
+                                      se_col <- if ("robust se" %in% colnames(coefs)) "robust se" else "se(coef)"
+                                      for (i in seq_along(row_names)) {
+                                          raw_name <- row_names[i]
+                                          clean_name <- raw_name
+                                          if (grepl("^\\.\\.group", raw_name)) {
+                                              lvl <- gsub("^\\.\\.group_?", "", raw_name)
+                                              clean_name <- if (nzchar(lvl)) paste0(group_var, " (", lvl, ")") else group_var
+                                          } else if (grepl("^\\.\\.cov_([0-9]+)", raw_name)) {
+                                              match_idx <- as.integer(gsub("^\\.\\.cov_([0-9]+).*", "\\1", raw_name))
+                                              rem_suffix <- gsub(paste0("^\\.\\.cov_", match_idx, "_?"), "", raw_name)
+                                              cov_name <- if (match_idx >= 1 && match_idx <= length(covs)) covs[match_idx] else paste0("cov_", match_idx)
+                                              clean_name <- if (nzchar(rem_suffix)) paste0(cov_name, " (", rem_suffix, ")") else cov_name
+                                          }
+
+                                          coefTable$addRow(rowKey=raw_name, values=list(
+                                              var     = clean_name,
+                                              coef    = as.numeric(coefs[i, "coef"]),
+                                              se      = as.numeric(coefs[i, se_col]),
+                                              z       = as.numeric(coefs[i, "z"]),
+                                              p       = as.numeric(coefs[i, "Pr(>|z|)"]),
+                                              hr      = as.numeric(conf_int[i, "exp(coef)"]),
+                                              hrLower = as.numeric(conf_int[i, "lower .95"]),
+                                              hrUpper = as.numeric(conf_int[i, "upper .95"])
+                                          ))
+                                      }
+
+                                      if (has_cluster) {
+                                          coefTable$setNote("cluster_note", paste0(jmvcore::.("Standard errors and confidence intervals are adjusted for clustering by"), " ", subject_id_var, " (", jmvcore::.("Huber–White robust sandwich estimator"), ")."))
+                                      } else {
+                                          coefTable$setNote("cluster_note", NULL)
+                                      }
+                                      if (has_tstart) {
+                                          coefTable$setNote("cp_note", jmvcore::.("Counting process formulation with left-truncation (tstart, elapsed)."))
+                                      } else {
+                                          coefTable$setNote("cp_note", NULL)
+                                      }
                                   }
                               }
                           } else {
@@ -543,6 +625,8 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                           private$.cox_model_sig <- NULL
                           self$results$coxSection$coxFitTable$deleteRows()
                           self$results$coxSection$coxCoefTable$deleteRows()
+                          self$results$coxSection$coxFitTable$setNote("firth_fit_note", NULL)
+                          self$results$coxSection$coxCoefTable$setNote("firth_note", NULL)
                       }
                   }
 
@@ -559,8 +643,16 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
                       # Proportionality check
                       if (self$options$coxAssump) {
-                          if (is.null(private$.cached_zph)) {
-                              zph <- try(survival::cox.zph(cox_fit), silent = TRUE)
+                          if (inherits(cox_fit, "coxphf")) {
+                              assumpTable <- self$results$coxSection$coxAssumpTable
+                              assumpTable$deleteRows()
+                              assumpTable$setNote("firth_assump_note", jmvcore::.("Proportional hazards assumption test via Schoenfeld residuals is not available for Firth's penalized Cox regression models."))
+                              schoenfeldPlots <- self$results$coxSection$schoenfeldPlots
+                              schoenfeldPlots$clear()
+                          } else {
+                              self$results$coxSection$coxAssumpTable$setNote("firth_assump_note", NULL)
+                              if (is.null(private$.cached_zph)) {
+                                  zph <- try(survival::cox.zph(cox_fit), silent = TRUE)
                               if (!inherits(zph, "try-error")) {
                                   private$.cached_zph <- zph
                                   private$.cached_zph_rows <- rownames(zph$table)
@@ -686,8 +778,10 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                   }
                               }
                           }
+                          }
                       } else {
                           self$results$coxSection$coxAssumpTable$deleteRows()
+                          self$results$coxSection$coxAssumpTable$setNote("firth_assump_note", NULL)
                           self$results$coxSection$schoenfeldPlots$clear()
                           self$results$coxSection$schoenfeldPlots$setState(NULL)
                           private$.cached_zph <- NULL
@@ -1347,14 +1441,27 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
           terms <- state$terms
           if (is.null(fit) || is.null(terms)) return(FALSE)
 
-          sum_cox <- summary(fit)
-          coef_df <- as.data.frame(sum_cox$conf.int)
-          if (nrow(coef_df) == 0) return(FALSE)
+          if (inherits(fit, "coxphf")) {
+              coef_df <- data.frame(
+                  `exp(coef)` = as.numeric(exp(fit$coefficients)),
+                  `lower .95` = as.numeric(fit$ci.lower),
+                  `upper .95` = as.numeric(fit$ci.upper),
+                  check.names = FALSE
+              )
+              rownames(coef_df) <- names(fit$coefficients)
+              coef_df$raw_var <- names(fit$coefficients)
+              coef_df$coef <- as.numeric(fit$coefficients)
+              coef_df$se <- as.numeric(sqrt(diag(fit$var)))
+          } else {
+              sum_cox <- summary(fit)
+              coef_df <- as.data.frame(sum_cox$conf.int)
+              if (nrow(coef_df) == 0) return(FALSE)
 
-          coef_df$raw_var <- rownames(coef_df)
-          coef_df$coef <- sum_cox$coefficients[, "coef"]
-          se_col_cox <- if ("robust se" %in% colnames(sum_cox$coefficients)) "robust se" else if ("se(coef)" %in% colnames(sum_cox$coefficients)) "se(coef)" else 2
-          coef_df$se <- sum_cox$coefficients[, se_col_cox]
+              coef_df$raw_var <- rownames(coef_df)
+              coef_df$coef <- sum_cox$coefficients[, "coef"]
+              se_col_cox <- if ("robust se" %in% colnames(sum_cox$coefficients)) "robust se" else if ("se(coef)" %in% colnames(sum_cox$coefficients)) "se(coef)" else 2
+              coef_df$se <- sum_cox$coefficients[, se_col_cox]
+          }
 
           coef_df$var <- coef_df$raw_var
           group_var <- self$options$group

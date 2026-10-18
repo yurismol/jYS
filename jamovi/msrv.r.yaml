@@ -115,7 +115,7 @@ items:
     title: Cox Proportional Hazards Regression
     type: Group
     visible: (showCox && ((!is.null(covariates) && length(covariates) > 0) || (!is.null(group)) || showTimeDepEffects))
-    refs: [survival, cox1972, harrell2015, therneau2000]
+    refs: [survival, cox1972, harrell2015, therneau2000, firth1993, coxphf]
     items:
       - name: coxFitTable
         title: Cox Model Fit Statistics
@@ -129,6 +129,7 @@ items:
           - group
           - covariates
           - subjectId
+          - coxFirth
         columns:
           - name: test
             title: Test
@@ -156,6 +157,7 @@ items:
           - group
           - covariates
           - subjectId
+          - coxFirth
         columns:
           - name: var
             title: Variable
@@ -239,6 +241,7 @@ items:
           - group
           - covariates
           - subjectId
+          - coxFirth
 
       - name: coxAssumpTable
         title: Proportional Hazards Assumption (Schoenfeld Residuals Test)
@@ -252,6 +255,7 @@ items:
           - group
           - covariates
           - subjectId
+          - coxFirth
         columns:
           - name: var
             title: Variable
@@ -281,6 +285,7 @@ items:
           - subjectId
           - coxAssump
           - showSchoenfeldPlot
+          - coxFirth
         template:
           title: $key
           type: Image
@@ -297,6 +302,7 @@ items:
             - subjectId
             - coxAssump
             - showSchoenfeldPlot
+            - coxFirth
 
   - name: adjSection
     title: Adjusted Survival Curves (Direct / G-computation)

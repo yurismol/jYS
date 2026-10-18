@@ -50,6 +50,9 @@ children:
       - name: method
         type: ComboBox
         label: Feature Selection Method
+      - name: firth
+        type: CheckBox
+        label: Firth's penalized likelihood
       - name: elastic_alpha
         type: TextBox
         label: ElasticNet Alpha (0=Ridge, 1=LASSO)

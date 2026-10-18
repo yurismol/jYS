@@ -111,9 +111,14 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             X_selected <- X_all[, selected_features, drop = FALSE]
             
             if (is_multinomial) {
+                if (isTRUE(self$options$firth)) {
+                    self$results$insert(1, jmvcore::Notice$new(self$options, name="firthMultiNotice",
+                        type=jmvcore::NoticeType$WARNING,
+                        content=jmvcore::.("Firth's penalized likelihood is currently only supported for binary logistic regression. Falling back to standard multinomial model.")))
+                }
                 fit_full <- private$.fit_multinom(X_selected, y_target)
             } else {
-                fit_full <- private$.fit_standard_glm(X_selected, y_num)
+                fit_full <- private$.fit_standard_glm(X_selected, y_num, pl = TRUE)
             }
             
             # Populate Model Coefficients Table
@@ -236,7 +241,7 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     r_val_roc <- try(pROC::multiclass.roc(val_y, val_prob, quiet = TRUE), silent = TRUE)
                     val_auc <- if (inherits(r_val_roc, "try-error")) NA else as.numeric(pROC::auc(r_val_roc))
                 } else {
-                    fit_train <- private$.fit_standard_glm(X_train_selected, y_train)
+                    fit_train <- private$.fit_standard_glm(X_train_selected, y_train, pl = FALSE)
                     
                     # Predict on test split
                     val_prob <- predict(fit_train, newdata = as.data.frame(X_test_selected), type = "response")
@@ -338,7 +343,7 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         X_tr_selected <- X_tr_full[, tr_selected, drop = FALSE]
                         X_te_selected <- X_all[t_idx, tr_selected, drop = FALSE]
                         
-                        fit_cv_fold <- try(private$.fit_standard_glm(X_tr_selected, y_tr), silent = TRUE)
+                        fit_cv_fold <- try(private$.fit_standard_glm(X_tr_selected, y_tr, pl = FALSE), silent = TRUE)
                         
                         if (!inherits(fit_cv_fold, "try-error")) {
                             p_prob <- predict(fit_cv_fold, newdata = as.data.frame(X_te_selected), type = "response")
@@ -457,7 +462,7 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                             X_tr_selected <- X_tr_full[, tr_selected, drop = FALSE]
                             X_te_selected <- X_all[t_idx, tr_selected, drop = FALSE]
                             
-                            fit_cv_fold <- try(private$.fit_standard_glm(X_tr_selected, y_tr), silent = TRUE)
+                            fit_cv_fold <- try(private$.fit_standard_glm(X_tr_selected, y_tr, pl = FALSE), silent = TRUE)
                             
                             if (!inherits(fit_cv_fold, "try-error")) {
                                 p_prob <- predict(fit_cv_fold, newdata = as.data.frame(X_te_selected), type = "response")
@@ -501,7 +506,8 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 X_selected = X_selected,
                 covs = covs,
                 factors = factors,
-                ref_level = y_levels[1]
+                ref_level = y_levels[1],
+                is_multinomial = is_multinomial
             )
             
             # ----------------------------------------------------
@@ -1018,7 +1024,7 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
         # ----------------------------------------------------
         # Helper: Fit Standard Binomial GLM
         # ----------------------------------------------------
-        .fit_standard_glm = function(X_selected, y_num) {
+        .fit_standard_glm = function(X_selected, y_num, pl = TRUE) {
             df_fit <- as.data.frame(X_selected)
             df_fit$y_num <- y_num
             
@@ -1030,7 +1036,14 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 formula_str <- jmvcore::composeFormula("y_num", colnames(X_selected))
             }
             
-            fit <- glm(as.formula(formula_str), data = df_fit, family = binomial)
+            if (isTRUE(self$options$firth)) {
+                if (!requireNamespace("logistf", quietly = TRUE)) {
+                    stop(jmvcore::.("The 'logistf' package is required for Firth's penalized likelihood. Please install it with install.packages('logistf')."))
+                }
+                fit <- logistf::logistf(as.formula(formula_str), data = df_fit, pl = pl)
+            } else {
+                fit <- glm(as.formula(formula_str), data = df_fit, family = binomial)
+            }
             return(fit)
         },
         
@@ -1155,6 +1168,54 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         ))
                     }
                 }
+            } else if (inherits(fit, "logistf")) {
+                terms <- names(fit$coefficients)
+                se_vec <- sqrt(diag(as.matrix(fit$var)))
+                
+                for (i in seq_along(terms)) {
+                    term_name <- terms[i]
+                    est <- as.numeric(fit$coefficients[i])
+                    se <- as.numeric(se_vec[i])
+                    z <- if (!is.na(se) && se > 0) est / se else NA_real_
+                    p <- as.numeric(fit$prob[i])
+                    
+                    odds_ratio <- exp(est)
+                    ci_lower <- exp(as.numeric(fit$ci.lower[i]))
+                    ci_upper <- exp(as.numeric(fit$ci.upper[i]))
+                    
+                    if (term_name == "(Intercept)") {
+                        std_beta <- NA
+                        disp_name <- .("(Intercept)")
+                    } else {
+                        clean_col_name <- gsub("^`|`$", "", term_name)
+                        if (clean_col_name %in% colnames(X_selected)) {
+                            std_beta <- est * sd(X_selected[, clean_col_name], na.rm = TRUE)
+                            disp_name <- clean_col_name
+                        } else {
+                            disp_name <- term_name
+                            std_beta <- NA
+                            for (col in colnames(X_selected)) {
+                                if (grepl(col, term_name, fixed = TRUE)) {
+                                    std_beta <- est * sd(X_selected[, col], na.rm = TRUE)
+                                    break
+                                }
+                            }
+                        }
+                    }
+                    
+                    coeff_table$addRow(rowKey = term_name, values = list(
+                        level = y_levels[2],
+                        term = disp_name,
+                        est = est,
+                        se = se,
+                        z = z,
+                        p = p,
+                        or = odds_ratio,
+                        ciLower = ci_lower,
+                        ciUpper = ci_upper,
+                        stdBeta = std_beta
+                    ))
+                }
             } else {
                 sum_fit <- summary(fit)
                 coef_matrix <- sum_fit$coefficients
@@ -1207,6 +1268,12 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             }
             
             try(coeff_table$addFootnote(col = "level", note = ref_msg, rowNo = 1), silent = TRUE)
+            if (isTRUE(self$options$firth) && !is_multinomial) {
+                firth_note <- .("<b>Firth's penalized likelihood</b> (Firth, 1993) reduces small-sample bias and addresses separation. Parameters and 95% confidence intervals are estimated using penalized profile likelihood.")
+                try(coeff_table$setNote('firth_note', firth_note), silent = TRUE)
+            } else {
+                try(coeff_table$setNote('firth_note', NULL), silent = TRUE)
+            }
             if (isTRUE(private$.step_fallback)) {
                 fallback_note <- .("Stepwise selection failed to retain any predictors or encountered an error; falling back to all predictors.")
                 try(coeff_table$setNote('fallback_note', fallback_note), silent = TRUE)
@@ -1220,7 +1287,7 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
         # ----------------------------------------------------
         .populate_info_table = function(method, alpha, lasso_choice, partition, val_split, cv_folds, cv_repeats,
                                         train_acc, train_auc, val_acc, val_auc, cv_acc, cv_auc,
-                                        X_selected, covs, factors, ref_level) {
+                                        X_selected, covs, factors, ref_level, is_multinomial = FALSE) {
             method_lbl <- switch(
                 method,
                 "manual" = .("Manual"),
@@ -1229,6 +1296,9 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 "lasso" = jmvcore::format(.("LASSO ({penalty})"), penalty = toupper(lasso_choice)),
                 "elastic" = jmvcore::format(.("ElasticNet (α={alpha}, {penalty})"), alpha = alpha, penalty = toupper(lasso_choice))
             )
+            if (isTRUE(self$options$firth)) {
+                method_lbl <- paste0(method_lbl, " + ", .("Firth's penalized likelihood"))
+            }
             
             val_lbl <- switch(
                 partition,
@@ -1310,6 +1380,13 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             
             msg <- jmvcore::format(.("Selected Factors: {factors}; Selected Covariates: {covs}"), factors = factors_str, covs = covs_str)
             info_table$addFootnote(col = "metric", note = msg, rowNo = 1)
+            
+            if (isTRUE(self$options$firth) && !is_multinomial) {
+                firth_info_note <- .("<b>Firth's penalized likelihood</b>: Applies a penalty (Jeffreys prior) to eliminate small-sample bias and prevent infinite odds ratios when events are rare or data are separated.")
+                info_table$setNote('firth_note', firth_info_note)
+            } else {
+                info_table$setNote('firth_note', NULL)
+            }
         },
         
         # ----------------------------------------------------
@@ -1703,6 +1780,32 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                             upper = ci_upper
                         )
                     }
+                }
+            } else if (inherits(fit, "logistf")) {
+                terms <- names(fit$coefficients)
+                for (i in seq_along(terms)) {
+                    term_name <- terms[i]
+                    if (term_name == "(Intercept)") next
+                    
+                    est <- as.numeric(fit$coefficients[i])
+                    odds_ratio <- exp(est)
+                    ci_lower <- exp(as.numeric(fit$ci.lower[i]))
+                    ci_upper <- exp(as.numeric(fit$ci.upper[i]))
+                    
+                    clean_col_name <- gsub("^`|`$", "", term_name)
+                    if (clean_col_name %in% colnames(X_selected)) {
+                        disp_name <- clean_col_name
+                    } else {
+                        disp_name <- term_name
+                    }
+                    
+                    forest_list[[length(forest_list) + 1]] <- list(
+                        level = NA,
+                        term = disp_name,
+                        or = odds_ratio,
+                        lower = ci_lower,
+                        upper = ci_upper
+                    )
                 }
             } else {
                 sum_fit <- summary(fit)
