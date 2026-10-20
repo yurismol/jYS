@@ -605,9 +605,6 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "chow2014",
                     "capen2018",
                     "quinlan2013",
-                    "mcmahon2021",
-                    "gonzalez2022",
-                    "cordero2024",
                     "waterman2005",
                     "waterman2007",
                     "connors1986",
@@ -645,23 +642,20 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     list(
                         `name`="ss", 
                         `title`="Sum of Squares", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="ms", 
                         `title`="Mean Square", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="f", 
                         `title`="F", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="p", 
                         `title`="p", 
                         `type`="number", 
-                        `format`="zto"),
+                        `format`="zto,pvalue"),
                     list(
                         `name`="decision", 
                         `title`="Statistical Decision (ICH Q1E)", 
@@ -696,23 +690,19 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     list(
                         `name`="intercept", 
                         `title`="Intercept (t = 0)", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="slope", 
                         `title`="Slope (rate / month)", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="statShelf", 
                         `title`="Statistical Shelf Life (months)", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="ichShelf", 
                         `title`="ICH Q1E Permitted Shelf Life (months)", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="limiting", 
                         `title`="Status / Limiting Factor", 
@@ -741,33 +731,28 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     list(
                         `name`="est", 
                         `title`="Estimate", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="se", 
                         `title`="Std. Error", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="t", 
                         `title`="t", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="p", 
                         `title`="p", 
                         `type`="number", 
-                        `format`="zto"),
+                        `format`="zto,pvalue"),
                     list(
                         `name`="lower", 
                         `title`="95% CI Lower", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="upper", 
                         `title`="95% CI Upper", 
-                        `type`="number", 
-                        `format`="zto"))))
+                        `type`="number"))))
             self$add(jmvcore::Table$new(
                 options=options,
                 name="diagTable",
@@ -792,8 +777,7 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     list(
                         `name`="value", 
                         `title`="Statistic / Value", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="df", 
                         `title`="df / Parameter", 
@@ -802,7 +786,7 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `name`="p", 
                         `title`="p", 
                         `type`="number", 
-                        `format`="zto"),
+                        `format`="zto,pvalue"),
                     list(
                         `name`="note", 
                         `title`="Assessment / Criteria", 
@@ -815,7 +799,7 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=680,
                 height=480,
                 renderFun=".stabPlot",
-                requiresData=TRUE,
+                requiresData=FALSE,
                 clearWith=list(
                     "dep",
                     "time",
@@ -837,7 +821,7 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=660,
                 height=400,
                 renderFun=".shelfPlot",
-                requiresData=TRUE,
+                requiresData=FALSE,
                 clearWith=list(
                     "dep",
                     "time",
@@ -859,7 +843,7 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=720,
                 height=500,
                 renderFun=".facetPlot",
-                requiresData=TRUE,
+                requiresData=FALSE,
                 clearWith=list(
                     "dep",
                     "time",
@@ -881,7 +865,7 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=660,
                 height=380,
                 renderFun=".ratePlot",
-                requiresData=TRUE,
+                requiresData=FALSE,
                 clearWith=list(
                     "dep",
                     "time",
@@ -897,7 +881,7 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=680,
                 height=480,
                 renderFun=".predPlot",
-                requiresData=TRUE,
+                requiresData=FALSE,
                 clearWith=list(
                     "dep",
                     "time",
@@ -908,6 +892,7 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "alphaPool",
                     "confLevel",
                     "modelChoice",
+                    "accelCondition",
                     "trans",
                     "studyDuration")))
             self$add(jmvcore::Image$new(
@@ -918,12 +903,13 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=700,
                 height=600,
                 renderFun=".diagPlot",
-                requiresData=TRUE,
+                requiresData=FALSE,
                 clearWith=list(
                     "dep",
                     "time",
                     "batch",
                     "modelChoice",
+                    "alphaPool",
                     "trans")))
             self$add(jmvcore::Table$new(
                 options=options,
@@ -950,13 +936,11 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     list(
                         `name`="statShelf", 
                         `title`="Statistical Shelf Life (months)", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="ichShelf", 
                         `title`="ICH Q1E Permitted Shelf Life (months)", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="status", 
                         `title`="Status / Limiting Role", 
@@ -974,33 +958,27 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     list(
                         `name`="attr1", 
                         `title`="Attribute 1 (months)", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="attr2", 
                         `title`="Attribute 2 (months)", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="attr3", 
                         `title`="Attribute 3 (months)", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="attr4", 
                         `title`="Attribute 4 (months)", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="attr5", 
                         `title`="Attribute 5 (months)", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="worstShelf", 
                         `title`="Batch Minimum Shelf Life (months)", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="limitingAttr", 
                         `title`="Limiting Attribute", 
@@ -1013,7 +991,7 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=700,
                 height=420,
                 renderFun=".multiShelfPlot",
-                requiresData=TRUE))
+                requiresData=FALSE))
             self$add(jmvcore::Table$new(
                 options=options,
                 name="arrhTable",
@@ -1027,28 +1005,23 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     list(
                         `name`="temp", 
                         `title`="Temperature (\u00B0C)", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="rh", 
                         `title`="RH (%)", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="af", 
                         `title`="Acceleration Factor (AF)", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="rate", 
                         `title`="Degradation Rate (k / month)", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="predShelf", 
                         `title`="Predicted Shelf Life (months)", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="extrapNote", 
                         `title`="Projection & Regulatory Assessment", 
@@ -1062,18 +1035,15 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     list(
                         `name`="ea", 
                         `title`="Assumed Ea (kJ/mol)", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="af", 
                         `title`="Relative AF (vs 25\u00B0C)", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="predShelf", 
                         `title`="Predicted Shelf Life at 25\u00B0C (months)", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="assessment", 
                         `title`="Risk Profile / Assessment", 
@@ -1091,23 +1061,20 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     list(
                         `name`="est", 
                         `title`="Estimate", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="se", 
                         `title`="Std. Error", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="t", 
                         `title`="t", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="p", 
                         `title`="p", 
                         `type`="number", 
-                        `format`="zto"),
+                        `format`="zto,pvalue"),
                     list(
                         `name`="ci", 
                         `title`="95% Confidence Interval", 
@@ -1120,7 +1087,7 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=680,
                 height=440,
                 renderFun=".arrhPlot",
-                requiresData=TRUE))
+                requiresData=FALSE))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="arrhTrajPlot",
@@ -1129,7 +1096,7 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=700,
                 height=460,
                 renderFun=".arrhTrajPlot",
-                requiresData=TRUE))}))
+                requiresData=FALSE))}))
 
 mSTABBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "mSTABBase",
@@ -1155,8 +1122,8 @@ mSTABBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' Stability Analysis (ICH Q1E)
 #'
 #' Evaluation of stability data and shelf life estimation according to the ICH 
-#' Q1E guideline using ANCOVA poolability testing and one-sided 95\% 
-#' confidence intervals.
+#' Q1E guideline using ANCOVA poolability testing and specification-directed 
+#' confidence bounds.
 #' @param data .
 #' @param dep .
 #' @param time .

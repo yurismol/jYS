@@ -41,7 +41,7 @@ options:
         - numeric
 
     - name: statusEvent
-      title: Level
+      title: Event level
       type: Level
       variable: (status)
 
@@ -93,27 +93,27 @@ options:
         - factor
 
     - name: showKm
-      title: Kaplan-Meier Survival Curves
+      title: Kaplan–Meier estimation
       type: Bool
       default: true
 
     - name: kmPlot
-      title: Kaplan-Meier Survival Plot
+      title: Kaplan–Meier survival plot
       type: Bool
       default: true
 
     - name: kmCI
-      title: Confidence Intervals (KM)
+      title: Confidence intervals (KM)
       type: Bool
       default: true
 
     - name: kmTable
-      title: Risk-at-time Table
+      title: Risk table
       type: Bool
       default: false
 
     - name: kmType
-      title: Plot Type
+      title: Plot type
       type: List
       options:
         - title: Survival probability
@@ -129,12 +129,12 @@ options:
       default: 0
 
     - name: showLogRank
-      title: Log-rank Test for Group Comparison
+      title: Log-rank test for group comparison
       type: Bool
       default: true
 
     - name: showCox
-      title: Cox Proportional Hazards Regression
+      title: Cox proportional hazards regression
       type: Bool
       default: true
 
@@ -144,27 +144,27 @@ options:
       default: false
 
     - name: coxForest
-      title: Forest Plot of Hazard Ratios
+      title: Forest plot of hazard ratios
       type: Bool
       default: false
 
     - name: coxAssump
-      title: Test Proportional Hazards Assumption
+      title: Test proportional hazards assumption
       type: Bool
       default: false
 
     - name: showSchoenfeldPlot
-      title: Schoenfeld Residuals Plot
+      title: Schoenfeld residuals plot
       type: Bool
       default: false
 
     - name: showAdjCurves
-      title: Show Adjusted Survival Curves
+      title: Adjusted survival curves
       type: Bool
       default: false
 
     - name: adjExposure
-      title: Exposure Variable (Adjusted Curves)
+      title: Exposure variable (adjusted curves)
       type: Variable
       required: false
       suggested:
@@ -174,17 +174,17 @@ options:
         - factor
 
     - name: adjCI
-      title: Confidence Intervals (Bootstrap)
+      title: Confidence intervals (bootstrap)
       type: Bool
       default: false
 
     - name: showTimeDepEffects
-      title: Time-dependent effects (time-varying coefficients)
+      title: Time-varying effects (time-varying coefficients)
       type: Bool
       default: false
 
     - name: timeDepFunc
-      title: Time Transform Function
+      title: Time transform function
       type: List
       options:
         - title: log(t) (Logarithmic time)
@@ -194,47 +194,47 @@ options:
       default: log
 
     - name: showCompRisks
-      title: Competing Risks Analysis
+      title: Competing risks analysis
       type: Bool
       default: false
 
     - name: compEvent
-      title: Event of Interest
+      title: Event of interest
       type: Level
       variable: (status)
 
     - name: compCensor
-      title: Censored Level
+      title: Censored level
       type: Level
       variable: (status)
 
     - name: showCifTable
-      title: Cumulative Incidence Summary
+      title: Cumulative incidence summary
       type: Bool
       default: true
 
     - name: showCifPlot
-      title: Cumulative Incidence Curves (Aalen-Johansen)
+      title: Cumulative incidence curves (Aalen–Johansen)
       type: Bool
       default: true
 
     - name: cifCI
-      title: Confidence Intervals (CIF)
+      title: Confidence intervals (CIF)
       type: Bool
       default: false
 
     - name: showGrayTest
-      title: Gray's Test for Group Differences
+      title: Gray's test for group differences
       type: Bool
       default: true
 
     - name: showFineGray
-      title: Fine-Gray Subdistribution Hazard Model
+      title: Fine–Gray subdistribution hazard model
       type: Bool
       default: false
 
     - name: showRoc
-      title: Time-dependent ROC Analysis
+      title: Time-dependent ROC analysis
       type: Bool
       default: false
 
@@ -248,24 +248,24 @@ options:
         - numeric
 
     - name: rocTime
-      title: Analysis Time Point t
+      title: Analysis time point t
       type: Number
       default: 12
 
     - name: rocCI
-      title: Confidence Interval (ROC)
+      title: Confidence intervals (ROC)
       type: Bool
       default: true
 
     - name: rocWidth
-      title: CI Width
+      title: Confidence level (%)
       type: Number
       min: 50
       max: 99.9
       default: 95
 
     - name: rocPlot
-      title: ROC Plot
+      title: ROC plot
       type: Bool
       default: false
 

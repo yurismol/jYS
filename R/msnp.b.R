@@ -15,11 +15,12 @@ mSNPClass <- R6::R6Class(
         g_pop_results = list(),
         g_mdr_results = list(),
         g_ld_results = list(),
+        .sex_notice_posted = FALSE,
         
         .getSexLevels = function(gender_var) {
             if (is.null(gender_var)) return(list(female = NULL, male = NULL))
             gender_levels <- levels(as.factor(gender_var))
-            female_level <- self$options$femaleLevel
+            female_level <- if (isTRUE(self$options$has("femaleLevel"))) self$options$femaleLevel else NULL
             if (!is.null(female_level) && female_level %in% gender_levels) {
                 male_level <- setdiff(gender_levels, female_level)[1]
                 return(list(female = female_level, male = male_level))
@@ -31,6 +32,12 @@ mSNPClass <- R6::R6Class(
             } else {
                 female_level <- gender_levels[1]
                 male_level <- if (length(gender_levels) > 1) gender_levels[2] else NULL
+                if (!private$.sex_notice_posted) {
+                    private$.sex_notice_posted <- TRUE
+                    self$results$insert(1, jmvcore::Notice$new(self$options, name="sexLevelsFallback",
+                        type=jmvcore::NoticeType$INFO,
+                        content=jmvcore::.("Sex variable levels could not be identified automatically. Specify the female level in options if needed.")))
+                }
             }
             list(female = female_level, male = male_level)
         },
@@ -71,16 +78,16 @@ mSNPClass <- R6::R6Class(
             ldTable <- self$results$ldGroup$ldTable
             
             if (isTRUE(self$options$freqPct)) {
-                freqTable$getColumn("p_freq")$setTitle(paste0(.("p (A)"), " (%)"))
-                freqTable$getColumn("q_freq")$setTitle(paste0(.("q (B)"), " (%)"))
-                freqTable$getColumn("obsAA")$setTitle(paste0(.("Obs AA"), " (n, %)"))
-                freqTable$getColumn("obsAB")$setTitle(paste0(.("Obs AB"), " (n, %)"))
-                freqTable$getColumn("obsBB")$setTitle(paste0(.("Obs BB"), " (n, %)"))
-                freqTable$getColumn("expAA")$setTitle(paste0(.("Exp AA"), " (n, %)"))
-                freqTable$getColumn("expAB")$setTitle(paste0(.("Exp AB"), " (n, %)"))
-                freqTable$getColumn("expBB")$setTitle(paste0(.("Exp BB"), " (n, %)"))
-                freqTable$getColumn("h_obs")$setTitle(paste0(.("H(obs)"), " (%)"))
-                freqTable$getColumn("h_exp")$setTitle(paste0(.("H(exp)"), " (%)"))
+                freqTable$getColumn("p_freq")$setTitle(.("p (A) (%)"))
+                freqTable$getColumn("q_freq")$setTitle(.("q (B) (%)"))
+                freqTable$getColumn("obsAA")$setTitle(.("Obs AA (n, %)"))
+                freqTable$getColumn("obsAB")$setTitle(.("Obs AB (n, %)"))
+                freqTable$getColumn("obsBB")$setTitle(.("Obs BB (n, %)"))
+                freqTable$getColumn("expAA")$setTitle(.("Exp AA (n, %)"))
+                freqTable$getColumn("expAB")$setTitle(.("Exp AB (n, %)"))
+                freqTable$getColumn("expBB")$setTitle(.("Exp BB (n, %)"))
+                freqTable$getColumn("h_obs")$setTitle(.("H(obs) (%)"))
+                freqTable$getColumn("h_exp")$setTitle(.("H(exp) (%)"))
             } else {
                 freqTable$getColumn("p_freq")$setTitle(.("p (A)"))
                 freqTable$getColumn("q_freq")$setTitle(.("q (B)"))
@@ -182,7 +189,7 @@ mSNPClass <- R6::R6Class(
             assocTable$setNote('n2', .("<b>Odds Ratio (OR)</b> quantifies the strength of association between an allele/genotype and the outcome. <b>OR > 1</b> indicates increased risk, <b>OR < 1</b> indicates protective effect, <b>OR = 1</b> indicates no association. The 95% CI that does not cross 1.0 indicates significance."))
             assocTable$setNote('n3', .("<b>Genetic models</b> test the association under different inheritance patterns: <b>Codominant</b> (AA vs AB vs BB), <b>Dominant</b> (AA vs AB+BB), <b>Recessive</b> (AA+AB vs BB), <b>Overdominant</b> (AA+BB vs AB), <b>Log-additive</b> (trend test for allele dose 0/1/2)."))
             assocTable$setNote('n4', .("<b>p-adjusted</b> is the p-value corrected for multiple testing across markers using the selected method (Bonferroni, Holm, or Benjamini–Hochberg FDR)."))
-            assocTable$setNote('n5', .("<b>Best model selection</b>: the genetic model with the lowest p-value (or AIC/BIC) is highlighted. This helps identify the most likely mode of inheritance for the observed association."))
+            assocTable$setNote('n5', .("<b>Best model selection</b>: the genetic model with the lowest p-value is highlighted. This helps identify the most likely mode of inheritance for the observed association."))
             
             popTable$setNote('n1', .("<b>MAF (Minor Allele Frequency)</b> is the frequency of the less common allele in the population. Markers with <b>MAF < 0.01</b> are typically considered monomorphic and may be excluded from analysis. <b>MAF < 0.05</b> indicates a rare variant."))
             popTable$setNote('n2', .("<b>PIC (Polymorphism Information Content)</b> measures the informativeness of a genetic marker. <b>PIC > 0.5</b> is highly informative, <b>0.25 < PIC < 0.5</b> is moderately informative, <b>PIC < 0.25</b> is slightly informative (Botstein et al., 1980)."))
@@ -206,6 +213,8 @@ mSNPClass <- R6::R6Class(
         
         .run = function() {
             if (length(self$options$vars) == 0) return()
+            
+            private$.sex_notice_posted <- FALSE
             
             # Prepare data
             private$g_data <- self$data
@@ -417,20 +426,21 @@ mSNPClass <- R6::R6Class(
                     male_idx <- which(sub_gender == male_level)
                     female_idx <- which(sub_gender == female_level)
                     
-                    male_geno <- sub_class[male_idx]
-                    female_geno <- sub_class[female_idx]
+                    male_geno <- na.omit(sub_class[male_idx])
+                    female_geno <- na.omit(sub_class[female_idx])
                     
                     # Exclude male heterozygotes from X-linked calculations
-                    male_geno <- male_geno[male_geno != "AB"]
+                    male_calls <- male_geno[male_geno %in% c("AA", "A", "BB", "B")]
+                    female_calls <- female_geno[female_geno %in% c("AA", "AB", "BB")]
                     
-                    obsA <- sum(male_geno == "AA" | male_geno == "A", na.rm=TRUE)
-                    obsB <- sum(male_geno == "BB" | male_geno == "B", na.rm=TRUE)
-                    obsAA <- sum(female_geno == "AA", na.rm=TRUE)
-                    obsAB <- sum(female_geno == "AB", na.rm=TRUE)
-                    obsBB <- sum(female_geno == "BB", na.rm=TRUE)
+                    obsA <- sum(male_calls == "AA" | male_calls == "A")
+                    obsB <- sum(male_calls == "BB" | male_calls == "B")
+                    obsAA <- sum(female_calls == "AA")
+                    obsAB <- sum(female_calls == "AB")
+                    obsBB <- sum(female_calls == "BB")
                     
                     nA <- 2 * obsAA + obsAB + obsA
-                    total_alleles <- 2 * length(female_geno) + length(male_geno)
+                    total_alleles <- 2 * length(female_calls) + length(male_calls)
                 } else {
                     nA <- 2 * obsAA + obsAB
                     total_alleles <- 2 * length(non_na)
@@ -649,12 +659,12 @@ mSNPClass <- R6::R6Class(
                         group = g,
                         p_freq = p_freq,
                         q_freq = q_freq,
-                        obsAA = if (is_x_linked) paste0(obsAA, " F / ", obsA, " M") else as.character(obsAA),
-                        obsAB = if (is_x_linked) paste0(obsAB, " F") else as.character(obsAB),
-                        obsBB = if (is_x_linked) paste0(obsBB, " F / ", obsB, " M") else as.character(obsBB),
-                        expAA = if (is_x_linked) paste0(format(round(expAA, 1), nsmall=1), " F") else format(round(expAA, 1), nsmall=1),
-                        expAB = if (is_x_linked) paste0(format(round(expAB, 1), nsmall=1), " F") else format(round(expAB, 1), nsmall=1),
-                        expBB = if (is_x_linked) paste0(format(round(expBB, 1), nsmall=1), " F") else format(round(expBB, 1), nsmall=1),
+                        obsAA = if (is_x_linked) jmvcore::format(.("{females} F / {males} M"), females = obsAA, males = obsA) else as.character(obsAA),
+                        obsAB = if (is_x_linked) jmvcore::format(.("{females} F"), females = obsAB) else as.character(obsAB),
+                        obsBB = if (is_x_linked) jmvcore::format(.("{females} F / {males} M"), females = obsBB, males = obsB) else as.character(obsBB),
+                        expAA = if (is_x_linked) jmvcore::format(.("{val} F"), val = format(round(expAA, 1), nsmall=1)) else format(round(expAA, 1), nsmall=1),
+                        expAB = if (is_x_linked) jmvcore::format(.("{val} F"), val = format(round(expAB, 1), nsmall=1)) else format(round(expAB, 1), nsmall=1),
+                        expBB = if (is_x_linked) jmvcore::format(.("{val} F"), val = format(round(expBB, 1), nsmall=1)) else format(round(expBB, 1), nsmall=1),
                         raw_obsAA = obsAA,
                         raw_obsAB = obsAB,
                         raw_obsBB = obsBB,
@@ -845,7 +855,7 @@ mSNPClass <- R6::R6Class(
                     # Highlight if marker failed QC
                     marker_status <- private$g_qc_status[[k$marker]]
                     if (!is.null(marker_status) && !isTRUE(marker_status$passed)) {
-                        hwTable$addFootnote(rowKey = k$row_key, col = "marker", paste0(.("Failed QC"), " (", marker_status$label, ")"))
+                        hwTable$addFootnote(rowKey = k$row_key, col = "marker", jmvcore::format(.("Failed QC ({label})"), label = marker_status$label))
                     }
                 }
                 if (isTRUE(self$options$signifMarkers)) {
@@ -1196,14 +1206,21 @@ mSNPClass <- R6::R6Class(
                     male_idx <- which(gender_var == male_level)
                     female_idx <- which(gender_var == female_level)
                     
-                    obsA <- sum(classified[male_idx] == "AA" | classified[male_idx] == "A", na.rm=TRUE)
-                    obsB <- sum(classified[male_idx] == "BB" | classified[male_idx] == "B", na.rm=TRUE)
-                    obsAA <- sum(classified[female_idx] == "AA", na.rm=TRUE)
-                    obsAB <- sum(classified[female_idx] == "AB", na.rm=TRUE)
-                    obsBB <- sum(classified[female_idx] == "BB", na.rm=TRUE)
+                    male_geno <- na.omit(classified[male_idx])
+                    female_geno <- na.omit(classified[female_idx])
+                    
+                    # Exclude male heterozygotes from X-linked calculations
+                    male_calls <- male_geno[male_geno %in% c("AA", "A", "BB", "B")]
+                    female_calls <- female_geno[female_geno %in% c("AA", "AB", "BB")]
+                    
+                    obsA <- sum(male_calls == "AA" | male_calls == "A")
+                    obsB <- sum(male_calls == "BB" | male_calls == "B")
+                    obsAA <- sum(female_calls == "AA")
+                    obsAB <- sum(female_calls == "AB")
+                    obsBB <- sum(female_calls == "BB")
                     
                     nA <- 2 * obsAA + obsAB + obsA
-                    total_alleles <- 2 * length(na.omit(classified[female_idx])) + length(na.omit(classified[male_idx]))
+                    total_alleles <- 2 * length(female_calls) + length(male_calls)
                 } else {
                     nA <- 2 * obsAA + obsAB
                     total_alleles <- 2 * N
@@ -1240,7 +1257,7 @@ mSNPClass <- R6::R6Class(
                 
                 # Warning for MAF below threshold
                 if (maf_thr > 0 && maf < maf_thr) {
-                    popTable$addFootnote(rowKey = marker, col = "maf", paste0(.("MAF is below threshold"), " (", maf_thr, ")"))
+                    popTable$addFootnote(rowKey = marker, col = "maf", jmvcore::format(.("MAF is below threshold ({thr})"), thr = maf_thr))
                 }
             }
         },
@@ -1329,8 +1346,6 @@ mSNPClass <- R6::R6Class(
             fold_ids[ctrl_idx] <- ctrl_folds
             user_order <- as.integer(self$options$mdrOrder)
             max_order <- min(user_order, length(snps))
-            
-            if (max_order < 1) return()
             
             if (user_order > length(snps)) {
                 self$results$mdrGroup$mdrBestTable$setNote('order_note', jmvcore::format(
@@ -1751,14 +1766,6 @@ mSNPClass <- R6::R6Class(
                 return(res)
             }
             
-            formatChi2 <- function(chi_sq, df, p) {
-                if (is.na(chi_sq) || is.na(df) || is.na(p)) {
-                    return("–")
-                }
-                p_str <- if (p < 0.001) "p < 0.001" else paste0("p = ", format(round(p, 3), nsmall = 3))
-                paste0("df = ", df, ", χ² = ", format(round(chi_sq, 2), nsmall = 2), ", ", p_str)
-            }
-            
             for (marker in self$options$vars) {
                 major <- private$g_alleles[[marker]]$major
                 minor <- private$g_alleles[[marker]]$minor
@@ -1793,9 +1800,7 @@ mSNPClass <- R6::R6Class(
                 # Overall 3xG test for polymorphism
                 test_poly <- run_chisq_test(counts)
                 if (isTRUE(self$options$polyDf1)) {
-                    if (!is.na(test_poly$df)) {
-                        test_poly$df <- test_poly$df / 2
-                    }
+                    test_poly$df <- length(groups) - 1
                     if (!is.na(test_poly$chisq) && !is.na(test_poly$df)) {
                         test_poly$p <- stats::pchisq(test_poly$chisq, df = test_poly$df, lower.tail = FALSE)
                     }
@@ -2003,14 +2008,16 @@ mSNPClass <- R6::R6Class(
                     row_key <- paste(marker_names[i], group_names[i], sep="_")
                     row <- private$g_hwe_results[[row_key]]
                     is_sig <- FALSE
+                    alpha_val <- as.numeric(self$options$alpha)
                     if (!is.null(row) && !is.null(row$exact_p) && !is.na(row$exact_p)) {
-                        is_sig <- (row$exact_p < 0.05)
+                        is_sig <- (row$exact_p < alpha_val)
                     }
                     col_vec <- c(col_vec, if (is_sig) col_red else col_green)
                     labels_vec <- c(labels_vec, marker_names[i])
                 }
             }
             
+            alpha_val <- as.numeric(self$options$alpha)
             maf_val <- 0.05
             maf_opt <- self$options$mafThreshold
             if (!is.null(maf_opt) && maf_opt != "none") {
@@ -2025,7 +2032,8 @@ mSNPClass <- R6::R6Class(
                 has_multi_groups = has_multi_groups,
                 region_type = region_type,
                 ternaryShowMAF = isTRUE(self$options$ternaryShowMAF),
-                maf_val = maf_val
+                maf_val = maf_val,
+                alpha = alpha_val
             ))
         },
 
@@ -2208,10 +2216,13 @@ mSNPClass <- R6::R6Class(
                 }
             }
             
-            bonf_p <- 0.05 / max(1, length(self$options$vars))
+            n_tested <- if (!is.null(plot_df_manh) && nrow(plot_df_manh) > 0) nrow(plot_df_manh) else max(1, length(self$options$vars))
+            alpha_val <- as.numeric(self$options$alpha)
+            bonf_p <- alpha_val / max(1, n_tested)
             self$results$assocGroup$manhattanPlot$setState(list(
                 plot_df = plot_df_manh,
                 bonf_p = bonf_p,
+                alpha = alpha_val,
                 vars = self$options$vars
             ))
         },
@@ -2340,6 +2351,7 @@ mSNPClass <- R6::R6Class(
             groups <- state$groups
             has_multi_groups <- state$has_multi_groups
             region_type <- state$region_type
+            alpha_val <- if (!is.null(state$alpha)) state$alpha else 0.05
             
             palette <- c("#2B5C8F", "#D95F02", "#7570B3", "#E7298A", "#66A61E", "#E6AB02", "#A6761D", "#666666")
             col_green <- "#2E7D32"
@@ -2361,7 +2373,8 @@ mSNPClass <- R6::R6Class(
                 markerpos = pos_vec,
                 mcex = 0.8,
                 cex = 1.5,
-                vertex.cex = 1.2
+                vertex.cex = 1.2,
+                alpha = alpha_val
             )
             
             Xcom <- HardyWeinberg::HWClo(counts_mat)
@@ -2391,9 +2404,10 @@ mSNPClass <- R6::R6Class(
                 segments(x0 = x_right, y0 = 0, x1 = x_right, y1 = y_height, 
                          col = "#D32F2F", lty = "longdash", lwd = 1.5)
                 
-                text(x_left + 0.01, y_height + 0.02, paste0("MAF = ", maf_val), 
+                maf_label <- jmvcore::format(.("MAF = {val}"), val = maf_val)
+                text(x_left + 0.01, y_height + 0.02, maf_label, 
                      adj = c(0, 0.5), col = "#D32F2F", cex = 0.8)
-                text(x_right - 0.01, y_height + 0.02, paste0("MAF = ", maf_val), 
+                text(x_right - 0.01, y_height + 0.02, maf_label, 
                      adj = c(1, 0.5), col = "#D32F2F", cex = 0.8)
             }
             
@@ -2534,7 +2548,7 @@ mSNPClass <- R6::R6Class(
                                       "recessive" = .("Recessive"),
                                       "overdominant" = .("Overdominant"),
                                       "log-additive" = .("Log-additive"))
-                p <- p + ggplot2::labs(title = paste0(.("Genetic model:"), " ", model_title))
+                p <- p + ggplot2::labs(title = jmvcore::format(.("Genetic model: {model}"), model = model_title))
             }
             
             print(p)
@@ -2640,12 +2654,13 @@ mSNPClass <- R6::R6Class(
             
             plot_df <- state$plot_df
             bonf_p <- state$bonf_p
+            alpha_val <- if (!is.null(state$alpha)) state$alpha else 0.05
             vars <- state$vars
             plot_df$Marker <- factor(plot_df$Marker, levels = vars)
             
             p <- ggplot2::ggplot(plot_df, ggplot2::aes(x = Marker, y = LogP)) +
                 ggplot2::geom_bar(stat = "identity", fill = "#2B5C8F", width = 0.5, color = "black", linewidth = 0.2) +
-                ggplot2::geom_hline(yintercept = -log10(0.05), linetype = "dashed", color = "blue", linewidth = 0.8) +
+                ggplot2::geom_hline(yintercept = -log10(alpha_val), linetype = "dashed", color = "blue", linewidth = 0.8) +
                 ggplot2::geom_hline(yintercept = -log10(bonf_p), linetype = "dashed", color = "red", linewidth = 0.8) +
                 ggplot2::theme_minimal(base_size = 12) +
                 ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 11, face = "bold"),

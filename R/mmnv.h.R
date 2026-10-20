@@ -6,10 +6,8 @@ mMNVOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     inherit = jmvcore::Options,
     public = list(
         initialize = function(
-            mode = "rm",
             rmCells = list(),
             rmFactorName = "Time",
-            deps = list(),
             between = list(),
             covs = list(),
             testPillai = TRUE,
@@ -34,13 +32,6 @@ mMNVOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 requiresData=TRUE,
                 ...)
 
-            private$..mode <- jmvcore::OptionList$new(
-                "mode",
-                mode,
-                options=list(
-                    "rm",
-                    "factorial"),
-                default="rm")
             private$..rmCells <- jmvcore::OptionVariables$new(
                 "rmCells",
                 rmCells,
@@ -53,14 +44,6 @@ mMNVOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "rmFactorName",
                 rmFactorName,
                 default="Time")
-            private$..deps <- jmvcore::OptionVariables$new(
-                "deps",
-                deps,
-                suggested=list(
-                    "continuous"),
-                permitted=list(
-                    "numeric"),
-                default=list())
             private$..between <- jmvcore::OptionVariables$new(
                 "between",
                 between,
@@ -149,10 +132,8 @@ mMNVOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 showOutlierPlot,
                 default=FALSE)
 
-            self$.addOption(private$..mode)
             self$.addOption(private$..rmCells)
             self$.addOption(private$..rmFactorName)
-            self$.addOption(private$..deps)
             self$.addOption(private$..between)
             self$.addOption(private$..covs)
             self$.addOption(private$..testPillai)
@@ -172,10 +153,8 @@ mMNVOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..showOutlierPlot)
         }),
     active = list(
-        mode = function() private$..mode$value,
         rmCells = function() private$..rmCells$value,
         rmFactorName = function() private$..rmFactorName$value,
-        deps = function() private$..deps$value,
         between = function() private$..between$value,
         covs = function() private$..covs$value,
         testPillai = function() private$..testPillai$value,
@@ -194,10 +173,8 @@ mMNVOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         showHePlot = function() private$..showHePlot$value,
         showOutlierPlot = function() private$..showOutlierPlot$value),
     private = list(
-        ..mode = NA,
         ..rmCells = NA,
         ..rmFactorName = NA,
-        ..deps = NA,
         ..between = NA,
         ..covs = NA,
         ..testPillai = NA,
@@ -247,8 +224,7 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "huynh1976",
                     "box1949",
                     "mardia1970",
-                    "olson1974",
-                    "friendly2007"))
+                    "olson1974"))
             self$add(jmvcore::Html$new(
                 options=options,
                 name="instructions",
@@ -264,22 +240,20 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "fox2019",
                     "olson1974"),
                 clearWith=list(
-                    "mode",
                     "rmCells",
                     "rmFactorName",
-                    "deps",
                     "between",
                     "covs",
                     "testPillai",
                     "testWilks",
                     "testHotelling",
-                    "testRoy",
-                    "contrastType"),
+                    "testRoy"),
                 columns=list(
                     list(
                         `name`="term", 
                         `title`="Effect / Source", 
-                        `type`="text"),
+                        `type`="text", 
+                        `combineBelow`=TRUE),
                     list(
                         `name`="test", 
                         `title`="Multiv. Test", 
@@ -292,8 +266,7 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     list(
                         `name`="f", 
                         `title`="F", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="df1", 
                         `title`="df1", 
@@ -301,13 +274,12 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     list(
                         `name`="df2", 
                         `title`="df2", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="p", 
                         `title`="p", 
                         `type`="number", 
-                        `format`="zto"),
+                        `format`="zto,pvalue"),
                     list(
                         `name`="etaSqP", 
                         `title`="Partial \u03B7\u00B2", 
@@ -322,17 +294,16 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "greenhouse1959",
                     "huynh1976"),
                 clearWith=list(
-                    "mode",
                     "rmCells",
                     "rmFactorName",
-                    "deps",
                     "between",
                     "covs"),
                 columns=list(
                     list(
                         `name`="term", 
                         `title`="Effect / Source", 
-                        `type`="text"),
+                        `type`="text", 
+                        `combineBelow`=TRUE),
                     list(
                         `name`="correction", 
                         `title`="Sphericity Correction", 
@@ -340,28 +311,28 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     list(
                         `name`="ss", 
                         `title`="Sum of Squares", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
-                        `name`="df", 
-                        `title`="df", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `name`="df1", 
+                        `title`="df1", 
+                        `type`="number"),
+                    list(
+                        `name`="df2", 
+                        `title`="df2", 
+                        `type`="number"),
                     list(
                         `name`="ms", 
                         `title`="Mean Square", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="f", 
                         `title`="F", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="p", 
                         `title`="p", 
                         `type`="number", 
-                        `format`="zto"),
+                        `format`="zto,pvalue"),
                     list(
                         `name`="etaSqP", 
                         `title`="Partial \u03B7\u00B2", 
@@ -375,10 +346,8 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 refs=list(
                     "obrien1985"),
                 clearWith=list(
-                    "mode",
                     "rmCells",
                     "rmFactorName",
-                    "deps",
                     "between",
                     "covs"),
                 columns=list(
@@ -394,8 +363,7 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     list(
                         `name`="chisq", 
                         `title`="Approx. \u03C7\u00B2", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="df", 
                         `title`="df", 
@@ -404,7 +372,7 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `name`="p", 
                         `title`="p", 
                         `type`="number", 
-                        `format`="zto"),
+                        `format`="zto,pvalue"),
                     list(
                         `name`="gg", 
                         `title`="Greenhouse-Geisser \u03B5", 
@@ -428,10 +396,8 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 refs=list(
                     "obrien1985"),
                 clearWith=list(
-                    "mode",
                     "rmCells",
                     "rmFactorName",
-                    "deps",
                     "between",
                     "covs"),
                 columns=list(
@@ -451,8 +417,7 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     list(
                         `name`="f", 
                         `title`="F", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="df1", 
                         `title`="df1", 
@@ -460,13 +425,12 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     list(
                         `name`="df2", 
                         `title`="df2", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="p", 
                         `title`="p", 
                         `type`="number", 
-                        `format`="zto"),
+                        `format`="zto,pvalue"),
                     list(
                         `name`="conclusion", 
                         `title`="Interpretation & Decision", 
@@ -477,10 +441,8 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 title="Tests of Within-Subjects Contrasts",
                 visible="(showContrastsTable)",
                 clearWith=list(
-                    "mode",
                     "rmCells",
                     "rmFactorName",
-                    "deps",
                     "between",
                     "covs",
                     "contrastType"),
@@ -492,8 +454,7 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     list(
                         `name`="ss", 
                         `title`="Sum of Squares", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="df", 
                         `title`="df", 
@@ -501,18 +462,16 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     list(
                         `name`="ms", 
                         `title`="Mean Square", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="f", 
                         `title`="F", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="p", 
                         `title`="p", 
                         `type`="number", 
-                        `format`="zto"),
+                        `format`="zto,pvalue"),
                     list(
                         `name`="etaSqP", 
                         `title`="Partial \u03B7\u00B2", 
@@ -527,10 +486,8 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "box1949",
                     "mardia1970"),
                 clearWith=list(
-                    "mode",
                     "rmCells",
                     "rmFactorName",
-                    "deps",
                     "between",
                     "covs"),
                 columns=list(
@@ -541,28 +498,24 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     list(
                         `name`="stat", 
                         `title`="Statistic", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="fOrChisq", 
                         `title`="F / \u03C7\u00B2", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="df1", 
                         `title`="df1", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="df2", 
                         `title`="df2", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="p", 
                         `title`="p", 
                         `type`="number", 
-                        `format`="zto"),
+                        `format`="zto,pvalue"),
                     list(
                         `name`="assessment", 
                         `title`="Assessment & Recommendation", 
@@ -573,10 +526,8 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 title="Marginal Means & Descriptives",
                 visible="(showMeansTable)",
                 clearWith=list(
-                    "mode",
                     "rmCells",
                     "rmFactorName",
-                    "deps",
                     "between",
                     "covs"),
                 columns=list(
@@ -595,28 +546,23 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     list(
                         `name`="mean", 
                         `title`="Mean", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="se", 
                         `title`="SE", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="sd", 
                         `title`="SD", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="ciLower", 
                         `title`="95% CI Lower", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="ciUpper", 
                         `title`="95% CI Upper", 
-                        `type`="number", 
-                        `format`="zto"))))
+                        `type`="number"))))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="profilePlot",
@@ -626,28 +572,23 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 height=450,
                 renderFun=".plotProfile",
                 clearWith=list(
-                    "mode",
                     "rmCells",
                     "rmFactorName",
-                    "deps",
                     "between",
                     "covs",
                     "plotError")))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="hePlot",
-                title="Hypothesis-Error (HE) Plot",
+                title="Group Scatter with Data Ellipses",
                 visible="(showHePlot)",
-                refs=list(
-                    "friendly2007"),
+                requiresData=TRUE,
                 width=550,
                 height=450,
                 renderFun=".plotHe",
                 clearWith=list(
-                    "mode",
                     "rmCells",
                     "rmFactorName",
-                    "deps",
                     "between",
                     "covs")))
             self$add(jmvcore::Image$new(
@@ -659,10 +600,8 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 height=400,
                 renderFun=".plotOutlier",
                 clearWith=list(
-                    "mode",
                     "rmCells",
                     "rmFactorName",
-                    "deps",
                     "between",
                     "covs")))}))
 
@@ -693,10 +632,8 @@ mMNVBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' without sphericity assumption (O'Brien & Kaiser, 1985), and Profile 
 #' Analysis.
 #' @param data .
-#' @param mode .
 #' @param rmCells .
 #' @param rmFactorName .
-#' @param deps .
 #' @param between .
 #' @param covs .
 #' @param testPillai .
@@ -738,10 +675,8 @@ mMNVBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @export
 mMNV <- function(
     data,
-    mode = "rm",
     rmCells = list(),
     rmFactorName = "Time",
-    deps = list(),
     between = list(),
     covs = list(),
     testPillai = TRUE,
@@ -764,24 +699,20 @@ mMNV <- function(
         stop("mMNV requires jmvcore to be installed (restart may be required)")
 
     if ( ! missing(rmCells)) rmCells <- jmvcore::resolveQuo(jmvcore::enquo(rmCells))
-    if ( ! missing(deps)) deps <- jmvcore::resolveQuo(jmvcore::enquo(deps))
     if ( ! missing(between)) between <- jmvcore::resolveQuo(jmvcore::enquo(between))
     if ( ! missing(covs)) covs <- jmvcore::resolveQuo(jmvcore::enquo(covs))
     if (missing(data))
         data <- jmvcore::marshalData(
             parent.frame(),
             `if`( ! missing(rmCells), rmCells, NULL),
-            `if`( ! missing(deps), deps, NULL),
             `if`( ! missing(between), between, NULL),
             `if`( ! missing(covs), covs, NULL))
 
     for (v in between) if (v %in% names(data)) data[[v]] <- as.factor(data[[v]])
 
     options <- mMNVOptions$new(
-        mode = mode,
         rmCells = rmCells,
         rmFactorName = rmFactorName,
-        deps = deps,
         between = between,
         covs = covs,
         testPillai = testPillai,

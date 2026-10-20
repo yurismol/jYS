@@ -225,8 +225,8 @@ analyses:
     menuTitle: Stability Analysis (ICH Q1E)
     description: >-
       Evaluation of stability data and shelf life estimation according to the
-      ICH Q1E guideline using ANCOVA poolability testing and one-sided 95%
-      confidence intervals.
+      ICH Q1E guideline using ANCOVA poolability testing and
+      specification-directed confidence bounds.
   - title: MANOVA & Repeated Measures
     name: mMNV
     ns: jYS

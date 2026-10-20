@@ -5,7 +5,7 @@ menuGroup: jYS
 menuSubgroup: Regression & Classification
 menuTitle: Stability Analysis (ICH Q1E)
 description:
-    main: Evaluation of stability data and shelf life estimation according to the ICH Q1E guideline using ANCOVA poolability testing and one-sided 95% confidence intervals.
+    main: Evaluation of stability data and shelf life estimation according to the ICH Q1E guideline using ANCOVA poolability testing and specification-directed confidence bounds.
 version: '1.0.0'
 jas: '1.2'
 

@@ -13,16 +13,6 @@ options:
     - name: data
       type: Data
 
-    - name: mode
-      title: Analysis Mode
-      type: List
-      options:
-        - title: Repeated Measures MANOVA (Within-Subjects / Mixed Design)
-          name:  rm
-        - title: Factorial MANOVA / MANCOVA (Between-Subjects Multiple DVs)
-          name:  factorial
-      default: rm
-
     - name: rmCells
       title: Repeated Measures Variables / Time Points
       type: Variables
@@ -36,15 +26,6 @@ options:
       title: Within-Subjects Factor Name
       type: String
       default: Time
-
-    - name: deps
-      title: Dependent Variables (Factorial MANOVA)
-      type: Variables
-      suggested:
-        - continuous
-      permitted:
-        - numeric
-      default: []
 
     - name: between
       title: Between-Subjects Factors
@@ -149,7 +130,7 @@ options:
       default: ci
 
     - name: showHePlot
-      title: Hypothesis-Error (HE) Plot
+      title: Group Scatter with Data Ellipses
       type: Bool
       default: false
 

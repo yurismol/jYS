@@ -15,13 +15,6 @@ children:
             name: rmCells
             isTarget: true
       - type: TargetLayoutBox
-        label: Dependent Variables (Factorial MANOVA)
-        children:
-          - type: VariablesListBox
-            name: deps
-            isTarget: true
-            height: small
-      - type: TargetLayoutBox
         label: Between-Subjects Factors
         children:
           - type: VariablesListBox
@@ -36,12 +29,10 @@ children:
             isTarget: true
             height: small
   - type: CollapseBox
-    label: Analysis Mode & Design
+    label: Repeated Measures Design & Contrasts
     collapsed: false
     stretchFactor: 1
     children:
-      - type: ComboBox
-        name: mode
       - type: TextBox
         name: rmFactorName
         format: string
@@ -105,5 +96,6 @@ children:
             name: showProfilePlot
           - type: ComboBox
             name: plotError
+            enable: (showProfilePlot)
           - type: CheckBox
             name: showHePlot

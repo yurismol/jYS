@@ -719,7 +719,7 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             height=500,
                             renderFun=".plotTernary",
                             visible="(ternaryPlot)",
-                            requiresData=TRUE,
+                            requiresData=FALSE,
                             clearWith=list(
                                 "vars",
                                 "group",
@@ -741,7 +741,7 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             height=450,
                             renderFun=".plotQQ",
                             visible="(qqPlot)",
-                            requiresData=TRUE,
+                            requiresData=FALSE,
                             clearWith=list(
                                 "vars",
                                 "group",
@@ -761,7 +761,7 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             height=450,
                             renderFun=".plotBar",
                             visible="(barPlot)",
-                            requiresData=TRUE,
+                            requiresData=FALSE,
                             clearWith=list(
                                 "vars",
                                 "group",
@@ -848,7 +848,7 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             height=500,
                             renderFun=".plotForest",
                             visible="(assocEnable && assocForest)",
-                            requiresData=TRUE,
+                            requiresData=FALSE,
                             clearWith=list(
                                 "vars",
                                 "outcome",
@@ -867,7 +867,7 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             height=400,
                             renderFun=".plotManhattan",
                             visible="(assocEnable && manhattanPlot)",
-                            requiresData=TRUE,
+                            requiresData=FALSE,
                             clearWith=list(
                                 "vars",
                                 "outcome",
@@ -1074,7 +1074,7 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             height=340,
                             renderFun=".plotMDRHeatmap",
                             visible="(mdrEnable && mdrHeatmap)",
-                            requiresData=TRUE,
+                            requiresData=FALSE,
                             clearWith=list(
                                 "vars",
                                 "outcome",
@@ -1092,7 +1092,7 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             height=450,
                             renderFun=".plotMDRBar",
                             visible="(mdrEnable && mdrBarPlot)",
-                            requiresData=TRUE,
+                            requiresData=FALSE,
                             clearWith=list(
                                 "vars",
                                 "outcome",
@@ -1159,7 +1159,7 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             height=550,
                             renderFun=".plotLDHeatmap",
                             visible="(ldEnable && ldHeatmap)",
-                            requiresData=TRUE,
+                            requiresData=FALSE,
                             clearWith=list(
                                 "vars",
                                 "ldMetric",

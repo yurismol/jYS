@@ -240,14 +240,6 @@ refs:
         publisher: '[R package]. Retrieved from https://CRAN.R-project.org/package=survival'
         url: https://CRAN.R-project.org/package=survival
 
-    survminer:
-        type: 'software'
-        title: "survminer: Drawing Survival Curves using 'ggplot2'"
-        author: Kassambara, A., Kosinski, M., Biecek, P.
-        year: 2021
-        publisher: '[R package]. Retrieved from https://CRAN.R-project.org/package=survminer'
-        url: https://CRAN.R-project.org/package=survminer
-
     ggsurvfit:
         type: 'software'
         title: "ggsurvfit: Flexible Measurement and Visualization of Survival Data"

@@ -5,13 +5,13 @@ jrs:   '1.1'
 
 items:
   - name: kmSection
-    title: Kaplan-Meier Survival Analysis
+    title: Kaplan–Meier Survival Analysis
     type: Group
     visible: (showKm)
-    refs: [jys, survival, survminer, ggsurvfit, kaplan1958]
+    refs: [jys, survival, ggsurvfit, kaplan1958]
     items:
       - name: kmSummaryTable
-        title: Kaplan-Meier Survival Summary
+        title: Kaplan–Meier Survival Summary
         type: Table
         visible: (showKm)
         clearWith:
@@ -42,7 +42,7 @@ items:
             type: number
 
       - name: kmRiskTable
-        title: Kaplan-Meier Risk-at-time Table
+        title: Kaplan–Meier Risk Table
         type: Table
         visible: (showKm && kmTable)
         clearWith:
@@ -68,13 +68,13 @@ items:
             type: integer
 
       - name: kmPlot
-        title: Kaplan-Meier Curve
+        title: Kaplan–Meier Curve
         type: Image
         width: 600
         height: 450
         renderFun: .kmPlot
         visible: (showKm && kmPlot)
-        requiresData: true
+        requiresData: false
         clearWith:
           - elapsed
           - tstart
@@ -186,7 +186,7 @@ items:
             type: number
 
       - name: timeDepTable
-        title: Time-dependent Effects in Cox Model
+        title: Time-varying Effects in Cox Model
         type: Table
         visible: (showCox && showTimeDepEffects)
         clearWith:
@@ -374,6 +374,7 @@ items:
           - elapsed
           - tstart
           - status
+          - statusEvent
           - compEvent
           - compCensor
           - group
@@ -406,7 +407,7 @@ items:
             type: number
 
       - name: cifPlot
-        title: Cumulative Incidence Curves (Aalen-Johansen)
+        title: Cumulative Incidence Curves (Aalen–Johansen)
         type: Image
         width: 600
         height: 450
@@ -416,6 +417,7 @@ items:
           - elapsed
           - tstart
           - status
+          - statusEvent
           - compEvent
           - compCensor
           - group
@@ -432,6 +434,7 @@ items:
           - elapsed
           - tstart
           - status
+          - statusEvent
           - compEvent
           - compCensor
           - group
@@ -452,7 +455,7 @@ items:
             format: zto,pvalue
 
       - name: fineGrayTable
-        title: Fine-Gray Subdistribution Hazard Regression
+        title: Fine–Gray Subdistribution Hazard Regression
         type: Table
         visible: (showCompRisks && showFineGray && ((!is.null(covariates) && length(covariates) > 0) || (!is.null(group))))
         refs: [survival, finegray1999]
@@ -460,6 +463,7 @@ items:
           - elapsed
           - tstart
           - status
+          - statusEvent
           - compEvent
           - compCensor
           - group
@@ -496,6 +500,7 @@ items:
     title: Time-dependent ROC Analysis
     type: Group
     visible: (showRoc && (!is.null(rocPredictors) && length(rocPredictors) > 0))
+    refs: [roc]
     items:
       - name: rocTable
         title: Time-dependent ROC Results
@@ -503,8 +508,10 @@ items:
         visible: (showRoc && (!is.null(rocPredictors) && length(rocPredictors) > 0))
         clearWith:
           - elapsed
+          - tstart
           - status
           - statusEvent
+          - subjectId
           - rocPredictors
           - rocTime
           - rocCI
@@ -546,8 +553,10 @@ items:
         visible: (showRoc && rocPlot && (!is.null(rocPredictors) && length(rocPredictors) > 0))
         clearWith:
           - elapsed
+          - tstart
           - status
           - statusEvent
+          - subjectId
           - rocPredictors
           - rocTime
           - rocCI

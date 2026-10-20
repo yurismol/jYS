@@ -164,7 +164,7 @@ items:
           height: 500
           renderFun: .plotTernary
           visible: (ternaryPlot)
-          requiresData: true
+          requiresData: false
           clearWith:
             - vars
             - group
@@ -186,7 +186,7 @@ items:
           height: 450
           renderFun: .plotQQ
           visible: (qqPlot)
-          requiresData: true
+          requiresData: false
           clearWith:
             - vars
             - group
@@ -206,7 +206,7 @@ items:
           height: 450
           renderFun: .plotBar
           visible: (barPlot)
-          requiresData: true
+          requiresData: false
           clearWith:
             - vars
             - group
@@ -277,7 +277,7 @@ items:
           height: 500
           renderFun: .plotForest
           visible: (assocEnable && assocForest)
-          requiresData: true
+          requiresData: false
           clearWith:
             - vars
             - outcome
@@ -296,7 +296,7 @@ items:
           height: 400
           renderFun: .plotManhattan
           visible: (assocEnable && manhattanPlot)
-          requiresData: true
+          requiresData: false
           clearWith:
             - vars
             - outcome
@@ -463,7 +463,7 @@ items:
           height: 340
           renderFun: .plotMDRHeatmap
           visible: (mdrEnable && mdrHeatmap)
-          requiresData: true
+          requiresData: false
           clearWith:
             - vars
             - outcome
@@ -481,7 +481,7 @@ items:
           height: 450
           renderFun: .plotMDRBar
           visible: (mdrEnable && mdrBarPlot)
-          requiresData: true
+          requiresData: false
           clearWith:
             - vars
             - outcome
@@ -536,7 +536,7 @@ items:
           height: 550
           renderFun: .plotLDHeatmap
           visible: (ldEnable && ldHeatmap)
-          requiresData: true
+          requiresData: false
           clearWith:
             - vars
             - ldMetric

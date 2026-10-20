@@ -437,17 +437,16 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         super$initialize(
                             options=options,
                             name="kmSection",
-                            title="Kaplan-Meier Survival Analysis",
+                            title="Kaplan–Meier Survival Analysis",
                             refs=list(
                     "jys",
                     "survival",
-                    "survminer",
                     "ggsurvfit",
                     "kaplan1958"))
                         self$add(jmvcore::Table$new(
                             options=options,
                             name="kmSummaryTable",
-                            title="Kaplan-Meier Survival Summary",
+                            title="Kaplan\u2013Meier Survival Summary",
                             visible="(showKm)",
                             clearWith=list(
                                 "elapsed",
@@ -484,7 +483,7 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         self$add(jmvcore::Table$new(
                             options=options,
                             name="kmRiskTable",
-                            title="Kaplan-Meier Risk-at-time Table",
+                            title="Kaplan\u2013Meier Risk Table",
                             visible="(showKm && kmTable)",
                             clearWith=list(
                                 "elapsed",
@@ -514,12 +513,12 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         self$add(jmvcore::Image$new(
                             options=options,
                             name="kmPlot",
-                            title="Kaplan-Meier Curve",
+                            title="Kaplan\u2013Meier Curve",
                             width=600,
                             height=450,
                             renderFun=".kmPlot",
                             visible="(showKm && kmPlot)",
-                            requiresData=TRUE,
+                            requiresData=FALSE,
                             clearWith=list(
                                 "elapsed",
                                 "tstart",
@@ -665,7 +664,7 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         self$add(jmvcore::Table$new(
                             options=options,
                             name="timeDepTable",
-                            title="Time-dependent Effects in Cox Model",
+                            title="Time-varying Effects in Cox Model",
                             visible="(showCox && showTimeDepEffects)",
                             clearWith=list(
                                 "elapsed",
@@ -891,6 +890,7 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 "elapsed",
                                 "tstart",
                                 "status",
+                                "statusEvent",
                                 "compEvent",
                                 "compCensor",
                                 "group",
@@ -932,7 +932,7 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         self$add(jmvcore::Image$new(
                             options=options,
                             name="cifPlot",
-                            title="Cumulative Incidence Curves (Aalen-Johansen)",
+                            title="Cumulative Incidence Curves (Aalen\u2013Johansen)",
                             width=600,
                             height=450,
                             renderFun=".cifPlot",
@@ -941,6 +941,7 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 "elapsed",
                                 "tstart",
                                 "status",
+                                "statusEvent",
                                 "compEvent",
                                 "compCensor",
                                 "group",
@@ -958,6 +959,7 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 "elapsed",
                                 "tstart",
                                 "status",
+                                "statusEvent",
                                 "compEvent",
                                 "compCensor",
                                 "group",
@@ -983,7 +985,7 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         self$add(jmvcore::Table$new(
                             options=options,
                             name="fineGrayTable",
-                            title="Fine-Gray Subdistribution Hazard Regression",
+                            title="Fine\u2013Gray Subdistribution Hazard Regression",
                             visible="(showCompRisks && showFineGray && ((!is.null(covariates) && length(covariates) > 0) || (!is.null(group))))",
                             refs=list(
                                 "survival",
@@ -992,6 +994,7 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 "elapsed",
                                 "tstart",
                                 "status",
+                                "statusEvent",
                                 "compEvent",
                                 "compCensor",
                                 "group",
@@ -1042,7 +1045,9 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         super$initialize(
                             options=options,
                             name="rocSection",
-                            title="Time-dependent ROC Analysis")
+                            title="Time-dependent ROC Analysis",
+                            refs=list(
+                    "roc"))
                         self$add(jmvcore::Table$new(
                             options=options,
                             name="rocTable",
@@ -1050,8 +1055,10 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             visible="(showRoc && (!is.null(rocPredictors) && length(rocPredictors) > 0))",
                             clearWith=list(
                                 "elapsed",
+                                "tstart",
                                 "status",
                                 "statusEvent",
+                                "subjectId",
                                 "rocPredictors",
                                 "rocTime",
                                 "rocCI",
@@ -1101,8 +1108,10 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             visible="(showRoc && rocPlot && (!is.null(rocPredictors) && length(rocPredictors) > 0))",
                             clearWith=list(
                                 "elapsed",
+                                "tstart",
                                 "status",
                                 "statusEvent",
+                                "subjectId",
                                 "rocPredictors",
                                 "rocTime",
                                 "rocCI",

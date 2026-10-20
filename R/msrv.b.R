@@ -5,53 +5,41 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
     "mSRVClass",
     inherit = mSRVBase,
     private = list(
-      .km_sig = NULL,
-      .lr_sig = NULL,
-      .cox_model_sig = NULL,
-      .cached_cox_fit = NULL,
-      .cached_cox_terms = NULL,
-      .cached_zph = NULL,
-      .cached_zph_rows = NULL,
-      .timedep_sig = NULL,
-      .adj_sig = NULL,
-      .roc_sig = NULL,
-      .cr_sig = NULL,
-
 
       .init = function() {
-          # Add comments to tables with bold keywords
+          # Add concise comments to tables
           kmTable <- self$results$kmSection$kmSummaryTable
-          kmTable$setNote('km_note', .('<b>Kaplan-Meier estimator</b> (Kaplan & Meier, 1958) is a non-parametric statistic used to estimate the survival function from lifetime data, accounting for censored observations. <b>Median survival</b> is the estimated time at which 50% of the subjects have experienced the event (survival probability drops to 0.5). <b>Lower/Upper 95% CI</b> represent the 95% confidence interval limits for this median survival time.'))
+          kmTable$setNote('km_note', .('Median survival is the time at which survival probability drops to 50%. CI indicates 95% confidence limits.'))
 
           lrTable <- self$results$logRankTable
-          lrTable$setNote('lr_note', .('<b>Log-rank (Mantel-Cox) test</b> is a non-parametric hypothesis test that compares the survival distributions of two or more independent groups. It evaluates the null hypothesis that there is no difference in survival curves between groups. <b>Chi-square</b> is the test statistic based on observed vs. expected events, and the <b>p-value</b> indicates the statistical significance of the differences under the null hypothesis.'))
+          lrTable$setNote('lr_note', .('Compares survival distributions between groups. Significant p-value (p < 0.05) indicates difference in survival.'))
 
           fitTable <- self$results$coxSection$coxFitTable
-          fitTable$setNote('fit_note', .('<b>Likelihood Ratio</b>, <b>Wald</b>, and <b>Score (Log-rank)</b> tests assess the global null hypothesis that all regression coefficients (beta) in the model are equal to zero. Statistically significant p-values (p < 0.05) indicate that the predictors collectively improve the model fit relative to a null model without covariates.'))
+          fitTable$setNote('fit_note', .('Global tests assess whether predictors collectively improve model fit (p < 0.05 indicates significant improvement).'))
 
           coefTable <- self$results$coxSection$coxCoefTable
-          coefTable$setNote('coef_note', .('<b>Hazard Ratio (HR)</b> represents the ratio of the hazard rates corresponding to the conditions described by two levels of an explanatory variable (Cox, 1972). It indicates the relative risk of event occurrence per unit change in the predictor. An <b>HR > 1</b> indicates an increased hazard (higher risk of the event), while an <b>HR < 1</b> indicates a decreased hazard (protective effect). <b>Lower/Upper 95% CI</b> represent the confidence interval for the Hazard Ratio.'))
+          coefTable$setNote('coef_note', .('HR > 1 indicates increased risk of event, HR < 1 indicates lower risk (protective effect).'))
 
           assumpTable <- self$results$coxSection$coxAssumpTable
-          assumpTable$setNote('assump_note', .('<b>Schoenfeld residuals test</b> evaluates the proportional hazards (PH) assumption of the Cox model for each covariate individually and globally. It tests whether the effect of the covariates is constant over time. A statistically significant <b>p-value (p < 0.05)</b> indicates a violation of the PH assumption, meaning the hazard ratio changes over time.'))
+          assumpTable$setNote('assump_note', .('Tests proportional hazards assumption. Significant p-value (p < 0.05) indicates non-proportional hazards over time.'))
 
           adjSummaryTable <- self$results$adjSection$adjSummaryTable
-          adjSummaryTable$setNote('adj_note', .('<b>Direct adjustment (G-computation)</b> calculates counterfactual survival curves for each exposure level by averaging individual predicted survival curves over the empirical covariate distribution of the sample (Denz et al., 2023). <b>RMST</b> represents the Restricted Mean Survival Time evaluated up to \u03c4 (area under the adjusted survival curve).'))
+          adjSummaryTable$setNote('adj_note', .('Direct adjustment (G-computation) averages predicted survival over sample covariates. RMST is restricted mean survival time up to \u03c4.'))
 
           cifSummaryTable <- self$results$compRisksSection$cifSummaryTable
-          cifSummaryTable$setNote('cif_note', .('<b>Cumulative Incidence Function (CIF)</b> estimated via the non-parametric Aalen–Johansen estimator (Aalen & Johansen, 1978) calculates the probability of experiencing a specific event over time in the presence of competing risks. Unlike Kaplan–Meier survival (1 – KM), which overestimates risk by treating competing events as censored, CIF properly accounts for competing failure types.'))
+          cifSummaryTable$setNote('cif_note', .('Cumulative incidence function (Aalen\u2013Johansen) estimates event probability accounting for competing risks.'))
 
           grayTestTable <- self$results$compRisksSection$grayTestTable
-          grayTestTable$setNote('gray_note', .("<b>Gray's test</b> (Gray, 1988) is a non-parametric K-sample test for comparing cumulative incidence functions of a specific cause between groups. It evaluates subdistribution hazards under competing risks."))
+          grayTestTable$setNote('gray_note', .("Compares cumulative incidence functions between groups in the presence of competing risks."))
 
           fineGrayTable <- self$results$compRisksSection$fineGrayTable
-          fineGrayTable$setNote('fg_note', .('<b>Fine–Gray proportional subdistribution hazards regression</b> (Fine & Gray, 1999) models the effect of covariates directly on the cumulative incidence function of the event of interest. <b>sHR</b> (subdistribution Hazard Ratio) represents the relative change in the subdistribution hazard. Robust standard errors are used to account for inverse-probability weighting.'))
+          fineGrayTable$setNote('fg_note', .('Subdistribution hazard ratio (sHR) models covariate effects directly on cumulative incidence with robust SE.'))
 
           rocTable <- self$results$rocSection$rocTable
-          rocTable$setNote('roc_note', .('<b>Time-dependent ROC</b> analysis evaluates the predictive accuracy of continuous markers for time-to-event outcomes via landmark dichotomization at a specific time point <i>t</i> (subjects censored prior to <i>t</i> are excluded). <b>AUC</b> measures the discriminative ability. <b>Cut-off</b> represents the optimal threshold determined by the Youden index (J = Sensitivity + Specificity – 1).'))
+          rocTable$setNote('roc_note', .('Evaluates marker discriminative accuracy (AUC) at time t. Cut-off is determined by the Youden index.'))
 
           timeDepTable <- self$results$coxSection$timeDepTable
-          timeDepTable$setNote('timedep_note', .('<b>Time-dependent Cox regression</b> models non-proportional hazards by interacting covariates with a function of time (Therneau & Grambsch, 2000). The hazard function is modeled as \u03bb(t; z) = \u03bb\u2080(t) exp(\u03b2\u2080 z + \u03b2_td [z \u00d7 f(t)]). A statistically significant time interaction (\u03b2_td, p < 0.05) indicates that the hazard ratio changes over time: \u03b2_td < 0 indicates diminishing relative risk, while \u03b2_td > 0 indicates increasing relative risk.'))
+          timeDepTable$setNote('timedep_note', .('Models time-varying effects via time interactions. Significant p-value indicates hazard ratio changes over time.'))
 
           if (self$options$showCox && self$options$coxAssump && self$options$showSchoenfeldPlot) {
               schoenfeldPlots <- self$results$coxSection$schoenfeldPlots
@@ -77,7 +65,7 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                           m_idx <- as.integer(gsub("^\\.\\.cov_([0-9]+)_", "\\1", pk))
                           clean_pk <- if (m_idx >= 1 && m_idx <= length(covs)) covs[m_idx] else paste0("cov_", m_idx)
                       }
-                      item$setTitle(paste0(jmvcore::.("Schoenfeld residuals"), " \u2013 ", clean_pk))
+                      item$setTitle(jmvcore::format(.("Schoenfeld residuals \u2013 {var}"), var = clean_pk))
                   }
               }
           }
@@ -163,31 +151,7 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               formula_km <- stats::as.formula(paste(surv_km_str, "~ 1"))
           }
 
-          km_sig <- list(
-              self$options$showKm,
-              self$options$kmPlot,
-              self$options$kmTable,
-              self$options$kmMaxTime,
-              time_var,
-              tstart_var,
-              status_var,
-              self$options$statusEvent,
-              group_var,
-              nrow(dat_km)
-          )
-
-          km_needs_run <- !identical(private$.km_sig, km_sig) ||
-                          (self$options$showKm && self$results$kmSection$kmSummaryTable$rowCount == 0)
-
-          if (km_needs_run) {
-              if (self$options$showKm && self$options$kmPlot && nrow(dat_km) > 0) {
-                  # Store state for plot
-                  self$results$kmSection$kmPlot$setState(list(data = dat_km))
-              } else {
-                  self$results$kmSection$kmPlot$setState(NULL)
-              }
-
-              if (self$options$showKm && nrow(dat_km) > 0) {
+          if (self$options$showKm && nrow(dat_km) > 0) {
 
                   km_fit <- try(survival::survfit(formula_km, data = dat_km), silent = TRUE)
                   if (!inherits(km_fit, "try-error")) {
@@ -292,96 +256,109 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                               }
                           }
                       }
+                  # Plot state (compact dataframe)
+                  if (self$options$kmPlot) {
+                      strata_names <- if (!is.null(km_fit$strata)) {
+                          rep(names(km_fit$strata), km_fit$strata)
+                      } else {
+                          rep("All", length(km_fit$time))
+                      }
+                      strata_clean <- sub("^\\.\\.group=", "", strata_names)
+                      df_km <- data.frame(
+                          time = km_fit$time,
+                          surv = km_fit$surv,
+                          cumhaz = if (!is.null(km_fit$cumhaz)) km_fit$cumhaz else -log(pmax(km_fit$surv, 1e-10)),
+                          lower = km_fit$lower,
+                          upper = km_fit$upper,
+                          n.censor = km_fit$n.censor,
+                          strata = strata_clean,
+                          stringsAsFactors = FALSE
+                      )
+                      u_strata <- unique(df_km$strata)
+                      t0_list <- lapply(u_strata, function(st) {
+                          data.frame(time = 0, surv = 1, cumhaz = 0, lower = 1, upper = 1, n.censor = 0, strata = st, stringsAsFactors = FALSE)
+                      })
+                      df_km <- rbind(do.call(rbind, t0_list), df_km)
+                      df_km <- df_km[order(df_km$strata, df_km$time), ]
+                      df_km$strata <- factor(df_km$strata, levels = u_strata)
+
+                      self$results$kmSection$kmPlot$setState(list(
+                          df = df_km,
+                          group_var = group_var,
+                          time_var = time_var
+                      ))
                   } else {
-                      self$results$kmSection$kmSummaryTable$deleteRows()
-                      self$results$kmSection$kmRiskTable$deleteRows()
                       self$results$kmSection$kmPlot$setState(NULL)
-                      self$results$insert(1, jmvcore::Notice$new(self$options, name="kmFitError",
-                          type=jmvcore::NoticeType$WARNING,
-                          content=paste0(jmvcore::.("Kaplan–Meier estimation failed:"), " ", jmvcore::extractErrorMessage(km_fit))))
                   }
-                  private$.km_sig <- km_sig
               } else {
                   self$results$kmSection$kmSummaryTable$deleteRows()
                   self$results$kmSection$kmRiskTable$deleteRows()
                   self$results$kmSection$kmPlot$setState(NULL)
-                  private$.km_sig <- NULL
+                  self$results$insert(1, jmvcore::Notice$new(self$options, name="kmFitError",
+                      type=jmvcore::NoticeType$WARNING,
+                      content=jmvcore::format(.("Kaplan\u2013Meier estimation failed: {reason}"), reason = jmvcore::extractErrorMessage(km_fit))))
               }
+          } else {
+              self$results$kmSection$kmSummaryTable$deleteRows()
+              self$results$kmSection$kmRiskTable$deleteRows()
+              self$results$kmSection$kmPlot$setState(NULL)
           }
 
           # ----------------------------------------------------
           # 2. Log-rank Test
           # ----------------------------------------------------
-          lr_sig <- list(
-              self$options$showLogRank,
-              time_var,
-              tstart_var,
-              status_var,
-              self$options$statusEvent,
-              group_var,
-              nrow(dat_km)
-          )
-
-          lr_needs_run <- !identical(private$.lr_sig, lr_sig) ||
-                          (self$options$showLogRank && !is.null(group_var) && self$results$logRankTable$rowCount == 0)
-
-          if (lr_needs_run) {
-              if (self$options$showLogRank && !is.null(group_var) && nrow(dat_km) > 0) {
-                  ug <- unique(dat_km$..group)
-                  if (length(ug) >= 2) {
-                      logRankTable <- self$results$logRankTable
-                      logRankTable$deleteRows()
-                      if (has_tstart) {
-                          fit_lr <- try(survival::coxph(survival::Surv(..tstart, ..time, ..event) ~ ..group, data = dat_km), silent = TRUE)
-                          if (!inherits(fit_lr, "try-error")) {
-                              s_lr <- summary(fit_lr)
-                              stat_val <- as.numeric(s_lr$sctest["test"])
-                              df_val <- as.integer(s_lr$sctest["df"])
-                              p_val <- as.numeric(s_lr$sctest["pvalue"])
-                              logRankTable$addRow(rowKey="test", values=list(
-                                  chisq = stat_val,
-                                  df    = df_val,
-                                  p     = p_val
-                              ))
-                              logRankTable$setNote('cp_lr_note', .('Score (log-rank) test from Cox model is reported, as standard Mantel–Cox log-rank is not defined for counting process data.'))
-                          } else {
-                              err_msg <- if (!is.null(attr(fit_lr, "condition"))) conditionMessage(attr(fit_lr, "condition")) else as.character(fit_lr)
-                              self$results$insert(1, jmvcore::Notice$new(self$options,
-                                  name = "logRankWarn",
-                                  type = jmvcore::NoticeType$WARNING,
-                                  content = jmvcore::format(.("Log-rank test could not be computed: {err}"), err = err_msg)
-                              ))
-                          }
+          if (self$options$showLogRank && !is.null(group_var) && nrow(dat_km) > 0) {
+              ug <- unique(dat_km$..group)
+              if (length(ug) >= 2) {
+                  logRankTable <- self$results$logRankTable
+                  logRankTable$deleteRows()
+                  if (has_tstart) {
+                      fit_lr <- try(survival::coxph(survival::Surv(..tstart, ..time, ..event) ~ ..group, data = dat_km), silent = TRUE)
+                      if (!inherits(fit_lr, "try-error")) {
+                          s_lr <- summary(fit_lr)
+                          stat_val <- as.numeric(s_lr$sctest["test"])
+                          df_val <- as.integer(s_lr$sctest["df"])
+                          p_val <- as.numeric(s_lr$sctest["pvalue"])
+                          logRankTable$addRow(rowKey="test", values=list(
+                              chisq = stat_val,
+                              df    = df_val,
+                              p     = p_val
+                          ))
+                          logRankTable$setNote('cp_lr_note', .('Score (log-rank) test from Cox model is reported, as standard Mantel\u2013Cox log-rank is not defined for counting process data.'))
                       } else {
-                          sdiff <- try(survival::survdiff(survival::Surv(..time, ..event) ~ ..group, data = dat_km), silent = TRUE)
-                          if (!inherits(sdiff, "try-error")) {
-                              df <- length(sdiff$n) - 1
-                              chisq <- sdiff$chisq
-                              pval <- 1 - stats::pchisq(chisq, df)
-                              logRankTable$addRow(rowKey="test", values=list(
-                                  chisq = chisq,
-                                  df    = df,
-                                  p     = pval
-                              ))
-                              logRankTable$setNote('cp_lr_note', NULL)
-                          } else {
-                              err_msg <- if (!is.null(attr(sdiff, "condition"))) conditionMessage(attr(sdiff, "condition")) else as.character(sdiff)
-                              self$results$insert(1, jmvcore::Notice$new(self$options,
-                                  name = "logRankWarn",
-                                  type = jmvcore::NoticeType$WARNING,
-                                  content = jmvcore::format(.("Log-rank test could not be computed: {err}"), err = err_msg)
-                              ))
-                          }
+                          err_msg <- if (!is.null(attr(fit_lr, "condition"))) conditionMessage(attr(fit_lr, "condition")) else as.character(fit_lr)
+                          self$results$insert(1, jmvcore::Notice$new(self$options,
+                              name = "logRankWarn",
+                              type = jmvcore::NoticeType$WARNING,
+                              content = jmvcore::format(.("Log-rank test could not be computed: {err}"), err = trimws(err_msg))
+                          ))
                       }
-                      private$.lr_sig <- lr_sig
                   } else {
-                      self$results$logRankTable$deleteRows()
-                      private$.lr_sig <- NULL
+                      sdiff <- try(survival::survdiff(survival::Surv(..time, ..event) ~ ..group, data = dat_km), silent = TRUE)
+                      if (!inherits(sdiff, "try-error")) {
+                          df <- length(sdiff$n) - 1
+                          chisq <- sdiff$chisq
+                          pval <- 1 - stats::pchisq(chisq, df)
+                          logRankTable$addRow(rowKey="test", values=list(
+                              chisq = chisq,
+                              df    = df,
+                              p     = pval
+                          ))
+                          logRankTable$setNote('cp_lr_note', NULL)
+                      } else {
+                          err_msg <- if (!is.null(attr(sdiff, "condition"))) conditionMessage(attr(sdiff, "condition")) else as.character(sdiff)
+                          self$results$insert(1, jmvcore::Notice$new(self$options,
+                              name = "logRankWarn",
+                              type = jmvcore::NoticeType$WARNING,
+                              content = jmvcore::format(.("Log-rank test could not be computed: {err}"), err = trimws(err_msg))
+                          ))
+                      }
                   }
               } else {
                   self$results$logRankTable$deleteRows()
-                  private$.lr_sig <- NULL
               }
+          } else {
+              self$results$logRankTable$deleteRows()
           }
 
           # ----------------------------------------------------
@@ -418,79 +395,146 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                   }
                   dat_cox <- dat[stats::complete.cases(dat[, cols_to_check, drop=FALSE]), ]
 
-                  cox_model_sig <- list(
-                      time_var,
-                      tstart_var,
-                      status_var,
-                      self$options$statusEvent,
-                      group_var,
-                      covs,
-                      subject_id_var,
-                      self$options$coxFirth,
-                      nrow(dat_cox)
-                  )
+                  if (nrow(dat_cox) > 0) {
+                      surv_cox_str <- if (has_tstart) "survival::Surv(..tstart, ..time, ..event)" else "survival::Surv(..time, ..event)"
+                      formula_cox <- paste(surv_cox_str, "~", paste(terms, collapse = " + "))
 
-                  cox_needs_refit <- !identical(private$.cox_model_sig, cox_model_sig) ||
-                                     is.null(private$.cached_cox_fit) ||
-                                     self$results$coxSection$coxFitTable$rowCount == 0
-
-                  if (cox_needs_refit) {
-                      if (nrow(dat_cox) > 0) {
-                          surv_cox_str <- if (has_tstart) "survival::Surv(..tstart, ..time, ..event)" else "survival::Surv(..time, ..event)"
-                          formula_cox <- paste(surv_cox_str, "~", paste(terms, collapse = " + "))
-
-                          if (isTRUE(self$options$coxFirth)) {
-                              if ( ! requireNamespace("coxphf", quietly = TRUE)) {
-                                  cox_fit <- try(stop(jmvcore::.("The 'coxphf' package is required for Firth's penalized likelihood Cox regression. Please install it with install.packages('coxphf').")), silent = TRUE)
-                              } else {
-                                  cox_fit <- try(coxphf::coxphf(as.formula(formula_cox), data = dat_cox, pl = TRUE), silent = TRUE)
-                              }
+                      if (isTRUE(self$options$coxFirth)) {
+                          if ( ! requireNamespace("coxphf", quietly = TRUE)) {
+                              cox_fit <- try(stop(jmvcore::.("The 'coxphf' package is required for Firth's penalized likelihood Cox regression. Please install it with install.packages('coxphf').")), silent = TRUE)
                           } else {
-                              cluster_arg <- if (has_cluster) dat_cox$..cluster else NULL
-                              cox_fit <- try(survival::coxph(as.formula(formula_cox), data = dat_cox, cluster = cluster_arg, x = TRUE), silent = TRUE)
+                              cox_fit <- try(coxphf::coxphf(as.formula(formula_cox), data = dat_cox, pl = TRUE), silent = TRUE)
                           }
+                      } else {
+                          cluster_arg <- if (has_cluster) dat_cox$..cluster else NULL
+                          cox_fit <- try(survival::coxph(as.formula(formula_cox), data = dat_cox, cluster = cluster_arg, x = TRUE), silent = TRUE)
+                      }
 
-                          if (!inherits(cox_fit, "try-error")) {
-                              private$.cached_cox_fit <- cox_fit
-                              private$.cached_cox_terms <- terms
-                              private$.cox_model_sig <- cox_model_sig
-                              private$.cached_zph <- NULL
-                              private$.cached_zph_rows <- NULL
+                      if (!inherits(cox_fit, "try-error")) {
+                          fitTable <- self$results$coxSection$coxFitTable
+                          fitTable$deleteRows()
+                          coefTable <- self$results$coxSection$coxCoefTable
+                          coefTable$deleteRows()
 
-                              fitTable <- self$results$coxSection$coxFitTable
-                              fitTable$deleteRows()
-                              coefTable <- self$results$coxSection$coxCoefTable
-                              coefTable$deleteRows()
+                          coef_df_rows <- list()
 
-                              if (inherits(cox_fit, "coxphf")) {
-                                  stat_lr <- 2 * (cox_fit$loglik[2] - cox_fit$loglik[1])
-                                  df_lr <- as.integer(cox_fit$df)
-                                  p_lr <- as.numeric(1 - stats::pchisq(stat_lr, df_lr))
+                          if (inherits(cox_fit, "coxphf")) {
+                              stat_lr <- 2 * (cox_fit$loglik[2] - cox_fit$loglik[1])
+                              df_lr <- as.integer(cox_fit$df)
+                              p_lr <- as.numeric(1 - stats::pchisq(stat_lr, df_lr))
 
-                                  fitTable$addRow(rowKey="lr", values=list(
-                                      test = jmvcore::.("Likelihood Ratio Test"),
-                                      stat = as.numeric(stat_lr),
+                              fitTable$addRow(rowKey="lr", values=list(
+                                  test = jmvcore::.("Likelihood Ratio Test"),
+                                  stat = as.numeric(stat_lr),
+                                  df   = df_lr,
+                                  p    = as.numeric(p_lr)
+                              ))
+
+                              stat_wald <- try(as.numeric(t(cox_fit$coefficients) %*% solve(cox_fit$var) %*% cox_fit$coefficients), silent = TRUE)
+                              if (!inherits(stat_wald, "try-error") && !is.na(stat_wald)) {
+                                  fitTable$addRow(rowKey="wald", values=list(
+                                      test = jmvcore::.("Wald Test"),
+                                      stat = as.numeric(stat_wald),
                                       df   = df_lr,
-                                      p    = as.numeric(p_lr)
+                                      p    = as.numeric(1 - stats::pchisq(stat_wald, df_lr))
                                   ))
+                              }
 
-                                  stat_wald <- try(as.numeric(t(cox_fit$coefficients) %*% solve(cox_fit$var) %*% cox_fit$coefficients), silent = TRUE)
-                                  if (!inherits(stat_wald, "try-error") && !is.na(stat_wald)) {
-                                      fitTable$addRow(rowKey="wald", values=list(
-                                          test = jmvcore::.("Wald Test"),
-                                          stat = as.numeric(stat_wald),
-                                          df   = df_lr,
-                                          p    = as.numeric(1 - stats::pchisq(stat_wald, df_lr))
-                                      ))
+                              fitTable$setNote("firth_fit_note", jmvcore::.("<b>Firth's penalized likelihood</b>: Likelihood Ratio and Wald tests assess the overall significance of the model (joint effect of all predictors) using penalized likelihood."))
+
+                              coef_names <- names(cox_fit$coefficients)
+                              se_vec <- sqrt(diag(cox_fit$var))
+
+                              for (i in seq_along(coef_names)) {
+                                  raw_name <- coef_names[i]
+                                  clean_name <- raw_name
+                                  if (grepl("^\\.\\.group", raw_name)) {
+                                      lvl <- gsub("^\\.\\.group_?", "", raw_name)
+                                      clean_name <- if (nzchar(lvl)) paste0(group_var, " (", lvl, ")") else group_var
+                                  } else if (grepl("^\\.\\.cov_([0-9]+)", raw_name)) {
+                                      match_idx <- as.integer(gsub("^\\.\\.cov_([0-9]+).*", "\\1", raw_name))
+                                      rem_suffix <- gsub(paste0("^\\.\\.cov_", match_idx, "_?"), "", raw_name)
+                                      cov_name <- if (match_idx >= 1 && match_idx <= length(covs)) covs[match_idx] else paste0("cov_", match_idx)
+                                      clean_name <- if (nzchar(rem_suffix)) paste0(cov_name, " (", rem_suffix, ")") else cov_name
                                   }
 
-                                  fitTable$setNote("firth_fit_note", jmvcore::.("<b>Firth's penalized likelihood</b>: Likelihood Ratio and Wald tests assess the overall significance of the model (joint effect of all predictors) using penalized likelihood."))
+                                  coef_val <- as.numeric(cox_fit$coefficients[i])
+                                  se_val <- as.numeric(se_vec[i])
+                                  z_val <- if (!is.na(se_val) && se_val > 0) coef_val / se_val else NA_real_
 
-                                  coef_names <- names(cox_fit$coefficients)
-                                  se_vec <- sqrt(diag(cox_fit$var))
+                                  coefTable$addRow(rowKey=raw_name, values=list(
+                                      var     = clean_name,
+                                      coef    = coef_val,
+                                      se      = se_val,
+                                      z       = z_val,
+                                      p       = as.numeric(cox_fit$prob[i]),
+                                      hr      = as.numeric(exp(coef_val)),
+                                      hrLower = as.numeric(cox_fit$ci.lower[i]),
+                                      hrUpper = as.numeric(cox_fit$ci.upper[i])
+                                  ))
 
-                                  for (i in seq_along(coef_names)) {
-                                      raw_name <- coef_names[i]
+                                  coef_df_rows[[i]] <- data.frame(
+                                      var   = clean_name,
+                                      coef  = coef_val,
+                                      hr    = as.numeric(exp(coef_val)),
+                                      lower = as.numeric(cox_fit$ci.lower[i]),
+                                      upper = as.numeric(cox_fit$ci.upper[i]),
+                                      stringsAsFactors = FALSE
+                                  )
+                              }
+
+                              coefTable$setNote("firth_note", jmvcore::.("<b>Firth's penalized likelihood</b> (Firth, 1993) reduces small-sample bias and addresses monotone likelihood (separation) in Cox regression. Parameters and 95% hazard ratio confidence intervals are estimated using penalized profile likelihood."))
+                              if (has_cluster) {
+                                  coefTable$setNote("cluster_note", jmvcore::.("Clustering is not supported with Firth's penalized Cox regression; cluster adjustment was omitted."))
+                              } else {
+                                  coefTable$setNote("cluster_note", NULL)
+                              }
+                              if (has_tstart) {
+                                  coefTable$setNote("cp_note", jmvcore::.("Counting process formulation with left-truncation (tstart, elapsed)."))
+                              } else {
+                                  coefTable$setNote("cp_note", NULL)
+                              }
+                          } else {
+                              fitTable$setNote("firth_fit_note", NULL)
+                              coefTable$setNote("firth_note", NULL)
+
+                              # Model fit summaries
+                              sum_cox <- summary(cox_fit)
+
+                              if (!is.null(sum_cox$logtest)) {
+                                  fitTable$addRow(rowKey="lr", values=list(
+                                      test = jmvcore::.("Likelihood Ratio Test"),
+                                      stat = as.numeric(sum_cox$logtest["test"]),
+                                      df   = as.integer(sum_cox$logtest["df"]),
+                                      p    = as.numeric(sum_cox$logtest["pvalue"])
+                                  ))
+                              }
+                              if (!is.null(sum_cox$waldtest)) {
+                                  fitTable$addRow(rowKey="wald", values=list(
+                                      test = jmvcore::.("Wald Test"),
+                                      stat = as.numeric(sum_cox$waldtest["test"]),
+                                      df   = as.integer(sum_cox$waldtest["df"]),
+                                      p    = as.numeric(sum_cox$waldtest["pvalue"])
+                                  ))
+                              }
+                              if (!is.null(sum_cox$sctest)) {
+                                  fitTable$addRow(rowKey="score", values=list(
+                                      test = jmvcore::.("Score (Log-rank) Test"),
+                                      stat = as.numeric(sum_cox$sctest["test"]),
+                                      df   = as.integer(sum_cox$sctest["df"]),
+                                      p    = as.numeric(sum_cox$sctest["pvalue"])
+                                  ))
+                              }
+
+                              # Coefficients
+                              coefs <- sum_cox$coefficients
+                              conf_int <- sum_cox$conf.int
+
+                              if (!is.null(coefs)) {
+                                  row_names <- rownames(coefs)
+                                  se_col <- if ("robust se" %in% colnames(coefs)) "robust se" else "se(coef)"
+                                  for (i in seq_along(row_names)) {
+                                      raw_name <- row_names[i]
                                       clean_name <- raw_name
                                       if (grepl("^\\.\\.group", raw_name)) {
                                           lvl <- gsub("^\\.\\.group_?", "", raw_name)
@@ -502,25 +546,29 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                           clean_name <- if (nzchar(rem_suffix)) paste0(cov_name, " (", rem_suffix, ")") else cov_name
                                       }
 
-                                      coef_val <- as.numeric(cox_fit$coefficients[i])
-                                      se_val <- as.numeric(se_vec[i])
-                                      z_val <- if (!is.na(se_val) && se_val > 0) coef_val / se_val else NA_real_
-
                                       coefTable$addRow(rowKey=raw_name, values=list(
                                           var     = clean_name,
-                                          coef    = coef_val,
-                                          se      = se_val,
-                                          z       = z_val,
-                                          p       = as.numeric(cox_fit$prob[i]),
-                                          hr      = as.numeric(exp(coef_val)),
-                                          hrLower = as.numeric(cox_fit$ci.lower[i]),
-                                          hrUpper = as.numeric(cox_fit$ci.upper[i])
+                                          coef    = as.numeric(coefs[i, "coef"]),
+                                          se      = as.numeric(coefs[i, se_col]),
+                                          z       = as.numeric(coefs[i, "z"]),
+                                          p       = as.numeric(coefs[i, "Pr(>|z|)"]),
+                                          hr      = as.numeric(conf_int[i, "exp(coef)"]),
+                                          hrLower = as.numeric(conf_int[i, "lower .95"]),
+                                          hrUpper = as.numeric(conf_int[i, "upper .95"])
                                       ))
+
+                                      coef_df_rows[[i]] <- data.frame(
+                                          var   = clean_name,
+                                          coef  = as.numeric(coefs[i, "coef"]),
+                                          hr    = as.numeric(conf_int[i, "exp(coef)"]),
+                                          lower = as.numeric(conf_int[i, "lower .95"]),
+                                          upper = as.numeric(conf_int[i, "upper .95"]),
+                                          stringsAsFactors = FALSE
+                                      )
                                   }
 
-                                  coefTable$setNote("firth_note", jmvcore::.("<b>Firth's penalized likelihood</b> (Firth, 1993) reduces small-sample bias and addresses monotone likelihood (separation) in Cox regression. Parameters and 95% hazard ratio confidence intervals are estimated using penalized profile likelihood."))
                                   if (has_cluster) {
-                                      coefTable$setNote("cluster_note", jmvcore::.("Clustering is not supported with Firth's penalized Cox regression; cluster adjustment was omitted."))
+                                      coefTable$setNote("cluster_note", jmvcore::format(.("Standard errors and confidence intervals are adjusted for clustering by {var} (Huber\u2013White robust sandwich estimator)."), var = subject_id_var))
                                   } else {
                                       coefTable$setNote("cluster_note", NULL)
                                   }
@@ -529,263 +577,170 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                   } else {
                                       coefTable$setNote("cp_note", NULL)
                                   }
+                              }
+                          }
+
+                          # Forest plot state (compact dataframe)
+                          if (self$options$coxForest && length(coef_df_rows) > 0) {
+                              coef_df <- do.call(rbind, coef_df_rows)
+                              self$results$coxSection$coxForestPlot$setState(list(coef_df = coef_df))
+                          } else {
+                              self$results$coxSection$coxForestPlot$setState(NULL)
+                          }
+
+                          # Proportionality check
+                          if (self$options$coxAssump) {
+                              if (inherits(cox_fit, "coxphf")) {
+                                  assumpTable <- self$results$coxSection$coxAssumpTable
+                                  assumpTable$deleteRows()
+                                  assumpTable$setNote("firth_assump_note", jmvcore::.("Proportional hazards assumption test via Schoenfeld residuals is not available for Firth's penalized Cox regression models."))
+                                  schoenfeldPlots <- self$results$coxSection$schoenfeldPlots
+                                  schoenfeldPlots$clear()
                               } else {
-                                  fitTable$setNote("firth_fit_note", NULL)
-                                  coefTable$setNote("firth_note", NULL)
-
-                                  # Model fit summaries
-                                  sum_cox <- summary(cox_fit)
-
-                                  if (!is.null(sum_cox$logtest)) {
-                                      fitTable$addRow(rowKey="lr", values=list(
-                                          test = jmvcore::.("Likelihood Ratio Test"),
-                                          stat = as.numeric(sum_cox$logtest["test"]),
-                                          df   = as.integer(sum_cox$logtest["df"]),
-                                          p    = as.numeric(sum_cox$logtest["pvalue"])
-                                      ))
-                                  }
-                                  if (!is.null(sum_cox$waldtest)) {
-                                      fitTable$addRow(rowKey="wald", values=list(
-                                          test = jmvcore::.("Wald Test"),
-                                          stat = as.numeric(sum_cox$waldtest["test"]),
-                                          df   = as.integer(sum_cox$waldtest["df"]),
-                                          p    = as.numeric(sum_cox$waldtest["pvalue"])
-                                      ))
-                                  }
-                                  if (!is.null(sum_cox$sctest)) {
-                                      fitTable$addRow(rowKey="score", values=list(
-                                          test = jmvcore::.("Score (Log-rank) Test"),
-                                          stat = as.numeric(sum_cox$sctest["test"]),
-                                          df   = as.integer(sum_cox$sctest["df"]),
-                                          p    = as.numeric(sum_cox$sctest["pvalue"])
-                                      ))
+                                  self$results$coxSection$coxAssumpTable$setNote("firth_assump_note", NULL)
+                                  zph <- try(survival::cox.zph(cox_fit), silent = TRUE)
+                                  if (inherits(zph, "try-error")) {
+                                      err_msg <- conditionMessage(attr(zph, "condition"))
+                                      self$results$insert(1, jmvcore::Notice$new(self$options, name="coxZphError",
+                                          type=jmvcore::NoticeType$WARNING,
+                                          content=jmvcore::format(.("Proportional hazards test (cox.zph) could not be computed: {reason}"), reason = trimws(err_msg))))
+                                      self$results$coxSection$coxAssumpTable$deleteRows()
+                                      self$results$coxSection$schoenfeldPlots$clear()
+                                      zph <- NULL
                                   }
 
-                                  # Coefficients
-                                  coefs <- sum_cox$coefficients
-                                  conf_int <- sum_cox$conf.int
+                                  if (!is.null(zph)) {
+                                      assumpTable <- self$results$coxSection$coxAssumpTable
+                                      assumpTable$deleteRows()
+                                      zph_table <- zph$table
+                                      zph_rows <- rownames(zph_table)
 
-                                  if (!is.null(coefs)) {
-                                      row_names <- rownames(coefs)
-                                      se_col <- if ("robust se" %in% colnames(coefs)) "robust se" else "se(coef)"
-                                      for (i in seq_along(row_names)) {
-                                          raw_name <- row_names[i]
-                                          clean_name <- raw_name
-                                          if (grepl("^\\.\\.group", raw_name)) {
-                                              lvl <- gsub("^\\.\\.group_?", "", raw_name)
+                                      for (i in seq_along(zph_rows)) {
+                                          row_name <- zph_rows[i]
+                                          clean_name <- row_name
+                                          if (row_name == "GLOBAL") {
+                                              clean_name <- "GLOBAL"
+                                          } else if (grepl("^\\.\\.group", row_name)) {
+                                              lvl <- gsub("^\\.\\.group_?", "", row_name)
                                               clean_name <- if (nzchar(lvl)) paste0(group_var, " (", lvl, ")") else group_var
-                                          } else if (grepl("^\\.\\.cov_([0-9]+)", raw_name)) {
-                                              match_idx <- as.integer(gsub("^\\.\\.cov_([0-9]+).*", "\\1", raw_name))
-                                              rem_suffix <- gsub(paste0("^\\.\\.cov_", match_idx, "_?"), "", raw_name)
+                                          } else if (grepl("^\\.\\.cov_([0-9]+)", row_name)) {
+                                              match_idx <- as.integer(gsub("^\\.\\.cov_([0-9]+).*", "\\1", row_name))
+                                              rem_suffix <- gsub(paste0("^\\.\\.cov_", match_idx, "_?"), "", row_name)
                                               cov_name <- if (match_idx >= 1 && match_idx <= length(covs)) covs[match_idx] else paste0("cov_", match_idx)
                                               clean_name <- if (nzchar(rem_suffix)) paste0(cov_name, " (", rem_suffix, ")") else cov_name
                                           }
 
-                                          coefTable$addRow(rowKey=raw_name, values=list(
-                                              var     = clean_name,
-                                              coef    = as.numeric(coefs[i, "coef"]),
-                                              se      = as.numeric(coefs[i, se_col]),
-                                              z       = as.numeric(coefs[i, "z"]),
-                                              p       = as.numeric(coefs[i, "Pr(>|z|)"]),
-                                              hr      = as.numeric(conf_int[i, "exp(coef)"]),
-                                              hrLower = as.numeric(conf_int[i, "lower .95"]),
-                                              hrUpper = as.numeric(conf_int[i, "upper .95"])
+                                          assumpTable$addRow(rowKey=row_name, values=list(
+                                              var    = clean_name,
+                                              chisq  = as.numeric(zph_table[i, "chisq"]),
+                                              df     = as.integer(zph_table[i, "df"]),
+                                              p      = as.numeric(zph_table[i, "p"])
                                           ))
                                       }
 
-                                      if (has_cluster) {
-                                          coefTable$setNote("cluster_note", paste0(jmvcore::.("Standard errors and confidence intervals are adjusted for clustering by"), " ", subject_id_var, " (", jmvcore::.("Huber–White robust sandwich estimator"), ")."))
-                                      } else {
-                                          coefTable$setNote("cluster_note", NULL)
-                                      }
-                                      if (has_tstart) {
-                                          coefTable$setNote("cp_note", jmvcore::.("Counting process formulation with left-truncation (tstart, elapsed)."))
-                                      } else {
-                                          coefTable$setNote("cp_note", NULL)
-                                      }
-                                  }
-                              }
-                          } else {
-                              private$.cached_cox_fit <- NULL
-                              private$.cached_cox_terms <- NULL
-                              private$.cached_zph <- NULL
-                              private$.cached_zph_rows <- NULL
-                              private$.cox_model_sig <- NULL
-                              self$results$coxSection$coxFitTable$deleteRows()
-                              self$results$coxSection$coxCoefTable$deleteRows()
-                              self$results$insert(1, jmvcore::Notice$new(self$options, name="coxFitError",
-                                  type=jmvcore::NoticeType$WARNING,
-                                  content=paste0(jmvcore::.("Cox proportional hazards model fitting failed:"), " ", jmvcore::extractErrorMessage(cox_fit))))
-                          }
-                      } else {
-                          private$.cached_cox_fit <- NULL
-                          private$.cached_cox_terms <- NULL
-                          private$.cached_zph <- NULL
-                          private$.cached_zph_rows <- NULL
-                          private$.cox_model_sig <- NULL
-                          self$results$coxSection$coxFitTable$deleteRows()
-                          self$results$coxSection$coxCoefTable$deleteRows()
-                          self$results$coxSection$coxFitTable$setNote("firth_fit_note", NULL)
-                          self$results$coxSection$coxCoefTable$setNote("firth_note", NULL)
-                      }
-                  }
+                                      schoenfeldPlots <- self$results$coxSection$schoenfeldPlots
+                                      if (self$options$showSchoenfeldPlot) {
+                                          plot_vars <- zph_rows[zph_rows != "GLOBAL"]
+                                          existing_keys <- unlist(schoenfeldPlots$itemKeys, use.names = FALSE)
+                                          if (!identical(existing_keys, plot_vars)) {
+                                              schoenfeldPlots$clear()
+                                              for (pv in plot_vars) {
+                                                  schoenfeldPlots$addItem(key = pv)
+                                              }
+                                          }
+                                          for (pv in plot_vars) {
+                                              clean_pv <- pv
+                                              if (grepl("^\\.\\.group", pv)) {
+                                                  lvl <- gsub("^\\.\\.group_?", "", pv)
+                                                  clean_pv <- if (nzchar(lvl)) paste0(group_var, " (", lvl, ")") else group_var
+                                              } else if (grepl("^\\.\\.cov_([0-9]+)", pv)) {
+                                                  match_idx <- as.integer(gsub("^\\.\\.cov_([0-9]+).*", "\\1", pv))
+                                                  rem_suffix <- gsub(paste0("^\\.\\.cov_", match_idx, "_?"), "", pv)
+                                                  cov_name <- if (match_idx >= 1 && match_idx <= length(covs)) covs[match_idx] else paste0("cov_", match_idx)
+                                                  clean_pv <- if (nzchar(rem_suffix)) paste0(cov_name, " (", rem_suffix, ")") else cov_name
+                                              }
+                                              item <- schoenfeldPlots$get(key=pv)
+                                              item$setTitle(jmvcore::format(.("Schoenfeld residuals \u2013 {var}"), var = clean_pv))
 
-                  cox_fit <- private$.cached_cox_fit
-                  terms <- private$.cached_cox_terms
+                                              var_idx <- which(rownames(zph$table) == pv)
+                                              if (length(var_idx) > 0 && !is.na(var_idx) && var_idx >= 1 && var_idx <= nrow(zph$table)) {
+                                                  xx <- zph$x
+                                                  yy <- zph$y
+                                                  y <- if (is.matrix(yy)) yy[, var_idx] else yy
+                                                  keep <- !is.na(y)
 
-                  if (!is.null(cox_fit)) {
-                      # Forest plot state
-                      if (self$options$coxForest) {
-                          self$results$coxSection$coxForestPlot$setState(list(fit = cox_fit, terms = terms))
-                      } else {
-                          self$results$coxSection$coxForestPlot$setState(NULL)
-                      }
+                                                  nsmo <- 40
+                                                  df_sp <- 4
+                                                  pred_x <- seq(from = min(xx), to = max(xx), length.out = nsmo)
+                                                  temp <- c(pred_x, xx)
+                                                  lmat <- try(splines::ns(temp, df = df_sp, intercept = TRUE), silent = TRUE)
 
-                      # Proportionality check
-                      if (self$options$coxAssump) {
-                          if (inherits(cox_fit, "coxphf")) {
-                              assumpTable <- self$results$coxSection$coxAssumpTable
-                              assumpTable$deleteRows()
-                              assumpTable$setNote("firth_assump_note", jmvcore::.("Proportional hazards assumption test via Schoenfeld residuals is not available for Firth's penalized Cox regression models."))
-                              schoenfeldPlots <- self$results$coxSection$schoenfeldPlots
-                              schoenfeldPlots$clear()
-                          } else {
-                              self$results$coxSection$coxAssumpTable$setNote("firth_assump_note", NULL)
-                              if (is.null(private$.cached_zph)) {
-                                  zph <- try(survival::cox.zph(cox_fit), silent = TRUE)
-                              if (!inherits(zph, "try-error")) {
-                                  private$.cached_zph <- zph
-                                  private$.cached_zph_rows <- rownames(zph$table)
-                              }
-                          } else {
-                              zph <- private$.cached_zph
-                          }
+                                                  if (!inherits(lmat, "try-error") && sum(keep) >= df_sp) {
+                                                      pmat <- lmat[1:nsmo, , drop = FALSE]
+                                                      xmat <- lmat[-(1:nsmo), , drop = FALSE]
+                                                      qmat <- qr(xmat[keep, , drop = FALSE])
 
-                          if (!is.null(zph)) {
-                              assumpTable <- self$results$coxSection$coxAssumpTable
-                              assumpTable$deleteRows()
-                              zph_table <- zph$table
-                              zph_rows <- private$.cached_zph_rows
+                                                      if (qmat$rank >= df_sp) {
+                                                          yhat <- as.numeric(pmat %*% qr.coef(qmat, y[keep]))
+                                                          bk <- backsolve(qmat$qr[1:df_sp, 1:df_sp], diag(df_sp))
+                                                          xtx <- bk %*% t(bk)
+                                                          seval <- as.numeric(((pmat %*% xtx) * pmat) %*% rep(1, df_sp))
+                                                          var_val <- if (is.matrix(zph$var)) zph$var[var_idx, var_idx] else zph$var[var_idx]
+                                                          se_band <- 2 * sqrt(var_val * seval)
+                                                          yup <- as.numeric(yhat + se_band)
+                                                          ylow <- as.numeric(yhat - se_band)
 
-                              for (i in seq_along(zph_rows)) {
-                                  row_name <- zph_rows[i]
-                                  clean_name <- row_name
-                                  if (row_name == "GLOBAL") {
-                                      clean_name <- "GLOBAL"
-                                  } else if (grepl("^\\.\\.group", row_name)) {
-                                      lvl <- gsub("^\\.\\.group_?", "", row_name)
-                                      clean_name <- if (nzchar(lvl)) paste0(group_var, " (", lvl, ")") else group_var
-                                  } else if (grepl("^\\.\\.cov_([0-9]+)", row_name)) {
-                                      match_idx <- as.integer(gsub("^\\.\\.cov_([0-9]+).*", "\\1", row_name))
-                                      rem_suffix <- gsub(paste0("^\\.\\.cov_", match_idx, "_?"), "", row_name)
-                                      cov_name <- if (match_idx >= 1 && match_idx <= length(covs)) covs[match_idx] else paste0("cov_", match_idx)
-                                      clean_name <- if (nzchar(rem_suffix)) paste0(cov_name, " (", rem_suffix, ")") else cov_name
-                                  }
+                                                          tt <- if (!is.null(zph$time)) zph$time else xx
+                                                          if (is.null(zph$transform) || zph$transform == "identity") {
+                                                              pred_time <- pred_x
+                                                              pts_time <- xx
+                                                          } else if (zph$transform == "log") {
+                                                              pred_time <- exp(pred_x)
+                                                              pts_time <- exp(xx)
+                                                          } else {
+                                                              ord <- order(xx)
+                                                              xx_ord <- xx[ord]
+                                                              tt_ord <- tt[ord]
+                                                              nodup <- !duplicated(xx_ord)
+                                                              pred_time <- stats::approx(xx_ord[nodup], tt_ord[nodup], xout = pred_x, rule = 2)$y
+                                                              pts_time <- tt
+                                                          }
 
-                                  assumpTable$addRow(rowKey=row_name, values=list(
-                                      var    = clean_name,
-                                      chisq  = as.numeric(zph_table[i, "chisq"]),
-                                      df     = as.integer(zph_table[i, "df"]),
-                                      p      = as.numeric(zph_table[i, "p"])
-                                  ))
-                              }
-
-                              schoenfeldPlots <- self$results$coxSection$schoenfeldPlots
-                              if (self$options$showSchoenfeldPlot) {
-                                  plot_vars <- zph_rows[zph_rows != "GLOBAL"]
-                                  existing_keys <- unlist(schoenfeldPlots$itemKeys, use.names = FALSE)
-                                  if (!identical(existing_keys, plot_vars)) {
-                                      schoenfeldPlots$clear()
-                                      for (pv in plot_vars) {
-                                          schoenfeldPlots$addItem(key = pv)
-                                      }
-                                  }
-                                  for (pv in plot_vars) {
-                                      clean_pv <- pv
-                                      if (grepl("^\\.\\.group", pv)) {
-                                          lvl <- gsub("^\\.\\.group_?", "", pv)
-                                          clean_pv <- if (nzchar(lvl)) paste0(group_var, " (", lvl, ")") else group_var
-                                      } else if (grepl("^\\.\\.cov_([0-9]+)", pv)) {
-                                          match_idx <- as.integer(gsub("^\\.\\.cov_([0-9]+).*", "\\1", pv))
-                                          rem_suffix <- gsub(paste0("^\\.\\.cov_", match_idx, "_?"), "", pv)
-                                          cov_name <- if (match_idx >= 1 && match_idx <= length(covs)) covs[match_idx] else paste0("cov_", match_idx)
-                                          clean_pv <- if (nzchar(rem_suffix)) paste0(cov_name, " (", rem_suffix, ")") else cov_name
-                                      }
-                                      item <- schoenfeldPlots$get(key=pv)
-                                      item$setTitle(paste0(jmvcore::.("Schoenfeld residuals"), " \u2013 ", clean_pv))
-
-                                      var_idx <- which(rownames(zph$table) == pv)
-                                      if (length(var_idx) > 0 && !is.na(var_idx) && var_idx >= 1 && var_idx <= nrow(zph$table)) {
-                                          xx <- zph$x
-                                          yy <- zph$y
-                                          y <- if (is.matrix(yy)) yy[, var_idx] else yy
-                                          keep <- !is.na(y)
-
-                                          nsmo <- 40
-                                          df_sp <- 4
-                                          pred_x <- seq(from = min(xx), to = max(xx), length.out = nsmo)
-                                          temp <- c(pred_x, xx)
-                                          lmat <- try(splines::ns(temp, df = df_sp, intercept = TRUE), silent = TRUE)
-
-                                          if (!inherits(lmat, "try-error") && sum(keep) >= df_sp) {
-                                              pmat <- lmat[1:nsmo, , drop = FALSE]
-                                              xmat <- lmat[-(1:nsmo), , drop = FALSE]
-                                              qmat <- qr(xmat[keep, , drop = FALSE])
-
-                                              if (qmat$rank >= df_sp) {
-                                                  yhat <- as.numeric(pmat %*% qr.coef(qmat, y[keep]))
-                                                  bk <- backsolve(qmat$qr[1:df_sp, 1:df_sp], diag(df_sp))
-                                                  xtx <- bk %*% t(bk)
-                                                  seval <- as.numeric(((pmat %*% xtx) * pmat) %*% rep(1, df_sp))
-                                                  var_val <- if (is.matrix(zph$var)) zph$var[var_idx, var_idx] else zph$var[var_idx]
-                                                  se_band <- 2 * sqrt(var_val * seval)
-                                                  yup <- as.numeric(yhat + se_band)
-                                                  ylow <- as.numeric(yhat - se_band)
-
-                                                  tt <- if (!is.null(zph$time)) zph$time else xx
-                                                  if (is.null(zph$transform) || zph$transform == "identity") {
-                                                      pred_time <- pred_x
-                                                      pts_time <- xx
-                                                  } else if (zph$transform == "log") {
-                                                      pred_time <- exp(pred_x)
-                                                      pts_time <- exp(xx)
+                                                          pts_df <- data.frame(time = pts_time[keep], resid = as.numeric(y[keep]))
+                                                          smooth_df <- data.frame(time = pred_time, yhat = yhat, yup = yup, ylow = ylow)
+                                                          item_state <- list(pts = pts_df, smooth = smooth_df, var_name = clean_pv)
+                                                          item$setState(item_state)
+                                                      } else {
+                                                          item$setState(NULL)
+                                                      }
                                                   } else {
-                                                      ord <- order(xx)
-                                                      xx_ord <- xx[ord]
-                                                      tt_ord <- tt[ord]
-                                                      nodup <- !duplicated(xx_ord)
-                                                      pred_time <- stats::approx(xx_ord[nodup], tt_ord[nodup], xout = pred_x, rule = 2)$y
-                                                      pts_time <- tt
+                                                      item$setState(NULL)
                                                   }
-
-                                                  pts_df <- data.frame(time = pts_time[keep], resid = as.numeric(y[keep]))
-                                                  smooth_df <- data.frame(time = pred_time, yhat = yhat, yup = yup, ylow = ylow)
-                                                  item_state <- list(pts = pts_df, smooth = smooth_df, var_name = clean_pv)
-                                                  item$setState(item_state)
                                               } else {
                                                   item$setState(NULL)
                                               }
-                                          } else {
-                                              item$setState(NULL)
                                           }
                                       } else {
-                                          item$setState(NULL)
+                                          if (length(schoenfeldPlots$items) > 0) {
+                                              schoenfeldPlots$clear()
+                                          }
                                       }
                                   }
-                              } else {
-                                  if (length(schoenfeldPlots$items) > 0) {
-                                      schoenfeldPlots$clear()
-                                  }
                               }
-                          }
+                          } else {
+                              self$results$coxSection$coxAssumpTable$deleteRows()
+                              self$results$coxSection$coxAssumpTable$setNote("firth_assump_note", NULL)
+                              self$results$coxSection$schoenfeldPlots$clear()
                           }
                       } else {
+                          self$results$coxSection$coxFitTable$deleteRows()
+                          self$results$coxSection$coxCoefTable$deleteRows()
+                          self$results$coxSection$coxForestPlot$setState(NULL)
                           self$results$coxSection$coxAssumpTable$deleteRows()
-                          self$results$coxSection$coxAssumpTable$setNote("firth_assump_note", NULL)
                           self$results$coxSection$schoenfeldPlots$clear()
-                          self$results$coxSection$schoenfeldPlots$setState(NULL)
-                          private$.cached_zph <- NULL
-                          private$.cached_zph_rows <- NULL
+                          self$results$insert(1, jmvcore::Notice$new(self$options, name="coxFitError",
+                              type=jmvcore::NoticeType$WARNING,
+                              content=jmvcore::format(.("Cox proportional hazards model fitting failed: {reason}"), reason = jmvcore::extractErrorMessage(cox_fit))))
                       }
                   } else {
                       self$results$coxSection$coxFitTable$deleteRows()
@@ -793,7 +748,6 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                       self$results$coxSection$coxForestPlot$setState(NULL)
                       self$results$coxSection$coxAssumpTable$deleteRows()
                       self$results$coxSection$schoenfeldPlots$clear()
-                      self$results$coxSection$schoenfeldPlots$setState(NULL)
                   }
               } else {
                   self$results$coxSection$coxFitTable$deleteRows()
@@ -801,33 +755,12 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                   self$results$coxSection$coxForestPlot$setState(NULL)
                   self$results$coxSection$coxAssumpTable$deleteRows()
                   self$results$coxSection$schoenfeldPlots$clear()
-                  self$results$coxSection$schoenfeldPlots$setState(NULL)
-                  private$.cached_cox_fit <- NULL
-                  private$.cached_cox_terms <- NULL
-                  private$.cached_zph <- NULL
-                  private$.cached_zph_rows <- NULL
-                  private$.cox_model_sig <- NULL
               }
 
               if (self$options$showTimeDepEffects) {
-                  timedep_sig <- list(
-                      time_var,
-                      tstart_var,
-                      status_var,
-                      subject_id_var,
-                      group_var,
-                      covs,
-                      self$options$timeDepVars,
-                      self$options$timeDepFunc,
-                      nrow(dat)
-                  )
-                  if (!identical(private$.timedep_sig, timedep_sig) || self$results$coxSection$timeDepTable$rowCount == 0) {
-                      private$.runTimeDepCox(dat, time_var, tstart_var, subject_id_var, group_var, covs, has_tstart, has_cluster)
-                      private$.timedep_sig <- timedep_sig
-                  }
+                  private$.runTimeDepCox(dat, time_var, tstart_var, subject_id_var, group_var, covs, has_tstart, has_cluster)
               } else {
                   self$results$coxSection$timeDepTable$deleteRows()
-                  private$.timedep_sig <- NULL
               }
           } else {
               self$results$coxSection$coxFitTable$deleteRows()
@@ -835,14 +768,7 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               self$results$coxSection$coxForestPlot$setState(NULL)
               self$results$coxSection$coxAssumpTable$deleteRows()
               self$results$coxSection$schoenfeldPlots$clear()
-              self$results$coxSection$schoenfeldPlots$setState(NULL)
               self$results$coxSection$timeDepTable$deleteRows()
-              private$.cached_cox_fit <- NULL
-              private$.cached_cox_terms <- NULL
-              private$.cached_zph <- NULL
-              private$.cached_zph_rows <- NULL
-              private$.cox_model_sig <- NULL
-              private$.timedep_sig <- NULL
           }
 
           # ----------------------------------------------------
@@ -855,25 +781,7 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                   exp_var <- group_var
               }
 
-              adj_sig <- list(
-                  exp_var,
-                  group_var,
-                  covs,
-                  time_var,
-                  tstart_var,
-                  status_var,
-                  self$options$statusEvent,
-                  self$options$adjCI,
-                  self$options$kmMaxTime,
-                  nrow(dat)
-              )
-
-              adj_needs_run <- !identical(private$.adj_sig, adj_sig) ||
-                               adjSummaryTable$rowCount == 0 ||
-                               is.null(self$results$adjSection$adjPlot$state)
-
-              if (adj_needs_run) {
-                  adjSummaryTable$deleteRows()
+              adjSummaryTable$deleteRows()
                   if (is.null(exp_var) || exp_var == "" || !(exp_var %in% names(dat))) {
                       adjSummaryTable$setNote('exp_warn', .("Please select a Grouping Variable or Exposure Variable to compute adjusted survival curves."))
                       self$results$adjSection$adjPlot$setState(NULL)
@@ -935,14 +843,15 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                           tt <- stats::delete.response(stats::terms(adj_fit))
                                           time_range <- max(dat_adj$..time, na.rm = TRUE)
                                           eval_times <- sort(unique(c(0, pretty(c(0, time_range), n = 100), time_range)))
-                                          h0_step <- stats::stepfun(bh$time[-1], bh$hazard)
-                                          h0_eval <- c(0, h0_step(eval_times[-1]))
+                                          h0_step <- stats::stepfun(bh$time, c(0, bh$hazard))
+                                          h0_eval <- h0_step(eval_times)
 
                                           adj_curves <- list()
                                           coef_fit <- stats::coef(adj_fit)
+                                          df_cf_base <- if (has_cluster) dat_adj[!duplicated(dat_adj$..cluster), , drop = FALSE] else dat_adj
 
                                           for (z in levels_z) {
-                                              df_cf <- dat_adj
+                                              df_cf <- df_cf_base
                                               df_cf$..adj_exp <- factor(z, levels = levels(dat_adj$..adj_exp))
                                               mm_cf <- stats::model.matrix(tt, data = df_cf)
                                               if ("(Intercept)" %in% colnames(mm_cf)) {
@@ -1039,12 +948,13 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                                    bh_b <- try(survival::basehaz(fit_b, centered = FALSE), silent = TRUE)
                                                    if (inherits(bh_b, 'try-error') || nrow(bh_b) == 0) next
 
-                                                   h0_step_b <- stats::stepfun(bh_b$time[-1], bh_b$hazard)
-                                                   h0_eval_b <- c(0, h0_step_b(eval_times[-1]))
+                                                   h0_step_b <- stats::stepfun(bh_b$time, c(0, bh_b$hazard))
+                                                   h0_eval_b <- h0_step_b(eval_times)
                                                    coef_b <- stats::coef(fit_b)
+                                                   df_b_base <- if (has_cluster) dat_b[!duplicated(dat_b$..cluster), , drop = FALSE] else dat_b
 
                                                    for (z in levels_z) {
-                                                       df_b <- dat_b
+                                                       df_b <- df_b_base
                                                        df_b$..adj_exp <- factor(z, levels = levels(dat_adj$..adj_exp))
                                                        mm_b <- stats::model.matrix(tt, data = df_b)
                                                        if ('(Intercept)' %in% colnames(mm_b)) {
@@ -1079,13 +989,13 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                            self$results$adjSection$adjPlot$setState(NULL)
                                            self$results$insert(1, jmvcore::Notice$new(self$options, name="adjBhError",
                                                type=jmvcore::NoticeType$WARNING,
-                                               content=paste0(jmvcore::.("Adjusted survival baseline hazard estimation failed:"), " ", jmvcore::extractErrorMessage(bh))))
+                                               content=jmvcore::format(.("Adjusted survival baseline hazard estimation failed: {reason}"), reason = jmvcore::extractErrorMessage(bh))))
                                        }
                                    } else {
                                        self$results$adjSection$adjPlot$setState(NULL)
                                        self$results$insert(1, jmvcore::Notice$new(self$options, name="adjFitError",
                                            type=jmvcore::NoticeType$WARNING,
-                                           content=paste0(jmvcore::.("Adjusted survival curve model fitting failed:"), " ", jmvcore::extractErrorMessage(adj_fit))))
+                                           content=jmvcore::format(.("Adjusted survival curve model fitting failed: {reason}"), reason = jmvcore::extractErrorMessage(adj_fit))))
                                    }
                                } else {
                                    self$results$adjSection$adjPlot$setState(NULL)
@@ -1093,12 +1003,9 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                            }
                        }
                    }
-                   private$.adj_sig <- adj_sig
-              }
           } else {
               adjSummaryTable$deleteRows()
               self$results$adjSection$adjPlot$setState(NULL)
-              private$.adj_sig <- NULL
           }
 
           # ----------------------------------------------------
@@ -1109,316 +1016,212 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               rocTable <- self$results$rocSection$rocTable
               roc_time <- as.numeric(self$options$rocTime)
 
-              roc_sig <- list(
-                  roc_preds,
-                  roc_time,
-                  self$options$rocCI,
-                  self$options$rocWidth,
-                  time_var,
-                  status_var,
-                  self$options$statusEvent,
-                  nrow(dat)
-              )
+              rocTable$deleteRows()
+              roc_plot_list <- list()
 
-              roc_needs_run <- !identical(private$.roc_sig, roc_sig) ||
-                               rocTable$rowCount == 0 ||
-                               (self$options$rocPlot && is.null(self$results$rocSection$rocPlot$state))
+              # Data check
+              cols_to_check_roc <- c('..time', '..event', roc_preds)
+              if (has_cluster) cols_to_check_roc <- c(cols_to_check_roc, '..cluster')
+              if (has_tstart) cols_to_check_roc <- c(cols_to_check_roc, '..tstart')
+              dat_roc <- dat[stats::complete.cases(dat[, cols_to_check_roc, drop=FALSE]), ]
 
-              if (roc_needs_run) {
-                  rocTable$deleteRows()
-                  roc_plot_list <- list()
+              if (nrow(dat_roc) > 0) {
+                  if (has_cluster) {
+                      ord_idx <- if (has_tstart) order(dat_roc$..tstart) else seq_len(nrow(dat_roc))
+                      dat_roc_ord <- dat_roc[ord_idx, ]
+                      split_subj <- split(dat_roc_ord, dat_roc_ord$..cluster)
 
-                  # Data check
-                  cols_to_check_roc <- c('..time', '..event', roc_preds)
-                  if (has_cluster) cols_to_check_roc <- c(cols_to_check_roc, '..cluster')
-                  if (has_tstart) cols_to_check_roc <- c(cols_to_check_roc, '..tstart')
-                  dat_roc <- dat[stats::complete.cases(dat[, cols_to_check_roc, drop=FALSE]), ]
-
-                  if (nrow(dat_roc) > 0) {
-                      if (has_cluster) {
-                          ord_idx <- if (has_tstart) order(dat_roc$..tstart) else seq_len(nrow(dat_roc))
-                          dat_roc_ord <- dat_roc[ord_idx, ]
-                          split_subj <- split(dat_roc_ord, dat_roc_ord$..cluster)
-
-                          subj_status <- vapply(split_subj, function(df_s) {
-                              if (any(df_s$..event == 1 & df_s$..time <= roc_time)) {
-                                  1L
-                              } else if (max(df_s$..time) > roc_time) {
-                                  0L
-                              } else {
-                                  NA_integer_
-                              }
-                          }, integer(1))
-
-                          rocTable$setNote('cluster_note', jmvcore::format(
-                              .("Multi-row data collapsed to unique subjects based on '{subjectId}' with baseline marker values."),
-                              subjectId = subject_id_var
-                          ))
-                      } else {
-                          rocTable$setNote('cluster_note', NULL)
-                      }
-
-                      for (pred in roc_preds) {
-                          private$.checkpoint()
-                          if (has_cluster) {
-                              sub_pred_all <- vapply(split_subj, function(df_s) as.numeric(df_s[[pred]][1]), numeric(1))
-                              valid_idx <- !is.na(subj_status) & !is.na(sub_pred_all)
-                              sub_class <- subj_status[valid_idx]
-                              sub_pred  <- sub_pred_all[valid_idx]
+                      subj_status <- vapply(split_subj, function(df_s) {
+                          if (any(df_s$..event == 1 & df_s$..time <= roc_time)) {
+                              1L
+                          } else if (max(df_s$..time) > roc_time) {
+                              0L
                           } else {
-                              pred_col <- dat_roc[[pred]]
-                              time_col <- dat_roc$..time
-                              ev_col   <- dat_roc$..event
-
-                              class_val <- rep(NA_integer_, length(time_col))
-                              # Case: Event occurred at or before t
-                              class_val[time_col <= roc_time & ev_col == 1] <- 1L
-                              # Control: Survived past t
-                              class_val[time_col > roc_time] <- 0L
-
-                              valid_idx <- !is.na(class_val) & !is.na(pred_col)
-                              sub_class <- class_val[valid_idx]
-                              sub_pred  <- pred_col[valid_idx]
+                              NA_integer_
                           }
+                      }, integer(1))
 
-                          if (sum(sub_class == 1) >= 1 && sum(sub_class == 0) >= 1) {
-                              roc_obj <- try(pROC::roc(response = sub_class, predictor = sub_pred, levels = c(0, 1), direction = '<', quiet = TRUE), silent = TRUE)
-                              if (!inherits(roc_obj, 'try-error')) {
-                                  ci_width <- self$options$rocWidth / 100
-                                  auc_ci <- try(pROC::ci.auc(roc_obj, conf.level = ci_width), silent = TRUE)
-                                  auc_lower <- if (inherits(auc_ci, 'try-error')) NA else auc_ci[1]
-                                  auc_upper <- if (inherits(auc_ci, 'try-error')) NA else auc_ci[3]
+                      rocTable$setNote('cluster_note', jmvcore::format(
+                          .("Multi-row data collapsed to unique subjects based on '{subjectId}' with baseline marker values."),
+                          subjectId = subject_id_var
+                      ))
+                  } else {
+                      rocTable$setNote('cluster_note', NULL)
+                  }
 
-                                  coords <- try(pROC::coords(roc_obj, 'best', best.method = 'youden',
-                                                             ret = c('threshold', 'sensitivity', 'specificity')), silent = TRUE)
-
-                                  cutoff <- NA; se <- NA; sp <- NA
-                                  if (!is.null(coords) && !inherits(coords, "try-error")) {
-                                      if (is.data.frame(coords) || is.matrix(coords)) {
-                                          cutoff <- as.numeric(coords[1, "threshold"])
-                                          se     <- as.numeric(coords[1, "sensitivity"])
-                                          sp     <- as.numeric(coords[1, "specificity"])
-                                      } else {
-                                          cutoff <- as.numeric(coords["threshold"])
-                                          se     <- as.numeric(coords["sensitivity"])
-                                          sp     <- as.numeric(coords["specificity"])
-                                      }
-                                  }
-
-                                  # Precompute threshold CI if requested, so rendering is instantaneous
-                                  roc_ci <- NULL
-                                  if (self$options$rocCI && !is.null(cutoff) && !is.na(cutoff)) {
-                                      roc_ci <- try(pROC::ci.thresholds(roc_obj, thresholds = cutoff, conf.level = ci_width, boot.n = 500), silent = TRUE)
-                                      if (inherits(roc_ci, "try-error")) roc_ci <- NULL
-                                  }
-                                  roc_obj$ci <- roc_ci
-
-                                  rocTable$addRow(rowKey=pred, values=list(
-                                      predictor = pred,
-                                      time      = roc_time,
-                                      auc       = as.numeric(roc_obj$auc),
-                                      aucLower  = auc_lower,
-                                      aucUpper  = auc_upper,
-                                      cutoff    = cutoff,
-                                      se        = se,
-                                      sp        = sp
-                                  ))
-
-                                  roc_plot_list[[pred]] <- list(
-                                      roc    = roc_obj,
-                                      pred   = pred,
-                                      time   = roc_time,
-                                      cutoff = cutoff,
-                                      ci     = roc_ci
-                                  )
-                              }
-                          }
-                      }
-                      if (self$options$rocPlot) {
-                          self$results$rocSection$rocPlot$setState(roc_plot_list)
+                  for (pred in roc_preds) {
+                      private$.checkpoint()
+                      if (has_cluster) {
+                          sub_pred_all <- vapply(split_subj, function(df_s) as.numeric(df_s[[pred]][1]), numeric(1))
+                          valid_idx <- !is.na(subj_status) & !is.na(sub_pred_all)
+                          sub_class <- subj_status[valid_idx]
+                          sub_pred  <- sub_pred_all[valid_idx]
                       } else {
-                          self$results$rocSection$rocPlot$setState(NULL)
+                          pred_col <- dat_roc[[pred]]
+                          time_col <- dat_roc$..time
+                          ev_col   <- dat_roc$..event
+
+                          class_val <- rep(NA_integer_, length(time_col))
+                          # Case: Event occurred at or before t
+                          class_val[time_col <= roc_time & ev_col == 1] <- 1L
+                          # Control: Survived past t
+                          class_val[time_col > roc_time] <- 0L
+
+                          valid_idx <- !is.na(class_val) & !is.na(pred_col)
+                          sub_class <- class_val[valid_idx]
+                          sub_pred  <- pred_col[valid_idx]
                       }
+
+                      if (sum(sub_class == 1) >= 1 && sum(sub_class == 0) >= 1) {
+                          roc_obj <- try(pROC::roc(response = sub_class, predictor = sub_pred, levels = c(0, 1), direction = '<', quiet = TRUE), silent = TRUE)
+                          if (!inherits(roc_obj, 'try-error')) {
+                              ci_width <- self$options$rocWidth / 100
+                              auc_ci <- try(pROC::ci.auc(roc_obj, conf.level = ci_width), silent = TRUE)
+                              auc_lower <- if (inherits(auc_ci, 'try-error')) NA else auc_ci[1]
+                              auc_upper <- if (inherits(auc_ci, 'try-error')) NA else auc_ci[3]
+
+                              coords <- try(pROC::coords(roc_obj, 'best', best.method = 'youden',
+                                                         ret = c('threshold', 'sensitivity', 'specificity')), silent = TRUE)
+
+                              cutoff <- NA; se <- NA; sp <- NA
+                              if (!is.null(coords) && !inherits(coords, "try-error")) {
+                                  if (is.data.frame(coords) || is.matrix(coords)) {
+                                      cutoff <- as.numeric(coords[1, "threshold"])
+                                      se     <- as.numeric(coords[1, "sensitivity"])
+                                      sp     <- as.numeric(coords[1, "specificity"])
+                                  } else {
+                                      cutoff <- as.numeric(coords["threshold"])
+                                      se     <- as.numeric(coords["sensitivity"])
+                                      sp     <- as.numeric(coords["specificity"])
+                                  }
+                              }
+
+                              # Precompute threshold CI if requested, with fixed seed for reproducibility
+                              roc_ci <- NULL
+                              if (self$options$rocCI && !is.null(cutoff) && !is.na(cutoff)) {
+                                  old_seed <- if (exists('.Random.seed', envir = .GlobalEnv, inherits = FALSE)) get('.Random.seed', envir = .GlobalEnv) else NULL
+                                  set.seed(42)
+                                  roc_ci <- try(pROC::ci.thresholds(roc_obj, thresholds = cutoff, conf.level = ci_width, boot.n = 500), silent = TRUE)
+                                  if (!is.null(old_seed)) {
+                                      assign('.Random.seed', old_seed, envir = .GlobalEnv)
+                                  } else if (exists('.Random.seed', envir = .GlobalEnv, inherits = FALSE)) {
+                                      rm('.Random.seed', envir = .GlobalEnv)
+                                  }
+                                  if (inherits(roc_ci, "try-error")) roc_ci <- NULL
+                              }
+                              roc_obj$ci <- roc_ci
+
+                              rocTable$addRow(rowKey=pred, values=list(
+                                  predictor = pred,
+                                  time      = roc_time,
+                                  auc       = as.numeric(roc_obj$auc),
+                                  aucLower  = auc_lower,
+                                  aucUpper  = auc_upper,
+                                  cutoff    = cutoff,
+                                  se        = se,
+                                  sp        = sp
+                              ))
+
+                              roc_plot_list[[pred]] <- list(
+                                  roc    = roc_obj,
+                                  pred   = pred,
+                                  time   = roc_time,
+                                  cutoff = cutoff,
+                                  ci     = roc_ci
+                              )
+                          }
+                      }
+                  }
+                  if (self$options$rocPlot) {
+                      self$results$rocSection$rocPlot$setState(roc_plot_list)
                   } else {
                       self$results$rocSection$rocPlot$setState(NULL)
                   }
+              } else {
+                  self$results$rocSection$rocPlot$setState(NULL)
+              }
 
-                  # Set warning note if table is empty
-                  if (self$results$rocSection$rocTable$rowCount == 0) {
-                      self$results$rocSection$rocTable$setNote('empty_warning',
-                          .('Not enough events or survivors at the selected analysis time point t to perform ROC analysis.'))
-                  } else {
-                      self$results$rocSection$rocTable$setNote('empty_warning', NULL)
-                  }
-                  private$.roc_sig <- roc_sig
+              # Set warning note if table is empty
+              if (self$results$rocSection$rocTable$rowCount == 0) {
+                  self$results$rocSection$rocTable$setNote('empty_warning',
+                      .('Not enough events or survivors at the selected analysis time point t to perform ROC analysis.'))
+              } else {
+                  self$results$rocSection$rocTable$setNote('empty_warning', NULL)
               }
           } else {
               self$results$rocSection$rocTable$deleteRows()
               self$results$rocSection$rocPlot$setState(NULL)
-              private$.roc_sig <- NULL
           }
 
           # ----------------------------------------------------
           # 6. Competing Risks Analysis
           # ----------------------------------------------------
           if (self$options$showCompRisks) {
-              cr_sig <- list(
-                  self$options$compCensor,
-                  self$options$compEvent,
-                  self$options$statusEvent,
-                  status_var,
-                  time_var,
-                  tstart_var,
-                  subject_id_var,
-                  group_var,
-                  covs,
-                  self$options$kmMaxTime,
-                  self$options$showCifTable,
-                  self$options$showCifPlot,
-                  self$options$cifCI,
-                  self$options$showGrayTest,
-                  self$options$showFineGray,
-                  nrow(dat)
-              )
-
-              cifTable <- self$results$compRisksSection$cifSummaryTable
-              cifPlot <- self$results$compRisksSection$cifPlot
-              grayTable <- self$results$compRisksSection$grayTestTable
-              fgTable <- self$results$compRisksSection$fineGrayTable
-
-              cr_needs_run <- !identical(private$.cr_sig, cr_sig) ||
-                              (self$options$showCifTable && cifTable$rowCount == 0) ||
-                              (self$options$showCifPlot && is.null(cifPlot$state)) ||
-                              (self$options$showGrayTest && !is.null(group_var) && grayTable$rowCount == 0) ||
-                              (self$options$showFineGray && fgTable$rowCount == 0)
-
-              if (cr_needs_run) {
-                  private$.runCompetingRisks(dat, time_var, tstart_var, status_var, subject_id_var, group_var, covs, has_tstart, has_cluster)
-                  private$.cr_sig <- cr_sig
-              }
+              private$.runCompetingRisks(dat, time_var, tstart_var, status_var, subject_id_var, group_var, covs, has_tstart, has_cluster)
           } else {
               self$results$compRisksSection$cifSummaryTable$deleteRows()
               self$results$compRisksSection$cifPlot$setState(NULL)
               self$results$compRisksSection$grayTestTable$deleteRows()
               self$results$compRisksSection$fineGrayTable$deleteRows()
-              private$.cr_sig <- NULL
           }
       },
 
       .kmPlot = function(image, ggtheme, theme, ...) {
           state <- image$state
-          if (is.null(state)) return(FALSE)
+          if (is.null(state) || is.null(state$df)) return(FALSE)
 
-          dat_plot <- state$data
-          if (is.null(dat_plot) || nrow(dat_plot) == 0) return(FALSE)
-
-          has_tstart <- "..tstart" %in% names(dat_plot)
-          group_var <- self$options$group
-          surv_km_str <- if (has_tstart) "survival::Surv(..tstart, ..time, ..event)" else "survival::Surv(..time, ..event)"
-          if (!is.null(group_var)) {
-              formula <- stats::as.formula(paste(surv_km_str, "~ ..group"))
-          } else {
-              formula <- stats::as.formula(paste(surv_km_str, "~ 1"))
-          }
+          df <- state$df
+          group_var <- state$group_var
+          time_var <- state$time_var
 
           km_type <- self$options$kmType
           if (km_type == "hazard") km_type <- "cumhaz"
 
-          p <- NULL
-          if (requireNamespace("ggsurvfit", quietly = TRUE)) {
-              fit <- try(ggsurvfit::survfit2(formula, data = dat_plot), silent = TRUE)
-              if (!inherits(fit, "try-error")) {
-                  p <- try({
-                      p_obj <- ggsurvfit::ggsurvfit(fit, type = km_type) +
-                          ggplot2::labs(
-                              x = self$options$elapsed,
-                              y = ifelse(km_type == "survival", .("Survival probability"), .("Cumulative hazard"))
-                          )
-                      if (self$options$kmCI) {
-                          p_obj <- p_obj + ggsurvfit::add_confidence_interval()
-                      }
-                      p_obj
-                  }, silent = TRUE)
-                  if (inherits(p, "try-error")) p <- NULL
-              }
+          y_var <- if (km_type == "cumhaz") "cumhaz" else "surv"
+          y_label <- if (km_type == "cumhaz") .("Cumulative hazard") else .("Survival probability")
+
+          if (!is.null(group_var)) {
+              p <- ggplot2::ggplot(df, ggplot2::aes_string(x = "time", y = y_var, color = "strata"))
+          } else {
+              p <- ggplot2::ggplot(df, ggplot2::aes_string(x = "time", y = y_var))
           }
 
-          if (is.null(p)) {
-              fit <- try(survival::survfit(formula, data = dat_plot), silent = TRUE)
-              if (inherits(fit, "try-error")) return(FALSE)
-
-              strata_names <- if (!is.null(fit$strata)) {
-                  rep(names(fit$strata), fit$strata)
-              } else {
-                  rep("All", length(fit$time))
+          if (self$options$kmCI) {
+              make_step_ribbon <- function(d) {
+                  do.call(rbind, lapply(split(d, d$strata), function(subd) {
+                      n <- nrow(subd)
+                      if (n <= 1) return(subd)
+                      idx <- rep(1:n, each = 2)
+                      res <- subd[idx, ]
+                      res$time <- c(subd$time[1], rep(subd$time[2:n], each = 2), subd$time[n])[1:nrow(res)]
+                      res
+                  }))
               }
-              strata_clean <- sub("^\\.\\.group=", "", strata_names)
-
-              df <- data.frame(
-                  time = fit$time,
-                  surv = fit$surv,
-                  cumhaz = if (!is.null(fit$cumhaz)) fit$cumhaz else -log(pmax(fit$surv, 1e-10)),
-                  lower = fit$lower,
-                  upper = fit$upper,
-                  n.censor = fit$n.censor,
-                  strata = strata_clean,
-                  stringsAsFactors = FALSE
-              )
-
-              u_strata <- unique(df$strata)
-              t0_list <- lapply(u_strata, function(st) {
-                  data.frame(time = 0, surv = 1, cumhaz = 0, lower = 1, upper = 1, n.censor = 0, strata = st, stringsAsFactors = FALSE)
-              })
-              df <- rbind(do.call(rbind, t0_list), df)
-              df <- df[order(df$strata, df$time), ]
-              df$strata <- factor(df$strata, levels = u_strata)
-
-              y_var <- if (km_type == "cumhaz") "cumhaz" else "surv"
-              y_label <- if (km_type == "cumhaz") .("Cumulative hazard") else .("Survival probability")
-
+              ribbon_df <- make_step_ribbon(df)
               if (!is.null(group_var)) {
-                  p <- ggplot2::ggplot(df, ggplot2::aes_string(x = "time", y = y_var, color = "strata"))
+                  p <- p + ggplot2::geom_ribbon(data = ribbon_df, ggplot2::aes_string(ymin = "lower", ymax = "upper", fill = "strata"), alpha = 0.2, linetype = 0)
               } else {
-                  p <- ggplot2::ggplot(df, ggplot2::aes_string(x = "time", y = y_var))
+                  p <- p + ggplot2::geom_ribbon(data = ribbon_df, ggplot2::aes_string(ymin = "lower", ymax = "upper"), alpha = 0.2, linetype = 0, fill = "grey50")
               }
-
-              if (self$options$kmCI) {
-                  make_step_ribbon <- function(d) {
-                      do.call(rbind, lapply(split(d, d$strata), function(subd) {
-                          n <- nrow(subd)
-                          if (n <= 1) return(subd)
-                          idx <- rep(1:n, each = 2)
-                          res <- subd[idx, ]
-                          res$time <- c(subd$time[1], rep(subd$time[2:n], each = 2), subd$time[n])[1:nrow(res)]
-                          res
-                      }))
-                  }
-                  ribbon_df <- make_step_ribbon(df)
-                  if (!is.null(group_var)) {
-                      p <- p + ggplot2::geom_ribbon(data = ribbon_df, ggplot2::aes_string(ymin = "lower", ymax = "upper", fill = "strata"), alpha = 0.2, linetype = 0)
-                  } else {
-                      p <- p + ggplot2::geom_ribbon(data = ribbon_df, ggplot2::aes_string(ymin = "lower", ymax = "upper"), alpha = 0.2, linetype = 0, fill = "grey50")
-                  }
-              }
-
-              p <- p + ggplot2::geom_step(linewidth = 0.8)
-
-              cens_df <- df[df$n.censor > 0, ]
-              if (nrow(cens_df) > 0) {
-                  if (!is.null(group_var)) {
-                      p <- p + ggplot2::geom_point(data = cens_df, ggplot2::aes_string(x = "time", y = y_var, color = "strata"), shape = 3, size = 2)
-                  } else {
-                      p <- p + ggplot2::geom_point(data = cens_df, ggplot2::aes_string(x = "time", y = y_var), shape = 3, size = 2)
-                  }
-              }
-
-              p <- p + ggplot2::labs(
-                  x = self$options$elapsed,
-                  y = y_label,
-                  color = group_var,
-                  fill = group_var
-              )
           }
+
+          p <- p + ggplot2::geom_step(linewidth = 0.8)
+
+          cens_df <- df[df$n.censor > 0, ]
+          if (nrow(cens_df) > 0) {
+              if (!is.null(group_var)) {
+                  p <- p + ggplot2::geom_point(data = cens_df, ggplot2::aes_string(x = "time", y = y_var, color = "strata"), shape = 3, size = 2)
+              } else {
+                  p <- p + ggplot2::geom_point(data = cens_df, ggplot2::aes_string(x = "time", y = y_var), shape = 3, size = 2)
+              }
+          }
+
+          p <- p + ggplot2::labs(
+              x = if (!is.null(time_var)) time_var else self$options$elapsed,
+              y = y_label,
+              color = group_var,
+              fill = group_var
+          )
 
           limit_time <- self$options$kmMaxTime
           if (!is.null(limit_time) && length(limit_time) > 0) {
@@ -1428,6 +1231,12 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               }
           }
 
+          pal <- self$options$palBrewer
+          if (!is.null(group_var) && !is.null(pal) && pal != "default" && pal != "none") {
+              p <- p + ggplot2::scale_color_brewer(palette = pal) +
+                       ggplot2::scale_fill_brewer(palette = pal)
+          }
+
           p <- p + ggtheme + ggplot2::theme(legend.position = "bottom")
           print(p)
           return(TRUE)
@@ -1435,59 +1244,13 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
       .coxForestPlot = function(image, ggtheme, theme, ...) {
           state <- image$state
-          if (is.null(state)) return(FALSE)
+          if (is.null(state) || is.null(state$coef_df)) return(FALSE)
+          coef_df <- state$coef_df
+          if (nrow(coef_df) == 0) return(FALSE)
 
-          fit <- state$fit
-          terms <- state$terms
-          if (is.null(fit) || is.null(terms)) return(FALSE)
-
-          if (inherits(fit, "coxphf")) {
-              coef_df <- data.frame(
-                  `exp(coef)` = as.numeric(exp(fit$coefficients)),
-                  `lower .95` = as.numeric(fit$ci.lower),
-                  `upper .95` = as.numeric(fit$ci.upper),
-                  check.names = FALSE
-              )
-              rownames(coef_df) <- names(fit$coefficients)
-              coef_df$raw_var <- names(fit$coefficients)
-              coef_df$coef <- as.numeric(fit$coefficients)
-              coef_df$se <- as.numeric(sqrt(diag(fit$var)))
-          } else {
-              sum_cox <- summary(fit)
-              coef_df <- as.data.frame(sum_cox$conf.int)
-              if (nrow(coef_df) == 0) return(FALSE)
-
-              coef_df$raw_var <- rownames(coef_df)
-              coef_df$coef <- sum_cox$coefficients[, "coef"]
-              se_col_cox <- if ("robust se" %in% colnames(sum_cox$coefficients)) "robust se" else if ("se(coef)" %in% colnames(sum_cox$coefficients)) "se(coef)" else 2
-              coef_df$se <- sum_cox$coefficients[, se_col_cox]
-          }
-
-          coef_df$var <- coef_df$raw_var
-          group_var <- self$options$group
-          covs <- self$options$covariates
-          exp_var <- self$options$adjExposure
-          if (is.null(exp_var) || exp_var == "") exp_var <- group_var
-
-          for (i in seq_along(coef_df$raw_var)) {
-              rv <- coef_df$raw_var[i]
-              if (grepl("^\\.\\.group", rv)) {
-                  lvl <- gsub("^\\.\\.group", "", rv)
-                  coef_df$var[i] <- paste0(group_var, " (", lvl, ")")
-              } else if (grepl("^\\.\\.adj_exp", rv)) {
-                  lvl <- gsub("^\\.\\.adj_exp", "", rv)
-                  coef_df$var[i] <- paste0(exp_var, " (", lvl, ")")
-              } else if (grepl("^\\.\\.cov_([0-9]+)_", rv)) {
-                  match_idx <- as.integer(gsub("^\\.\\.cov_([0-9]+)_.*", "\\1", rv))
-                  rem_suffix <- gsub(paste0("^\\.\\.cov_", match_idx, "_"), "", rv)
-                  cov_name <- covs[match_idx]
-                  coef_df$var[i] <- if (rem_suffix != "") paste0(cov_name, " (", rem_suffix, ")") else cov_name
-              }
-          }
-
-          p <- ggplot2::ggplot(coef_df, ggplot2::aes(x = stats::reorder(var, coef), y = `exp(coef)`)) +
+          p <- ggplot2::ggplot(coef_df, ggplot2::aes(x = stats::reorder(var, coef), y = hr)) +
               ggplot2::geom_hline(yintercept = 1, linetype = "dashed", color = "#E54028", linewidth = 0.8) +
-              ggplot2::geom_errorbar(ggplot2::aes(ymin = `lower .95`, ymax = `upper .95`), width = 0.2, color = "#3366B2", linewidth = 0.8) +
+              ggplot2::geom_errorbar(ggplot2::aes(ymin = lower, ymax = upper), width = 0.2, color = "#3366B2", linewidth = 0.8) +
               ggplot2::geom_point(color = "#3366B2", size = 3) +
               ggplot2::coord_flip() +
               ggplot2::labs(
@@ -1516,8 +1279,8 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               ggplot2::geom_point(color = "#3366B2", alpha = 0.45, size = 1.8) +
               ggplot2::labs(
                   x = self$options$elapsed,
-                  y = paste0("Beta(t) for ", var_name),
-                  title = paste0(jmvcore::.("Schoenfeld residuals"), " \u2013 ", var_name)
+                  y = jmvcore::format(.("Beta(t) for {var}"), var = var_name),
+                  title = jmvcore::format(.("Schoenfeld residuals – {var}"), var = var_name)
               ) +
               ggtheme +
               ggplot2::theme(plot.title = ggplot2::element_text(face = "bold", size = 12))
@@ -1565,7 +1328,7 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                   cex.axis = 1.4,
                   lwd = 3,
                   legacy.axes = TRUE,
-                  xlab = .("1 - Specificity"),
+                  xlab = .("1 – Specificity"),
                   ylab = .("Sensitivity"),
                   grid = !add,
                   print.thres = has_cutoff,
@@ -1581,7 +1344,7 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               add <- TRUE
           }
 
-          leg_labels <- sapply(roc_list, function(x) paste0(x$pred, " (AUC = ", sprintf("%.3f", x$roc$auc), ")"))
+          leg_labels <- sapply(roc_list, function(x) jmvcore::format(.("{pred} (AUC = {auc})"), pred = x$pred, auc = sprintf("%.3f", as.numeric(x$roc$auc))))
           legend(
               "bottomright",
               legend = leg_labels,
@@ -1729,9 +1492,8 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                   censor_val <- auto_censor
                   self$results$insert(1, jmvcore::Notice$new(self$options, name="compRisksAutoLevels",
                       type=jmvcore::NoticeType$INFO,
-                      content=paste0(jmvcore::.("Competing risks levels were automatically assigned:"), " ",
-                                     jmvcore::.("Event of interest"), " = '", event_val, "', ",
-                                     jmvcore::.("Censored level"), " = '", censor_val, "'.")))
+                      content=jmvcore::format(.("Competing risks levels were automatically assigned: Event of interest = '{event}', Censored level = '{censor}'."),
+                                              event = event_val, censor = censor_val)))
               } else {
                   self$results$compRisksSection$cifSummaryTable$deleteRows()
                   self$results$compRisksSection$cifPlot$setState(NULL)
@@ -1781,15 +1543,23 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
           # Fit Aalen-Johansen CIF via survival::survfit
           surv_comp_str <- if (has_tstart) "survival::Surv(..tstart, ..time, ..comp_event)" else "survival::Surv(..time, ..comp_event)"
           if (!is.null(group_var)) {
-              cif_fit <- try(survival::survfit(stats::as.formula(paste(surv_comp_str, "~ ..group")), data = dat_comp), silent = TRUE)
+              cif_fit <- if (has_cluster) {
+                  try(survival::survfit(stats::as.formula(paste(surv_comp_str, "~ ..group")), data = dat_comp, id = ..cluster), silent = TRUE)
+              } else {
+                  try(survival::survfit(stats::as.formula(paste(surv_comp_str, "~ ..group")), data = dat_comp), silent = TRUE)
+              }
           } else {
-              cif_fit <- try(survival::survfit(stats::as.formula(paste(surv_comp_str, "~ 1")), data = dat_comp), silent = TRUE)
+              cif_fit <- if (has_cluster) {
+                  try(survival::survfit(stats::as.formula(paste(surv_comp_str, "~ 1")), data = dat_comp, id = ..cluster), silent = TRUE)
+              } else {
+                  try(survival::survfit(stats::as.formula(paste(surv_comp_str, "~ 1")), data = dat_comp), silent = TRUE)
+              }
           }
 
           if (inherits(cif_fit, "try-error")) {
               self$results$insert(1, jmvcore::Notice$new(self$options, name="cifFitError",
                   type=jmvcore::NoticeType$WARNING,
-                  content=paste0(jmvcore::.("Cumulative incidence (Aalen–Johansen) model fitting failed:"), " ", jmvcore::extractErrorMessage(cif_fit))))
+                  content=jmvcore::format(.("Cumulative incidence (Aalen–Johansen) model fitting failed: {reason}"), reason = jmvcore::extractErrorMessage(cif_fit))))
           }
 
           causes <- if (!inherits(cif_fit, "try-error") && !is.null(cif_fit$states)) {
@@ -1886,12 +1656,55 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
           # 2. Cumulative Incidence Plot State
           if (self$options$showCifPlot && !inherits(cif_fit, "try-error")) {
-              self$results$compRisksSection$cifPlot$setState(list(
-                  fit = cif_fit,
-                  causes = causes,
-                  group_var = group_var,
-                  time_var = time_var
-              ))
+              states <- cif_fit$states
+              if (!is.null(cif_fit$strata)) {
+                  strata_rep <- rep(names(cif_fit$strata), cif_fit$strata)
+                  clean_strata <- gsub("^.*=", "", strata_rep)
+              } else {
+                  clean_strata <- rep("All", length(cif_fit$time))
+              }
+
+              plot_rows <- list()
+              for (st in causes) {
+                  col_idx <- which(states == st)
+                  if (length(col_idx) == 0) next
+                  df_st <- data.frame(
+                      time  = cif_fit$time,
+                      cif   = cif_fit$pstate[, col_idx],
+                      lower = if (!is.null(cif_fit$lower)) cif_fit$lower[, col_idx] else NA_real_,
+                      upper = if (!is.null(cif_fit$upper)) cif_fit$upper[, col_idx] else NA_real_,
+                      cause = st,
+                      group = clean_strata,
+                      stringsAsFactors = FALSE
+                  )
+                  plot_rows[[st]] <- df_st
+              }
+
+              if (length(plot_rows) > 0) {
+                  plot_data <- do.call(rbind, plot_rows)
+                  unique_grps <- unique(clean_strata)
+                  zero_rows <- expand.grid(
+                      time  = 0,
+                      cause = causes,
+                      group = unique_grps,
+                      stringsAsFactors = FALSE
+                  )
+                  zero_rows$cif <- 0
+                  zero_rows$lower <- 0
+                  zero_rows$upper <- 0
+
+                  full_plot_data <- rbind(zero_rows, plot_data)
+                  full_plot_data <- full_plot_data[order(full_plot_data$cause, full_plot_data$group, full_plot_data$time), ]
+
+                  self$results$compRisksSection$cifPlot$setState(list(
+                      plot_data = full_plot_data,
+                      causes    = causes,
+                      group_var = group_var,
+                      time_var  = time_var
+                  ))
+              } else {
+                  self$results$compRisksSection$cifPlot$setState(NULL)
+              }
           } else {
               self$results$compRisksSection$cifPlot$setState(NULL)
           }
@@ -1968,7 +1781,9 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                       dat_fg <- stats::na.omit(dat_comp[, fg_vars, drop = FALSE])
 
                       surv_fg_str <- if (has_tstart) "survival::Surv(..tstart, ..time, ..comp_event)" else "survival::Surv(..time, ..comp_event)"
-                      fg_form_str <- paste(surv_fg_str, "~", paste(terms, collapse = " + "))
+                      fg_formula_terms <- terms
+                      if (has_cluster) fg_formula_terms <- c(fg_formula_terms, "..cluster")
+                      fg_form_str <- paste(surv_fg_str, "~", paste(fg_formula_terms, collapse = " + "))
                       fg_formula <- stats::as.formula(fg_form_str)
 
                       id_arg <- if (has_cluster) dat_fg$..cluster else if (has_tstart) seq_len(nrow(dat_fg)) else NULL
@@ -2024,7 +1839,7 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                               }
 
                               if (has_cluster) {
-                                  fgTable$setNote("cluster_note", paste0(jmvcore::.("Standard errors and confidence intervals are adjusted for clustering by"), " ", subject_id_var, " (", jmvcore::.("Huber–White robust sandwich estimator"), ")."))
+                                  fgTable$setNote("cluster_note", jmvcore::format(.("Standard errors and confidence intervals are adjusted for clustering by {var} (Huber–White robust sandwich estimator)."), var = subject_id_var))
                               } else {
                                   fgTable$setNote("cluster_note", NULL)
                               }
@@ -2043,14 +1858,16 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                       stat = stat_str, df = df_val, p = p_str, nev = s_fg$nevent))
                               }
                           } else {
+                              err_msg <- jmvcore::extractErrorMessage(fg_fit)
                               self$results$insert(1, jmvcore::Notice$new(self$options, name="fgFitError",
                                   type=jmvcore::NoticeType$WARNING,
-                                  content=jmvcore::.("Fine–Gray model fitting failed to converge.")))
+                                  content=jmvcore::format(.("Fine–Gray model fitting failed to converge: {reason}"), reason = err_msg)))
                           }
                       } else {
+                          err_msg <- jmvcore::extractErrorMessage(pdata)
                           self$results$insert(1, jmvcore::Notice$new(self$options, name="finegrayError",
                               type=jmvcore::NoticeType$WARNING,
-                              content=jmvcore::.("Data weighting for Fine–Gray model failed.")))
+                              content=jmvcore::format(.("Data weighting for Fine–Gray model failed: {reason}"), reason = err_msg)))
                       }
                   }
               }
@@ -2059,56 +1876,15 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
       .cifPlot = function(image, ggtheme, theme, ...) {
           state <- image$state
-          if (is.null(state)) return(FALSE)
+          if (is.null(state) || is.null(state$plot_data)) return(FALSE)
 
-          fit <- state$fit
+          full_plot_data <- state$plot_data
           causes <- state$causes
           group_var <- state$group_var
           time_var <- state$time_var
           has_ci <- self$options$cifCI
 
-          if (is.null(fit) || is.null(causes) || length(causes) == 0) return(FALSE)
-
-          states <- fit$states
-          if (!is.null(fit$strata)) {
-              strata_rep <- rep(names(fit$strata), fit$strata)
-              clean_strata <- gsub("^.*=", "", strata_rep)
-          } else {
-              clean_strata <- rep("All", length(fit$time))
-          }
-
-          plot_rows <- list()
-          for (st in causes) {
-              col_idx <- which(states == st)
-              if (length(col_idx) == 0) next
-              df_st <- data.frame(
-                  time  = fit$time,
-                  cif   = fit$pstate[, col_idx],
-                  lower = if (!is.null(fit$lower)) fit$lower[, col_idx] else NA_real_,
-                  upper = if (!is.null(fit$upper)) fit$upper[, col_idx] else NA_real_,
-                  cause = st,
-                  group = clean_strata,
-                  stringsAsFactors = FALSE
-              )
-              plot_rows[[st]] <- df_st
-          }
-
-          if (length(plot_rows) == 0) return(FALSE)
-          plot_data <- do.call(rbind, plot_rows)
-
-          unique_grps <- unique(clean_strata)
-          zero_rows <- expand.grid(
-              time  = 0,
-              cause = causes,
-              group = unique_grps,
-              stringsAsFactors = FALSE
-          )
-          zero_rows$cif <- 0
-          zero_rows$lower <- 0
-          zero_rows$upper <- 0
-
-          full_plot_data <- rbind(zero_rows, plot_data)
-          full_plot_data <- full_plot_data[order(full_plot_data$cause, full_plot_data$group, full_plot_data$time), ]
+          if (nrow(full_plot_data) == 0) return(FALSE)
 
           limit_time <- self$options$kmMaxTime
           limit_val <- NULL
@@ -2483,7 +2259,7 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               err_msg <- as.character(attr(td_fit, "condition")$message)
               self$results$insert(1, jmvcore::Notice$new(self$options, name="tdFitError",
                   type=jmvcore::NoticeType$WARNING,
-                  content=paste0(jmvcore::.("Time-varying effects model fitting failed to converge:"), " ", err_msg)))
+                  content=jmvcore::format(.("Time-varying effects model fitting failed to converge: {reason}"), reason = err_msg)))
               return()
           }
 
@@ -2508,7 +2284,7 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
           }
 
           if (has_cluster) {
-              timeDepTable$setNote('cluster_note', paste0(jmvcore::.("Standard errors and confidence intervals are adjusted for clustering by"), " ", subject_id_var, " (", jmvcore::.("Huber–White robust sandwich estimator"), ")."))
+              timeDepTable$setNote('cluster_note', jmvcore::format(.("Standard errors and confidence intervals are adjusted for clustering by {var} (Huber–White robust sandwich estimator)."), var = subject_id_var))
           } else {
               timeDepTable$setNote('cluster_note', NULL)
           }

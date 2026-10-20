@@ -75,9 +75,11 @@ children:
       - type: TextBox
         name: lsl
         format: number
+        enable: (specType:lower || specType:both)
       - type: TextBox
         name: usl
         format: number
+        enable: (specType:upper || specType:both)
       - type: ComboBox
         name: trans
   - type: CollapseBox
@@ -90,9 +92,11 @@ children:
       - type: TextBox
         name: lsl2
         format: number
+        enable: (specType2:lower || specType2:both)
       - type: TextBox
         name: usl2
         format: number
+        enable: (specType2:upper || specType2:both)
       - type: ComboBox
         name: trans2
   - type: CollapseBox
@@ -105,9 +109,11 @@ children:
       - type: TextBox
         name: lsl3
         format: number
+        enable: (specType3:lower || specType3:both)
       - type: TextBox
         name: usl3
         format: number
+        enable: (specType3:upper || specType3:both)
       - type: ComboBox
         name: trans3
   - type: CollapseBox
@@ -120,9 +126,11 @@ children:
       - type: TextBox
         name: lsl4
         format: number
+        enable: (specType4:lower || specType4:both)
       - type: TextBox
         name: usl4
         format: number
+        enable: (specType4:upper || specType4:both)
       - type: ComboBox
         name: trans4
       - type: ComboBox
@@ -130,9 +138,11 @@ children:
       - type: TextBox
         name: lsl5
         format: number
+        enable: (specType5:lower || specType5:both)
       - type: TextBox
         name: usl5
         format: number
+        enable: (specType5:upper || specType5:both)
       - type: ComboBox
         name: trans5
   - type: CollapseBox

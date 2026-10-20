@@ -4,13 +4,15 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
     "mMNVClass",
     inherit = mMNVBase,
     private = list(
-        .state = list(),
 
         .init = function() {
-            # Provide HTML instructions explaining MANOVA approach vs univariate ANOVA
             instructions <- self$results$instructions
+            instructions$setVisible(TRUE)
             instructions$setContent(paste0(
                 "<h3>", .("MANOVA & Repeated Measures: Methodological Guide"), "</h3>",
+                "<p><b>", .("Getting started:"), "</b> ",
+                .("Select at least 2 repeated measures variables (e.g., T1, T2, T3) into Repeated Measures Cells. Optionally specify a Within-Subjects Factor Name (e.g., Time), Between-Subjects Factors (e.g., Treatment Group), and Covariates."),
+                "</p>",
                 "<p>",
                 .("The Multivariate Analysis of Variance (MANOVA) approach to repeated measures designs"),
                 " (O'Brien & Kaiser, 1985) ",
@@ -35,120 +37,74 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
         },
 
         .initNotes = function() {
-            # 1. multivariateTable notes
+            # 1. multivariateTable note
             mvTable <- self$results$multivariateTable
             mvTable$setNote(
-                "pillai_note",
-                .("<b>Pillai's Trace</b>: Most robust statistic against departures from multivariate normality and homogeneity of covariance matrices (Olson, 1974; O'Brien & Kaiser, 1985). Recommended as primary test criterion.")
-            )
-            mvTable$setNote(
-                "wilks_note",
-                .("<b>Wilks' Lambda</b>: Classic likelihood-ratio criterion (U-statistic). Values closer to 0 represent stronger multivariate effects.")
-            )
-            mvTable$setNote(
-                "hl_note",
-                .("<b>Hotelling-Lawley Trace</b>: Sum of eigenvalues of HE^-1. Directly reflects multidimensional variance explained by hypothesis relative to error.")
-            )
-            mvTable$setNote(
-                "roy_note",
-                .("<b>Roy's Largest Root</b>: Based on the maximum eigenvalue. Most powerful when the effect is concentrated along a single dimension, but sensitive to departures from assumptions.")
-            )
-            mvTable$setNote(
-                "f_approx",
-                .("<b>F-Approximation</b>: Multidimensional test criteria are converted to exact or approximate F-statistics using Rao's or Pillai's approximations.")
+                "mv_note",
+                .("Multivariate tests evaluate within-subjects changes across time without assuming sphericity. Pillai's trace is recommended as the most robust criterion.")
             )
 
-            # 2. univariateTable notes
+            # 2. univariateTable note
             uniTable <- self$results$univariateTable
             uniTable$setNote(
-                "uni_intro",
-                .("<b>Univariate Repeated Measures ANOVA</b>: Tests within-subjects effects assuming sphericity. When Mauchly's test is violated (p < .05), uncorrected F-tests inflate Type I error; epsilon-adjusted degrees of freedom and p-values must be used instead.")
-            )
-            uniTable$setNote(
-                "gg_note",
-                .("<b>Greenhouse-Geisser (ε_GG)</b>: Conservative epsilon adjustment applied to degrees of freedom when sphericity is violated (Greenhouse & Geisser, 1959). Recommended when true epsilon < 0.75.")
-            )
-            uniTable$setNote(
-                "hf_note",
-                .("<b>Huynh-Feldt (ε_HF)</b>: Less conservative epsilon adjustment suitable when sample size is moderate and true epsilon >= 0.75 (Huynh & Feldt, 1976).")
-            )
-            uniTable$setNote(
-                "manova_pref",
-                .("<b>Methodological Recommendation</b>: In repeated measures designs with sphericity violations (p < .05, ε < .75), the MANOVA approach (Multivariate Table) is preferred over uncorrected Univariate ANOVA (O'Brien & Kaiser, 1985).")
+                "uni_note",
+                .("Univariate ANOVA assumes sphericity. If Mauchly's test is significant (p < .05), report Greenhouse-Geisser (ε < .75) or Huynh-Feldt (ε ≥ .75) corrected p-values.")
             )
 
-            # 3. sphericityTable notes
+            # 3. sphericityTable note
             sphTable <- self$results$sphericityTable
             sphTable$setNote(
-                "mauchly_rule",
-                .("<b>Mauchly's Sphericity Test</b>: Tests H0 that the covariance matrix of orthonormal contrasts has equal variances (compound symmetry). A significant result (p < .05) indicates violation of sphericity.")
-            )
-            sphTable$setNote(
-                "eps_bounds",
-                .("<b>Epsilon Bounds</b>: Epsilon ranges from 1 / (k - 1) (lower bound, severe violation) to 1.0 (perfect sphericity). Values below 0.75 strongly favor the multivariate MANOVA approach.")
+                "sph_note",
+                .("Mauchly's test evaluates sphericity (equal variances of differences). Values of ε close to 1 indicate sphericity; ε < .75 indicates substantial departure.")
             )
 
-            # 4. profileTable notes
+            # 4. profileTable note
             profTable <- self$results$profileTable
             profTable$setNote(
-                "step1_parallel",
-                .("<b>1. Parallelism (Group × Time Interaction)</b>: Tests whether response trajectories over time are parallel across groups. If rejected (p < .05), groups change differently over time, demonstrating differential treatment efficacy.")
-            )
-            profTable$setNote(
-                "step2_levels",
-                .("<b>2. Equal Levels (Coincidence / Between-Group Main Effect)</b>: Tests whether overall mean responses across all time points are identical across groups (between-subjects main effect).")
-            )
-            profTable$setNote(
-                "step3_flatness",
-                .("<b>3. Flatness (Within-Subject Change over Time)</b>: Tests whether mean response levels remain constant across time points regardless of group (within-subjects main effect).")
+                "prof_note",
+                .("Profile analysis tests 3 key questions: Parallelism (different group trajectories), Coincidence (different overall levels), and Flatness (change over time).")
             )
 
-            # 5. contrastsTable notes
+            # 5. contrastsTable note
             cntTable <- self$results$contrastsTable
             cntTable$setNote(
-                "poly_rule",
-                .("<b>Orthogonal Polynomial Contrasts</b>: Decompose the within-subject factor into orthogonal trends: Linear (constant rate of change), Quadratic (curvature/plateau), and Cubic (inflection points).")
-            )
-            cntTable$setNote(
-                "trend_interp",
-                .("<b>Trend Interpretation</b>: Evaluates the functional mathematical trajectory of the response across repeated measurement intervals.")
+                "cnt_note",
+                .("Contrasts compare specific trajectories across time points (e.g., linear trends or step-by-step changes).")
             )
 
-            # 6. assumptionsTable notes
+            # 6. assumptionsTable note
             assTable <- self$results$assumptionsTable
             assTable$setNote(
-                "boxm_rule",
-                .("<b>Box's M Test</b>: Tests equality of covariance matrices across between-subjects groups using Box's exact F-approximation (Box, 1949). Highly sensitive to departures from normality; alpha = .001 is conventionally used.")
-            )
-            assTable$setNote(
-                "mardia_rule",
-                .("<b>Mardia's Multivariate Normality</b>: Computes multivariate skewness (b1,p; asymptotic chi-square) and multivariate kurtosis (b2,p; asymptotic standard normal z) (Mardia, 1970). Values p >= .05 indicate conformity with multivariate normality.")
-            )
-            assTable$setNote(
-                "mahal_rule",
-                .("<b>Multivariate Outliers (Mahalanobis D²)</b>: Evaluates squared distance from group centroid against the chi-square distribution (df = p, alpha = .001). Observations exceeding critical threshold warrant inspection.")
+                "assump_note",
+                .("Evaluates model assumptions on residuals: covariance matrix homogeneity (Box's M), multivariate normality (Mardia), and multivariate outliers (Mahalanobis D²).")
             )
 
-            # 7. meansTable notes
+            # 7. meansTable note
             mnsTable <- self$results$meansTable
             mnsTable$setNote(
-                "means_rule",
-                .("<b>Marginal Means & Error Bounds</b>: Displays estimated marginal means, standard errors (SE), standard deviations (SD), and 95% confidence intervals for each factor combination across repeated measures cells.")
+                "means_note",
+                .("Cell means and standard deviations with 95% Student's t confidence intervals. If covariates are present, model tests are evaluated at mean covariate values.")
             )
         },
 
         .run = function() {
             dat <- self$data
-            mode <- self$options$mode
+            rmCells <- self$options$rmCells
 
-            if (mode == "rm") {
-                private$.runRepeatedMeasures(dat)
-            } else {
-                private$.runFactorialManova(dat)
+            # Quiet return when nothing is assigned
+            if (is.null(rmCells) || length(rmCells) == 0) {
+                return()
             }
+
+            if (length(rmCells) < 2) {
+                jmvcore::reject(.("Repeated Measures requires at least 2 variables / time points in Repeated Measures Cells."))
+                return()
+            }
+
+            private$.runRepeatedMeasures(dat)
         },
 
-        .runRepeatedMeasures = function(dat) {
+                .runRepeatedMeasures = function(dat) {
             rmCells <- self$options$rmCells
             if (is.null(rmCells) || length(rmCells) < 2) {
                 return()
@@ -159,6 +115,8 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             if (is.null(rmFactorName) || rmFactorName == "") {
                 rmFactorName <- "Time"
             }
+            # Ensure syntactic R name for formula
+            rmFactorName <- make.names(rmFactorName)
 
             between <- self$options$between
             covs <- self$options$covs
@@ -166,6 +124,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             # Selected columns
             all_cols <- c(rmCells, between, covs)
             dat_clean <- stats::na.omit(dat[, all_cols, drop = FALSE])
+            dat_clean <- droplevels(dat_clean)
             n_obs <- nrow(dat_clean)
 
             if (n_obs < 3) {
@@ -179,7 +138,9 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             }
             if (!is.null(covs) && length(covs) > 0) {
                 for (col in covs) {
-                    dat_clean[[col]] <- jmvcore::toNumeric(dat_clean[[col]])
+                    vals <- jmvcore::toNumeric(dat_clean[[col]])
+                    # Center covariates around their sample mean (standard Type III ANCOVA practice)
+                    dat_clean[[col]] <- vals - mean(vals, na.rm = TRUE)
                 }
             }
             if (!is.null(between) && length(between) > 0) {
@@ -211,14 +172,27 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             # Set contrast scheme
             contrastType <- self$options$contrastType
             if (contrastType == "polynomial") {
-                stats::contrasts(idata[[rmFactorName]]) <- stats::contr.poly(k)
-            } else if (contrastType == "helmert") {
-                stats::contrasts(idata[[rmFactorName]]) <- stats::contr.helmert(k)
+                c_mat <- stats::contr.poly(k)
+            } else if (contrastType == "repeated") {
+                c_mat <- matrix(0, nrow = k, ncol = k - 1)
+                for (j in 1:(k - 1)) {
+                    c_mat[j, j] <- -1
+                    c_mat[j + 1, j] <- 1
+                }
             } else if (contrastType == "treatment") {
-                stats::contrasts(idata[[rmFactorName]]) <- stats::contr.treatment(k)
+                c_mat <- stats::contr.treatment(k)
+            } else if (contrastType == "helmert") {
+                c_mat <- stats::contr.helmert(k)
+            } else if (contrastType == "difference") {
+                c_mat <- matrix(0, nrow = k, ncol = k - 1)
+                for (j in 1:(k - 1)) {
+                    c_mat[1:j, j] <- -1 / j
+                    c_mat[j + 1, j] <- 1
+                }
             } else {
-                stats::contrasts(idata[[rmFactorName]]) <- stats::contr.poly(k)
+                c_mat <- stats::contr.poly(k)
             }
+            stats::contrasts(idata[[rmFactorName]]) <- c_mat
 
             # Call car::Anova
             av <- tryCatch(
@@ -230,8 +204,11 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
             av_sum <- summary(av, multivariate = TRUE)
 
+            # Model residual matrix for assumption diagnostics
+            res_matrix <- stats::residuals(fit)
+
             # 1. Fill Multivariate Table
-            private$.fillMultivariateTable(av_sum, is_rm = TRUE, rmFactorName = rmFactorName)
+            private$.fillMultivariateTable(av_sum, rmFactorName = rmFactorName)
 
             # 2. Fill Univariate Table
             if (self$options$showUnivariate) {
@@ -240,7 +217,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
             # 3. Fill Sphericity Table
             if (self$options$showSphericity) {
-                private$.fillSphericityTable(av_sum, k = k)
+                private$.fillSphericityTable(av_sum, k = k, fit = fit)
             }
 
             # 4. Fill Profile Analysis Table
@@ -250,12 +227,12 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
             # 5. Fill Contrasts Table
             if (self$options$showContrastsTable) {
-                private$.fillContrastsTable(dat_clean, rmCells, rmFactorName, between)
+                private$.fillContrastsTable(dat_clean, rmCells, rmFactorName, between, covs, contrastType)
             }
 
             # 6. Fill Assumptions Table
             if (self$options$showAssumptionChecks) {
-                private$.fillAssumptionsTable(dat_clean, rmCells, between)
+                private$.fillAssumptionsTable(dat_clean, rmCells, between, res_matrix = res_matrix)
             }
 
             # 7. Fill Means Table
@@ -263,88 +240,120 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 private$.fillMeansTable(dat_clean, rmCells, between)
             }
 
-            # Save state for plotting
-            private$.state <- list(
-                dat_clean = dat_clean,
-                rmCells = rmCells,
+            # Multiple between factors notice
+            if (!is.null(between) && length(between) > 1) {
+                notice <- jmvcore::Notice$new(self$options, name = "multiBetweenNotice",
+                    type = jmvcore::NoticeType$INFO,
+                    content = jmvcore::format(
+                        .("Multiple between-subjects factors specified. Descriptives, Box's M, profile analysis, and plots evaluate primary factor '{factor}' pooled across remaining factors."),
+                        factor = between[1]
+                    )
+                )
+                self$results$insert(1, notice)
+            }
+
+            # 8. Set lightweight states for plots (ensures full exportability)
+            has_between <- (!is.null(between) && length(between) > 0)
+            summary_list <- list()
+            groups <- if (has_between) levels(dat_clean[[between[1]]]) else "Total"
+            for (g in groups) {
+                sub_df <- if (has_between) dat_clean[dat_clean[[between[1]]] == g, , drop = FALSE] else dat_clean
+                for (t_val in rmCells) {
+                    vals <- sub_df[[t_val]]
+                    m <- mean(vals, na.rm = TRUE)
+                    s <- stats::sd(vals, na.rm = TRUE)
+                    n_s <- length(vals)
+                    se <- if (n_s > 0) s / sqrt(n_s) else NA_real_
+                    df_t <- max(1, n_s - 1)
+                    t_crit <- stats::qt(0.975, df = df_t)
+                    summary_list[[length(summary_list) + 1]] <- data.frame(
+                        group = as.character(g),
+                        time = t_val,
+                        mean = m,
+                        se = se,
+                        ci_lower = m - t_crit * se,
+                        ci_upper = m + t_crit * se,
+                        stringsAsFactors = FALSE
+                    )
+                }
+            }
+            sum_df <- do.call(rbind, summary_list)
+            sum_df$time <- factor(sum_df$time, levels = rmCells)
+
+            self$results$profilePlot$setState(list(
+                summary = sum_df,
+                has_between = has_between,
+                betweenName = if (has_between) between[1] else "",
                 rmFactorName = rmFactorName,
-                between = between,
-                k = k
-            )
+                rmCells = rmCells
+            ))
+
+            if (!is.null(between) && length(between) > 1) {
+                notice <- jmvcore::Notice$new(self$options, name = "multiBetweenNotice",
+                    type = jmvcore::NoticeType$INFO,
+                    content = jmvcore::format(
+                        .("Multiple between-subjects factors specified. Descriptives, Box's M, profile analysis, and plots evaluate primary factor '{factor}' pooled across remaining factors."),
+                        factor = between[1]
+                    )
+                )
+                self$results$insert(1, notice)
+            }
+
+            outlier_res <- private$.calcMahalanobis(res_matrix)
+            if (!is.null(outlier_res)) {
+                self$results$outlierPlot$setState(list(
+                    d2 = outlier_res$d2,
+                    crit = outlier_res$crit
+                ))
+            }
+
+            self$results$hePlot$setState(list(
+                vars = rmCells[1:2],
+                between = between
+            ))
         },
 
-        .runFactorialManova = function(dat) {
-            deps <- self$options$deps
-            if (is.null(deps) || length(deps) < 2) {
-                return()
-            }
-
-            between <- self$options$between
-            covs <- self$options$covs
-
-            if ((is.null(between) || length(between) == 0) && (is.null(covs) || length(covs) == 0)) {
-                return()
-            }
-
-            all_cols <- c(deps, between, covs)
-            dat_clean <- stats::na.omit(dat[, all_cols, drop = FALSE])
-            n_obs <- nrow(dat_clean)
-
-            if (n_obs < 4) {
-                jmvcore::reject(.("Too few complete observations (minimum 4 required)."))
-                return()
-            }
-
-            for (col in deps) {
-                dat_clean[[col]] <- jmvcore::toNumeric(dat_clean[[col]])
-            }
-            if (!is.null(covs) && length(covs) > 0) {
-                for (col in covs) {
-                    dat_clean[[col]] <- jmvcore::toNumeric(dat_clean[[col]])
-                }
-            }
-            if (!is.null(between) && length(between) > 0) {
-                for (col in between) {
-                    dat_clean[[col]] <- as.factor(dat_clean[[col]])
-                    stats::contrasts(dat_clean[[col]]) <- stats::contr.sum(nlevels(dat_clean[[col]]))
-                }
-            }
-
-            rhs_terms <- c()
-            if (!is.null(between) && length(between) > 0) {
-                rhs_terms <- c(rhs_terms, paste(between, collapse = " * "))
-            }
-            if (!is.null(covs) && length(covs) > 0) {
-                rhs_terms <- c(rhs_terms, paste(covs, collapse = " + "))
-            }
-
-            rhs_formula <- paste(rhs_terms, collapse = " + ")
-            lhs_formula <- paste0("cbind(", paste(paste0("`", deps, "`"), collapse = ", "), ")")
-            full_formula <- stats::as.formula(paste(lhs_formula, "~", rhs_formula))
-
-            fit <- stats::lm(full_formula, data = dat_clean)
-            av <- car::Anova(fit, type = "III")
-            av_sum <- summary(av)
-
-            private$.fillMultivariateTable(av_sum, is_rm = FALSE)
-
-            if (self$options$showAssumptionChecks) {
-                private$.fillAssumptionsTable(dat_clean, deps, between)
-            }
-
-            if (self$options$showMeansTable) {
-                private$.fillMeansTable(dat_clean, deps, between)
-            }
-
-            private$.state <- list(
-                dat_clean = dat_clean,
-                deps = deps,
-                between = between,
-                p = length(deps)
-            )
+        .calcPillai = function(eig, q, df.res) {
+            test <- sum(eig / (1 + eig))
+            p <- length(eig)
+            s <- min(p, q)
+            n <- 0.5 * (df.res - p - 1)
+            m <- 0.5 * (abs(p - q) - 1)
+            tmp1 <- 2 * m + s + 1
+            tmp2 <- 2 * n + s + 1
+            c(test, (tmp2 / tmp1 * test) / (s - test), s * tmp1, s * tmp2)
         },
 
-        .fillMultivariateTable = function(av_sum, is_rm = TRUE, rmFactorName = "Time") {
+        .calcWilks = function(eig, q, df.res) {
+            test <- prod(1 / (1 + eig))
+            p <- length(eig)
+            tmp1 <- df.res - 0.5 * (p - q + 1)
+            tmp2 <- (p * q - 2) / 4
+            tmp3 <- p^2 + q^2 - 5
+            tmp3 <- if (tmp3 > 0) sqrt(((p * q)^2 - 4) / tmp3) else 1
+            c(test, ((test^(-1 / tmp3) - 1) * (tmp1 * tmp3 - 2 * tmp2)) / p / q, p * q, tmp1 * tmp3 - 2 * tmp2)
+        },
+
+        .calcHL = function(eig, q, df.res) {
+            test <- sum(eig)
+            p <- length(eig)
+            m <- 0.5 * (abs(p - q) - 1)
+            n <- 0.5 * (df.res - p - 1)
+            s <- min(p, q)
+            tmp1 <- 2 * m + s + 1
+            tmp2 <- 2 * (s * n + 1)
+            c(test, (tmp2 * test) / s / s / tmp1, s * tmp1, tmp2)
+        },
+
+        .calcRoy = function(eig, q, df.res) {
+            p <- length(eig)
+            test <- max(eig)
+            tmp1 <- max(p, q)
+            tmp2 <- df.res - tmp1 + q
+            c(test, (tmp2 * test) / tmp1, tmp1, tmp2)
+        },
+
+        .fillMultivariateTable = function(av_sum, rmFactorName = "Time") {
             table <- self$results$multivariateTable
             table$deleteRows()
 
@@ -353,17 +362,25 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             if (is.null(m_tests) || length(m_tests) == 0) return()
 
             test_configs <- list(
-                list(id = "Pillai", name = .("Pillai's Trace"), opt = self$options$testPillai, fn = car:::Pillai),
-                list(id = "Wilks", name = .("Wilks' Lambda"), opt = self$options$testWilks, fn = car:::Wilks),
-                list(id = "Hotelling-Lawley", name = .("Hotelling-Lawley Trace"), opt = self$options$testHotelling, fn = car:::HL),
-                list(id = "Roy", name = .("Roy's Largest Root"), opt = self$options$testRoy, fn = car:::Roy)
+                list(id = "Pillai", name = .("Pillai's Trace"), opt = self$options$testPillai, fn = private$.calcPillai),
+                list(id = "Wilks", name = .("Wilks' Lambda"), opt = self$options$testWilks, fn = private$.calcWilks),
+                list(id = "Hotelling-Lawley", name = .("Hotelling-Lawley Trace"), opt = self$options$testHotelling, fn = private$.calcHL),
+                list(id = "Roy", name = .("Roy's Largest Root"), opt = self$options$testRoy, fn = private$.calcRoy)
             )
 
             term_names <- names(m_tests)
             for (term in term_names) {
                 x <- m_tests[[term]]
                 if (is.null(x$SSPH) || is.null(x$SSPE)) next
-                if (!is.null(x$singular) && x$singular) next
+                if (!is.null(x$singular) && x$singular) {
+                    clean_term <- gsub("`", "", term)
+                    notice <- jmvcore::Notice$new(self$options, name = paste0("sing_", clean_term),
+                        type = jmvcore::NoticeType$WARNING,
+                        content = jmvcore::format(.("Term '{term}' has a singular hypothesis or error matrix and was omitted from multivariate tests."), term = clean_term)
+                    )
+                    self$results$insert(1, notice)
+                    next
+                }
 
                 SSPE_qr <- qr(x$SSPE)
                 eigs <- tryCatch(
@@ -408,7 +425,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 }
             }
 
-            if (is_rm && table$rowCount > 0) {
+            if (table$rowCount > 0) {
                 table$addFootnote(
                     rowNo = 1,
                     col = "test",
@@ -448,7 +465,8 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     term = clean_term,
                     correction = .("Sphericity Assumed"),
                     ss = ss_val,
-                    df = df_val,
+                    df1 = df_val,
+                    df2 = den_df,
                     ms = ms_val,
                     f = f_val,
                     p = p_val,
@@ -467,7 +485,8 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                             term = clean_term,
                             correction = .("Greenhouse-Geisser"),
                             ss = ss_val,
-                            df = df_val * gg_eps,
+                            df1 = df_val * gg_eps,
+                            df2 = den_df * gg_eps,
                             ms = ss_val / (df_val * gg_eps),
                             f = f_val,
                             p = gg_p,
@@ -482,7 +501,8 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                             term = clean_term,
                             correction = .("Huynh-Feldt"),
                             ss = ss_val,
-                            df = df_val * hf_eps_capped,
+                            df1 = df_val * hf_eps_capped,
+                            df2 = den_df * hf_eps_capped,
                             ms = ss_val / (df_val * hf_eps_capped),
                             f = f_val,
                             p = hf_p,
@@ -493,7 +513,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             }
         },
 
-        .fillSphericityTable = function(av_sum, k) {
+                .fillSphericityTable = function(av_sum, k, fit = NULL) {
             table <- self$results$sphericityTable
             table$deleteRows()
 
@@ -501,6 +521,8 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             adjust <- av_sum$pval.adjustments
 
             if (is.null(sph) || !is.matrix(sph)) return()
+
+            df_residual <- if (!is.null(fit)) fit$df.residual else (nrow(self$data) - 1)
 
             terms <- rownames(sph)
             for (term in terms) {
@@ -516,12 +538,18 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 }
 
                 lower_eps <- 1 / (k - 1)
+                p_dim <- k - 1
                 df_sph <- (k * (k - 1) / 2) - 1
+
+                # Bartlett-Box multiplier: (N - g) - (2*p^2 + p + 2) / (6*p)
+                c_factor <- (2 * p_dim^2 + p_dim + 2) / (6 * p_dim)
+                d_factor <- df_residual - c_factor
+                chisq_val <- if (!is.na(w_val) && w_val > 0 && d_factor > 0) -log(w_val) * d_factor else NA_real_
 
                 table$addRow(rowKey = clean_term, values = list(
                     term = clean_term,
                     mauchlyW = w_val,
-                    chisq = if (!is.na(w_val) && w_val > 0) -log(w_val) * (nrow(self$data) - 1) else NA,
+                    chisq = chisq_val,
                     df = as.integer(df_sph),
                     p = p_val,
                     gg = gg_eps,
@@ -539,23 +567,36 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             }
         },
 
-        .fillProfileTable = function(av_sum, between, rmFactorName) {
+                .fillProfileTable = function(av_sum, between, rmFactorName) {
             table <- self$results$profileTable
             table$deleteRows()
 
             m_tests <- av_sum$multivariate.tests
             if (is.null(m_tests)) return()
 
+            clean_term_names <- gsub("`", "", names(m_tests))
+
+            find_term <- function(t1, t2 = NULL) {
+                if (is.null(t2)) {
+                    idx <- which(clean_term_names == t1)
+                } else {
+                    target1 <- paste(t1, t2, sep = ":")
+                    target2 <- paste(t2, t1, sep = ":")
+                    idx <- which(clean_term_names == target1 | clean_term_names == target2)
+                }
+                if (length(idx) > 0) names(m_tests)[idx[1]] else NULL
+            }
+
             has_between <- (!is.null(between) && length(between) > 0)
 
-            # Hypothesis 1: Parallelism (Time:Between interaction)
+            # Hypothesis 1: Parallelism (Time x Between interaction)
             if (has_between) {
-                matched_term <- names(m_tests)[grep(paste0(rmFactorName, ".*", between[1]), names(m_tests))]
-                if (length(matched_term) > 0) {
-                    x <- m_tests[[matched_term[1]]]
+                matched_term <- find_term(between[1], rmFactorName)
+                if (!is.null(matched_term)) {
+                    x <- m_tests[[matched_term]]
                     SSPE_qr <- qr(x$SSPE)
                     eigs <- Re(eigen(qr.coef(SSPE_qr, x$SSPH), symmetric = FALSE)$values)
-                    wlk <- car:::Wilks(eigs, x$df, x$df.residual)
+                    wlk <- private$.calcWilks(eigs, x$df, x$df.residual)
                     w_stat <- as.numeric(wlk[1])
                     f_val  <- as.numeric(wlk[2])
                     df1    <- as.integer(round(wlk[3]))
@@ -569,7 +610,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     }
 
                     table$addRow(rowKey = "parallelism", values = list(
-                        hypothesis = .("1. Parallelism (Time \u00D7 Group Interaction)"),
+                        hypothesis = jmvcore::format(.("1. Parallelism ({time} × {group} Interaction)"), time = rmFactorName, group = between[1]),
                         test = .("Wilks' Lambda"),
                         stat = w_stat,
                         f = f_val,
@@ -581,12 +622,12 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 }
 
                 # Hypothesis 2: Equal Levels / Coincidence (Between-groups main effect)
-                matched_b <- names(m_tests)[grep(paste0("^`?", between[1], "`?$"), names(m_tests))]
-                if (length(matched_b) > 0) {
-                    x <- m_tests[[matched_b[1]]]
+                matched_b <- find_term(between[1])
+                if (!is.null(matched_b)) {
+                    x <- m_tests[[matched_b]]
                     SSPE_qr <- qr(x$SSPE)
                     eigs <- Re(eigen(qr.coef(SSPE_qr, x$SSPH), symmetric = FALSE)$values)
-                    pil <- car:::Pillai(eigs, x$df, x$df.residual)
+                    pil <- private$.calcPillai(eigs, x$df, x$df.residual)
                     p_stat <- as.numeric(pil[1])
                     f_val  <- as.numeric(pil[2])
                     df1    <- as.integer(round(pil[3]))
@@ -600,7 +641,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     }
 
                     table$addRow(rowKey = "coincidence", values = list(
-                        hypothesis = .("2. Equal Levels (Coincidence / Between-Group Main Effect)"),
+                        hypothesis = jmvcore::format(.("2. Equal Levels (Coincidence / {group} Main Effect)"), group = between[1]),
                         test = .("Pillai / Univariate"),
                         stat = p_stat,
                         f = f_val,
@@ -610,15 +651,19 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         conclusion = conclusion
                     ))
                 }
+
+                if (length(between) > 1) {
+                    table$setNote("profile_between_factor", jmvcore::format(.("Profile analysis evaluates between-subjects factor '{factor}'."), factor = between[1]))
+                }
             }
 
             # Hypothesis 3: Flatness (Within-subjects time main effect)
-            matched_time <- names(m_tests)[grep(paste0("^`?", rmFactorName, "`?$"), names(m_tests))]
-            if (length(matched_time) > 0) {
-                x <- m_tests[[matched_time[1]]]
+            matched_time <- find_term(rmFactorName)
+            if (!is.null(matched_time)) {
+                x <- m_tests[[matched_time]]
                 SSPE_qr <- qr(x$SSPE)
                 eigs <- Re(eigen(qr.coef(SSPE_qr, x$SSPH), symmetric = FALSE)$values)
-                wlk <- car:::Wilks(eigs, x$df, x$df.residual)
+                wlk <- private$.calcWilks(eigs, x$df, x$df.residual)
                 w_stat <- as.numeric(wlk[1])
                 f_val  <- as.numeric(wlk[2])
                 df1    <- as.integer(round(wlk[3]))
@@ -632,7 +677,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 }
 
                 table$addRow(rowKey = "flatness", values = list(
-                    hypothesis = .("3. Flatness (Within-Subjects Change over Time)"),
+                    hypothesis = jmvcore::format(.("3. Flatness (Within-Subjects Change over {time})"), time = rmFactorName),
                     test = .("Wilks' Lambda"),
                     stat = w_stat,
                     f = f_val,
@@ -644,7 +689,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             }
         },
 
-        .fillContrastsTable = function(dat_clean, rmCells, rmFactorName, between) {
+                .fillContrastsTable = function(dat_clean, rmCells, rmFactorName, between, covs, contrastType) {
             table <- self$results$contrastsTable
             table$deleteRows()
 
@@ -652,19 +697,71 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             if (k < 2) return()
 
             Y <- as.matrix(dat_clean[, rmCells, drop = FALSE])
-            poly_mat <- stats::contr.poly(k)
-            c_names <- c(.("Linear"), .("Quadratic"), .("Cubic"), .("Quartic"), .("Quintic"))
+
+            if (contrastType == "polynomial") {
+                c_mat <- stats::contr.poly(k)
+                c_names <- c(.("Linear"), .("Quadratic"), .("Cubic"), .("Quartic"), .("Quintic"))
+                c_labels <- sapply(1:(k - 1), function(d) if (d <= length(c_names)) c_names[d] else paste0(.("Degree"), " ", d))
+                table$setNote("contrast_type_note", .("<b>Orthogonal Polynomial Contrasts</b>: Decompose the within-subject factor into orthogonal trends: Linear (constant rate of change), Quadratic (curvature/plateau), and Cubic (inflection points)."))
+            } else if (contrastType == "repeated") {
+                c_mat <- matrix(0, nrow = k, ncol = k - 1)
+                c_labels <- character(k - 1)
+                for (j in 1:(k - 1)) {
+                    c_mat[j, j] <- -1
+                    c_mat[j + 1, j] <- 1
+                    c_labels[j] <- paste(rmCells[j + 1], "–", rmCells[j])
+                }
+                table$setNote("contrast_type_note", .("<b>Repeated Contrasts</b>: Compare each successive time point / condition to the immediately preceding one."))
+            } else if (contrastType == "treatment") {
+                c_mat <- matrix(0, nrow = k, ncol = k - 1)
+                c_labels <- character(k - 1)
+                for (j in 1:(k - 1)) {
+                    c_mat[1, j] <- -1
+                    c_mat[j + 1, j] <- 1
+                    c_labels[j] <- paste(rmCells[j + 1], "–", rmCells[1])
+                }
+                table$setNote("contrast_type_note", .("<b>Treatment Contrasts</b>: Compare each subsequent time point / condition to the first (baseline)."))
+            } else if (contrastType == "helmert") {
+                c_mat <- matrix(0, nrow = k, ncol = k - 1)
+                c_labels <- character(k - 1)
+                for (j in 1:(k - 1)) {
+                    c_mat[j, j] <- 1
+                    c_mat[(j + 1):k, j] <- -1 / (k - j)
+                    c_labels[j] <- paste0(rmCells[j], " vs ", .("subsequent"))
+                }
+                table$setNote("contrast_type_note", .("<b>Helmert Contrasts</b>: Compare each time point to the average of subsequent time points."))
+            } else if (contrastType == "difference") {
+                c_mat <- matrix(0, nrow = k, ncol = k - 1)
+                c_labels <- character(k - 1)
+                for (j in 1:(k - 1)) {
+                    c_mat[1:j, j] <- -1 / j
+                    c_mat[j + 1, j] <- 1
+                    c_labels[j] <- paste0(rmCells[j + 1], " vs ", .("preceding"))
+                }
+                table$setNote("contrast_type_note", .("<b>Difference Contrasts</b>: Compare each time point to the average of preceding time points (reverse Helmert)."))
+            } else {
+                c_mat <- stats::contr.poly(k)
+                c_labels <- paste0(.("Degree"), " ", 1:(k - 1))
+                table$setNote("contrast_type_note", NULL)
+            }
 
             old_contr <- options(contrasts = c("contr.sum", "contr.poly"))
             on.exit(options(old_contr), add = TRUE)
 
-            for (degree in 1:(k - 1)) {
-                c_weight <- poly_mat[, degree]
-                Y_c <- Y %*% c_weight
-                c_label <- if (degree <= length(c_names)) c_names[degree] else paste0(.("Polynomial Degree"), " ", degree)
+            rhs_terms <- c()
+            if (!is.null(between) && length(between) > 0) {
+                rhs_terms <- c(rhs_terms, paste(between, collapse = " * "))
+            }
+            if (!is.null(covs) && length(covs) > 0) {
+                rhs_terms <- c(rhs_terms, paste(covs, collapse = " + "))
+            }
+            rhs <- if (length(rhs_terms) > 0) paste(rhs_terms, collapse = " + ") else "1"
 
-                # Test within-subjects contrast
-                rhs <- if (!is.null(between) && length(between) > 0) paste(between, collapse = " * ") else "1"
+            for (col_idx in 1:(k - 1)) {
+                c_weight <- c_mat[, col_idx]
+                Y_c <- Y %*% c_weight
+                c_label <- c_labels[col_idx]
+
                 c_fit <- stats::lm(stats::as.formula(paste("Y_c ~", rhs)), data = dat_clean)
 
                 aov_c <- tryCatch(
@@ -672,19 +769,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     error = function(e) NULL
                 )
 
-                if (is.null(aov_c) || !("(Intercept)" %in% rownames(aov_c))) {
-                    sm <- summary(c_fit)
-                    t_val <- sm$coefficients["(Intercept)", "t value"]
-                    f_val <- t_val^2
-                    df_intercept <- 1
-                    df_res <- c_fit$df.residual
-                    ss_res <- sum(residuals(c_fit)^2)
-                    ms_res <- ss_res / df_res
-                    ss_intercept <- f_val * ms_res
-                    ms_intercept <- ss_intercept
-                    p_val <- stats::pf(f_val, 1, df_res, lower.tail = FALSE)
-                    eta_p <- ss_intercept / (ss_intercept + ss_res)
-                } else {
+                if (!is.null(aov_c) && ("(Intercept)" %in% rownames(aov_c)) && ("Residuals" %in% rownames(aov_c))) {
                     ss_intercept <- aov_c["(Intercept)", "Sum Sq"]
                     df_intercept <- aov_c["(Intercept)", "Df"]
                     ms_intercept <- ss_intercept / df_intercept
@@ -693,10 +778,22 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     ms_res <- ss_res / df_res
                     f_val <- aov_c["(Intercept)", "F value"]
                     p_val <- aov_c["(Intercept)", "Pr(>F)"]
-                    eta_p <- ss_intercept / (ss_intercept + ss_res)
+                    eta_p <- if ((ss_intercept + ss_res) > 0) ss_intercept / (ss_intercept + ss_res) else NA_real_
+                } else {
+                    sm <- summary(c_fit)
+                    t_val <- sm$coefficients["(Intercept)", "t value"]
+                    f_val <- t_val^2
+                    df_intercept <- 1
+                    df_res <- c_fit$df.residual
+                    ss_res <- sum(stats::residuals(c_fit)^2)
+                    ms_res <- ss_res / df_res
+                    ss_intercept <- f_val * ms_res
+                    ms_intercept <- ss_intercept
+                    p_val <- stats::pf(f_val, 1, df_res, lower.tail = FALSE)
+                    eta_p <- if ((ss_intercept + ss_res) > 0) ss_intercept / (ss_intercept + ss_res) else NA_real_
                 }
 
-                table$addRow(rowKey = paste0("poly_", degree), values = list(
+                table$addRow(rowKey = paste0("contrast_", col_idx), values = list(
                     contrast = paste0(rmFactorName, " (", c_label, ")"),
                     ss = ss_intercept,
                     df = as.integer(df_intercept),
@@ -706,7 +803,6 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     etaSqP = eta_p
                 ))
 
-                # Contrast x Between interaction
                 if (!is.null(between) && length(between) > 0 && !is.null(aov_c)) {
                     b_terms <- setdiff(rownames(aov_c), c("(Intercept)", "Residuals"))
                     for (term_b in b_terms) {
@@ -715,12 +811,12 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         ms_b <- ss_b / df_b
                         f_b  <- aov_c[term_b, "F value"]
                         p_b  <- aov_c[term_b, "Pr(>F)"]
-                        eta_b <- ss_b / (ss_b + ss_res)
+                        eta_b <- if ((ss_b + ss_res) > 0) ss_b / (ss_b + ss_res) else NA_real_
 
-                        term_label <- gsub(":", " \u00D7 ", term_b)
+                        term_label <- gsub(":", " × ", term_b)
 
-                        table$addRow(rowKey = paste0("poly_", degree, "_", term_b), values = list(
-                            contrast = paste0(rmFactorName, " (", c_label, ") \u00D7 ", term_label),
+                        table$addRow(rowKey = paste0("contrast_", col_idx, "_", term_b), values = list(
+                            contrast = paste0(rmFactorName, " (", c_label, ") × ", term_label),
                             ss = ss_b,
                             df = as.integer(df_b),
                             ms = ms_b,
@@ -733,43 +829,64 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             }
         },
 
-        .fillAssumptionsTable = function(dat_clean, vars, between) {
+                .fillAssumptionsTable = function(dat_clean, vars, between, res_matrix = NULL) {
             table <- self$results$assumptionsTable
             table$deleteRows()
 
             Y <- as.matrix(dat_clean[, vars, drop = FALSE])
-            n <- nrow(Y)
-            p <- ncol(Y)
+            E <- if (!is.null(res_matrix)) as.matrix(res_matrix) else Y
+            n <- nrow(E)
+            p <- ncol(E)
 
             # 1. Box's M Test
             if (!is.null(between) && length(between) > 0) {
                 grp <- dat_clean[[between[1]]]
                 box_res <- private$.calcBoxM(Y, grp)
                 if (!is.null(box_res)) {
-                    assess <- if (box_res$p < 0.001) {
-                        .("Heterogeneous covariance matrices (p < .001). Rely primarily on Pillai's Trace.")
+                    if (!is.null(box_res$insufficient_n) && box_res$insufficient_n) {
+                        table$addRow(rowKey = "box_m", values = list(
+                            test = .("Box's M (Equality of Covariance Matrices)"),
+                            stat = NA,
+                            fOrChisq = NA,
+                            df1 = NA,
+                            df2 = NA,
+                            p = NA,
+                            assessment = box_res$msg
+                        ))
                     } else {
-                        .("Homogeneity of covariance matrices supported (assumption met).")
+                        assess <- if (box_res$p < 0.001) {
+                            .("Heterogeneous covariance matrices (p < .001). Rely primarily on Pillai's Trace.")
+                        } else {
+                            .("Homogeneity of covariance matrices supported (assumption met).")
+                        }
+                        table$addRow(rowKey = "box_m", values = list(
+                            test = .("Box's M (Equality of Covariance Matrices)"),
+                            stat = box_res$stat,
+                            fOrChisq = box_res$f,
+                            df1 = box_res$df1,
+                            df2 = box_res$df2,
+                            p = box_res$p,
+                            assessment = assess
+                        ))
                     }
-                    table$addRow(rowKey = "box_m", values = list(
-                        test = .("Box's M (Equality of Covariance Matrices)"),
-                        stat = box_res$stat,
-                        fOrChisq = box_res$f,
-                        df1 = box_res$df1,
-                        df2 = box_res$df2,
-                        p = box_res$p,
-                        assessment = assess
+                }
+                if (length(between) > 1) {
+                    table$setNote("boxm_factor_note", jmvcore::format(
+                        .("Box's M evaluates covariance homogeneity across levels of primary factor '{factor}'."),
+                        factor = between[1]
                     ))
+                } else {
+                    table$setNote("boxm_factor_note", NULL)
                 }
             }
 
-            # 2. Mardia's Multivariate Normality
-            mardia_res <- private$.calcMardia(Y)
+            # 2. Mardia's Multivariate Normality of Residuals
+            mardia_res <- private$.calcMardia(E)
             if (!is.null(mardia_res)) {
                 # Skewness
-                assess_skew <- if (mardia_res$skew$p < 0.05) .("Multivariate skewness significant.") else .("Multivariate skewness normal.")
+                assess_skew <- if (mardia_res$skew$p < 0.05) .("Multivariate skewness significant (departure from normality).") else .("Multivariate skewness normal.")
                 table$addRow(rowKey = "mardia_skew", values = list(
-                    test = .("Mardia Multivariate Skewness"),
+                    test = .("Mardia Multivariate Skewness (Residuals)"),
                     stat = mardia_res$skew$stat,
                     fOrChisq = mardia_res$skew$chisq,
                     df1 = mardia_res$skew$df,
@@ -779,9 +896,9 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 ))
 
                 # Kurtosis
-                assess_kurt <- if (mardia_res$kurt$p < 0.05) .("Multivariate kurtosis significant.") else .("Multivariate kurtosis normal.")
+                assess_kurt <- if (mardia_res$kurt$p < 0.05) .("Multivariate kurtosis significant (departure from normality).") else .("Multivariate kurtosis normal.")
                 table$addRow(rowKey = "mardia_kurt", values = list(
-                    test = .("Mardia Multivariate Kurtosis"),
+                    test = .("Mardia Multivariate Kurtosis (Residuals)"),
                     stat = mardia_res$kurt$stat,
                     fOrChisq = mardia_res$kurt$z,
                     df1 = NA,
@@ -791,16 +908,16 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 ))
             }
 
-            # 3. Multivariate Outliers (Mahalanobis D^2)
-            outlier_res <- private$.calcMahalanobis(Y)
+            # 3. Multivariate Outliers (Mahalanobis D^2 on Residuals)
+            outlier_res <- private$.calcMahalanobis(E)
             if (!is.null(outlier_res)) {
                 assess_out <- if (outlier_res$n_outliers > 0) {
-                    paste0(outlier_res$n_outliers, " ", .("observation(s) exceed critical Mahalanobis D\u00B2 (p < .001)."))
+                    paste0(outlier_res$n_outliers, " ", .("residual observation(s) exceed critical Mahalanobis D² (p < .001)."))
                 } else {
-                    .("No multivariate outliers detected at critical threshold (p < .001).")
+                    .("No multivariate residual outliers detected at critical threshold (p < .001).")
                 }
                 table$addRow(rowKey = "mahalanobis", values = list(
-                    test = .("Mahalanobis Distance (Multivariate Outliers)"),
+                    test = .("Mahalanobis Distance D² (Residual Outliers)"),
                     stat = outlier_res$max_d2,
                     fOrChisq = outlier_res$crit,
                     df1 = p,
@@ -818,6 +935,15 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             has_between <- (!is.null(between) && length(between) > 0)
 
             if (has_between) {
+                if (length(between) > 1) {
+                    table$setNote("means_factor_note", jmvcore::format(
+                        .("Marginal means and descriptives are evaluated for primary factor '{factor}' pooled across remaining factors."),
+                        factor = between[1]
+                    ))
+                } else {
+                    table$setNote("means_factor_note", NULL)
+                }
+
                 grp_col <- between[1]
                 grp_levels <- levels(dat_clean[[grp_col]])
 
@@ -830,8 +956,10 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         m_val <- mean(vals, na.rm = TRUE)
                         s_val <- stats::sd(vals, na.rm = TRUE)
                         se_val <- s_val / sqrt(n_sub)
-                        ci_lower <- m_val - 1.96 * se_val
-                        ci_upper <- m_val + 1.96 * se_val
+                        df_t <- max(1, n_sub - 1)
+                        t_crit <- stats::qt(0.975, df = df_t)
+                        ci_lower <- m_val - t_crit * se_val
+                        ci_upper <- m_val + t_crit * se_val
 
                         table$addRow(rowKey = paste(grp, v, sep = "_"), values = list(
                             factor = grp,
@@ -852,8 +980,10 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     m_val <- mean(vals, na.rm = TRUE)
                     s_val <- stats::sd(vals, na.rm = TRUE)
                     se_val <- s_val / sqrt(n_all)
-                    ci_lower <- m_val - 1.96 * se_val
-                    ci_upper <- m_val + 1.96 * se_val
+                    df_t <- max(1, n_all - 1)
+                    t_crit <- stats::qt(0.975, df = df_t)
+                    ci_lower <- m_val - t_crit * se_val
+                    ci_upper <- m_val + t_crit * se_val
 
                     table$addRow(rowKey = v, values = list(
                         factor = .("Total"),
@@ -867,6 +997,13 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     ))
                 }
             }
+
+            covs <- self$options$covs
+            if (!is.null(covs) && length(covs) > 0) {
+                table$setNote("covs_means_note", .("Reported values are observed cell means and SDs with 95% Student's t confidence intervals. Model tests evaluate effects at the mean of the covariates."))
+            } else {
+                table$setNote("covs_means_note", .("Confidence intervals are 95% Student's t intervals."))
+            }
         },
 
         .calcBoxM = function(Y, grp) {
@@ -876,8 +1013,15 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             p <- ncol(Y)
             N <- nrow(Y)
 
+            if (g < 2) return(NULL)
+
             n_vec <- table(grp)
-            if (any(n_vec <= p) || g < 2) return(NULL)
+            if (any(n_vec <= p)) {
+                return(list(
+                    insufficient_n = TRUE,
+                    msg = .("Sample size in one or more groups (n <= p) is insufficient for Box's M test.")
+                ))
+            }
 
             det_vec <- numeric(g)
             pooled_cov <- matrix(0, p, p)
@@ -886,14 +1030,24 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 Yi <- Y[grp == levels_g[i], , drop = FALSE]
                 Si <- stats::cov(Yi)
                 det_i <- det(Si)
-                if (is.na(det_i) || det_i <= 0) return(NULL)
+                if (is.na(det_i) || det_i <= 0) {
+                    return(list(
+                        insufficient_n = TRUE,
+                        msg = .("Covariance matrix in one or more groups is singular or non-positive definite.")
+                    ))
+                }
                 det_vec[i] <- det_i
                 pooled_cov <- pooled_cov + (n_vec[i] - 1) * Si
             }
 
             pooled_cov <- pooled_cov / (N - g)
             det_pooled <- det(pooled_cov)
-            if (is.na(det_pooled) || det_pooled <= 0) return(NULL)
+            if (is.na(det_pooled) || det_pooled <= 0) {
+                return(list(
+                    insufficient_n = TRUE,
+                    msg = .("Pooled covariance matrix is singular or non-positive definite.")
+                ))
+            }
 
             M <- (N - g) * log(det_pooled) - sum((n_vec - 1) * log(det_vec))
             sum_inv_n <- sum(1 / (n_vec - 1))
@@ -908,8 +1062,12 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 a <- (1 - c1 - df1 / df2) / df1
                 f_val <- M * a
             } else {
-                df2 <- (df1 + 2) / (c1^2)
-                f_val <- (M * (1 - c1)) / df1
+                # Box (1949) inverted F approximation when c2 - c1^2 <= 0
+                denom <- c1^2 - c2
+                if (denom <= 0) denom <- 1e-6
+                df2 <- (df1 + 2) / denom
+                b_val <- df2 / (1 - c1 - 2 / df2)
+                f_val <- if ((b_val - M) > 0) (df2 * M) / (df1 * (b_val - M)) else (M * (1 - c1)) / df1
             }
 
             p_val <- stats::pf(f_val, df1, df2, lower.tail = FALSE)
@@ -967,66 +1125,16 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
         },
 
         .plotProfile = function(image, ...) {
-            if (is.null(private$.state$dat_clean)) return(FALSE)
+            state <- image$state
+            if (is.null(state) || is.null(state$summary)) return(FALSE)
 
-            dat <- private$.state$dat_clean
-            rmCells <- private$.state$rmCells
-            between <- private$.state$between
+            sum_df <- state$summary
+            rmCells <- state$rmCells
+            has_between <- state$has_between
+            betweenName <- state$betweenName
+            rmFactorName <- state$rmFactorName
             plotError <- self$options$plotError
 
-            if (is.null(rmCells) || length(rmCells) < 2) return(FALSE)
-
-            # Reshape data to long format
-            has_between <- (!is.null(between) && length(between) > 0)
-            id_col <- "Subject_ID"
-            dat[[id_col]] <- 1:nrow(dat)
-
-            long_rows <- list()
-            for (i in 1:nrow(dat)) {
-                for (t_idx in seq_along(rmCells)) {
-                    row_entry <- list(
-                        id = dat[[id_col]][i],
-                        time = rmCells[t_idx],
-                        time_idx = t_idx,
-                        val = dat[[rmCells[t_idx]]][i]
-                    )
-                    if (has_between) {
-                        row_entry$group <- as.character(dat[[between[1]]][i])
-                    } else {
-                        row_entry$group <- "All"
-                    }
-                    long_rows[[length(long_rows) + 1]] <- row_entry
-                }
-            }
-
-            long_df <- do.call(rbind, lapply(long_rows, as.data.frame))
-            long_df$time <- factor(long_df$time, levels = rmCells)
-
-            # Calculate summary stats per group and time
-            summary_list <- list()
-            groups <- unique(long_df$group)
-
-            for (g in groups) {
-                for (t_val in rmCells) {
-                    sub_vals <- long_df$val[long_df$group == g & long_df$time == t_val]
-                    m <- mean(sub_vals, na.rm = TRUE)
-                    s <- stats::sd(sub_vals, na.rm = TRUE)
-                    n_s <- length(sub_vals)
-                    se <- s / sqrt(n_s)
-
-                    summary_list[[length(summary_list) + 1]] <- data.frame(
-                        group = g,
-                        time = t_val,
-                        mean = m,
-                        se = se,
-                        ci_lower = m - 1.96 * se,
-                        ci_upper = m + 1.96 * se,
-                        stringsAsFactors = FALSE
-                    )
-                }
-            }
-
-            sum_df <- do.call(rbind, summary_list)
             sum_df$time <- factor(sum_df$time, levels = rmCells)
 
             p <- ggplot2::ggplot(sum_df, ggplot2::aes(x = time, y = mean, group = group, color = group)) +
@@ -1034,9 +1142,9 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 ggplot2::geom_point(size = 3) +
                 ggplot2::labs(
                     title = .("Repeated Measures Trajectory Profile"),
-                    x = self$options$rmFactorName,
+                    x = rmFactorName,
                     y = .("Mean Response"),
-                    color = if (has_between) between[1] else ""
+                    color = if (has_between) betweenName else ""
                 ) +
                 ggplot2::theme_minimal(base_size = 12) +
                 ggplot2::theme(
@@ -1056,41 +1164,48 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
         },
 
         .plotHe = function(image, ...) {
-            if (is.null(private$.state$dat_clean)) return(FALSE)
+            state <- image$state
+            if (is.null(state) || is.null(state$vars)) return(FALSE)
 
-            dat <- private$.state$dat_clean
-            rmCells <- private$.state$rmCells
-            deps <- private$.state$deps
-            vars <- if (!is.null(rmCells)) rmCells else deps
+            vars <- state$vars
+            between <- state$between
+            dat <- self$data
 
-            if (is.null(vars) || length(vars) < 2) return(FALSE)
+            if (is.null(dat) || is.null(vars) || length(vars) < 2) return(FALSE)
 
-            Y <- as.matrix(dat[, vars[1:2], drop = FALSE])
-            between <- private$.state$between
+            plot_cols <- vars
+            has_between <- (!is.null(between) && length(between) > 0 && between[1] %in% names(dat))
+            if (has_between) plot_cols <- c(plot_cols, between[1])
+            dat_plot <- stats::na.omit(dat[, plot_cols, drop = FALSE])
+            if (nrow(dat_plot) < 3) return(FALSE)
 
-            df_plot <- as.data.frame(Y)
-            colnames(df_plot) <- c("V1", "V2")
+            for (v in vars) dat_plot[[v]] <- jmvcore::toNumeric(dat_plot[[v]])
+            df_plot <- data.frame(
+                V1 = dat_plot[[vars[1]]],
+                V2 = dat_plot[[vars[2]]]
+            )
 
-            if (!is.null(between) && length(between) > 0) {
-                df_plot$Group <- dat[[between[1]]]
+            if (has_between) {
+                df_plot$Group <- as.factor(dat_plot[[between[1]]])
             } else {
                 df_plot$Group <- factor("Total")
             }
 
-            # 2D scatter with group ellipses representing Hypothesis/Error dispersion
             p <- ggplot2::ggplot(df_plot, ggplot2::aes(x = V1, y = V2, color = Group)) +
                 ggplot2::geom_point(alpha = 0.6, size = 2) +
                 ggplot2::stat_ellipse(level = 0.68, linetype = "dashed", size = 0.9) +
                 ggplot2::stat_ellipse(level = 0.95, size = 1.1) +
                 ggplot2::labs(
-                    title = .("Hypothesis-Error (HE) Multivariate Scatter & Ellipses"),
+                    title = .("Group Scatter with Data Ellipses"),
+                    subtitle = jmvcore::format(.("Data ellipses (68% dashed, 95% solid) for '{v1}' and '{v2}'"), v1 = vars[1], v2 = vars[2]),
                     x = vars[1],
                     y = vars[2],
-                    color = if (!is.null(between) && length(between) > 0) between[1] else ""
+                    color = if (has_between) between[1] else ""
                 ) +
                 ggplot2::theme_minimal(base_size = 12) +
                 ggplot2::theme(
                     plot.title = ggplot2::element_text(face = "bold", hjust = 0.5),
+                    plot.subtitle = ggplot2::element_text(hjust = 0.5),
                     legend.position = "top"
                 )
 
@@ -1099,34 +1214,27 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
         },
 
         .plotOutlier = function(image, ...) {
-            if (is.null(private$.state$dat_clean)) return(FALSE)
+            state <- image$state
+            if (is.null(state) || is.null(state$d2)) return(FALSE)
 
-            dat <- private$.state$dat_clean
-            rmCells <- private$.state$rmCells
-            deps <- private$.state$deps
-            vars <- if (!is.null(rmCells)) rmCells else deps
-
-            if (is.null(vars) || length(vars) < 2) return(FALSE)
-
-            Y <- as.matrix(dat[, vars, drop = FALSE])
-            res <- private$.calcMahalanobis(Y)
-            if (is.null(res)) return(FALSE)
+            d2 <- state$d2
+            crit <- state$crit
 
             df_out <- data.frame(
-                Index = 1:length(res$d2),
-                D2 = res$d2,
-                Outlier = res$d2 > res$crit
+                Index = seq_along(d2),
+                D2 = d2,
+                Outlier = d2 > crit
             )
 
             p <- ggplot2::ggplot(df_out, ggplot2::aes(x = Index, y = D2, color = Outlier)) +
                 ggplot2::geom_point(size = 2.5) +
-                ggplot2::geom_hline(yintercept = res$crit, linetype = "dashed", color = "#D9534F", size = 1) +
+                ggplot2::geom_hline(yintercept = crit, linetype = "dashed", color = "#D9534F", size = 1) +
                 ggplot2::scale_color_manual(values = c("FALSE" = "#2C5E8A", "TRUE" = "#D9534F")) +
                 ggplot2::labs(
-                    title = .("Mahalanobis Distance D\u00B2 (Multivariate Outliers)"),
+                    title = .("Mahalanobis Distance D² (Residual Outliers)"),
                     x = .("Observation Index"),
-                    y = .("Mahalanobis Distance D\u00B2"),
-                    subtitle = paste0(.("Critical threshold (p < .001)"), ": ", round(res$crit, 2))
+                    y = .("Mahalanobis Distance D²"),
+                    subtitle = paste0(.("Critical threshold (p < .001)"), ": ", round(crit, 2))
                 ) +
                 ggplot2::theme_minimal(base_size = 12) +
                 ggplot2::theme(

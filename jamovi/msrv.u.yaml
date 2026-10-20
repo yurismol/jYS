@@ -31,7 +31,7 @@ children:
             isTarget: true
           - type: LevelSelector
             name: statusEvent
-            label: Level
+            label: Event level
             enable: ({return ui['status'].value()!==null;})
       - type: TargetLayoutBox
         label: Subject ID / Cluster (optional)
@@ -61,6 +61,7 @@ children:
             name: adjExposure
             maxItemCount: 1
             isTarget: true
+            enable: (showAdjCurves)
       - type: TargetLayoutBox
         label: Time-varying Effects (Cox)
         children:
@@ -69,11 +70,6 @@ children:
             isTarget: true
             height: small
             enable: (showCox && showTimeDepEffects)
-
-  - type: VariableSupplier
-    persistentItems: false
-    stretchFactor: 1
-    children:
       - type: TargetLayoutBox
         label: Predictors (ROC)
         children:
@@ -83,7 +79,7 @@ children:
             height: small
 
   - type: CollapseBox
-    label: Kaplan-Meier Curves & Estimation
+    label: Kaplan–Meier Curves & Estimation
     collapsed: false
     stretchFactor: 1
     children:
@@ -103,23 +99,23 @@ children:
           - type: CheckBox
             name: kmTable
             enable: (showKm)
-          - type: TextBox
-            name: kmMaxTime
-            label: Max time (0 = unlimited)
-            format: number
+          - type: CheckBox
+            name: showLogRank
             enable: (showKm)
 
   - type: CollapseBox
-    label: Group Comparison
-    collapsed: false
+    label: Time Horizon & Cutoff
+    collapsed: true
     stretchFactor: 1
     children:
-      - type: CheckBox
-        name: showLogRank
+      - type: TextBox
+        name: kmMaxTime
+        label: Maximum evaluation horizon (0 = unlimited)
+        format: number
 
   - type: CollapseBox
     label: Cox Proportional Hazards Regression
-    collapsed: false
+    collapsed: true
     stretchFactor: 1
     children:
       - type: CheckBox
@@ -149,7 +145,7 @@ children:
 
   - type: CollapseBox
     label: Adjusted Survival Curves (Direct / G-computation)
-    collapsed: false
+    collapsed: true
     stretchFactor: 1
     children:
       - type: CheckBox
@@ -161,7 +157,7 @@ children:
 
   - type: CollapseBox
     label: Competing Risks Analysis
-    collapsed: false
+    collapsed: true
     stretchFactor: 1
     children:
       - type: CheckBox
@@ -169,11 +165,11 @@ children:
         children:
           - type: LevelSelector
             name: compEvent
-            label: Event of Interest
+            label: Event of interest
             enable: (showCompRisks && {return ui['status'].value()!==null;})
           - type: LevelSelector
             name: compCensor
-            label: Censored Level
+            label: Censored level
             enable: (showCompRisks && {return ui['status'].value()!==null;})
           - type: CheckBox
             name: showCifTable
@@ -194,7 +190,7 @@ children:
 
   - type: CollapseBox
     label: Time-dependent ROC Analysis
-    collapsed: false
+    collapsed: true
     stretchFactor: 1
     children:
       - type: CheckBox

@@ -2,7 +2,7 @@
 name:  mMNV
 title: MANOVA & Repeated Measures
 jrs:   '1.1'
-refs: [jys, obrien1985, fox2019, greenhouse1959, huynh1976, box1949, mardia1970, olson1974, friendly2007]
+refs: [jys, obrien1985, fox2019, greenhouse1959, huynh1976, box1949, mardia1970, olson1974]
 
 items:
     - name: instructions
@@ -16,21 +16,19 @@ items:
       visible: true
       refs: [obrien1985, fox2019, olson1974]
       clearWith:
-          - mode
           - rmCells
           - rmFactorName
-          - deps
           - between
           - covs
           - testPillai
           - testWilks
           - testHotelling
           - testRoy
-          - contrastType
       columns:
           - name: term
             title: Effect / Source
             type: text
+            combineBelow: true
           - name: test
             title: Multiv. Test
             type: text
@@ -41,18 +39,16 @@ items:
           - name: f
             title: F
             type: number
-            format: zto
           - name: df1
             title: df1
             type: integer
           - name: df2
             title: df2
             type: number
-            format: zto
           - name: p
             title: p
             type: number
-            format: zto
+            format: zto,pvalue
           - name: etaSqP
             title: Partial η²
             type: number
@@ -64,39 +60,37 @@ items:
       visible: (showUnivariate)
       refs: [greenhouse1959, huynh1976]
       clearWith:
-          - mode
           - rmCells
           - rmFactorName
-          - deps
           - between
           - covs
       columns:
           - name: term
             title: Effect / Source
             type: text
+            combineBelow: true
           - name: correction
             title: Sphericity Correction
             type: text
           - name: ss
             title: Sum of Squares
             type: number
-            format: zto
-          - name: df
-            title: df
+          - name: df1
+            title: df1
             type: number
-            format: zto
+          - name: df2
+            title: df2
+            type: number
           - name: ms
             title: Mean Square
             type: number
-            format: zto
           - name: f
             title: F
             type: number
-            format: zto
           - name: p
             title: p
             type: number
-            format: zto
+            format: zto,pvalue
           - name: etaSqP
             title: Partial η²
             type: number
@@ -108,10 +102,8 @@ items:
       visible: (showSphericity)
       refs: [obrien1985]
       clearWith:
-          - mode
           - rmCells
           - rmFactorName
-          - deps
           - between
           - covs
       columns:
@@ -125,14 +117,13 @@ items:
           - name: chisq
             title: Approx. χ²
             type: number
-            format: zto
           - name: df
             title: df
             type: integer
           - name: p
             title: p
             type: number
-            format: zto
+            format: zto,pvalue
           - name: gg
             title: Greenhouse-Geisser ε
             type: number
@@ -152,10 +143,8 @@ items:
       visible: (showProfileAnalysis)
       refs: [obrien1985]
       clearWith:
-          - mode
           - rmCells
           - rmFactorName
-          - deps
           - between
           - covs
       columns:
@@ -172,18 +161,16 @@ items:
           - name: f
             title: F
             type: number
-            format: zto
           - name: df1
             title: df1
             type: integer
           - name: df2
             title: df2
             type: number
-            format: zto
           - name: p
             title: p
             type: number
-            format: zto
+            format: zto,pvalue
           - name: conclusion
             title: Interpretation & Decision
             type: text
@@ -193,10 +180,8 @@ items:
       type: Table
       visible: (showContrastsTable)
       clearWith:
-          - mode
           - rmCells
           - rmFactorName
-          - deps
           - between
           - covs
           - contrastType
@@ -207,22 +192,19 @@ items:
           - name: ss
             title: Sum of Squares
             type: number
-            format: zto
           - name: df
             title: df
             type: integer
           - name: ms
             title: Mean Square
             type: number
-            format: zto
           - name: f
             title: F
             type: number
-            format: zto
           - name: p
             title: p
             type: number
-            format: zto
+            format: zto,pvalue
           - name: etaSqP
             title: Partial η²
             type: number
@@ -234,10 +216,8 @@ items:
       visible: (showAssumptionChecks)
       refs: [box1949, mardia1970]
       clearWith:
-          - mode
           - rmCells
           - rmFactorName
-          - deps
           - between
           - covs
       columns:
@@ -247,23 +227,19 @@ items:
           - name: stat
             title: Statistic
             type: number
-            format: zto
           - name: fOrChisq
             title: F / χ²
             type: number
-            format: zto
           - name: df1
             title: df1
             type: number
-            format: zto
           - name: df2
             title: df2
             type: number
-            format: zto
           - name: p
             title: p
             type: number
-            format: zto
+            format: zto,pvalue
           - name: assessment
             title: Assessment & Recommendation
             type: text
@@ -273,10 +249,8 @@ items:
       type: Table
       visible: (showMeansTable)
       clearWith:
-          - mode
           - rmCells
           - rmFactorName
-          - deps
           - between
           - covs
       columns:
@@ -292,23 +266,18 @@ items:
           - name: mean
             title: Mean
             type: number
-            format: zto
           - name: se
             title: SE
             type: number
-            format: zto
           - name: sd
             title: SD
             type: number
-            format: zto
           - name: ciLower
             title: 95% CI Lower
             type: number
-            format: zto
           - name: ciUpper
             title: 95% CI Upper
             type: number
-            format: zto
 
     - name: profilePlot
       title: Trajectory / Profile Plot
@@ -318,27 +287,23 @@ items:
       height: 450
       renderFun: .plotProfile
       clearWith:
-          - mode
           - rmCells
           - rmFactorName
-          - deps
           - between
           - covs
           - plotError
 
     - name: hePlot
-      title: Hypothesis-Error (HE) Plot
+      title: Group Scatter with Data Ellipses
       type: Image
       visible: (showHePlot)
-      refs: [friendly2007]
+      requiresData: true
       width: 550
       height: 450
       renderFun: .plotHe
       clearWith:
-          - mode
           - rmCells
           - rmFactorName
-          - deps
           - between
           - covs
 
@@ -350,10 +315,8 @@ items:
       height: 400
       renderFun: .plotOutlier
       clearWith:
-          - mode
           - rmCells
           - rmFactorName
-          - deps
           - between
           - covs
 ...

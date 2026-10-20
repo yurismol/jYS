@@ -80,7 +80,7 @@ options:
       default: true
 
     - name: polyDf1
-      title: Use df = 1 for polymorphism
+      title: Use reduced df for polymorphism (1 df per contrast)
       type: Bool
       default: false
 
@@ -128,21 +128,21 @@ options:
       title: Acceptance region type
       type: List
       options:
-        - title: None (0)
+        - title: None
           name: "0"
-        - title: Asymptotic Chi-square (1)
+        - title: Asymptotic chi-square
           name: "1"
-        - title: Exact joint (2)
+        - title: Exact joint (males & females)
           name: "2"
-        - title: Asymptotic Chi-square female (3)
+        - title: Asymptotic chi-square (females)
           name: "3"
-        - title: Exact female (4)
+        - title: Exact (females)
           name: "4"
-        - title: Asymptotic Likelihood-ratio (5)
+        - title: Asymptotic likelihood ratio
           name: "5"
-        - title: Exact joint test (6)
+        - title: Exact joint permutation
           name: "6"
-        - title: Exact autosomal (7)
+        - title: Exact autosomal
           name: "7"
       default: "1"
 
