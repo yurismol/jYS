@@ -27,7 +27,9 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
         .run = function() {
             vars <- self$options$vars
-            if (is.null(vars) || length(vars) < 2) {
+            if (is.null(vars) || length(vars) == 0)
+                return()
+            if (length(vars) < 2) {
                 jmvcore::reject(.("Please select at least 2 variables for PCA."))
                 return()
             }

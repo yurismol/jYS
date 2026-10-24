@@ -72,7 +72,7 @@ items:
       height: 450
       renderFun: .plotDD
       visible: (showPlots && (plotType == "dd" || plotType == "both"))
-      requiresData: true
+
       clearWith:
           - vars
           - group
@@ -86,7 +86,7 @@ items:
       height: 450
       renderFun: .plotQQ
       visible: (showPlots && (plotType == "qq" || plotType == "both"))
-      requiresData: true
+
       clearWith:
           - vars
           - group

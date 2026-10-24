@@ -1040,7 +1040,23 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 if (!requireNamespace("logistf", quietly = TRUE)) {
                     stop(jmvcore::.("The 'logistf' package is required for Firth's penalized likelihood. Please install it with install.packages('logistf')."))
                 }
-                fit <- logistf::logistf(as.formula(formula_str), data = df_fit, pl = pl)
+                warn_msgs <- character(0)
+                fit <- withCallingHandlers(
+                    expr = logistf::logistf(as.formula(formula_str), data = df_fit, pl = pl),
+                    warning = function(w) {
+                        warn_msgs <<- c(warn_msgs, conditionMessage(w))
+                        invokeRestart("muffleWarning")
+                    }
+                )
+                if (isTRUE(pl) && (length(warn_msgs) > 0 || any(is.na(fit$ci.lower)) || any(is.na(fit$prob)))) {
+                    wmsg <- if (length(warn_msgs) > 0) paste(unique(warn_msgs), collapse = "; ") else jmvcore::.("Profile likelihood confidence intervals or p-values could not be evaluated.")
+                    self$results$insert(1, jmvcore::Notice$new(
+                        self$options,
+                        name = "firthConvNotice",
+                        type = jmvcore::NoticeType$WARNING,
+                        content = jmvcore::format(jmvcore::.("Firth's penalized likelihood estimation warning: {msg}"), msg = wmsg)
+                    ))
+                }
             } else {
                 fit <- glm(as.formula(formula_str), data = df_fit, family = binomial)
             }
@@ -1269,10 +1285,17 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             
             try(coeff_table$addFootnote(col = "level", note = ref_msg, rowNo = 1), silent = TRUE)
             if (isTRUE(self$options$firth) && !is_multinomial) {
-                firth_note <- .("<b>Firth's penalized likelihood</b> (Firth, 1993) reduces small-sample bias and addresses separation. Parameters and 95% confidence intervals are estimated using penalized profile likelihood.")
+                firth_note <- .("<b>Firth's penalized likelihood</b> (Firth, 1993) reduces small-sample bias and addresses separation. Parameters are estimated by penalized maximum likelihood; confidence intervals and p-values are based on profile penalized likelihood ratio tests, while z is a Wald statistic.")
                 try(coeff_table$setNote('firth_note', firth_note), silent = TRUE)
+                if (self$options$method %in% c("forward", "backward")) {
+                    firth_step_note <- .("Stepwise feature selection is performed using standard maximum likelihood (AIC) before refitting the final model with Firth's penalized likelihood.")
+                    try(coeff_table$setNote('firth_step_note', firth_step_note), silent = TRUE)
+                } else {
+                    try(coeff_table$setNote('firth_step_note', NULL), silent = TRUE)
+                }
             } else {
                 try(coeff_table$setNote('firth_note', NULL), silent = TRUE)
+                try(coeff_table$setNote('firth_step_note', NULL), silent = TRUE)
             }
             if (isTRUE(private$.step_fallback)) {
                 fallback_note <- .("Stepwise selection failed to retain any predictors or encountered an error; falling back to all predictors.")
@@ -1296,7 +1319,7 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 "lasso" = jmvcore::format(.("LASSO ({penalty})"), penalty = toupper(lasso_choice)),
                 "elastic" = jmvcore::format(.("ElasticNet (α={alpha}, {penalty})"), alpha = alpha, penalty = toupper(lasso_choice))
             )
-            if (isTRUE(self$options$firth)) {
+            if (isTRUE(self$options$firth) && !is_multinomial) {
                 method_lbl <- paste0(method_lbl, " + ", .("Firth's penalized likelihood"))
             }
             

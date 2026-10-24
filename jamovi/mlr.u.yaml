@@ -44,15 +44,19 @@ children:
             name: selgroup
             enable: ({return ui['group'].value()!==null;})
   - type: CollapseBox
+    label: Estimation
+    collapsed: false
+    children:
+      - name: firth
+        type: CheckBox
+        label: Firth's penalized likelihood
+  - type: CollapseBox
     label: Feature Selection Settings
     collapsed: false
     children:
       - name: method
         type: ComboBox
         label: Feature Selection Method
-      - name: firth
-        type: CheckBox
-        label: Firth's penalized likelihood
       - name: elastic_alpha
         type: TextBox
         label: ElasticNet Alpha (0=Ridge, 1=LASSO)

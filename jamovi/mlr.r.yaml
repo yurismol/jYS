@@ -99,7 +99,7 @@ items:
       height: 400
       renderFun: .forestPlot
       visible: (showForest)
-      requiresData: true
+
       clearWith:
           - dep
           - covs

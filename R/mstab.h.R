@@ -9,10 +9,12 @@ mSTABOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             dep = NULL,
             time = NULL,
             batch = NULL,
+            factors = list(),
             specType = "lower",
             lsl = 90,
             usl = 105,
             alphaPool = 0.25,
+            alphaFactor = 0.05,
             confLevel = 0.95,
             modelChoice = "auto",
             trans = "none",
@@ -41,6 +43,7 @@ mSTABOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             showMultiShelfPlot = TRUE,
             detailAttr = "worst",
             showArrh = FALSE,
+            arrhDataCondition = "long_term",
             tempVar = NULL,
             arrhEa = 83.14,
             arrhTempAcc = 40,
@@ -52,15 +55,24 @@ mSTABOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             showArrhPlot = TRUE,
             showArrhTrajPlot = TRUE,
             accelCondition = "none",
+            storageCond = "room",
+            accelResult = "not_tested",
+            intermedResult = "not_applicable",
+            supportingData = TRUE,
+            littleChange = FALSE,
             studyDuration = 0,
+            proposedShelfLife = 0,
+            showRegTable = TRUE,
             showPoolTable = TRUE,
             showShelfTable = TRUE,
+            showComboShelfTable = TRUE,
             showCoefTable = TRUE,
             showDiagTable = TRUE,
             showStabPlot = TRUE,
             showDiagPlot = FALSE,
             showShelfPlot = FALSE,
             showFacetPlot = FALSE,
+            showBatchPlots = FALSE,
             showRatePlot = FALSE,
             showPredPlot = FALSE, ...) {
 
@@ -95,6 +107,15 @@ mSTABOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 permitted=list(
                     "factor"),
                 required=TRUE)
+            private$..factors <- jmvcore::OptionVariables$new(
+                "factors",
+                factors,
+                suggested=list(
+                    "nominal",
+                    "ordinal"),
+                permitted=list(
+                    "factor"),
+                default=list())
             private$..specType <- jmvcore::OptionList$new(
                 "specType",
                 specType,
@@ -117,6 +138,12 @@ mSTABOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 min=0.01,
                 max=0.5,
                 default=0.25)
+            private$..alphaFactor <- jmvcore::OptionNumber$new(
+                "alphaFactor",
+                alphaFactor,
+                min=0.001,
+                max=0.25,
+                default=0.05)
             private$..confLevel <- jmvcore::OptionNumber$new(
                 "confLevel",
                 confLevel,
@@ -287,6 +314,13 @@ mSTABOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "showArrh",
                 showArrh,
                 default=FALSE)
+            private$..arrhDataCondition <- jmvcore::OptionList$new(
+                "arrhDataCondition",
+                arrhDataCondition,
+                options=list(
+                    "long_term",
+                    "accelerated"),
+                default="long_term")
             private$..tempVar <- jmvcore::OptionVariable$new(
                 "tempVar",
                 tempVar,
@@ -347,11 +381,53 @@ mSTABOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "change_observed",
                     "none"),
                 default="none")
+            private$..storageCond <- jmvcore::OptionList$new(
+                "storageCond",
+                storageCond,
+                options=list(
+                    "room",
+                    "refrigerated",
+                    "frozen"),
+                default="room")
+            private$..accelResult <- jmvcore::OptionList$new(
+                "accelResult",
+                accelResult,
+                options=list(
+                    "no_change",
+                    "change_observed",
+                    "change_refrig_early",
+                    "not_tested"),
+                default="not_tested")
+            private$..intermedResult <- jmvcore::OptionList$new(
+                "intermedResult",
+                intermedResult,
+                options=list(
+                    "not_applicable",
+                    "no_change",
+                    "change_observed"),
+                default="not_applicable")
+            private$..supportingData <- jmvcore::OptionBool$new(
+                "supportingData",
+                supportingData,
+                default=TRUE)
+            private$..littleChange <- jmvcore::OptionBool$new(
+                "littleChange",
+                littleChange,
+                default=FALSE)
             private$..studyDuration <- jmvcore::OptionNumber$new(
                 "studyDuration",
                 studyDuration,
                 min=0,
                 default=0)
+            private$..proposedShelfLife <- jmvcore::OptionNumber$new(
+                "proposedShelfLife",
+                proposedShelfLife,
+                min=0,
+                default=0)
+            private$..showRegTable <- jmvcore::OptionBool$new(
+                "showRegTable",
+                showRegTable,
+                default=TRUE)
             private$..showPoolTable <- jmvcore::OptionBool$new(
                 "showPoolTable",
                 showPoolTable,
@@ -359,6 +435,10 @@ mSTABOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             private$..showShelfTable <- jmvcore::OptionBool$new(
                 "showShelfTable",
                 showShelfTable,
+                default=TRUE)
+            private$..showComboShelfTable <- jmvcore::OptionBool$new(
+                "showComboShelfTable",
+                showComboShelfTable,
                 default=TRUE)
             private$..showCoefTable <- jmvcore::OptionBool$new(
                 "showCoefTable",
@@ -384,6 +464,10 @@ mSTABOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "showFacetPlot",
                 showFacetPlot,
                 default=FALSE)
+            private$..showBatchPlots <- jmvcore::OptionBool$new(
+                "showBatchPlots",
+                showBatchPlots,
+                default=FALSE)
             private$..showRatePlot <- jmvcore::OptionBool$new(
                 "showRatePlot",
                 showRatePlot,
@@ -396,10 +480,12 @@ mSTABOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..dep)
             self$.addOption(private$..time)
             self$.addOption(private$..batch)
+            self$.addOption(private$..factors)
             self$.addOption(private$..specType)
             self$.addOption(private$..lsl)
             self$.addOption(private$..usl)
             self$.addOption(private$..alphaPool)
+            self$.addOption(private$..alphaFactor)
             self$.addOption(private$..confLevel)
             self$.addOption(private$..modelChoice)
             self$.addOption(private$..trans)
@@ -428,6 +514,7 @@ mSTABOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..showMultiShelfPlot)
             self$.addOption(private$..detailAttr)
             self$.addOption(private$..showArrh)
+            self$.addOption(private$..arrhDataCondition)
             self$.addOption(private$..tempVar)
             self$.addOption(private$..arrhEa)
             self$.addOption(private$..arrhTempAcc)
@@ -439,15 +526,24 @@ mSTABOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..showArrhPlot)
             self$.addOption(private$..showArrhTrajPlot)
             self$.addOption(private$..accelCondition)
+            self$.addOption(private$..storageCond)
+            self$.addOption(private$..accelResult)
+            self$.addOption(private$..intermedResult)
+            self$.addOption(private$..supportingData)
+            self$.addOption(private$..littleChange)
             self$.addOption(private$..studyDuration)
+            self$.addOption(private$..proposedShelfLife)
+            self$.addOption(private$..showRegTable)
             self$.addOption(private$..showPoolTable)
             self$.addOption(private$..showShelfTable)
+            self$.addOption(private$..showComboShelfTable)
             self$.addOption(private$..showCoefTable)
             self$.addOption(private$..showDiagTable)
             self$.addOption(private$..showStabPlot)
             self$.addOption(private$..showDiagPlot)
             self$.addOption(private$..showShelfPlot)
             self$.addOption(private$..showFacetPlot)
+            self$.addOption(private$..showBatchPlots)
             self$.addOption(private$..showRatePlot)
             self$.addOption(private$..showPredPlot)
         }),
@@ -455,10 +551,12 @@ mSTABOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         dep = function() private$..dep$value,
         time = function() private$..time$value,
         batch = function() private$..batch$value,
+        factors = function() private$..factors$value,
         specType = function() private$..specType$value,
         lsl = function() private$..lsl$value,
         usl = function() private$..usl$value,
         alphaPool = function() private$..alphaPool$value,
+        alphaFactor = function() private$..alphaFactor$value,
         confLevel = function() private$..confLevel$value,
         modelChoice = function() private$..modelChoice$value,
         trans = function() private$..trans$value,
@@ -487,6 +585,7 @@ mSTABOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         showMultiShelfPlot = function() private$..showMultiShelfPlot$value,
         detailAttr = function() private$..detailAttr$value,
         showArrh = function() private$..showArrh$value,
+        arrhDataCondition = function() private$..arrhDataCondition$value,
         tempVar = function() private$..tempVar$value,
         arrhEa = function() private$..arrhEa$value,
         arrhTempAcc = function() private$..arrhTempAcc$value,
@@ -498,25 +597,36 @@ mSTABOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         showArrhPlot = function() private$..showArrhPlot$value,
         showArrhTrajPlot = function() private$..showArrhTrajPlot$value,
         accelCondition = function() private$..accelCondition$value,
+        storageCond = function() private$..storageCond$value,
+        accelResult = function() private$..accelResult$value,
+        intermedResult = function() private$..intermedResult$value,
+        supportingData = function() private$..supportingData$value,
+        littleChange = function() private$..littleChange$value,
         studyDuration = function() private$..studyDuration$value,
+        proposedShelfLife = function() private$..proposedShelfLife$value,
+        showRegTable = function() private$..showRegTable$value,
         showPoolTable = function() private$..showPoolTable$value,
         showShelfTable = function() private$..showShelfTable$value,
+        showComboShelfTable = function() private$..showComboShelfTable$value,
         showCoefTable = function() private$..showCoefTable$value,
         showDiagTable = function() private$..showDiagTable$value,
         showStabPlot = function() private$..showStabPlot$value,
         showDiagPlot = function() private$..showDiagPlot$value,
         showShelfPlot = function() private$..showShelfPlot$value,
         showFacetPlot = function() private$..showFacetPlot$value,
+        showBatchPlots = function() private$..showBatchPlots$value,
         showRatePlot = function() private$..showRatePlot$value,
         showPredPlot = function() private$..showPredPlot$value),
     private = list(
         ..dep = NA,
         ..time = NA,
         ..batch = NA,
+        ..factors = NA,
         ..specType = NA,
         ..lsl = NA,
         ..usl = NA,
         ..alphaPool = NA,
+        ..alphaFactor = NA,
         ..confLevel = NA,
         ..modelChoice = NA,
         ..trans = NA,
@@ -545,6 +655,7 @@ mSTABOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..showMultiShelfPlot = NA,
         ..detailAttr = NA,
         ..showArrh = NA,
+        ..arrhDataCondition = NA,
         ..tempVar = NA,
         ..arrhEa = NA,
         ..arrhTempAcc = NA,
@@ -556,15 +667,24 @@ mSTABOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..showArrhPlot = NA,
         ..showArrhTrajPlot = NA,
         ..accelCondition = NA,
+        ..storageCond = NA,
+        ..accelResult = NA,
+        ..intermedResult = NA,
+        ..supportingData = NA,
+        ..littleChange = NA,
         ..studyDuration = NA,
+        ..proposedShelfLife = NA,
+        ..showRegTable = NA,
         ..showPoolTable = NA,
         ..showShelfTable = NA,
+        ..showComboShelfTable = NA,
         ..showCoefTable = NA,
         ..showDiagTable = NA,
         ..showStabPlot = NA,
         ..showDiagPlot = NA,
         ..showShelfPlot = NA,
         ..showFacetPlot = NA,
+        ..showBatchPlots = NA,
         ..showRatePlot = NA,
         ..showPredPlot = NA)
 )
@@ -575,12 +695,15 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     active = list(
         instructions = function() private$.items[["instructions"]],
         poolTable = function() private$.items[["poolTable"]],
+        regTable = function() private$.items[["regTable"]],
         shelfTable = function() private$.items[["shelfTable"]],
+        comboShelfTable = function() private$.items[["comboShelfTable"]],
         coefTable = function() private$.items[["coefTable"]],
         diagTable = function() private$.items[["diagTable"]],
         stabPlot = function() private$.items[["stabPlot"]],
         shelfPlot = function() private$.items[["shelfPlot"]],
         facetPlot = function() private$.items[["facetPlot"]],
+        batchPlots = function() private$.items[["batchPlots"]],
         ratePlot = function() private$.items[["ratePlot"]],
         predPlot = function() private$.items[["predPlot"]],
         diagPlot = function() private$.items[["diagPlot"]],
@@ -613,7 +736,7 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 options=options,
                 name="instructions",
                 title="Instructions",
-                visible=TRUE))
+                visible=FALSE))
             self$add(jmvcore::Table$new(
                 options=options,
                 name="poolTable",
@@ -629,7 +752,28 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "alphaPool",
                     "confLevel",
                     "modelChoice",
-                    "trans"),
+                    "trans",
+                    "detailAttr",
+                    "dep2",
+                    "specType2",
+                    "lsl2",
+                    "usl2",
+                    "trans2",
+                    "dep3",
+                    "specType3",
+                    "lsl3",
+                    "usl3",
+                    "trans3",
+                    "dep4",
+                    "specType4",
+                    "lsl4",
+                    "usl4",
+                    "trans4",
+                    "dep5",
+                    "specType5",
+                    "lsl5",
+                    "usl5",
+                    "trans5"),
                 columns=list(
                     list(
                         `name`="step", 
@@ -662,6 +806,47 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `type`="text"))))
             self$add(jmvcore::Table$new(
                 options=options,
+                name="regTable",
+                title="ICH Q1E Regulatory Extrapolation & Decision Tree Summary",
+                visible="(showRegTable)",
+                clearWith=list(
+                    "dep",
+                    "time",
+                    "batch",
+                    "specType",
+                    "lsl",
+                    "usl",
+                    "alphaPool",
+                    "confLevel",
+                    "modelChoice",
+                    "trans",
+                    "storageCond",
+                    "accelResult",
+                    "intermedResult",
+                    "supportingData",
+                    "littleChange",
+                    "studyDuration",
+                    "proposedShelfLife",
+                    "detailAttr"),
+                columns=list(
+                    list(
+                        `name`="param", 
+                        `title`="Study & Regulatory Evaluation Parameter", 
+                        `type`="text"),
+                    list(
+                        `name`="source", 
+                        `title`="Parameter Category / Source", 
+                        `type`="text"),
+                    list(
+                        `name`="value", 
+                        `title`="Reported Value / Assessment", 
+                        `type`="text"),
+                    list(
+                        `name`="guideline", 
+                        `title`="ICH Q1E Reference & Regulatory Criteria", 
+                        `type`="text"))))
+            self$add(jmvcore::Table$new(
+                options=options,
                 name="shelfTable",
                 title="Shelf Life / Retest Period Estimation Summary",
                 visible="(showShelfTable)",
@@ -677,7 +862,34 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "modelChoice",
                     "trans",
                     "accelCondition",
-                    "studyDuration"),
+                    "storageCond",
+                    "accelResult",
+                    "intermedResult",
+                    "supportingData",
+                    "littleChange",
+                    "studyDuration",
+                    "proposedShelfLife",
+                    "detailAttr",
+                    "dep2",
+                    "specType2",
+                    "lsl2",
+                    "usl2",
+                    "trans2",
+                    "dep3",
+                    "specType3",
+                    "lsl3",
+                    "usl3",
+                    "trans3",
+                    "dep4",
+                    "specType4",
+                    "lsl4",
+                    "usl4",
+                    "trans4",
+                    "dep5",
+                    "specType5",
+                    "lsl5",
+                    "usl5",
+                    "trans5"),
                 columns=list(
                     list(
                         `name`="batch", 
@@ -704,8 +916,76 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `title`="ICH Q1E Permitted Shelf Life (months)", 
                         `type`="number"),
                     list(
+                        `name`="proposedStatus", 
+                        `title`="Proposed Shelf Life Conformity", 
+                        `type`="text", 
+                        `visible`="(proposedShelfLife > 0)"),
+                    list(
                         `name`="limiting", 
                         `title`="Status / Limiting Factor", 
+                        `type`="text"))))
+            self$add(jmvcore::Table$new(
+                options=options,
+                name="comboShelfTable",
+                title="Factor Combinations Shelf Life Summary Table",
+                visible="(showComboShelfTable && (length(factors) > 0))",
+                clearWith=list(
+                    "dep",
+                    "time",
+                    "batch",
+                    "factors",
+                    "specType",
+                    "lsl",
+                    "usl",
+                    "alphaPool",
+                    "alphaFactor",
+                    "confLevel",
+                    "modelChoice",
+                    "trans",
+                    "accelCondition",
+                    "storageCond",
+                    "accelResult",
+                    "intermedResult",
+                    "supportingData",
+                    "littleChange",
+                    "studyDuration",
+                    "proposedShelfLife",
+                    "detailAttr"),
+                columns=list(
+                    list(
+                        `name`="combo", 
+                        `title`="Factor Combination", 
+                        `type`="text"),
+                    list(
+                        `name`="nBatches", 
+                        `title`="Batches", 
+                        `type`="integer"),
+                    list(
+                        `name`="model", 
+                        `title`="Adopted Model", 
+                        `type`="text"),
+                    list(
+                        `name`="limitingBatch", 
+                        `title`="Governing Batch", 
+                        `type`="text"),
+                    list(
+                        `name`="statShelf", 
+                        `title`="Statistical Shelf Life (months)", 
+                        `type`="number", 
+                        `format`="zto,dp:1"),
+                    list(
+                        `name`="ichShelf", 
+                        `title`="ICH Q1E Permitted Shelf Life (months)", 
+                        `type`="number", 
+                        `format`="zto,dp:1"),
+                    list(
+                        `name`="proposedStatus", 
+                        `title`="Proposed Shelf Life Conformity", 
+                        `type`="text", 
+                        `visible`="(proposedShelfLife > 0)"),
+                    list(
+                        `name`="limiting", 
+                        `title`="Status / Limiting Role", 
                         `type`="text"))))
             self$add(jmvcore::Table$new(
                 options=options,
@@ -722,7 +1002,28 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "alphaPool",
                     "confLevel",
                     "modelChoice",
-                    "trans"),
+                    "trans",
+                    "detailAttr",
+                    "dep2",
+                    "specType2",
+                    "lsl2",
+                    "usl2",
+                    "trans2",
+                    "dep3",
+                    "specType3",
+                    "lsl3",
+                    "usl3",
+                    "trans3",
+                    "dep4",
+                    "specType4",
+                    "lsl4",
+                    "usl4",
+                    "trans4",
+                    "dep5",
+                    "specType5",
+                    "lsl5",
+                    "usl5",
+                    "trans5"),
                 columns=list(
                     list(
                         `name`="term", 
@@ -768,7 +1069,28 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "alphaPool",
                     "confLevel",
                     "modelChoice",
-                    "trans"),
+                    "trans",
+                    "detailAttr",
+                    "dep2",
+                    "specType2",
+                    "lsl2",
+                    "usl2",
+                    "trans2",
+                    "dep3",
+                    "specType3",
+                    "lsl3",
+                    "usl3",
+                    "trans3",
+                    "dep4",
+                    "specType4",
+                    "lsl4",
+                    "usl4",
+                    "trans4",
+                    "dep5",
+                    "specType5",
+                    "lsl5",
+                    "usl5",
+                    "trans5"),
                 columns=list(
                     list(
                         `name`="metric", 
@@ -812,7 +1134,28 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "modelChoice",
                     "trans",
                     "accelCondition",
-                    "studyDuration")))
+                    "studyDuration",
+                    "detailAttr",
+                    "dep2",
+                    "specType2",
+                    "lsl2",
+                    "usl2",
+                    "trans2",
+                    "dep3",
+                    "specType3",
+                    "lsl3",
+                    "usl3",
+                    "trans3",
+                    "dep4",
+                    "specType4",
+                    "lsl4",
+                    "usl4",
+                    "trans4",
+                    "dep5",
+                    "specType5",
+                    "lsl5",
+                    "usl5",
+                    "trans5")))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="shelfPlot",
@@ -834,7 +1177,28 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "modelChoice",
                     "trans",
                     "accelCondition",
-                    "studyDuration")))
+                    "studyDuration",
+                    "detailAttr",
+                    "dep2",
+                    "specType2",
+                    "lsl2",
+                    "usl2",
+                    "trans2",
+                    "dep3",
+                    "specType3",
+                    "lsl3",
+                    "usl3",
+                    "trans3",
+                    "dep4",
+                    "specType4",
+                    "lsl4",
+                    "usl4",
+                    "trans4",
+                    "dep5",
+                    "specType5",
+                    "lsl5",
+                    "usl5",
+                    "trans5")))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="facetPlot",
@@ -856,7 +1220,75 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "modelChoice",
                     "trans",
                     "accelCondition",
-                    "studyDuration")))
+                    "studyDuration",
+                    "detailAttr",
+                    "dep2",
+                    "specType2",
+                    "lsl2",
+                    "usl2",
+                    "trans2",
+                    "dep3",
+                    "specType3",
+                    "lsl3",
+                    "usl3",
+                    "trans3",
+                    "dep4",
+                    "specType4",
+                    "lsl4",
+                    "usl4",
+                    "trans4",
+                    "dep5",
+                    "specType5",
+                    "lsl5",
+                    "usl5",
+                    "trans5")))
+            self$add(jmvcore::Array$new(
+                options=options,
+                name="batchPlots",
+                title="Individual Batch Shelf Life Plots",
+                visible="(showBatchPlots)",
+                items="(levels(batch))",
+                clearWith=list(
+                    "dep",
+                    "time",
+                    "batch",
+                    "specType",
+                    "lsl",
+                    "usl",
+                    "alphaPool",
+                    "confLevel",
+                    "modelChoice",
+                    "trans",
+                    "accelCondition",
+                    "studyDuration",
+                    "detailAttr",
+                    "dep2",
+                    "specType2",
+                    "lsl2",
+                    "usl2",
+                    "trans2",
+                    "dep3",
+                    "specType3",
+                    "lsl3",
+                    "usl3",
+                    "trans3",
+                    "dep4",
+                    "specType4",
+                    "lsl4",
+                    "usl4",
+                    "trans4",
+                    "dep5",
+                    "specType5",
+                    "lsl5",
+                    "usl5",
+                    "trans5"),
+                template=jmvcore::Image$new(
+                    options=options,
+                    title="$key",
+                    width=640,
+                    height=440,
+                    renderFun=".batchPlot",
+                    requiresData=TRUE)))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="ratePlot",
@@ -872,7 +1304,28 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "batch",
                     "modelChoice",
                     "trans",
-                    "alphaPool")))
+                    "alphaPool",
+                    "detailAttr",
+                    "dep2",
+                    "specType2",
+                    "lsl2",
+                    "usl2",
+                    "trans2",
+                    "dep3",
+                    "specType3",
+                    "lsl3",
+                    "usl3",
+                    "trans3",
+                    "dep4",
+                    "specType4",
+                    "lsl4",
+                    "usl4",
+                    "trans4",
+                    "dep5",
+                    "specType5",
+                    "lsl5",
+                    "usl5",
+                    "trans5")))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="predPlot",
@@ -894,7 +1347,28 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "modelChoice",
                     "accelCondition",
                     "trans",
-                    "studyDuration")))
+                    "studyDuration",
+                    "detailAttr",
+                    "dep2",
+                    "specType2",
+                    "lsl2",
+                    "usl2",
+                    "trans2",
+                    "dep3",
+                    "specType3",
+                    "lsl3",
+                    "usl3",
+                    "trans3",
+                    "dep4",
+                    "specType4",
+                    "lsl4",
+                    "usl4",
+                    "trans4",
+                    "dep5",
+                    "specType5",
+                    "lsl5",
+                    "usl5",
+                    "trans5")))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="diagPlot",
@@ -910,12 +1384,67 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "batch",
                     "modelChoice",
                     "alphaPool",
-                    "trans")))
+                    "trans",
+                    "detailAttr",
+                    "dep2",
+                    "specType2",
+                    "lsl2",
+                    "usl2",
+                    "trans2",
+                    "dep3",
+                    "specType3",
+                    "lsl3",
+                    "usl3",
+                    "trans3",
+                    "dep4",
+                    "specType4",
+                    "lsl4",
+                    "usl4",
+                    "trans4",
+                    "dep5",
+                    "specType5",
+                    "lsl5",
+                    "usl5",
+                    "trans5")))
             self$add(jmvcore::Table$new(
                 options=options,
                 name="multiShelfTable",
                 title="Multi-Attribute Shelf Life Summary Table",
                 visible="(showMultiShelfTable && ((length(dep2) > 0 && dep2 != \"\") || (length(dep3) > 0 && dep3 != \"\") || (length(dep4) > 0 && dep4 != \"\") || (length(dep5) > 0 && dep5 != \"\")))",
+                clearWith=list(
+                    "dep",
+                    "time",
+                    "batch",
+                    "specType",
+                    "lsl",
+                    "usl",
+                    "trans",
+                    "dep2",
+                    "specType2",
+                    "lsl2",
+                    "usl2",
+                    "trans2",
+                    "dep3",
+                    "specType3",
+                    "lsl3",
+                    "usl3",
+                    "trans3",
+                    "dep4",
+                    "specType4",
+                    "lsl4",
+                    "usl4",
+                    "trans4",
+                    "dep5",
+                    "specType5",
+                    "lsl5",
+                    "usl5",
+                    "trans5",
+                    "confLevel",
+                    "alphaPool",
+                    "modelChoice",
+                    "studyDuration",
+                    "accelCondition",
+                    "detailAttr"),
                 columns=list(
                     list(
                         `name`="attr", 
@@ -950,6 +1479,40 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 name="multiBatchTable",
                 title="Multi-Attribute Batch Evaluation Matrix",
                 visible="(showMultiBatchTable && ((length(dep2) > 0 && dep2 != \"\") || (length(dep3) > 0 && dep3 != \"\") || (length(dep4) > 0 && dep4 != \"\") || (length(dep5) > 0 && dep5 != \"\")))",
+                clearWith=list(
+                    "dep",
+                    "time",
+                    "batch",
+                    "specType",
+                    "lsl",
+                    "usl",
+                    "trans",
+                    "dep2",
+                    "specType2",
+                    "lsl2",
+                    "usl2",
+                    "trans2",
+                    "dep3",
+                    "specType3",
+                    "lsl3",
+                    "usl3",
+                    "trans3",
+                    "dep4",
+                    "specType4",
+                    "lsl4",
+                    "usl4",
+                    "trans4",
+                    "dep5",
+                    "specType5",
+                    "lsl5",
+                    "usl5",
+                    "trans5",
+                    "confLevel",
+                    "alphaPool",
+                    "modelChoice",
+                    "studyDuration",
+                    "accelCondition",
+                    "detailAttr"),
                 columns=list(
                     list(
                         `name`="batch", 
@@ -991,7 +1554,41 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=700,
                 height=420,
                 renderFun=".multiShelfPlot",
-                requiresData=FALSE))
+                requiresData=FALSE,
+                clearWith=list(
+                    "dep",
+                    "time",
+                    "batch",
+                    "specType",
+                    "lsl",
+                    "usl",
+                    "trans",
+                    "dep2",
+                    "specType2",
+                    "lsl2",
+                    "usl2",
+                    "trans2",
+                    "dep3",
+                    "specType3",
+                    "lsl3",
+                    "usl3",
+                    "trans3",
+                    "dep4",
+                    "specType4",
+                    "lsl4",
+                    "usl4",
+                    "trans4",
+                    "dep5",
+                    "specType5",
+                    "lsl5",
+                    "usl5",
+                    "trans5",
+                    "confLevel",
+                    "alphaPool",
+                    "modelChoice",
+                    "studyDuration",
+                    "accelCondition",
+                    "detailAttr")))
             self$add(jmvcore::Table$new(
                 options=options,
                 name="arrhTable",
@@ -1076,9 +1673,15 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `type`="number", 
                         `format`="zto,pvalue"),
                     list(
-                        `name`="ci", 
-                        `title`="95% Confidence Interval", 
-                        `type`="text"))))
+                        `name`="ciLower", 
+                        `title`="Lower", 
+                        `superTitle`="95% Confidence Interval", 
+                        `type`="number"),
+                    list(
+                        `name`="ciUpper", 
+                        `title`="Upper", 
+                        `superTitle`="95% Confidence Interval", 
+                        `type`="number"))))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="arrhPlot",
@@ -1128,10 +1731,12 @@ mSTABBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param dep .
 #' @param time .
 #' @param batch .
+#' @param factors .
 #' @param specType .
 #' @param lsl .
 #' @param usl .
 #' @param alphaPool .
+#' @param alphaFactor .
 #' @param confLevel .
 #' @param modelChoice .
 #' @param trans .
@@ -1160,6 +1765,7 @@ mSTABBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param showMultiShelfPlot .
 #' @param detailAttr .
 #' @param showArrh .
+#' @param arrhDataCondition .
 #' @param tempVar .
 #' @param arrhEa .
 #' @param arrhTempAcc .
@@ -1171,27 +1777,39 @@ mSTABBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param showArrhPlot .
 #' @param showArrhTrajPlot .
 #' @param accelCondition .
+#' @param storageCond .
+#' @param accelResult .
+#' @param intermedResult .
+#' @param supportingData .
+#' @param littleChange .
 #' @param studyDuration .
+#' @param proposedShelfLife .
+#' @param showRegTable .
 #' @param showPoolTable .
 #' @param showShelfTable .
+#' @param showComboShelfTable .
 #' @param showCoefTable .
 #' @param showDiagTable .
 #' @param showStabPlot .
 #' @param showDiagPlot .
 #' @param showShelfPlot .
 #' @param showFacetPlot .
+#' @param showBatchPlots .
 #' @param showRatePlot .
 #' @param showPredPlot .
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$instructions} \tab \tab \tab \tab \tab a html \cr
 #'   \code{results$poolTable} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$regTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$shelfTable} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$comboShelfTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$coefTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$diagTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$stabPlot} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$shelfPlot} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$facetPlot} \tab \tab \tab \tab \tab an image \cr
+#'   \code{results$batchPlots} \tab \tab \tab \tab \tab an array of images \cr
 #'   \code{results$ratePlot} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$predPlot} \tab \tab \tab \tab \tab an image \cr
 #'   \code{results$diagPlot} \tab \tab \tab \tab \tab an image \cr
@@ -1217,10 +1835,12 @@ mSTAB <- function(
     dep,
     time,
     batch,
+    factors = list(),
     specType = "lower",
     lsl = 90,
     usl = 105,
     alphaPool = 0.25,
+    alphaFactor = 0.05,
     confLevel = 0.95,
     modelChoice = "auto",
     trans = "none",
@@ -1249,6 +1869,7 @@ mSTAB <- function(
     showMultiShelfPlot = TRUE,
     detailAttr = "worst",
     showArrh = FALSE,
+    arrhDataCondition = "long_term",
     tempVar,
     arrhEa = 83.14,
     arrhTempAcc = 40,
@@ -1260,15 +1881,24 @@ mSTAB <- function(
     showArrhPlot = TRUE,
     showArrhTrajPlot = TRUE,
     accelCondition = "none",
+    storageCond = "room",
+    accelResult = "not_tested",
+    intermedResult = "not_applicable",
+    supportingData = TRUE,
+    littleChange = FALSE,
     studyDuration = 0,
+    proposedShelfLife = 0,
+    showRegTable = TRUE,
     showPoolTable = TRUE,
     showShelfTable = TRUE,
+    showComboShelfTable = TRUE,
     showCoefTable = TRUE,
     showDiagTable = TRUE,
     showStabPlot = TRUE,
     showDiagPlot = FALSE,
     showShelfPlot = FALSE,
     showFacetPlot = FALSE,
+    showBatchPlots = FALSE,
     showRatePlot = FALSE,
     showPredPlot = FALSE) {
 
@@ -1278,6 +1908,7 @@ mSTAB <- function(
     if ( ! missing(dep)) dep <- jmvcore::resolveQuo(jmvcore::enquo(dep))
     if ( ! missing(time)) time <- jmvcore::resolveQuo(jmvcore::enquo(time))
     if ( ! missing(batch)) batch <- jmvcore::resolveQuo(jmvcore::enquo(batch))
+    if ( ! missing(factors)) factors <- jmvcore::resolveQuo(jmvcore::enquo(factors))
     if ( ! missing(dep2)) dep2 <- jmvcore::resolveQuo(jmvcore::enquo(dep2))
     if ( ! missing(dep3)) dep3 <- jmvcore::resolveQuo(jmvcore::enquo(dep3))
     if ( ! missing(dep4)) dep4 <- jmvcore::resolveQuo(jmvcore::enquo(dep4))
@@ -1289,6 +1920,7 @@ mSTAB <- function(
             `if`( ! missing(dep), dep, NULL),
             `if`( ! missing(time), time, NULL),
             `if`( ! missing(batch), batch, NULL),
+            `if`( ! missing(factors), factors, NULL),
             `if`( ! missing(dep2), dep2, NULL),
             `if`( ! missing(dep3), dep3, NULL),
             `if`( ! missing(dep4), dep4, NULL),
@@ -1296,15 +1928,18 @@ mSTAB <- function(
             `if`( ! missing(tempVar), tempVar, NULL))
 
     for (v in batch) if (v %in% names(data)) data[[v]] <- as.factor(data[[v]])
+    for (v in factors) if (v %in% names(data)) data[[v]] <- as.factor(data[[v]])
 
     options <- mSTABOptions$new(
         dep = dep,
         time = time,
         batch = batch,
+        factors = factors,
         specType = specType,
         lsl = lsl,
         usl = usl,
         alphaPool = alphaPool,
+        alphaFactor = alphaFactor,
         confLevel = confLevel,
         modelChoice = modelChoice,
         trans = trans,
@@ -1333,6 +1968,7 @@ mSTAB <- function(
         showMultiShelfPlot = showMultiShelfPlot,
         detailAttr = detailAttr,
         showArrh = showArrh,
+        arrhDataCondition = arrhDataCondition,
         tempVar = tempVar,
         arrhEa = arrhEa,
         arrhTempAcc = arrhTempAcc,
@@ -1344,15 +1980,24 @@ mSTAB <- function(
         showArrhPlot = showArrhPlot,
         showArrhTrajPlot = showArrhTrajPlot,
         accelCondition = accelCondition,
+        storageCond = storageCond,
+        accelResult = accelResult,
+        intermedResult = intermedResult,
+        supportingData = supportingData,
+        littleChange = littleChange,
         studyDuration = studyDuration,
+        proposedShelfLife = proposedShelfLife,
+        showRegTable = showRegTable,
         showPoolTable = showPoolTable,
         showShelfTable = showShelfTable,
+        showComboShelfTable = showComboShelfTable,
         showCoefTable = showCoefTable,
         showDiagTable = showDiagTable,
         showStabPlot = showStabPlot,
         showDiagPlot = showDiagPlot,
         showShelfPlot = showShelfPlot,
         showFacetPlot = showFacetPlot,
+        showBatchPlots = showBatchPlots,
         showRatePlot = showRatePlot,
         showPredPlot = showPredPlot)
 

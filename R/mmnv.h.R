@@ -229,11 +229,11 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 options=options,
                 name="instructions",
                 title="Instructions & Methodological Guidance",
-                visible=TRUE))
+                visible=FALSE))
             self$add(jmvcore::Table$new(
                 options=options,
                 name="multivariateTable",
-                title="Multivariate Tests (MANOVA)",
+                title="Multivariate Tests",
                 visible=TRUE,
                 refs=list(
                     "obrien1985",
@@ -251,18 +251,17 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 columns=list(
                     list(
                         `name`="term", 
-                        `title`="Effect / Source", 
+                        `title`="Effect", 
                         `type`="text", 
                         `combineBelow`=TRUE),
                     list(
                         `name`="test", 
-                        `title`="Multiv. Test", 
+                        `title`="Test", 
                         `type`="text"),
                     list(
                         `name`="stat", 
                         `title`="Value", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="f", 
                         `title`="F", 
@@ -288,7 +287,7 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Table$new(
                 options=options,
                 name="univariateTable",
-                title="Tests of Within-Subjects Effects (Univariate ANOVA)",
+                title="Tests of Within-Subjects Effects",
                 visible="(showUnivariate)",
                 refs=list(
                     "greenhouse1959",
@@ -301,7 +300,7 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 columns=list(
                     list(
                         `name`="term", 
-                        `title`="Effect / Source", 
+                        `title`="Effect", 
                         `type`="text", 
                         `combineBelow`=TRUE),
                     list(
@@ -341,7 +340,7 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Table$new(
                 options=options,
                 name="sphericityTable",
-                title="Mauchly's Sphericity Test & Epsilon Estimates",
+                title="Sphericity Tests & Epsilon Corrections",
                 visible="(showSphericity)",
                 refs=list(
                     "obrien1985"),
@@ -353,7 +352,7 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 columns=list(
                     list(
                         `name`="term", 
-                        `title`="Within-Subjects Effect", 
+                        `title`="Effect", 
                         `type`="text"),
                     list(
                         `name`="mauchlyW", 
@@ -375,12 +374,12 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `format`="zto,pvalue"),
                     list(
                         `name`="gg", 
-                        `title`="Greenhouse-Geisser \u03B5", 
+                        `title`="Greenhouse\u2013Geisser \u03B5", 
                         `type`="number", 
                         `format`="zto"),
                     list(
                         `name`="hf", 
-                        `title`="Huynh-Feldt \u03B5", 
+                        `title`="Huynh\u2013Feldt \u03B5", 
                         `type`="number", 
                         `format`="zto"),
                     list(
@@ -391,7 +390,7 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Table$new(
                 options=options,
                 name="profileTable",
-                title="Profile Analysis Summary",
+                title="Profile Analysis",
                 visible="(showProfileAnalysis)",
                 refs=list(
                     "obrien1985"),
@@ -403,17 +402,16 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 columns=list(
                     list(
                         `name`="hypothesis", 
-                        `title`="Hypothesis / Question", 
+                        `title`="Hypothesis", 
                         `type`="text"),
                     list(
                         `name`="test", 
-                        `title`="Test Method", 
+                        `title`="Test", 
                         `type`="text"),
                     list(
                         `name`="stat", 
                         `title`="Value", 
-                        `type`="number", 
-                        `format`="zto"),
+                        `type`="number"),
                     list(
                         `name`="f", 
                         `title`="F", 
@@ -433,12 +431,12 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `format`="zto,pvalue"),
                     list(
                         `name`="conclusion", 
-                        `title`="Interpretation & Decision", 
+                        `title`="Interpretation", 
                         `type`="text"))))
             self$add(jmvcore::Table$new(
                 options=options,
                 name="contrastsTable",
-                title="Tests of Within-Subjects Contrasts",
+                title="Within-Subjects Contrasts",
                 visible="(showContrastsTable)",
                 clearWith=list(
                     "rmCells",
@@ -449,7 +447,7 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 columns=list(
                     list(
                         `name`="contrast", 
-                        `title`="Contrast / Trend", 
+                        `title`="Contrast", 
                         `type`="text"),
                     list(
                         `name`="ss", 
@@ -480,7 +478,7 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Table$new(
                 options=options,
                 name="assumptionsTable",
-                title="Model Diagnostics & Assumption Checks",
+                title="Assumption Checks",
                 visible="(showAssumptionChecks)",
                 refs=list(
                     "box1949",
@@ -493,7 +491,7 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 columns=list(
                     list(
                         `name`="test", 
-                        `title`="Diagnostic Test", 
+                        `title`="Test", 
                         `type`="text"),
                     list(
                         `name`="stat", 
@@ -518,12 +516,12 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `format`="zto,pvalue"),
                     list(
                         `name`="assessment", 
-                        `title`="Assessment & Recommendation", 
+                        `title`="Assessment", 
                         `type`="text"))))
             self$add(jmvcore::Table$new(
                 options=options,
                 name="meansTable",
-                title="Marginal Means & Descriptives",
+                title="Descriptives",
                 visible="(showMeansTable)",
                 clearWith=list(
                     "rmCells",
@@ -566,7 +564,7 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Image$new(
                 options=options,
                 name="profilePlot",
-                title="Trajectory / Profile Plot",
+                title="Trajectory Plot",
                 visible="(showProfilePlot)",
                 width=650,
                 height=450,
@@ -580,7 +578,7 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Image$new(
                 options=options,
                 name="hePlot",
-                title="Group Scatter with Data Ellipses",
+                title="Scatter with Data Ellipses",
                 visible="(showHePlot)",
                 requiresData=TRUE,
                 width=550,
@@ -594,7 +592,7 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(jmvcore::Image$new(
                 options=options,
                 name="outlierPlot",
-                title="Multivariate Outliers (Mahalanobis Distance) Plot",
+                title="Multivariate Outliers (Mahalanobis Distance)",
                 visible="(showOutlierPlot)",
                 width=550,
                 height=400,
@@ -626,11 +624,10 @@ mMNVBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 weightsSupport = 'auto')
         }))
 
-#' MANOVA & Repeated Measures
+#' Repeated Measures & Profile Analysis
 #'
-#' Multivariate Analysis of Variance (MANOVA), Repeated Measures MANOVA 
-#' without sphericity assumption (O'Brien & Kaiser, 1985), and Profile 
-#' Analysis.
+#' Repeated Measures MANOVA without sphericity assumption (O'Brien & Kaiser, 
+#' 1985) and Profile Analysis.
 #' @param data .
 #' @param rmCells .
 #' @param rmFactorName .

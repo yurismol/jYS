@@ -8,10 +8,10 @@ items:
     - name: instructions
       title: Instructions & Methodological Guidance
       type: Html
-      visible: true
+      visible: false
 
     - name: multivariateTable
-      title: Multivariate Tests (MANOVA)
+      title: Multivariate Tests
       type: Table
       visible: true
       refs: [obrien1985, fox2019, olson1974]
@@ -26,16 +26,15 @@ items:
           - testRoy
       columns:
           - name: term
-            title: Effect / Source
+            title: Effect
             type: text
             combineBelow: true
           - name: test
-            title: Multiv. Test
+            title: Test
             type: text
           - name: stat
             title: Value
             type: number
-            format: zto
           - name: f
             title: F
             type: number
@@ -55,7 +54,7 @@ items:
             format: zto
 
     - name: univariateTable
-      title: Tests of Within-Subjects Effects (Univariate ANOVA)
+      title: Tests of Within-Subjects Effects
       type: Table
       visible: (showUnivariate)
       refs: [greenhouse1959, huynh1976]
@@ -66,7 +65,7 @@ items:
           - covs
       columns:
           - name: term
-            title: Effect / Source
+            title: Effect
             type: text
             combineBelow: true
           - name: correction
@@ -97,7 +96,7 @@ items:
             format: zto
 
     - name: sphericityTable
-      title: Mauchly's Sphericity Test & Epsilon Estimates
+      title: Sphericity Tests & Epsilon Corrections
       type: Table
       visible: (showSphericity)
       refs: [obrien1985]
@@ -108,7 +107,7 @@ items:
           - covs
       columns:
           - name: term
-            title: Within-Subjects Effect
+            title: Effect
             type: text
           - name: mauchlyW
             title: Mauchly's W
@@ -125,11 +124,11 @@ items:
             type: number
             format: zto,pvalue
           - name: gg
-            title: Greenhouse-Geisser ε
+            title: Greenhouse–Geisser ε
             type: number
             format: zto
           - name: hf
-            title: Huynh-Feldt ε
+            title: Huynh–Feldt ε
             type: number
             format: zto
           - name: lower
@@ -138,7 +137,7 @@ items:
             format: zto
 
     - name: profileTable
-      title: Profile Analysis Summary
+      title: Profile Analysis
       type: Table
       visible: (showProfileAnalysis)
       refs: [obrien1985]
@@ -149,15 +148,14 @@ items:
           - covs
       columns:
           - name: hypothesis
-            title: Hypothesis / Question
+            title: Hypothesis
             type: text
           - name: test
-            title: Test Method
+            title: Test
             type: text
           - name: stat
             title: Value
             type: number
-            format: zto
           - name: f
             title: F
             type: number
@@ -172,11 +170,11 @@ items:
             type: number
             format: zto,pvalue
           - name: conclusion
-            title: Interpretation & Decision
+            title: Interpretation
             type: text
 
     - name: contrastsTable
-      title: Tests of Within-Subjects Contrasts
+      title: Within-Subjects Contrasts
       type: Table
       visible: (showContrastsTable)
       clearWith:
@@ -187,7 +185,7 @@ items:
           - contrastType
       columns:
           - name: contrast
-            title: Contrast / Trend
+            title: Contrast
             type: text
           - name: ss
             title: Sum of Squares
@@ -211,7 +209,7 @@ items:
             format: zto
 
     - name: assumptionsTable
-      title: Model Diagnostics & Assumption Checks
+      title: Assumption Checks
       type: Table
       visible: (showAssumptionChecks)
       refs: [box1949, mardia1970]
@@ -222,7 +220,7 @@ items:
           - covs
       columns:
           - name: test
-            title: Diagnostic Test
+            title: Test
             type: text
           - name: stat
             title: Statistic
@@ -241,11 +239,11 @@ items:
             type: number
             format: zto,pvalue
           - name: assessment
-            title: Assessment & Recommendation
+            title: Assessment
             type: text
 
     - name: meansTable
-      title: Marginal Means & Descriptives
+      title: Descriptives
       type: Table
       visible: (showMeansTable)
       clearWith:
@@ -280,7 +278,7 @@ items:
             type: number
 
     - name: profilePlot
-      title: Trajectory / Profile Plot
+      title: Trajectory Plot
       type: Image
       visible: (showProfilePlot)
       width: 650
@@ -294,7 +292,7 @@ items:
           - plotError
 
     - name: hePlot
-      title: Group Scatter with Data Ellipses
+      title: Scatter with Data Ellipses
       type: Image
       visible: (showHePlot)
       requiresData: true
@@ -308,7 +306,7 @@ items:
           - covs
 
     - name: outlierPlot
-      title: Multivariate Outliers (Mahalanobis Distance) Plot
+      title: Multivariate Outliers (Mahalanobis Distance)
       type: Image
       visible: (showOutlierPlot)
       width: 550

@@ -130,11 +130,11 @@ children:
             enable: (showCox)
           - type: CheckBox
             name: coxAssump
-            enable: (showCox)
+            enable: (showCox && !coxFirth)
             children:
               - type: CheckBox
                 name: showSchoenfeldPlot
-                enable: (showCox && coxAssump)
+                enable: (showCox && !coxFirth && coxAssump)
           - type: CheckBox
             name: showTimeDepEffects
             enable: (showCox)

@@ -33,8 +33,6 @@ children:
             name: IQR
             optionName: outlcheck
             optionPart: IQR
-            events:
-              change: './mout.events::onChange_iqr'
             children:
               - type: ComboBox
                 name: fence
@@ -46,8 +44,6 @@ children:
             name: ZS
             optionName: outlcheck
             optionPart: ZS
-            events:
-              change: './mout.events::onChange_iqr'
             children:
               - type: ComboBox
                 name: tholdZS

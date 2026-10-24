@@ -57,6 +57,8 @@ mMOUTClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             method <- self$options$method
             alpha <- as.numeric(self$options$alpha)
 
+            if (length(vars) == 0)
+                return()
             if (length(vars) < 2) {
                 jmvcore::reject(.("Please select at least 2 variables for multivariate analysis."), code='')
             }

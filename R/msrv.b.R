@@ -36,7 +36,7 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
           fineGrayTable$setNote('fg_note', .('Subdistribution hazard ratio (sHR) models covariate effects directly on cumulative incidence with robust SE.'))
 
           rocTable <- self$results$rocSection$rocTable
-          rocTable$setNote('roc_note', .('Evaluates marker discriminative accuracy (AUC) at time t. Cut-off is determined by the Youden index.'))
+          rocTable$setNote('roc_note', .('Evaluates marker discriminative accuracy (AUC) at time t. Cut-off is determined by the Youden index. Subjects censored before time t are excluded without IPCW weighting.'))
 
           timeDepTable <- self$results$coxSection$timeDepTable
           timeDepTable$setNote('timedep_note', .('Models time-varying effects via time interactions. Significant p-value indicates hazard ratio changes over time.'))
@@ -396,6 +396,7 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                   dat_cox <- dat[stats::complete.cases(dat[, cols_to_check, drop=FALSE]), ]
 
                   if (nrow(dat_cox) > 0) {
+                      dat_cox <- droplevels(dat_cox)
                       surv_cox_str <- if (has_tstart) "survival::Surv(..tstart, ..time, ..event)" else "survival::Surv(..time, ..event)"
                       formula_cox <- paste(surv_cox_str, "~", paste(terms, collapse = " + "))
 
@@ -403,7 +404,23 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                           if ( ! requireNamespace("coxphf", quietly = TRUE)) {
                               cox_fit <- try(stop(jmvcore::.("The 'coxphf' package is required for Firth's penalized likelihood Cox regression. Please install it with install.packages('coxphf').")), silent = TRUE)
                           } else {
-                              cox_fit <- try(coxphf::coxphf(as.formula(formula_cox), data = dat_cox, pl = TRUE), silent = TRUE)
+                              warn_coxfirth <- character(0)
+                              cox_fit <- try(withCallingHandlers(
+                                  coxphf::coxphf(as.formula(formula_cox), data = dat_cox, pl = TRUE),
+                                  warning = function(w) {
+                                      warn_coxfirth <<- c(warn_coxfirth, conditionMessage(w))
+                                      invokeRestart("muffleWarning")
+                                  }
+                              ), silent = TRUE)
+                              if (!inherits(cox_fit, "try-error") && (length(warn_coxfirth) > 0 || any(is.na(cox_fit$ci.lower)) || any(is.na(cox_fit$prob)))) {
+                                  wmsg <- if (length(warn_coxfirth) > 0) paste(unique(warn_coxfirth), collapse = "; ") else jmvcore::.("Profile likelihood confidence limits or p-values could not be evaluated.")
+                                  self$results$insert(1, jmvcore::Notice$new(
+                                      self$options,
+                                      name = "coxFirthConvNotice",
+                                      type = jmvcore::NoticeType$WARNING,
+                                      content = jmvcore::format(jmvcore::.("Firth's Cox regression warning: {msg}"), msg = wmsg)
+                                  ))
+                              }
                           }
                       } else {
                           cluster_arg <- if (has_cluster) dat_cox$..cluster else NULL
@@ -483,7 +500,7 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                   )
                               }
 
-                              coefTable$setNote("firth_note", jmvcore::.("<b>Firth's penalized likelihood</b> (Firth, 1993) reduces small-sample bias and addresses monotone likelihood (separation) in Cox regression. Parameters and 95% hazard ratio confidence intervals are estimated using penalized profile likelihood."))
+                              coefTable$setNote("firth_note", jmvcore::.("<b>Firth's penalized likelihood</b> (Firth, 1993) reduces small-sample bias and addresses monotone likelihood (separation) in Cox regression. Parameters are estimated by penalized maximum likelihood; hazard ratio confidence intervals and p-values are based on profile penalized likelihood ratio tests, while z is a Wald statistic."))
                               if (has_cluster) {
                                   coefTable$setNote("cluster_note", jmvcore::.("Clustering is not supported with Firth's penalized Cox regression; cluster adjustment was omitted."))
                               } else {
@@ -782,6 +799,11 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               }
 
               adjSummaryTable$deleteRows()
+              if (isTRUE(self$options$coxFirth)) {
+                  adjSummaryTable$setNote('firth_na_note', jmvcore::.("Firth's penalized likelihood is not applicable to adjusted survival curves; standard Cox regression was used."))
+              } else {
+                  adjSummaryTable$setNote('firth_na_note', NULL)
+              }
                   if (is.null(exp_var) || exp_var == "" || !(exp_var %in% names(dat))) {
                       adjSummaryTable$setNote('exp_warn', .("Please select a Grouping Variable or Exposure Variable to compute adjusted survival curves."))
                       self$results$adjSection$adjPlot$setState(NULL)
@@ -1780,28 +1802,21 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                       if (has_cluster) fg_vars <- c(fg_vars, "..cluster")
                       dat_fg <- stats::na.omit(dat_comp[, fg_vars, drop = FALSE])
 
+                      subjid <- if (has_cluster) dat_fg$..cluster else seq_len(nrow(dat_fg))
+                      dat_fg$..subjid <- subjid
+
                       surv_fg_str <- if (has_tstart) "survival::Surv(..tstart, ..time, ..comp_event)" else "survival::Surv(..time, ..comp_event)"
-                      fg_formula_terms <- terms
-                      if (has_cluster) fg_formula_terms <- c(fg_formula_terms, "..cluster")
+                      fg_formula_terms <- c(terms, "..subjid")
                       fg_form_str <- paste(surv_fg_str, "~", paste(fg_formula_terms, collapse = " + "))
                       fg_formula <- stats::as.formula(fg_form_str)
 
-                      id_arg <- if (has_cluster) dat_fg$..cluster else if (has_tstart) seq_len(nrow(dat_fg)) else NULL
-                      pdata <- if (!is.null(id_arg)) {
-                          try(survival::finegray(fg_formula, data = dat_fg, etype = target_etype, id = id_arg), silent = TRUE)
-                      } else {
-                          try(survival::finegray(fg_formula, data = dat_fg, etype = target_etype), silent = TRUE)
-                      }
+                      pdata <- try(survival::finegray(fg_formula, data = dat_fg, etype = target_etype, id = ..subjid), silent = TRUE)
 
                       if (!inherits(pdata, "try-error")) {
                           cox_form_str <- paste("survival::Surv(fgstart, fgstop, fgstatus) ~", paste(terms, collapse = " + "))
                           cox_formula <- stats::as.formula(cox_form_str)
 
-                          fg_fit <- if (has_cluster) {
-                              try(survival::coxph(cox_formula, weight = fgwt, data = pdata, cluster = ..cluster), silent = TRUE)
-                          } else {
-                              try(survival::coxph(cox_formula, weight = fgwt, data = pdata), silent = TRUE)
-                          }
+                          fg_fit <- try(survival::coxph(cox_formula, weight = fgwt, data = pdata, id = ..subjid), silent = TRUE)
 
                           if (!inherits(fg_fit, "try-error")) {
                               s_fg <- summary(fg_fit)
@@ -1841,7 +1856,12 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                               if (has_cluster) {
                                   fgTable$setNote("cluster_note", jmvcore::format(.("Standard errors and confidence intervals are adjusted for clustering by {var} (Huber–White robust sandwich estimator)."), var = subject_id_var))
                               } else {
-                                  fgTable$setNote("cluster_note", NULL)
+                                  fgTable$setNote("cluster_note", jmvcore::.("Standard errors and confidence intervals are computed using the Huber–White robust sandwich estimator grouped by subject."))
+                              }
+                              if (isTRUE(self$options$coxFirth)) {
+                                  fgTable$setNote('firth_na_note', jmvcore::.("Firth's penalized likelihood is not applicable to Fine–Gray competing risks models; standard subdistribution hazard regression was used."))
+                              } else {
+                                  fgTable$setNote('firth_na_note', NULL)
                               }
                               if (has_tstart) {
                                   fgTable$setNote("cp_note", jmvcore::.("Counting process formulation with left-truncation (tstart, elapsed)."))
@@ -2163,9 +2183,15 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
           timeDepTable <- self$results$coxSection$timeDepTable
           timeDepTable$deleteRows()
 
+          if (isTRUE(self$options$coxFirth)) {
+              timeDepTable$setNote('firth_na_note', jmvcore::.("Firth's penalized likelihood is not applicable to time-varying Cox models; standard Cox regression was used."))
+          } else {
+              timeDepTable$setNote('firth_na_note', NULL)
+          }
+
           td_vars <- self$options$timeDepVars
           if (length(td_vars) == 0) {
-              timeDepTable$setNote('no_vars', jmvcore::.("Please specify one or more time-dependent covariates."))
+              timeDepTable$setNote('no_vars', jmvcore::.("Please specify one or more covariates with time-varying effects."))
               return()
           }
           timeDepTable$setNote('no_vars', NULL)
@@ -2174,7 +2200,7 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
           all_preds <- intersect(all_preds, names(dat))
 
           if (length(all_preds) == 0) {
-              timeDepTable$setNote('no_preds', jmvcore::.("No valid predictors found for time-dependent Cox model."))
+              timeDepTable$setNote('no_preds', jmvcore::.("No valid predictors found for time-varying Cox model."))
               return()
           }
           timeDepTable$setNote('no_preds', NULL)
@@ -2185,7 +2211,7 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
           dat_sub <- dat[stats::complete.cases(dat[, cols_needed, drop = FALSE]), ]
           if (nrow(dat_sub) == 0) {
-              timeDepTable$setNote('no_data', jmvcore::.("No complete cases available for time-dependent Cox model."))
+              timeDepTable$setNote('no_data', jmvcore::.("No complete cases available for time-varying Cox model."))
               return()
           }
           timeDepTable$setNote('no_data', NULL)

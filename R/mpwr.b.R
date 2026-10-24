@@ -26,6 +26,25 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             alpha     <- as.numeric(self$options$alpha)
             n_ratio   <- self$options$n_ratio
             var_ratio <- self$options$var_ratio
+            margin    <- self$options$margin
+
+            if (alt %in% c("equivalent", "non-inferior", "superior")) {
+                if (is.null(margin) || is.na(margin) || margin <= 0) {
+                    jmvcore::reject(.("For equivalence, non-inferiority, or superiority hypotheses, the hypothesis margin (δ) must be strictly greater than 0."))
+                    return()
+                }
+            }
+
+            if (alt == "equivalent") {
+                if (calc == "es") {
+                    jmvcore::reject(.("Effect size calculation is not supported for equivalence designs. Please calculate Sample Size (N) or Power instead."))
+                    return()
+                }
+                if (calc == "n" && !is.null(es) && !is.na(es) && abs(es) >= margin) {
+                    jmvcore::reject(.("For equivalence tests, the expected effect size (|d|) must be strictly less than the hypothesis margin (δ)."))
+                    return()
+                }
+            }
 
 
 
@@ -346,6 +365,25 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             alpha     <- as.numeric(self$options$alpha)
             n_ratio   <- self$options$n_ratio
             var_ratio <- self$options$var_ratio
+            margin    <- self$options$margin
+
+            if (alt %in% c("equivalent", "non-inferior", "superior")) {
+                if (is.null(margin) || is.na(margin) || margin <= 0) {
+                    jmvcore::reject(.("For equivalence, non-inferiority, or superiority hypotheses, the hypothesis margin (δ) must be strictly greater than 0."))
+                    return()
+                }
+            }
+
+            if (alt == "equivalent") {
+                if (calc == "es") {
+                    jmvcore::reject(.("Effect size calculation is not supported for equivalence designs. Please calculate Sample Size (N) or Power instead."))
+                    return()
+                }
+                if (calc == "n" && !is.null(es) && !is.na(es) && abs(es) >= margin) {
+                    jmvcore::reject(.("For equivalence tests, the expected effect size (|d|) must be strictly less than the hypothesis margin (δ)."))
+                    return()
+                }
+            }
 
             is_cor       <- design %in% c("onecor", "onecor_np")
             is_spearman  <- design == "onecor_np"
@@ -570,6 +608,25 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             alpha     <- as.numeric(self$options$alpha)
             n_ratio   <- self$options$n_ratio
             var_ratio <- self$options$var_ratio
+            margin    <- self$options$margin
+
+            if (alt %in% c("equivalent", "non-inferior", "superior")) {
+                if (is.null(margin) || is.na(margin) || margin <= 0) {
+                    jmvcore::reject(.("For equivalence, non-inferiority, or superiority hypotheses, the hypothesis margin (δ) must be strictly greater than 0."))
+                    return()
+                }
+            }
+
+            if (alt == "equivalent") {
+                if (calc == "es") {
+                    jmvcore::reject(.("Effect size calculation is not supported for equivalence designs. Please calculate Sample Size (N) or Power instead."))
+                    return()
+                }
+                if (calc == "n" && !is.null(es) && !is.na(es) && abs(es) >= margin) {
+                    jmvcore::reject(.("For equivalence tests, the expected effect size (|d|) must be strictly less than the hypothesis margin (δ)."))
+                    return()
+                }
+            }
 
             is_cor       <- design %in% c("onecor", "onecor_np")
             is_spearman  <- design == "onecor_np"
@@ -775,6 +832,25 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             alpha     <- as.numeric(self$options$alpha)
             n_ratio   <- self$options$n_ratio
             var_ratio <- self$options$var_ratio
+            margin    <- self$options$margin
+
+            if (alt %in% c("equivalent", "non-inferior", "superior")) {
+                if (is.null(margin) || is.na(margin) || margin <= 0) {
+                    jmvcore::reject(.("For equivalence, non-inferiority, or superiority hypotheses, the hypothesis margin (δ) must be strictly greater than 0."))
+                    return()
+                }
+            }
+
+            if (alt == "equivalent") {
+                if (calc == "es") {
+                    jmvcore::reject(.("Effect size calculation is not supported for equivalence designs. Please calculate Sample Size (N) or Power instead."))
+                    return()
+                }
+                if (calc == "n" && !is.null(es) && !is.na(es) && abs(es) >= margin) {
+                    jmvcore::reject(.("For equivalence tests, the expected effect size (|d|) must be strictly less than the hypothesis margin (δ)."))
+                    return()
+                }
+            }
 
             is_cor       <- design %in% c("onecor", "onecor_np")
             is_spearman  <- design == "onecor_np"
@@ -975,6 +1051,25 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             alpha     <- as.numeric(self$options$alpha)
             n_ratio   <- self$options$n_ratio
             var_ratio <- self$options$var_ratio
+            margin    <- self$options$margin
+
+            if (alt %in% c("equivalent", "non-inferior", "superior")) {
+                if (is.null(margin) || is.na(margin) || margin <= 0) {
+                    jmvcore::reject(.("For equivalence, non-inferiority, or superiority hypotheses, the hypothesis margin (δ) must be strictly greater than 0."))
+                    return()
+                }
+            }
+
+            if (alt == "equivalent") {
+                if (calc == "es") {
+                    jmvcore::reject(.("Effect size calculation is not supported for equivalence designs. Please calculate Sample Size (N) or Power instead."))
+                    return()
+                }
+                if (calc == "n" && !is.null(es) && !is.na(es) && abs(es) >= margin) {
+                    jmvcore::reject(.("For equivalence tests, the expected effect size (|d|) must be strictly less than the hypothesis margin (δ)."))
+                    return()
+                }
+            }
 
             is_cor       <- design %in% c("onecor", "onecor_np")
             is_spearman  <- design == "onecor_np"
@@ -1217,6 +1312,25 @@ mPWRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             alpha     <- as.numeric(self$options$alpha)
             n_ratio   <- self$options$n_ratio
             var_ratio <- self$options$var_ratio
+            margin    <- self$options$margin
+
+            if (alt %in% c("equivalent", "non-inferior", "superior")) {
+                if (is.null(margin) || is.na(margin) || margin <= 0) {
+                    jmvcore::reject(.("For equivalence, non-inferiority, or superiority hypotheses, the hypothesis margin (δ) must be strictly greater than 0."))
+                    return()
+                }
+            }
+
+            if (alt == "equivalent") {
+                if (calc == "es") {
+                    jmvcore::reject(.("Effect size calculation is not supported for equivalence designs. Please calculate Sample Size (N) or Power instead."))
+                    return()
+                }
+                if (calc == "n" && !is.null(es) && !is.na(es) && abs(es) >= margin) {
+                    jmvcore::reject(.("For equivalence tests, the expected effect size (|d|) must be strictly less than the hypothesis margin (δ)."))
+                    return()
+                }
+            }
 
             is_cor       <- design %in% c("onecor", "onecor_np")
             is_spearman  <- design == "onecor_np"

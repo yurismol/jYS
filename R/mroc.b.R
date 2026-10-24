@@ -198,7 +198,7 @@ mROCClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
               # data subset
               subs <- ""
-              self$results$text$setContent(" ")
+              # self$results$text removed
               if (!is.null(self$options$groups) && !self$options$sepROC) {
                 dat <- dat[dat[[self$options$groups]] == self$options$selgroup, , drop=FALSE]
               }

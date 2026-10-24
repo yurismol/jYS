@@ -62,7 +62,7 @@ items:
       width:  500
       height: 350
       renderFun: .importancePlot
-      requiresData: true
+
       clearWith:
           - dep
           - covs
@@ -81,7 +81,7 @@ items:
       width:  600
       height: 500
       renderFun: .topoPlot
-      requiresData: true
+
       clearWith:
           - dep
           - covs
@@ -100,7 +100,7 @@ items:
       width:  500
       height: 350
       renderFun: .curvePlot
-      requiresData: true
+
       clearWith:
           - dep
           - covs

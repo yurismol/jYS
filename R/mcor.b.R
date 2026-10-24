@@ -65,7 +65,6 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
         hyp  <- self$options$get('hyp')
         flag <- self$options$get('flag')
         sign <- '* p < .05, ** p < .01, *** p < .001'
-        if (isTRUE(tryCatch(self$options$decSymbol == ",", error = function(e) FALSE))) sign <- '* p < ,05; ** p < ,01; *** p < ,001'
         if (hyp=='pos') {
             matrix$setNote('hyp', .('<b>H\u2090</b> is positive correlation'))
             hyp <- 'greater'
@@ -258,6 +257,52 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             }
             image <- self$results$plot
             image$setState(cor)
+
+            if (nVars > 2 && (self$options$hclust || (self$options$clustMan > ""))) {
+                posClust <- list()
+                if (self$options$hclust && !is.null(cor$hc)) {
+                    hc <- cor$hc
+                    ct <- cutree(hc, k=ifelse(self$options$numClust > nVars, nVars, self$options$numClust))
+                    ct <- ct[hc$order]
+                    ct <- c(ct[!duplicated(ct)], ct[length(ct)])
+                    posClust <- pmatch(names(ct), vars, nomatch=nVars)
+                } else if (self$options$clustMan > "") {
+                    vec_man <- as.numeric(strsplit(self$options$clustMan, ",")[[1]])
+                    posClust <- c(1, vec_man, nVars)
+                }
+                if (length(posClust) > 0) {
+                    nCl <- length(posClust)
+                    posClust[nCl] <- posClust[nCl] + 1
+                    splAt <- function(x, pos) unname(split(x, findInterval(x, pos)))
+                    vec_spl <- splAt(1:nVars, posClust)
+                    if (length(vec_spl) >= 2) {
+                        cmb <- combn(1:(length(vec_spl)), 2)
+                        images <- self$results$get('rplots')
+                        for (i in 1:ncol(cmb)) {
+                            cm <- cmb[, i]
+                            if (length(vec_spl[[cm[1]]]) > length(vec_spl[[cm[2]]])) {
+                                m1 <- vec_spl[[cm[2]]]; m2 <- vec_spl[[cm[1]]]
+                            } else {
+                                m1 <- vec_spl[[cm[1]]]; m2 <- vec_spl[[cm[2]]]
+                            }
+                            crr <- list(
+                                r = cor$r[m1, m2, drop=FALSE],
+                                p = cor$p[m1, m2, drop=FALSE],
+                                m = cor$s
+                            )
+                            key <- paste(cm[1], cm[2], sep="_")
+                            if (key %in% images$itemKeys) {
+                                img_item <- images$get(key=key)
+                                nm <- jmvcore::format(.("Matrix #{i}"), i=i+nCl-1)
+                                img_item$setTitle(nm)
+                                img_item$setStatus('complete')
+                                img_item$setVisible(visible=TRUE)
+                                img_item$setState(crr)
+                            }
+                        }
+                    }
+                }
+            }
 
             if (self$options$glasso) {
                 netMethod <- self$options$netMethod
@@ -462,8 +507,7 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
                  if (self$options$flag) {
                      sign <- '* p < .05, ** p < .01, *** p < .001'
-                     if (isTRUE(tryCatch(self$options$decSymbol == ",", error = function(e) FALSE))) sign <- '* p < ,05; ** p < ,01; *** p < ,001'
-                     glassoTable$setNote('flag', sign)
+                                  glassoTable$setNote('flag', sign)
                  } else {
                      glassoTable$setNote('flag', NULL)
                  }
@@ -766,38 +810,7 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               }
             }
 
-            splAt  <- function(x, pos) unname(split(x, findInterval(x, pos)))
-            vec    <- splAt(1:nVars, posClust)
-            cmb    <- combn(1:(length(vec)), 2)
-            #self$results$pre$setContent(cmb)
-
-            images <- self$results$get('rplots')
-            #images <- groups$get(key=i)$assump$resPlots
-            #images <- self$results$rplots
-
-            for (i in 1:ncol(cmb)) {
-              cm  <- cmb[,i]
-              crr <- list()
-	      if (length(vec[[cm[1]]])>length(vec[[cm[2]]])) {
-                m1 <- vec[[cm[2]]]; m2 <- vec[[cm[1]]]
-              } else {
-                m1 <- vec[[cm[1]]]; m2 <- vec[[cm[2]]]
-              }
-              
-              crr$r <- c$r[m1, m2, drop=FALSE]
-              crr$p <- c$p[m1, m2, drop=FALSE]
-	      crr$m <- c$s
-
-	      key <- paste(cm[1], cm[2], sep="_")
-              #image <- images$addItem(key)
-
-              image <- images$get(key=key)  # or whatever the $get() thing is
-              nm <- jmvcore::format(.("Matrix #{i}"), i=i+nCl-1)
-              image$setTitle(nm)
-              image$setStatus('complete')
-              image$setVisible(visible=TRUE)
-              image$setState(crr)
-            }
+            # rplots states populated in .run()
           }
 
 	  print(p)

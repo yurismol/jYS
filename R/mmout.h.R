@@ -206,7 +206,6 @@ mMOUTResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 height=450,
                 renderFun=".plotDD",
                 visible="(showPlots && (plotType == \"dd\" || plotType == \"both\"))",
-                requiresData=TRUE,
                 clearWith=list(
                     "vars",
                     "group",
@@ -220,7 +219,6 @@ mMOUTResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 height=450,
                 renderFun=".plotQQ",
                 visible="(showPlots && (plotType == \"qq\" || plotType == \"both\"))",
-                requiresData=TRUE,
                 clearWith=list(
                     "vars",
                     "group",

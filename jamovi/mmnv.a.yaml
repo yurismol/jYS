@@ -1,11 +1,11 @@
 ---
 name:  mMNV
-title: MANOVA & Repeated Measures
+title: Repeated Measures & Profile Analysis
 menuGroup: jYS
 menuSubgroup: Classical & Advanced ANOVA
-menuTitle: MANOVA & Repeated Measures
+menuTitle: Repeated Measures & Profile Analysis
 description:
-    main: Multivariate Analysis of Variance (MANOVA), Repeated Measures MANOVA without sphericity assumption (O'Brien & Kaiser, 1985), and Profile Analysis.
+    main: Repeated Measures MANOVA without sphericity assumption (O'Brien & Kaiser, 1985) and Profile Analysis.
 version: '1.0.0'
 jas: '1.2'
 
@@ -14,7 +14,7 @@ options:
       type: Data
 
     - name: rmCells
-      title: Repeated Measures Variables / Time Points
+      title: Repeated Measures Cells (Within-Subjects)
       type: Variables
       suggested:
         - continuous
@@ -57,7 +57,7 @@ options:
       default: true
 
     - name: testHotelling
-      title: Hotelling-Lawley Trace
+      title: Hotelling–Lawley Trace
       type: Bool
       default: true
 
@@ -83,37 +83,37 @@ options:
       default: polynomial
 
     - name: showUnivariate
-      title: Univariate Tests (with Sphericity Corrections)
+      title: Univariate Tests (Sphericity Corrections)
       type: Bool
       default: true
 
     - name: showSphericity
-      title: Mauchly's Sphericity Test & Epsilon Estimates
+      title: Sphericity Tests & Epsilon Corrections
       type: Bool
       default: true
 
     - name: showProfileAnalysis
-      title: Profile Analysis (Parallelism, Coincidence, Flatness)
+      title: Profile Analysis
       type: Bool
       default: true
 
     - name: showContrastsTable
-      title: Within-Subjects Contrasts Table
+      title: Within-Subjects Contrasts
       type: Bool
       default: true
 
     - name: showAssumptionChecks
-      title: Model Diagnostics & Assumption Checks
+      title: Assumption Checks
       type: Bool
       default: true
 
     - name: showMeansTable
-      title: Marginal Means & Descriptives Table
+      title: Descriptives
       type: Bool
       default: true
 
     - name: showProfilePlot
-      title: Trajectory / Profile Plot
+      title: Trajectory Plot
       type: Bool
       default: true
 
@@ -130,12 +130,12 @@ options:
       default: ci
 
     - name: showHePlot
-      title: Group Scatter with Data Ellipses
+      title: Scatter with Data Ellipses
       type: Bool
       default: false
 
     - name: showOutlierPlot
-      title: Multivariate Outliers (Mahalanobis Distance) Plot
+      title: Multivariate Outliers (Mahalanobis Distance)
       type: Bool
       default: false
 ...

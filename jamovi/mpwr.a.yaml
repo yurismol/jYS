@@ -180,7 +180,7 @@ options:
       default: 0
 
     - name: margin
-      title: "Equivalence / Non-Inferiority / Superiority margin"
+      title: "Hypothesis margin (δ)"
       type: Number
       default: 0
 

@@ -421,7 +421,6 @@ mRFResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=550,
                 height=400,
                 renderFun=".importancePlot",
-                requiresData=TRUE,
                 clearWith=list(
                     "dep",
                     "covs",
@@ -442,7 +441,6 @@ mRFResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=550,
                 height=350,
                 renderFun=".oobCurvePlot",
-                requiresData=TRUE,
                 clearWith=list(
                     "dep",
                     "covs",
@@ -714,7 +712,6 @@ mRFResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     width=550,
                     height=400,
                     renderFun=".pdpPlot",
-                    requiresData=TRUE,
                     clearWith=list(
                         "dep",
                         "covs",

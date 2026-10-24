@@ -69,7 +69,7 @@ options:
         - factor
 
     - name: covariates
-      title: Covariates (Cox regression)
+      title: Covariates (Adjustment / Confounders)
       type: Variables
       required: false
       suggested:

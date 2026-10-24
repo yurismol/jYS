@@ -128,7 +128,7 @@ mSNPClass <- R6::R6Class(
                     G <- length(groups)
                     if (G < 2) G <- 2 # fallback
                     df_gt <- G - 1
-                    df_poly <- if (isTRUE(self$options$polyDf1)) G - 1 else 2 * (G - 1)
+                    df_poly <- 2 * (G - 1)
 
                     groupTable$addColumn(
                         name = "genotype_model",
@@ -189,7 +189,7 @@ mSNPClass <- R6::R6Class(
             assocTable$setNote('n2', .("<b>Odds Ratio (OR)</b> quantifies the strength of association between an allele/genotype and the outcome. <b>OR > 1</b> indicates increased risk, <b>OR < 1</b> indicates protective effect, <b>OR = 1</b> indicates no association. The 95% CI that does not cross 1.0 indicates significance."))
             assocTable$setNote('n3', .("<b>Genetic models</b> test the association under different inheritance patterns: <b>Codominant</b> (AA vs AB vs BB), <b>Dominant</b> (AA vs AB+BB), <b>Recessive</b> (AA+AB vs BB), <b>Overdominant</b> (AA+BB vs AB), <b>Log-additive</b> (trend test for allele dose 0/1/2)."))
             assocTable$setNote('n4', .("<b>p-adjusted</b> is the p-value corrected for multiple testing across markers using the selected method (Bonferroni, Holm, or Benjamini–Hochberg FDR)."))
-            assocTable$setNote('n5', .("<b>Best model selection</b>: the genetic model with the lowest p-value is highlighted. This helps identify the most likely mode of inheritance for the observed association."))
+            assocTable$setNote('n5', .("<b>Model comparison</b>: the genetic model with the lowest p-value (or lowest AIC) indicates the most likely mode of inheritance for the observed association."))
             
             popTable$setNote('n1', .("<b>MAF (Minor Allele Frequency)</b> is the frequency of the less common allele in the population. Markers with <b>MAF < 0.01</b> are typically considered monomorphic and may be excluded from analysis. <b>MAF < 0.05</b> indicates a rare variant."))
             popTable$setNote('n2', .("<b>PIC (Polymorphism Information Content)</b> measures the informativeness of a genetic marker. <b>PIC > 0.5</b> is highly informative, <b>0.25 < PIC < 0.5</b> is moderately informative, <b>PIC < 0.25</b> is slightly informative (Botstein et al., 1980)."))
@@ -1797,13 +1797,11 @@ mSNPClass <- R6::R6Class(
                 # Column totals for percentages
                 col_totals <- colSums(counts)
                 
-                # Overall 3xG test for polymorphism
+                # Overall 3xG test for polymorphism (df = (3 - 1) * (G - 1) = 2 * (G - 1))
                 test_poly <- run_chisq_test(counts)
-                if (isTRUE(self$options$polyDf1)) {
-                    test_poly$df <- length(groups) - 1
-                    if (!is.na(test_poly$chisq) && !is.na(test_poly$df)) {
-                        test_poly$p <- stats::pchisq(test_poly$chisq, df = test_poly$df, lower.tail = FALSE)
-                    }
+                test_poly$df <- 2 * (length(groups) - 1)
+                if (!is.na(test_poly$chisq) && !is.na(test_poly$df) && test_poly$df > 0) {
+                    test_poly$p <- stats::pchisq(test_poly$chisq, df = test_poly$df, lower.tail = FALSE)
                 }
                 
                 # Allele counts matrix (2 x G)
@@ -1951,16 +1949,18 @@ mSNPClass <- R6::R6Class(
             marker_names <- character()
             group_names <- character()
             
+            gender_all <- if (!is.null(self$options$gender)) private$g_data[[self$options$gender]] else NULL
             for (marker in self$options$vars) {
                 classified <- private$g_classified[[marker]]
                 for (g in groups) {
                     subset_idx <- subsets[[g]]
-                    sub_class <- na.omit(classified[subset_idx])
-                    sub_class <- sub_class[sub_class != ""]
+                    raw_class <- classified[subset_idx]
+                    valid_mask <- !is.na(raw_class) & raw_class != ""
+                    sub_class <- raw_class[valid_mask]
                     
-                    is_x_linked <- isTRUE(self$options$xLinked) && !is.null(self$options$gender)
+                    is_x_linked <- isTRUE(self$options$xLinked) && !is.null(gender_all)
                     if (is_x_linked) {
-                        gender_var <- private$g_data[[self$options$gender]][subset_idx]
+                        gender_var <- gender_all[subset_idx][valid_mask]
                         sex_levels <- private$.getSexLevels(gender_var)
                         female_level <- sex_levels$female
                         female_idx <- which(gender_var == female_level)
@@ -2009,8 +2009,17 @@ mSNPClass <- R6::R6Class(
                     row <- private$g_hwe_results[[row_key]]
                     is_sig <- FALSE
                     alpha_val <- as.numeric(self$options$alpha)
-                    if (!is.null(row) && !is.null(row$exact_p) && !is.na(row$exact_p)) {
-                        is_sig <- (row$exact_p < alpha_val)
+                    if (!is.null(row)) {
+                        test_p <- if (region_type == 7) {
+                            row$exact_p
+                        } else if (region_type %in% c(1, 2, 3, 4, 5, 6)) {
+                            row$chi_p
+                        } else {
+                            if (!is.null(row$exact_p) && !is.na(row$exact_p)) row$exact_p else row$chi_p
+                        }
+                        if (!is.null(test_p) && !is.na(test_p)) {
+                            is_sig <- (test_p < alpha_val)
+                        }
                     }
                     col_vec <- c(col_vec, if (is_sig) col_red else col_green)
                     labels_vec <- c(labels_vec, marker_names[i])
@@ -2042,16 +2051,18 @@ mSNPClass <- R6::R6Class(
             groups <- names(subsets)
             
             counts_list <- list()
+            gender_all <- if (!is.null(self$options$gender)) private$g_data[[self$options$gender]] else NULL
             for (marker in self$options$vars) {
                 classified <- private$g_classified[[marker]]
                 for (g in groups) {
                     subset_idx <- subsets[[g]]
-                    sub_class <- na.omit(classified[subset_idx])
-                    sub_class <- sub_class[sub_class != ""]
+                    raw_class <- classified[subset_idx]
+                    valid_mask <- !is.na(raw_class) & raw_class != ""
+                    sub_class <- raw_class[valid_mask]
                     
-                    is_x_linked <- isTRUE(self$options$xLinked) && !is.null(self$options$gender)
+                    is_x_linked <- isTRUE(self$options$xLinked) && !is.null(gender_all)
                     if (is_x_linked) {
-                        gender_var <- private$g_data[[self$options$gender]][subset_idx]
+                        gender_var <- gender_all[subset_idx][valid_mask]
                         sex_levels <- private$.getSexLevels(gender_var)
                         female_level <- sex_levels$female
                         female_idx <- which(gender_var == female_level)
@@ -2388,7 +2399,13 @@ mSNPClass <- R6::R6Class(
                 legend(0, -0.08, legend = groups, col = palette[1:length(groups)], pch = 19, 
                        cex = 1.1, horiz = TRUE, xjust = 0.5, bty = "n")
             } else {
-                legend(0, -0.08, legend = c(.("HWE compliant"), .("HWE deviation")), 
+                test_label <- if (!is.null(state$region_type) && state$region_type == 7) {
+                    .("exact test")
+                } else if (!is.null(state$region_type) && state$region_type %in% c(1, 2, 3, 4, 5, 6)) {
+                    .("chi-square test")
+                } else ""
+                legend_sub <- if (nzchar(test_label)) paste0(" (", test_label, ")") else ""
+                legend(0, -0.08, legend = c(paste0(.("HWE compliant"), legend_sub), paste0(.("HWE deviation"), legend_sub)), 
                        col = c(col_green, col_red), pch = 19, 
                        cex = 1.1, horiz = TRUE, xjust = 0.5, bty = "n")
             }

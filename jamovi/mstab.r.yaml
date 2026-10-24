@@ -8,7 +8,7 @@ items:
     - name: instructions
       title: Instructions
       type: Html
-      visible: true
+      visible: false
 
     - name: poolTable
       title: ANCOVA Poolability Testing and Model Selection
@@ -25,6 +25,27 @@ items:
           - confLevel
           - modelChoice
           - trans
+          - detailAttr
+          - dep2
+          - specType2
+          - lsl2
+          - usl2
+          - trans2
+          - dep3
+          - specType3
+          - lsl3
+          - usl3
+          - trans3
+          - dep4
+          - specType4
+          - lsl4
+          - usl4
+          - trans4
+          - dep5
+          - specType5
+          - lsl5
+          - usl5
+          - trans5
       columns:
           - name: step
             title: Test Step / Source
@@ -49,6 +70,43 @@ items:
             title: Statistical Decision (ICH Q1E)
             type: text
 
+    - name: regTable
+      title: ICH Q1E Regulatory Extrapolation & Decision Tree Summary
+      type: Table
+      visible: (showRegTable)
+      clearWith:
+          - dep
+          - time
+          - batch
+          - specType
+          - lsl
+          - usl
+          - alphaPool
+          - confLevel
+          - modelChoice
+          - trans
+          - storageCond
+          - accelResult
+          - intermedResult
+          - supportingData
+          - littleChange
+          - studyDuration
+          - proposedShelfLife
+          - detailAttr
+      columns:
+          - name: param
+            title: Study & Regulatory Evaluation Parameter
+            type: text
+          - name: source
+            title: Parameter Category / Source
+            type: text
+          - name: value
+            title: Reported Value / Assessment
+            type: text
+          - name: guideline
+            title: ICH Q1E Reference & Regulatory Criteria
+            type: text
+
     - name: shelfTable
       title: Shelf Life / Retest Period Estimation Summary
       type: Table
@@ -65,7 +123,34 @@ items:
           - modelChoice
           - trans
           - accelCondition
+          - storageCond
+          - accelResult
+          - intermedResult
+          - supportingData
+          - littleChange
           - studyDuration
+          - proposedShelfLife
+          - detailAttr
+          - dep2
+          - specType2
+          - lsl2
+          - usl2
+          - trans2
+          - dep3
+          - specType3
+          - lsl3
+          - usl3
+          - trans3
+          - dep4
+          - specType4
+          - lsl4
+          - usl4
+          - trans4
+          - dep5
+          - specType5
+          - lsl5
+          - usl5
+          - trans5
       columns:
           - name: batch
             title: Batch / Cohort
@@ -85,8 +170,67 @@ items:
           - name: ichShelf
             title: ICH Q1E Permitted Shelf Life (months)
             type: number
+          - name: proposedStatus
+            title: Proposed Shelf Life Conformity
+            type: text
+            visible: (proposedShelfLife > 0)
           - name: limiting
             title: Status / Limiting Factor
+            type: text
+
+    - name: comboShelfTable
+      title: Factor Combinations Shelf Life Summary Table
+      type: Table
+      visible: (showComboShelfTable && (length(factors) > 0))
+      clearWith:
+          - dep
+          - time
+          - batch
+          - factors
+          - specType
+          - lsl
+          - usl
+          - alphaPool
+          - alphaFactor
+          - confLevel
+          - modelChoice
+          - trans
+          - accelCondition
+          - storageCond
+          - accelResult
+          - intermedResult
+          - supportingData
+          - littleChange
+          - studyDuration
+          - proposedShelfLife
+          - detailAttr
+      columns:
+          - name: combo
+            title: Factor Combination
+            type: text
+          - name: nBatches
+            title: Batches
+            type: integer
+          - name: model
+            title: Adopted Model
+            type: text
+          - name: limitingBatch
+            title: Governing Batch
+            type: text
+          - name: statShelf
+            title: Statistical Shelf Life (months)
+            type: number
+            format: zto,dp:1
+          - name: ichShelf
+            title: ICH Q1E Permitted Shelf Life (months)
+            type: number
+            format: zto,dp:1
+          - name: proposedStatus
+            title: Proposed Shelf Life Conformity
+            type: text
+            visible: (proposedShelfLife > 0)
+          - name: limiting
+            title: Status / Limiting Role
             type: text
 
     - name: coefTable
@@ -104,6 +248,27 @@ items:
           - confLevel
           - modelChoice
           - trans
+          - detailAttr
+          - dep2
+          - specType2
+          - lsl2
+          - usl2
+          - trans2
+          - dep3
+          - specType3
+          - lsl3
+          - usl3
+          - trans3
+          - dep4
+          - specType4
+          - lsl4
+          - usl4
+          - trans4
+          - dep5
+          - specType5
+          - lsl5
+          - usl5
+          - trans5
       columns:
           - name: term
             title: Parameter
@@ -143,6 +308,27 @@ items:
           - confLevel
           - modelChoice
           - trans
+          - detailAttr
+          - dep2
+          - specType2
+          - lsl2
+          - usl2
+          - trans2
+          - dep3
+          - specType3
+          - lsl3
+          - usl3
+          - trans3
+          - dep4
+          - specType4
+          - lsl4
+          - usl4
+          - trans4
+          - dep5
+          - specType5
+          - lsl5
+          - usl5
+          - trans5
       columns:
           - name: metric
             title: Diagnostic / Assumption Test
@@ -182,6 +368,27 @@ items:
           - trans
           - accelCondition
           - studyDuration
+          - detailAttr
+          - dep2
+          - specType2
+          - lsl2
+          - usl2
+          - trans2
+          - dep3
+          - specType3
+          - lsl3
+          - usl3
+          - trans3
+          - dep4
+          - specType4
+          - lsl4
+          - usl4
+          - trans4
+          - dep5
+          - specType5
+          - lsl5
+          - usl5
+          - trans5
 
     - name: shelfPlot
       title: Shelf Life Comparison & ICH Q1E Extrapolation Horizon
@@ -204,6 +411,27 @@ items:
           - trans
           - accelCondition
           - studyDuration
+          - detailAttr
+          - dep2
+          - specType2
+          - lsl2
+          - usl2
+          - trans2
+          - dep3
+          - specType3
+          - lsl3
+          - usl3
+          - trans3
+          - dep4
+          - specType4
+          - lsl4
+          - usl4
+          - trans4
+          - dep5
+          - specType5
+          - lsl5
+          - usl5
+          - trans5
 
     - name: facetPlot
       title: Individual Batch Trajectories (Faceted)
@@ -226,6 +454,74 @@ items:
           - trans
           - accelCondition
           - studyDuration
+          - detailAttr
+          - dep2
+          - specType2
+          - lsl2
+          - usl2
+          - trans2
+          - dep3
+          - specType3
+          - lsl3
+          - usl3
+          - trans3
+          - dep4
+          - specType4
+          - lsl4
+          - usl4
+          - trans4
+          - dep5
+          - specType5
+          - lsl5
+          - usl5
+          - trans5
+
+    - name: batchPlots
+      title: Individual Batch Shelf Life Plots
+      type: Array
+      visible: (showBatchPlots)
+      items: (levels(batch))
+      clearWith:
+          - dep
+          - time
+          - batch
+          - specType
+          - lsl
+          - usl
+          - alphaPool
+          - confLevel
+          - modelChoice
+          - trans
+          - accelCondition
+          - studyDuration
+          - detailAttr
+          - dep2
+          - specType2
+          - lsl2
+          - usl2
+          - trans2
+          - dep3
+          - specType3
+          - lsl3
+          - usl3
+          - trans3
+          - dep4
+          - specType4
+          - lsl4
+          - usl4
+          - trans4
+          - dep5
+          - specType5
+          - lsl5
+          - usl5
+          - trans5
+      template:
+          title: $key
+          type: Image
+          width:  640
+          height: 440
+          renderFun: .batchPlot
+          requiresData: true
 
     - name: ratePlot
       title: Batch Degradation Rates & ANCOVA Slope Comparison
@@ -242,6 +538,27 @@ items:
           - modelChoice
           - trans
           - alphaPool
+          - detailAttr
+          - dep2
+          - specType2
+          - lsl2
+          - usl2
+          - trans2
+          - dep3
+          - specType3
+          - lsl3
+          - usl3
+          - trans3
+          - dep4
+          - specType4
+          - lsl4
+          - usl4
+          - trans4
+          - dep5
+          - specType5
+          - lsl5
+          - usl5
+          - trans5
 
     - name: predPlot
       title: Individual Prediction Intervals & Release Limits (SRL)
@@ -264,6 +581,27 @@ items:
           - accelCondition
           - trans
           - studyDuration
+          - detailAttr
+          - dep2
+          - specType2
+          - lsl2
+          - usl2
+          - trans2
+          - dep3
+          - specType3
+          - lsl3
+          - usl3
+          - trans3
+          - dep4
+          - specType4
+          - lsl4
+          - usl4
+          - trans4
+          - dep5
+          - specType5
+          - lsl5
+          - usl5
+          - trans5
 
     - name: diagPlot
       title: Residual Diagnostic Plots
@@ -280,11 +618,66 @@ items:
           - modelChoice
           - alphaPool
           - trans
+          - detailAttr
+          - dep2
+          - specType2
+          - lsl2
+          - usl2
+          - trans2
+          - dep3
+          - specType3
+          - lsl3
+          - usl3
+          - trans3
+          - dep4
+          - specType4
+          - lsl4
+          - usl4
+          - trans4
+          - dep5
+          - specType5
+          - lsl5
+          - usl5
+          - trans5
 
     - name: multiShelfTable
       title: Multi-Attribute Shelf Life Summary Table
       type: Table
       visible: (showMultiShelfTable && ((length(dep2) > 0 && dep2 != "") || (length(dep3) > 0 && dep3 != "") || (length(dep4) > 0 && dep4 != "") || (length(dep5) > 0 && dep5 != "")))
+      clearWith:
+          - dep
+          - time
+          - batch
+          - specType
+          - lsl
+          - usl
+          - trans
+          - dep2
+          - specType2
+          - lsl2
+          - usl2
+          - trans2
+          - dep3
+          - specType3
+          - lsl3
+          - usl3
+          - trans3
+          - dep4
+          - specType4
+          - lsl4
+          - usl4
+          - trans4
+          - dep5
+          - specType5
+          - lsl5
+          - usl5
+          - trans5
+          - confLevel
+          - alphaPool
+          - modelChoice
+          - studyDuration
+          - accelCondition
+          - detailAttr
       columns:
           - name: attr
             title: Attribute / Parameter
@@ -312,6 +705,40 @@ items:
       title: Multi-Attribute Batch Evaluation Matrix
       type: Table
       visible: (showMultiBatchTable && ((length(dep2) > 0 && dep2 != "") || (length(dep3) > 0 && dep3 != "") || (length(dep4) > 0 && dep4 != "") || (length(dep5) > 0 && dep5 != "")))
+      clearWith:
+          - dep
+          - time
+          - batch
+          - specType
+          - lsl
+          - usl
+          - trans
+          - dep2
+          - specType2
+          - lsl2
+          - usl2
+          - trans2
+          - dep3
+          - specType3
+          - lsl3
+          - usl3
+          - trans3
+          - dep4
+          - specType4
+          - lsl4
+          - usl4
+          - trans4
+          - dep5
+          - specType5
+          - lsl5
+          - usl5
+          - trans5
+          - confLevel
+          - alphaPool
+          - modelChoice
+          - studyDuration
+          - accelCondition
+          - detailAttr
       columns:
           - name: batch
             title: Batch / Cohort
@@ -346,6 +773,40 @@ items:
       height: 420
       renderFun: .multiShelfPlot
       requiresData: false
+      clearWith:
+          - dep
+          - time
+          - batch
+          - specType
+          - lsl
+          - usl
+          - trans
+          - dep2
+          - specType2
+          - lsl2
+          - usl2
+          - trans2
+          - dep3
+          - specType3
+          - lsl3
+          - usl3
+          - trans3
+          - dep4
+          - specType4
+          - lsl4
+          - usl4
+          - trans4
+          - dep5
+          - specType5
+          - lsl5
+          - usl5
+          - trans5
+          - confLevel
+          - alphaPool
+          - modelChoice
+          - studyDuration
+          - accelCondition
+          - detailAttr
 
     - name: arrhTable
       title: Arrhenius Accelerated Stability Recalculation Table
@@ -413,9 +874,14 @@ items:
             title: p
             type: number
             format: zto,pvalue
-          - name: ci
-            title: 95% Confidence Interval
-            type: text
+          - name: ciLower
+            title: Lower
+            superTitle: 95% Confidence Interval
+            type: number
+          - name: ciUpper
+            title: Upper
+            superTitle: 95% Confidence Interval
+            type: number
 
     - name: arrhPlot
       title: Arrhenius Degradation Kinetics Plot (ln(k) vs 1000/T)

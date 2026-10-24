@@ -30,6 +30,13 @@ children:
             maxItemCount: 1
             isTarget: true
       - type: TargetLayoutBox
+        label: Additional Factors
+        children:
+          - type: VariablesListBox
+            name: factors
+            isTarget: true
+            height: small
+      - type: TargetLayoutBox
         label: Attribute 2 (Impurities / Degradants)
         children:
           - type: VariablesListBox
@@ -147,7 +154,7 @@ children:
         name: trans5
   - type: CollapseBox
     label: Multi-Attribute Shelf-Life & Worst-Case Options
-    collapsed: false
+    collapsed: true
     stretchFactor: 1
     children:
       - type: CheckBox
@@ -166,6 +173,9 @@ children:
       - type: CheckBox
         name: showArrh
         children:
+          - type: ComboBox
+            name: arrhDataCondition
+            enable: (showArrh)
           - type: TextBox
             name: arrhEa
             format: number
@@ -201,7 +211,7 @@ children:
             enable: (showArrh)
   - type: CollapseBox
     label: Statistical & Regulatory Settings (ICH Q1E)
-    collapsed: false
+    collapsed: true
     stretchFactor: 1
     children:
       - type: ComboBox
@@ -210,22 +220,48 @@ children:
         name: alphaPool
         format: number
       - type: TextBox
+        name: alphaFactor
+        format: number
+        enable: (factors)
+      - type: TextBox
         name: confLevel
         format: number
       - type: ComboBox
-        name: accelCondition
+        name: storageCond
+      - type: ComboBox
+        name: accelResult
+      - type: ComboBox
+        name: intermedResult
+        enable: (storageCond:room && accelResult:change_observed)
+      - type: CheckBox
+        name: supportingData
+      - type: CheckBox
+        name: littleChange
       - type: TextBox
         name: studyDuration
         format: number
+      - type: TextBox
+        name: proposedShelfLife
+        format: number
+  - type: LayoutBox
+    margin: large
+    children:
+      - type: ComboBox
+        name: accelCondition
   - type: CollapseBox
     label: Single Attribute Detailed Tables & Plots
-    collapsed: false
+    collapsed: true
     stretchFactor: 1
     children:
+      - type: CheckBox
+        name: showRegTable
       - type: CheckBox
         name: showPoolTable
       - type: CheckBox
         name: showShelfTable
+      - type: CheckBox
+        name: showComboShelfTable
+        enable: (factors)
       - type: CheckBox
         name: showCoefTable
       - type: CheckBox
@@ -236,6 +272,8 @@ children:
         name: showShelfPlot
       - type: CheckBox
         name: showFacetPlot
+      - type: CheckBox
+        name: showBatchPlots
       - type: CheckBox
         name: showRatePlot
       - type: CheckBox

@@ -19,9 +19,58 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             }
         },
 
+        .noticeList = list(),
+
+        .addNotice = function(name, type, content) {
+            private$.noticeList[[name]] <- list(name = name, type = type, content = content)
+            if (name %in% names(self$results)) {
+                n_obj <- self$results$get(name)
+                n_obj$set(type = type, content = content)
+                n_obj$setVisible(TRUE)
+            } else {
+                n_obj <- jmvcore::Notice$new(self$options, name = name, type = type, content = content)
+                self$results$insert(1, n_obj)
+            }
+        },
+
+        .renderNotices = function() {
+            # Hide consolidated warnings_notice if present
+            if ("warnings_notice" %in% names(self$results)) {
+                tryCatch(self$results$get("warnings_notice")$setVisible(FALSE), error = function(e) {})
+            }
+
+            legacy_names <- c(
+                "duplicate_records_warn", "time_units_info", "study_duration_mismatch_warn",
+                "intermed_missing_warn", "refrig_3m_warn", "frozen_accel_warn",
+                "dt_verification_warn", "little_change_discrepancy_info", "proposed_shelf_exceeds_warn",
+                "normality_violation_warn", "heteroscedasticity_warn", "autocorrelation_warn",
+                "temp_subset_info", "arrh_condition_info", "undetermined_product_shelf_notice",
+                "slopes_not_evaluated_notice", "undeterminedBatchesNotice",
+                "arrh_k_invalid_notice", "arrh_shelf_invalid_notice"
+            )
+
+            # Hide notices that were not triggered in this run
+            active_names <- names(private$.noticeList)
+            for (nm in names(self$results)) {
+                if ((nm %in% legacy_names || grepl("^(init_oos_warn_|attr_warn_)", nm)) && !(nm %in% active_names)) {
+                    tryCatch(self$results$get(nm)$setVisible(FALSE), error = function(e) {})
+                }
+            }
+
+            # Ensure all triggered notices are visible and updated
+            for (nm in active_names) {
+                if (nm %in% names(self$results)) {
+                    n_obj <- self$results$get(nm)
+                    n_obj$set(type = private$.noticeList[[nm]]$type, content = private$.noticeList[[nm]]$content)
+                    n_obj$setVisible(TRUE)
+                }
+            }
+        },
+
         .init = function() {
             # Initial instruction content
-            self$results$instructions$setVisible(TRUE)
+            isConfigured <- !is.null(self$options$dep) && !is.null(self$options$time) && !is.null(self$options$batch)
+            self$results$instructions$setVisible(!isConfigured)
             self$results$instructions$setContent(
                 paste0(
                     "<h3>", .("Stability Analysis (ICH Q1E)"), "</h3>",
@@ -48,6 +97,28 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
             # Table footnotes
             private$.initNotes()
+
+            # Dynamic column titles and visibility for multiBatchTable
+            deps <- list(
+                attr1 = self$options$dep,
+                attr2 = self$options$dep2,
+                attr3 = self$options$dep3,
+                attr4 = self$options$dep4,
+                attr5 = self$options$dep5
+            )
+            for (colName in names(deps)) {
+                varName <- deps[[colName]]
+                hasVar <- !is.null(varName) && length(varName) > 0 && nzchar(varName)
+                col <- self$results$multiBatchTable$getColumn(colName)
+                if (!is.null(col)) {
+                    if (hasVar) {
+                        col$setTitle(paste0(varName, " (", .("months"), ")"))
+                        col$setVisible(TRUE)
+                    } else {
+                        col$setVisible(FALSE)
+                    }
+                }
+            }
         },
 
         .initNotes = function() {
@@ -116,6 +187,8 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
         },
 
         .run = function() {
+            private$.noticeList <- list()
+
             if (is.null(self$options$dep) || is.null(self$options$time) || is.null(self$options$batch)) {
                 return()
             }
@@ -156,25 +229,117 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
             evalData <- data
             evalIsLong <- FALSE
-            if (length(self$options$tempVar) > 0 && nzchar(self$options$tempVar)) {
+            if (self$options$showArrh && length(self$options$tempVar) > 0 && nzchar(self$options$tempVar)) {
                 tempCol <- self$options$tempVar
                 if (tempCol %in% names(data)) {
                     tVals <- as.numeric(data[[tempCol]])
-                    uTemps <- unique(tVals[!is.na(tVals)])
+                    uTemps <- sort(unique(tVals[!is.na(tVals)]))
                     targetLongTemp <- as.numeric(self$options$arrhTempLong)
                     if (length(uTemps) > 1) {
                         if (any(!is.na(tVals) & tVals == targetLongTemp)) {
                             evalData <- data[!is.na(tVals) & tVals == targetLongTemp, , drop = FALSE]
                             evalIsLong <- TRUE
+                            private$.addNotice(
+                                name = "temp_subset_info",
+                                type = jmvcore::NoticeType$INFO,
+                                content = paste0(
+                                    "<b>", .("Model diagnostic note"), ":</b> ",
+                                    jmvcore::format(.("Shelf life evaluated on the {t} °C subset."), t = targetLongTemp)
+                                )
+                            )
                         } else {
-                            evalData <- data[!is.na(tVals) & tVals == min(uTemps), , drop = FALSE]
-                            evalIsLong <- TRUE
+                            jmvcore::reject(jmvcore::format(
+                                .("The specified Long-Term Storage Temperature ({temp} °C) was not found in the Temperature variable '{var}'. Available temperatures: {avail}."),
+                                temp = targetLongTemp,
+                                var = tempCol,
+                                avail = paste(uTemps, collapse = ", ")
+                            ))
+                            return()
                         }
                     }
                 }
             }
 
+            if (self$options$showArrh && !evalIsLong) {
+                arrhDataCond <- if (!is.null(self$options$arrhDataCondition)) self$options$arrhDataCondition else "long_term"
+                evalIsLong <- (arrhDataCond == "long_term")
+                cond_str <- if (evalIsLong) .("long-term storage condition") else .("accelerated study condition")
+                private$.addNotice(
+                    name = "arrh_condition_info",
+                    type = jmvcore::NoticeType$INFO,
+                    content = paste0(
+                        "<b>", .("Model diagnostic note"), ":</b> ",
+                        jmvcore::format(
+                            .("Arrhenius stability kinetics: Analysed data assumed to be collected at {condition} ({temp} °C / {rh}% RH)."),
+                            condition = cond_str,
+                            temp = if (evalIsLong) self$options$arrhTempLong else self$options$arrhTempAcc,
+                            rh = if (evalIsLong) self$options$arrhRhLong else self$options$arrhRhAcc
+                        )
+                    )
+                )
+            }
+
+            # Data integrity pre-check: Accidental duplicate records (exact duplicate rows)
+            if (nrow(evalData) > 0) {
+                chkCols <- c(timeName, batchName, depName)
+                validChkData <- jmvcore::naOmit(evalData[, chkCols, drop = FALSE])
+                if (nrow(validChkData) > 0) {
+                    dupMask <- duplicated(validChkData)
+                    numDups <- sum(dupMask)
+                    if (numDups > 0) {
+                        private$.addNotice(
+                            name = "duplicate_records_warn",
+                            type = jmvcore::NoticeType$WARNING,
+                            content = paste0(
+                                "<b>", .("Potential data entry error"), ":</b> ",
+                                jmvcore::format(
+                                    .("{n} identical duplicate record(s) detected (matching Time, Batch, and Response values). Please verify whether these represent intended analytical replicates or inadvertent duplicate entries."),
+                                    n = numDups
+                                )
+                            )
+                        )
+                    }
+                }
+            }
+
+            # Data integrity pre-check: Time units sanity and study duration consistency
+            tRaw <- as.numeric(evalData[[timeName]])
+            tFinite <- tRaw[is.finite(tRaw)]
+            if (length(tFinite) > 0) {
+                maxT <- max(tFinite)
+                if (maxT > 120) {
+                    private$.addNotice(
+                        name = "time_units_info",
+                        type = jmvcore::NoticeType$INFO,
+                        content = paste0(
+                            "<b>", .("Time unit advisory"), ":</b> ",
+                            jmvcore::format(
+                                .("Maximum observed Time is {max_t}. Please verify that Time is entered in months, as ICH Q1E extrapolation rules (such as +12 months or multipliers) assume time in months."),
+                                max_t = maxT
+                            )
+                        )
+                    )
+                }
+
+                sDur <- self$options$studyDuration
+                if (!is.null(sDur) && !is.na(sDur) && sDur > 0 && maxT > sDur) {
+                    private$.addNotice(
+                        name = "study_duration_mismatch_warn",
+                        type = jmvcore::NoticeType$WARNING,
+                        content = paste0(
+                            "<b>", .("Input inconsistency"), ":</b> ",
+                            jmvcore::format(
+                                .("Specified Long-Term Study Duration ({dur} months) is shorter than the maximum observed time in the data ({max_t} months). The maximum observed time was used as the study duration."),
+                                dur = sDur,
+                                max_t = maxT
+                            )
+                        )
+                    )
+                }
+            }
+
             evaluatedAttrs <- list()
+            failedAttrs <- list()
             for (idx in seq_along(attrDefs)) {
                 aDef <- attrDefs[[idx]]
                 res <- private$.evaluateSingleAttribute(
@@ -182,14 +347,35 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     data = evalData,
                     timeName = timeName,
                     batchName = batchName,
+                    factorsList = self$options$factors,
                     alphaPool = self$options$alphaPool,
+                    alphaFactor = self$options$alphaFactor,
                     confLevel = self$options$confLevel,
                     modelChoice = self$options$modelChoice,
                     accelCondition = self$options$accelCondition,
                     studyDuration = self$options$studyDuration
                 )
-                if (!is.null(res)) {
+                if (isTRUE(res$success)) {
                     evaluatedAttrs[[aDef$name]] <- res
+                } else {
+                    if (idx == 1) {
+                        jmvcore::reject(res$reason)
+                        return()
+                    } else {
+                        failedAttrs[[length(failedAttrs) + 1]] <- list(name = aDef$name, reason = res$reason)
+                        private$.addNotice(
+                            name = paste0("attr_warn_", idx),
+                            type = jmvcore::NoticeType$WARNING,
+                            content = paste0(
+                                "<b>", .("Model diagnostic warning"), ":</b> ",
+                                jmvcore::format(
+                                    .("Attribute '{attr}' was excluded from analysis: {reason}"),
+                                    attr = aDef$name,
+                                    reason = res$reason
+                                )
+                            )
+                        )
+                    }
                 }
             }
 
@@ -198,14 +384,26 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 return()
             }
 
+            hasFailedSecondary <- (length(failedAttrs) > 0)
+
             # Multi-Attribute Worst-Case Synthesis: Shelf-Life<sub>overall</sub> = min(Shelf-Life<sub>1</sub>, ..., Shelf-Life<sub>m</sub>)
             allStatShelves <- sapply(evaluatedAttrs, function(x) x$shelfResults$overallStatShelf)
             allIchShelves  <- sapply(evaluatedAttrs, function(x) x$shelfResults$overallIchShelf)
 
-            if (any(is.na(allStatShelves))) {
+            if (hasFailedSecondary || any(is.na(allStatShelves))) {
                 minStatShelf <- NA_real_
                 minIchShelf  <- NA_real_
-                limAttrIdx   <- which(is.na(allStatShelves))[1]
+                limAttrIdx   <- if (any(is.na(allStatShelves))) which(is.na(allStatShelves))[1] else 1
+                if (hasFailedSecondary) {
+                    private$.addNotice(
+                        name = "undetermined_product_shelf_notice",
+                        type = jmvcore::NoticeType$WARNING,
+                        content = paste0(
+                            "<b>", .("Model diagnostic warning"), ":</b> ",
+                            .("Overall product shelf life cannot be determined because one or more quality attributes failed validation.")
+                        )
+                    )
+                }
             } else {
                 minStatShelf <- min(allStatShelves)
                 minIchShelf  <- min(allIchShelves)
@@ -215,11 +413,11 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             governingRes <- evaluatedAttrs[[governingAttrName]]
             governingBatch <- governingRes$shelfResults$limitingBatch
 
-            isMulti <- (length(evaluatedAttrs) > 1)
+            isMulti <- (length(attrDefs) > 1)
 
             if (isMulti) {
                 # Populate Multi-Attribute Shelf Life Table
-                private$.populateMultiShelfTable(evaluatedAttrs, governingAttrName, minStatShelf, minIchShelf, governingBatch)
+                private$.populateMultiShelfTable(evaluatedAttrs, governingAttrName, minStatShelf, minIchShelf, governingBatch, failedAttrs)
 
                 # Populate Multi-Attribute Batch Evaluation Matrix
                 batchLevels <- governingRes$batchLevels
@@ -263,7 +461,8 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     arrhRhLong = self$options$arrhRhLong,
                     arrhB = self$options$arrhB,
                     showArrhSens = self$options$showArrhSens,
-                    evalIsLong = evalIsLong
+                    evalIsLong = evalIsLong,
+                    extrapCap = governingRes$shelfResults$extrapCap
                 )
             }
 
@@ -284,10 +483,25 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             selRes <- evaluatedAttrs[[selAttrName]]
 
             # Populate Detailed ANCOVA Table
+            if (selRes$k >= 2 && is.na(selRes$p_slopes) && self$options$modelChoice == "auto") {
+                private$.addNotice(
+                    name = "slopes_not_evaluated_notice",
+                    type = jmvcore::NoticeType$WARNING,
+                    content = paste0(
+                        "<b>", .("Model diagnostic warning"), ":</b> ",
+                        .("Slopes poolability could not be evaluated due to insufficient residual degrees of freedom. Model 1 (separate slopes and intercepts) adopted as conservative fallback.")
+                    )
+                )
+            }
+
             private$.populatePoolTable(
                 selRes$k, selRes$df_slopes, selRes$ss_slopes, selRes$ms_slopes, selRes$f_slopes, selRes$p_slopes,
                 selRes$df_ints, selRes$ss_ints, selRes$ms_ints, selRes$f_ints, selRes$p_ints,
-                selRes$df_full, selRes$rss_full, selRes$mse_full, self$options$alphaPool, selRes$selectedModelCode
+                selRes$df_full, selRes$rss_full, selRes$mse_full, self$options$alphaPool, selRes$selectedModelCode,
+                selRes$mse_cs,
+                isMultifactor = isTRUE(selRes$isMultifactor),
+                multifactorPool = selRes$multifactorPool,
+                alphaFactor = self$options$alphaFactor
             )
             if (selRes$k < 2) {
                 self$results$poolTable$setNote(
@@ -302,23 +516,113 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 )
             }
 
-            # Populate Detailed Shelf Life Table
-            private$.populateShelfTable(selRes$shelfResults, selRes$adoptedModelName, selRes$dat, selRes$selectedModelCode)
+            # Populate Detailed Shelf Life Table and Decision Tree Summary
+            if (isTRUE(self$options$showRegTable)) {
+                private$.populateRegTable(selRes$shelfResults, selRes$attrDef$name, selRes$shelfResults$t_dur)
+            }
+            private$.populateShelfTable(selRes$shelfResults, selRes$adoptedModelName, selRes$dat, selRes$selectedModelCode, selRes$trans)
+            if (isTRUE(selRes$isMultifactor) && !is.null(selRes$shelfResults$comboResults)) {
+                private$.populateComboShelfTable(
+                    comboResults = selRes$shelfResults$comboResults,
+                    overallIchShelf = selRes$shelfResults$overallIchShelf,
+                    limitingCombo = selRes$shelfResults$limitingCombo,
+                    limitingBatch = selRes$shelfResults$limitingBatch,
+                    proposedShelfLife = self$options$proposedShelfLife
+                )
+            }
             if (length(selRes$shelfResults$naBatches) > 0) {
-                notice <- jmvcore::Notice$new(self$options, name = "undeterminedBatchesNotice",
+                private$.addNotice(
+                    name = "undeterminedBatchesNotice",
                     type = jmvcore::NoticeType$WARNING,
-                    content = jmvcore::format(
-                        .("Overall shelf life cannot be determined because the shelf life for batch(es) {batches} could not be estimated."),
-                        batches = paste0("'", selRes$shelfResults$naBatches, "'", collapse = ", ")
+                    content = paste0(
+                        "<b>", .("Model diagnostic warning"), ":</b> ",
+                        jmvcore::format(
+                            .("Overall shelf life cannot be determined because the shelf life for batch(es) {batches} could not be estimated."),
+                            batches = paste0("'", selRes$shelfResults$naBatches, "'", collapse = ", ")
+                        )
                     )
                 )
-                self$results$insert(1, notice)
             }
             if (isMulti) {
                 self$results$shelfTable$setNote(
                     "attr_focus_note",
                     paste0(.("Detailed results shown for attribute:"), " '", selRes$attrDef$name, "'")
                 )
+            }
+
+            # Questionnaire & Regulatory Decision Tree Consistency Checks
+            storageCond    <- if (!is.null(self$options$storageCond)) self$options$storageCond else "room"
+            accelResult    <- if (!is.null(self$options$accelResult)) self$options$accelResult else "not_tested"
+            intermedResult <- if (!is.null(self$options$intermedResult)) self$options$intermedResult else "not_applicable"
+            littleChange   <- isTRUE(self$options$littleChange)
+
+            if (storageCond == "room" && accelResult == "change_observed" && intermedResult %in% c("not_applicable", "not_tested")) {
+                private$.addNotice(
+                    name = "intermed_missing_warn",
+                    type = jmvcore::NoticeType$WARNING,
+                    content = paste0(
+                        "<b>", .("Regulatory guidance notice"), ":</b> ",
+                        .("Under ICH Q1E (Section 2.4.2.1), when significant change occurs at the accelerated storage condition for a room-temperature product, testing at an intermediate condition (e.g., 30 °C / 65% RH) is required. Please specify the intermediate testing outcome.")
+                    )
+                )
+            }
+
+            if (storageCond == "refrigerated" && accelResult == "change_refrig_early") {
+                private$.addNotice(
+                    name = "refrig_3m_warn",
+                    type = jmvcore::NoticeType$WARNING,
+                    content = paste0(
+                        "<b>", .("Regulatory guidance notice"), ":</b> ",
+                        .("Significant change occurred within the first 3 months at accelerated condition (ICH Q1E Section 2.4.2.2). No extrapolation is permitted, and a shelf life shorter than real-time data may be required if degradation during shipping is a concern.")
+                    )
+                )
+            }
+
+            if (storageCond == "frozen" && accelResult %in% c("change_observed", "change_refrig_early")) {
+                private$.addNotice(
+                    name = "frozen_accel_warn",
+                    type = jmvcore::NoticeType$WARNING,
+                    content = paste0(
+                        "<b>", .("Regulatory guidance notice"), ":</b> ",
+                        .("Significant change occurred at accelerated testing for a frozen product (ICH Q1E Section 2.4.2.3). No extrapolation beyond real-time long-term data is permitted.")
+                    )
+                )
+            }
+
+            if (littleChange) {
+                isSigTrend <- (!is.na(selRes$p_slopes) && selRes$p_slopes <= 0.05)
+                if (isSigTrend) {
+                    private$.addNotice(
+                        name = "little_change_discrepancy_info",
+                        type = jmvcore::NoticeType$INFO,
+                        content = paste0(
+                            "<b>", .("Decision tree verification"), ":</b> ",
+                            jmvcore::format(
+                                .("'Little or no change' was selected in the questionnaire, but ANCOVA indicates statistically significant batch slope variation or trend (p = {p}). Please verify whether the 'little or no change' criterion of ICH Q1E Section 2.4.1.1 is met."),
+                                p = private$.formatNum(selRes$p_slopes, 4)
+                            )
+                        )
+                    )
+                }
+            }
+
+            propShelf <- self$options$proposedShelfLife
+            if (!is.null(propShelf) && !is.na(propShelf) && propShelf > 0) {
+                if (!is.na(minIchShelf) && propShelf > minIchShelf) {
+                    private$.addNotice(
+                        name = "proposed_shelf_exceeds_warn",
+                        type = jmvcore::NoticeType$WARNING,
+                        content = paste0(
+                            "<b>", .("Proposed shelf life warning"), ":</b> ",
+                            jmvcore::format(
+                                .("The proposed shelf life of {prop} months exceeds the maximum allowable ICH Q1E shelf life of {limit} months ({reason})."),
+                                prop = propShelf,
+                                limit = minIchShelf,
+                                reason = governingRes$shelfResults$extrapReason
+                            )
+                        )
+                    )
+                }
             }
 
             # Store precomputed plot states for single-attribute plots
@@ -357,38 +661,71 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
             # Populate Detailed Diagnostics Table
             private$.populateDiagTable(selRes$chosenFit, selRes$dat)
+
+            # Render consolidated compact warnings and notices
+            private$.renderNotices()
         },
 
         .evaluateSingleAttribute = function(
-            attrDef, data, timeName, batchName, alphaPool, confLevel, modelChoice, accelCondition, studyDuration
+            attrDef, data, timeName, batchName, factorsList = NULL, alphaPool = 0.25, alphaFactor = 0.05,
+            confLevel = 0.95, modelChoice = "auto", accelCondition = "none", studyDuration = 0
         ) {
             attrName <- attrDef$name
-            if (is.null(attrName) || !attrName %in% colnames(data)) return(NULL)
+            if (is.null(attrName) || !attrName %in% colnames(data)) {
+                return(list(success = FALSE, reason = jmvcore::format(.("Attribute '{name}' not found in dataset."), name = as.character(attrName))))
+            }
 
-            cols <- c(attrName, timeName, batchName)
+            validFactors <- character(0)
+            if (!is.null(factorsList) && length(factorsList) > 0) {
+                validFactors <- factorsList[factorsList %in% colnames(data)]
+            }
+            isMultifactor <- (length(validFactors) > 0)
+
+            cols <- c(attrName, timeName, batchName, validFactors)
             dat  <- jmvcore::naOmit(data[, cols])
-            if (nrow(dat) < 3) return(NULL)
+            if (nrow(dat) < 3) {
+                return(list(success = FALSE, reason = .("At least 3 valid observations are required for stability analysis.")))
+            }
 
-            colnames(dat) <- c("Y", "Time", "Batch")
+            colnames(dat) <- c("Y", "Time", "Batch", validFactors)
             dat$Y     <- as.numeric(dat$Y)
             dat$Time  <- as.numeric(dat$Time)
             dat$Batch <- as.factor(dat$Batch)
 
-            if (any(!is.finite(dat$Y)) || any(!is.finite(dat$Time))) return(NULL)
-            if (any(dat$Time < 0)) return(NULL)
+            if (isMultifactor) {
+                for (vf in validFactors) dat[[vf]] <- as.factor(dat[[vf]])
+                if (length(validFactors) == 1) {
+                    dat$Combo <- as.factor(dat[[validFactors[1]]])
+                } else {
+                    combo_strs <- apply(dat[, validFactors, drop = FALSE], 1, function(r) paste(r, collapse = " | "))
+                    dat$Combo <- as.factor(combo_strs)
+                }
+                dat$Cohort <- as.factor(paste(as.character(dat$Batch), as.character(dat$Combo), sep = " @ "))
+                if (length(levels(dat$Combo)) < 2) {
+                    isMultifactor <- FALSE
+                }
+            }
+
+            if (any(!is.finite(dat$Y)) || any(!is.finite(dat$Time))) {
+                return(list(success = FALSE, reason = .("Response and Time variables must contain only finite numeric values.")))
+            }
+            if (any(dat$Time < 0)) {
+                return(list(success = FALSE, reason = .("Time variable cannot contain negative values.")))
+            }
 
             dat$Batch <- droplevels(dat$Batch)
             batchLevels <- levels(dat$Batch)
             k <- length(batchLevels)
 
             t_per_batch <- tapply(dat$Time, dat$Batch, function(tt) length(unique(tt)))
-            if (all(t_per_batch < 2)) return(NULL)
+            if (all(t_per_batch < 2)) {
+                return(list(success = FALSE, reason = .("At least one batch must have observations at two or more distinct time points.")))
+            }
 
             trans <- attrDef$trans
             if (trans == "log") {
                 if (any(dat$Y <= 0)) {
-                    jmvcore::reject(paste0(.("Log transformation for attribute"), " '", attrName, "' ", .("requires strictly positive values of the response variable.")))
-                    return(NULL)
+                    return(list(success = FALSE, reason = .("Log transformation requires strictly positive values of the response variable.")))
                 }
                 dat$Y_trans <- log(dat$Y)
             } else {
@@ -399,6 +736,16 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             lsl_val  <- attrDef$lsl
             usl_val  <- attrDef$usl
 
+            if (specType %in% c("lower", "both") && (is.null(lsl_val) || is.na(lsl_val))) {
+                return(list(success = FALSE, reason = .("Lower specification limit (LSL) must be specified when Specification Type includes lower limit.")))
+            }
+            if (specType %in% c("upper", "both") && (is.null(usl_val) || is.na(usl_val))) {
+                return(list(success = FALSE, reason = .("Upper specification limit (USL) must be specified when Specification Type includes upper limit.")))
+            }
+            if (specType == "both" && !is.null(lsl_val) && !is.null(usl_val) && !is.na(lsl_val) && !is.na(usl_val) && lsl_val >= usl_val) {
+                return(list(success = FALSE, reason = .("Lower specification limit (LSL) must be strictly less than Upper specification limit (USL).")))
+            }
+
             if (trans == "log") {
                 lsl_trans <- if (!is.null(lsl_val) && lsl_val > 0) log(lsl_val) else -Inf
                 usl_trans <- if (!is.null(usl_val) && usl_val > 0) log(usl_val) else Inf
@@ -407,7 +754,123 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 usl_trans <- if (!is.null(usl_val)) usl_val else Inf
             }
 
-            if (k < 2) {
+            # Baseline / initial observations out-of-specification check
+            t_min <- min(dat$Time)
+            initRows <- which(dat$Time == t_min)
+            is_init_oos <- FALSE
+            if (length(initRows) > 0) {
+                initY <- dat$Y_trans[initRows]
+                if (specType %in% c("lower", "both") && any(initY < lsl_trans)) {
+                    is_init_oos <- TRUE
+                }
+                if (specType %in% c("upper", "both") && any(initY > usl_trans)) {
+                    is_init_oos <- TRUE
+                }
+            }
+            if (is_init_oos) {
+                private$.addNotice(
+                    name = paste0("init_oos_warn_", attrDef$id),
+                    type = jmvcore::NoticeType$WARNING,
+                    content = paste0(
+                        "<b>", .("Out-of-specification at baseline"), ":</b> ",
+                        jmvcore::format(
+                            .("Initial observation(s) at time {t0} for attribute '{attr}' already fall outside specification limits. Establishing a valid shelf life is questionable."),
+                            t0 = t_min,
+                            attr = attrDef$name
+                        )
+                    )
+                )
+            }
+
+            multifactorPool <- NULL
+            if (isMultifactor) {
+                # Multifactor ANCOVA Hierarchical Testing (ICH Q1E Section B.3.2.2.1)
+                fit_full <- stats::lm(Y_trans ~ Cohort * Time, data = dat)
+                fit_cs   <- stats::lm(Y_trans ~ Cohort + Time, data = dat)
+                fit_combo_t <- stats::lm(Y_trans ~ Combo * Time + Batch, data = dat)
+                fit_no_combo_t <- stats::lm(Y_trans ~ Combo + Time + Batch, data = dat)
+                fit_no_b <- stats::lm(Y_trans ~ Combo + Time, data = dat)
+                fit_cl   <- stats::lm(Y_trans ~ Time, data = dat)
+
+                df_full  <- stats::df.residual(fit_full)
+                rss_full <- sum(stats::residuals(fit_full)^2)
+                mse_full <- if (df_full > 0) rss_full / df_full else NA_real_
+
+                df_cs  <- stats::df.residual(fit_cs)
+                rss_cs <- sum(stats::residuals(fit_cs)^2)
+                mse_cs <- if (df_cs > 0) rss_cs / df_cs else NA_real_
+
+                df_cl  <- stats::df.residual(fit_cl)
+                rss_cl <- sum(stats::residuals(fit_cl)^2)
+                mse_cl <- if (df_cl > 0) rss_cl / df_cl else NA_real_
+
+                # Step 1: Cohort slopes (Batch * Factor * Time, alphaPool = 0.25)
+                an_slopes <- stats::anova(fit_cs, fit_full)
+                df_slopes <- an_slopes[2, "Df"]
+                ss_slopes <- max(0, an_slopes[2, "Sum of Sq"])
+                f_slopes  <- an_slopes[2, "F"]
+                p_slopes  <- an_slopes[2, "Pr(>F)"]
+                ms_slopes <- if (!is.na(df_slopes) && df_slopes > 0) ss_slopes / df_slopes else 0
+
+                # Step 2: Factor slopes (Factor * Time, alphaFactor = 0.05)
+                an_combo_t <- stats::anova(fit_no_combo_t, fit_combo_t)
+                df_combo_t <- an_combo_t[2, "Df"]
+                ss_combo_t <- max(0, an_combo_t[2, "Sum of Sq"])
+                f_combo_t  <- an_combo_t[2, "F"]
+                p_combo_t  <- an_combo_t[2, "Pr(>F)"]
+                ms_combo_t <- if (!is.na(df_combo_t) && df_combo_t > 0) ss_combo_t / df_combo_t else 0
+
+                # Step 3: Batch Intercepts (Batch main effect, alphaPool = 0.25)
+                an_b_ints <- stats::anova(fit_no_b, fit_no_combo_t)
+                df_b_ints <- an_b_ints[2, "Df"]
+                ss_b_ints <- max(0, an_b_ints[2, "Sum of Sq"])
+                f_b_ints  <- an_b_ints[2, "F"]
+                p_b_ints  <- an_b_ints[2, "Pr(>F)"]
+                ms_b_ints <- if (!is.na(df_b_ints) && df_b_ints > 0) ss_b_ints / df_b_ints else 0
+
+                # Step 4: Factor Intercepts (Factor main effect, alphaFactor = 0.05)
+                an_f_ints <- stats::anova(fit_cl, fit_no_b)
+                df_f_ints <- an_f_ints[2, "Df"]
+                ss_f_ints <- max(0, an_f_ints[2, "Sum of Sq"])
+                f_f_ints  <- an_f_ints[2, "F"]
+                p_f_ints  <- an_f_ints[2, "Pr(>F)"]
+                ms_f_ints <- if (!is.na(df_f_ints) && df_f_ints > 0) ss_f_ints / df_f_ints else 0
+
+                # Model Selection Strategy
+                if (modelChoice == "sep_slopes_sep_int") {
+                    selectedModelCode <- 1
+                    adoptedModelName  <- .("Separate slopes & separate intercepts (Model 1)")
+                } else if (modelChoice == "common_slope_sep_int") {
+                    selectedModelCode <- 2
+                    adoptedModelName  <- .("Common slope & separate intercepts (Model 2)")
+                } else if (modelChoice == "common_slope_common_int") {
+                    selectedModelCode <- 3
+                    adoptedModelName  <- .("Common slope & common intercept (Model 3)")
+                } else {
+                    if ((!is.na(p_slopes) && p_slopes <= alphaPool) || (!is.na(p_combo_t) && p_combo_t <= alphaFactor)) {
+                        selectedModelCode <- 1
+                        adoptedModelName  <- .("Separate slopes & separate intercepts (Model 1)")
+                    } else if ((!is.na(p_b_ints) && p_b_ints <= alphaPool) || (!is.na(p_f_ints) && p_f_ints <= alphaFactor)) {
+                        selectedModelCode <- 2
+                        adoptedModelName  <- .("Common slope & separate intercepts (Model 2)")
+                    } else {
+                        selectedModelCode <- 3
+                        adoptedModelName  <- .("Common slope & common intercept (Model 3)")
+                    }
+                }
+
+                chosenFit <- if (selectedModelCode == 1) fit_full else if (selectedModelCode == 2) fit_cs else fit_cl
+
+                multifactorPool <- list(
+                    step1 = list(name = .("Step 1: Batch * Factor * Time (Cohort Slopes)"), df = df_slopes, ss = ss_slopes, ms = ms_slopes, f = f_slopes, p = p_slopes, alpha = alphaPool),
+                    step2 = list(name = .("Step 2: Factor * Time (Factor Slopes)"), df = df_combo_t, ss = ss_combo_t, ms = ms_combo_t, f = f_combo_t, p = p_combo_t, alpha = alphaFactor),
+                    step3 = list(name = .("Step 3: Batch Intercepts"), df = df_b_ints, ss = ss_b_ints, ms = ms_b_ints, f = f_b_ints, p = p_b_ints, alpha = alphaPool),
+                    step4 = list(name = .("Step 4: Factor Intercepts"), df = df_f_ints, ss = ss_f_ints, ms = ms_f_ints, f = f_f_ints, p = p_f_ints, alpha = alphaFactor),
+                    resid = list(name = .("Residual Error (Full Model)"), df = df_full, ss = rss_full, ms = mse_full)
+                )
+
+                df_ints <- df_b_ints; ss_ints <- ss_b_ints; ms_ints <- ms_b_ints; f_ints <- f_b_ints; p_ints <- p_b_ints
+            } else if (k < 2) {
                 fit_cl   <- stats::lm(Y_trans ~ Time, data = dat)
                 fit_cs   <- fit_cl
                 fit_full <- fit_cl
@@ -489,9 +952,30 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 }
             }
 
-            chosenFit <- if (selectedModelCode == 1) fit_full else if (selectedModelCode == 2) fit_cs else fit_cl
+            if (!isMultifactor) {
+                chosenFit <- if (selectedModelCode == 1) fit_full else if (selectedModelCode == 2) fit_cs else fit_cl
+            }
 
-            shelfResults <- private$.computeShelfLife(
+            shelfResults <- if (isMultifactor) {
+                private$.computeMultifactorShelfLife(
+                    dat = dat,
+                    selectedModelCode = selectedModelCode,
+                    fit_full = fit_full,
+                    fit_cs = fit_cs,
+                    fit_cl = fit_cl,
+                    mse_full = mse_full,
+                    df_full = df_full,
+                    specType = specType,
+                    lsl_trans = lsl_trans,
+                    usl_trans = usl_trans,
+                    confLevel = confLevel,
+                    trans = trans,
+                    adoptedModelName = adoptedModelName,
+                    studyDuration = studyDuration,
+                    accelCondition = accelCondition
+                )
+            } else {
+                private$.computeShelfLife(
                 dat = dat,
                 batchLevels = batchLevels,
                 selectedModelCode = selectedModelCode,
@@ -506,6 +990,7 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 confLevel = confLevel,
                 trans = trans
             )
+            }
 
             return(list(
                 attrDef = attrDef,
@@ -543,17 +1028,126 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 usl_val = usl_val,
                 lsl_trans = lsl_trans,
                 usl_trans = usl_trans,
-                trans = trans
+                trans = trans,
+                isMultifactor = isMultifactor,
+                multifactorPool = multifactorPool,
+                success = TRUE
             ))
         },
 
         .populatePoolTable = function(
             k, df_slopes, ss_slopes, ms_slopes, f_slopes, p_slopes,
             df_ints, ss_ints, ms_ints, f_ints, p_ints,
-            df_full, rss_full, mse_full, alphaPool, selectedModelCode
+            df_full, rss_full, mse_full, alphaPool, selectedModelCode,
+            mse_cs = NA_real_,
+            isMultifactor = FALSE,
+            multifactorPool = NULL,
+            alphaFactor = 0.05
         ) {
             table <- self$results$poolTable
             table$deleteRows()
+
+            if (isMultifactor && !is.null(multifactorPool)) {
+                mp <- multifactorPool
+                # Step 1: Cohort Slopes
+                s1_f <- if (is.nan(mp$step1$f) || is.infinite(mp$step1$f)) NA_real_ else mp$step1$f
+                s1_p <- if (is.nan(mp$step1$p)) NA_real_ else mp$step1$p
+                table$addRow(rowKey = "step1", values = list(
+                    step = mp$step1$name,
+                    df = mp$step1$df,
+                    ss = mp$step1$ss,
+                    ms = mp$step1$ms,
+                    f = s1_f,
+                    p = s1_p,
+                    decision = if (is.na(s1_p)) {
+                        .("Cannot evaluate slopes")
+                    } else if (s1_p <= alphaPool) {
+                        jmvcore::format(.("Cohort slopes differ (p <= {alpha}) -> Adopt Model 1"), alpha = alphaPool)
+                    } else {
+                        jmvcore::format(.("Equal cohort slopes (p > {alpha}) -> Proceed to Step 2"), alpha = alphaPool)
+                    }
+                ))
+
+                # Step 2: Factor Slopes
+                s2_f <- if (is.nan(mp$step2$f) || is.infinite(mp$step2$f)) NA_real_ else mp$step2$f
+                s2_p <- if (is.nan(mp$step2$p)) NA_real_ else mp$step2$p
+                table$addRow(rowKey = "step2", values = list(
+                    step = mp$step2$name,
+                    df = mp$step2$df,
+                    ss = mp$step2$ss,
+                    ms = mp$step2$ms,
+                    f = s2_f,
+                    p = s2_p,
+                    decision = if (is.na(s2_p)) {
+                        .("Not tested")
+                    } else if (!is.na(s1_p) && s1_p <= alphaPool) {
+                        .("Not tested (cohort slopes differ)")
+                    } else if (s2_p <= alphaFactor) {
+                        jmvcore::format(.("Factor slopes differ (p <= {alpha}) -> Adopt Model 1"), alpha = alphaFactor)
+                    } else {
+                        jmvcore::format(.("Equal factor slopes (p > {alpha}) -> Proceed to Step 3"), alpha = alphaFactor)
+                    }
+                ))
+
+                # Step 3: Batch Intercepts
+                s3_f <- if (is.nan(mp$step3$f) || is.infinite(mp$step3$f)) NA_real_ else mp$step3$f
+                s3_p <- if (is.nan(mp$step3$p)) NA_real_ else mp$step3$p
+                table$addRow(rowKey = "step3", values = list(
+                    step = mp$step3$name,
+                    df = mp$step3$df,
+                    ss = mp$step3$ss,
+                    ms = mp$step3$ms,
+                    f = s3_f,
+                    p = s3_p,
+                    decision = if (is.na(s3_p)) {
+                        .("Not tested")
+                    } else if ((!is.na(s1_p) && s1_p <= alphaPool) || (!is.na(s2_p) && s2_p <= alphaFactor)) {
+                        .("Not tested (slopes are unequal)")
+                    } else if (s3_p <= alphaPool) {
+                        jmvcore::format(.("Batch intercepts differ (p <= {alpha}) -> Adopt Model 2"), alpha = alphaPool)
+                    } else {
+                        jmvcore::format(.("Equal batch intercepts (p > {alpha}) -> Proceed to Step 4"), alpha = alphaPool)
+                    }
+                ))
+
+                # Step 4: Factor Intercepts
+                s4_f <- if (is.nan(mp$step4$f) || is.infinite(mp$step4$f)) NA_real_ else mp$step4$f
+                s4_p <- if (is.nan(mp$step4$p)) NA_real_ else mp$step4$p
+                table$addRow(rowKey = "step4", values = list(
+                    step = mp$step4$name,
+                    df = mp$step4$df,
+                    ss = mp$step4$ss,
+                    ms = mp$step4$ms,
+                    f = s4_f,
+                    p = s4_p,
+                    decision = if (is.na(s4_p)) {
+                        .("Not tested")
+                    } else if ((!is.na(s1_p) && s1_p <= alphaPool) || (!is.na(s2_p) && s2_p <= alphaFactor) || (!is.na(s3_p) && s3_p <= alphaPool)) {
+                        .("Not tested (model already selected)")
+                    } else if (s4_p <= alphaFactor) {
+                        jmvcore::format(.("Factor intercepts differ (p <= {alpha}) -> Adopt Model 2"), alpha = alphaFactor)
+                    } else {
+                        jmvcore::format(.("Equal factor intercepts (p > {alpha}) -> Adopt Model 3"), alpha = alphaFactor)
+                    }
+                ))
+
+                # Residual Error
+                table$addRow(rowKey = "resid", values = list(
+                    step = mp$resid$name,
+                    df = mp$resid$df,
+                    ss = mp$resid$ss,
+                    ms = mp$resid$ms,
+                    f = NA_real_,
+                    p = NA_real_,
+                    decision = .("Pooled residual variance across cohorts")
+                ))
+
+                table$setNote(
+                    "multifactor_ancova_note",
+                    .("Multifactor ANCOVA poolability tests evaluate whether stability batches and packaging/strength factor levels can share common slopes and intercepts according to ICH Q1E Section B.3.2.2.1 (alpha = 0.25 for batch terms, alpha = 0.05 for factor terms).")
+                )
+                return()
+            }
             f_slopes_val <- if (is.nan(f_slopes) || is.infinite(f_slopes)) NA_real_ else f_slopes
             p_slopes_val <- if (is.nan(p_slopes)) NA_real_ else p_slopes
             f_ints_val   <- if (is.nan(f_ints) || is.infinite(f_ints)) NA_real_ else f_ints
@@ -579,13 +1173,15 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
             table$addRow(rowKey = "step2", values = list(
                 step = .("Step 2: Intercepts (Batch)"),
-                df = if (k < 2 || (!is.na(p_slopes_val) && p_slopes_val <= alphaPool)) NA_integer_ else df_ints,
-                ss = if (k < 2 || (!is.na(p_slopes_val) && p_slopes_val <= alphaPool)) NA_real_ else ss_ints,
-                ms = if (k < 2 || (!is.na(p_slopes_val) && p_slopes_val <= alphaPool)) NA_real_ else ms_ints,
-                f = if (k < 2 || (!is.na(p_slopes_val) && p_slopes_val <= alphaPool)) NA_real_ else f_ints_val,
-                p = if (k < 2 || (!is.na(p_slopes_val) && p_slopes_val <= alphaPool)) NA_real_ else p_ints_val,
+                df = if (k < 2 || is.na(p_slopes_val) || (!is.na(p_slopes_val) && p_slopes_val <= alphaPool)) NA_integer_ else df_ints,
+                ss = if (k < 2 || is.na(p_slopes_val) || (!is.na(p_slopes_val) && p_slopes_val <= alphaPool)) NA_real_ else ss_ints,
+                ms = if (k < 2 || is.na(p_slopes_val) || (!is.na(p_slopes_val) && p_slopes_val <= alphaPool)) NA_real_ else ms_ints,
+                f = if (k < 2 || is.na(p_slopes_val) || (!is.na(p_slopes_val) && p_slopes_val <= alphaPool)) NA_real_ else f_ints_val,
+                p = if (k < 2 || is.na(p_slopes_val) || (!is.na(p_slopes_val) && p_slopes_val <= alphaPool)) NA_real_ else p_ints_val,
                 decision = if (k < 2) {
                     .("Single batch – poolability test not applicable")
+                } else if (is.na(p_slopes_val)) {
+                    .("Not tested (slopes poolability test could not be evaluated)")
                 } else if (!is.na(p_slopes_val) && p_slopes_val <= alphaPool) {
                     .("Not tested (slopes are unequal)")
                 } else if (is.na(p_ints_val)) {
@@ -620,61 +1216,393 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             table$setNote("adopted_model", model_summary)
         },
 
-        .computeShelfLife = function(
-            dat, batchLevels, selectedModelCode, fit_full, fit_cs, fit_cl,
-            mse_full, df_full, specType, lsl_trans, usl_trans, confLevel, trans
+        .calcBound = function(
+            batch_i, t_eval, modelCode, dat, batchLevels,
+            fit_cs, fit_cl, mse_full, df_full, specType, confLevel,
+            batchStats = NULL
         ) {
-            # Critical t value for 95% bound
-            alpha <- 1 - confLevel
-            t_max_obs <- max(dat$Time, na.rm = TRUE)
-
-            calcBound = function(batch_i, t_eval, modelCode, boundType) {
-                if (modelCode == 1) {
-                    # Model 1: Separate slopes and separate intercepts with pooled MSE
-                    sub_dat <- dat[dat$Batch == batch_i, , drop = FALSE]
-                    n_i <- nrow(sub_dat)
-                    t_bar_i <- mean(sub_dat$Time)
-                    S_tt_i <- sum((sub_dat$Time - t_bar_i)^2)
-
-                    if (is.na(mse_full) || mse_full <= 0 || df_full <= 0 || S_tt_i <= 0) {
-                        return(rep(NA_real_, length(t_eval)))
+            if (modelCode == 1) {
+                b_stat <- if (!is.null(batchStats)) batchStats[[batch_i]] else NULL
+                if (is.null(b_stat)) {
+                    sub_d <- dat[dat$Batch == batch_i, , drop = FALSE]
+                    n_i <- nrow(sub_d)
+                    t_bar_i <- mean(sub_d$Time)
+                    S_tt_i <- sum((sub_d$Time - t_bar_i)^2)
+                    coef_i <- if (n_i >= 2 && S_tt_i > 0) {
+                        stats::coef(stats::lm(Y_trans ~ Time, data = sub_d))
+                    } else {
+                        c(`(Intercept)` = mean(sub_d$Y_trans), Time = NA_real_)
                     }
-
-                    fit_i <- stats::lm(Y_trans ~ Time, data = sub_dat)
-                    coef_i <- stats::coef(fit_i)
-                    y_hat <- coef_i[1] + coef_i[2] * t_eval
-                    se_pred <- sqrt(mse_full * (1 / n_i + (t_eval - t_bar_i)^2 / S_tt_i))
-                    df_val <- df_full
-                } else if (modelCode == 2) {
-                    # Model 2: Common slope, separate intercepts
+                    b_stat <- list(n = n_i, t_bar = t_bar_i, S_tt = S_tt_i, coef = coef_i)
+                }
+                if (is.na(mse_full) || mse_full <= 0 || df_full <= 0 || b_stat$S_tt <= 0 || is.na(b_stat$coef[2])) {
+                    y_hat <- rep(b_stat$coef[1], length(t_eval))
+                    se_pred <- rep(NA_real_, length(t_eval))
+                } else {
+                    y_hat <- b_stat$coef[1] + b_stat$coef[2] * t_eval
+                    se_pred <- sqrt(mse_full * (1 / b_stat$n + (t_eval - b_stat$t_bar)^2 / b_stat$S_tt))
+                }
+                df_val <- df_full
+            } else if (modelCode == 2) {
+                if ("Cohort" %in% names(stats::model.frame(fit_cs))) {
+                    cohort_levels <- levels(dat$Cohort)
+                    match_cohorts <- cohort_levels[startsWith(cohort_levels, paste0(batch_i, " @ "))]
+                    if (length(match_cohorts) == 0) match_cohorts <- cohort_levels[1]
+                    preds_list <- lapply(match_cohorts, function(c_name) {
+                        nd <- data.frame(Cohort = factor(c_name, levels = cohort_levels), Time = t_eval)
+                        stats::predict(fit_cs, newdata = nd, se.fit = TRUE)
+                    })
+                    pred_res <- preds_list[[1]]
+                    if (length(preds_list) > 1) {
+                        for (p_idx in 2:length(preds_list)) {
+                            if (specType %in% c("lower", "both")) {
+                                if (mean(preds_list[[p_idx]]$fit) < mean(pred_res$fit)) pred_res <- preds_list[[p_idx]]
+                            } else {
+                                if (mean(preds_list[[p_idx]]$fit) > mean(pred_res$fit)) pred_res <- preds_list[[p_idx]]
+                            }
+                        }
+                    }
+                    y_hat <- pred_res$fit
+                    se_pred <- pred_res$se.fit
+                    df_val <- stats::df.residual(fit_cs)
+                } else {
                     new_df <- data.frame(Batch = factor(batch_i, levels = batchLevels), Time = t_eval)
                     pred_res <- stats::predict(fit_cs, newdata = new_df, se.fit = TRUE)
                     y_hat <- pred_res$fit
                     se_pred <- pred_res$se.fit
                     df_val <- stats::df.residual(fit_cs)
-                } else {
-                    # Model 3: Common slope, common intercept
-                    new_df <- data.frame(Time = t_eval)
-                    pred_res <- stats::predict(fit_cl, newdata = new_df, se.fit = TRUE)
-                    y_hat <- pred_res$fit
-                    se_pred <- pred_res$se.fit
-                    df_val <- stats::df.residual(fit_cl)
                 }
+            } else {
+                new_df <- data.frame(Time = t_eval)
+                pred_res <- stats::predict(fit_cl, newdata = new_df, se.fit = TRUE)
+                y_hat <- pred_res$fit
+                se_pred <- pred_res$se.fit
+                df_val <- stats::df.residual(fit_cl)
+            }
 
-                # Critical value
-                # Two-sided 95% bound requires alpha / 2 on each tail
-                # One-sided 95% bound requires alpha on that tail
-                is_two_sided <- (specType == "both")
-                t_crit <- if (is_two_sided) stats::qt(1 - alpha / 2, df = df_val) else stats::qt(1 - alpha, df = df_val)
+            alpha <- 1 - confLevel
+            is_two_sided <- (specType == "both")
+            t_crit <- if (df_val > 0) {
+                if (is_two_sided) stats::qt(1 - alpha / 2, df = df_val) else stats::qt(1 - alpha, df = df_val)
+            } else {
+                if (is_two_sided) stats::qnorm(1 - alpha / 2) else stats::qnorm(1 - alpha)
+            }
 
+            return(list(
+                fit = y_hat,
+                se.fit = se_pred,
+                lower = y_hat - t_crit * se_pred,
+                upper = y_hat + t_crit * se_pred,
+                df = df_val
+            ))
+        },
+
+        .evaluateDecisionTree = function(
+            t_dur, storageCond, accelResult, intermedResult,
+            supportingData, littleChange, proposedShelfLife,
+            accelConditionLegacy = "none", overallStatShelf = NA_real_
+        ) {
+            # Normalize inputs
+            if (is.null(storageCond) || is.na(storageCond)) storageCond <- "room"
+            if (is.null(accelResult) || is.na(accelResult)) accelResult <- "no_change"
+            if (is.null(intermedResult) || is.na(intermedResult)) intermedResult <- "not_applicable"
+            if (is.null(supportingData) || is.na(supportingData)) supportingData <- TRUE
+            if (is.null(littleChange) || is.na(littleChange)) littleChange <- FALSE
+            if (is.null(proposedShelfLife) || is.na(proposedShelfLife)) proposedShelfLife <- 0
+
+            # Legacy accelCondition fallback if accelResult was left default or not_tested
+            if ((accelResult == "not_tested" || accelResult == "no_change") && !is.null(accelConditionLegacy) && accelConditionLegacy != "none") {
+                if (accelConditionLegacy == "no_change") {
+                    accelResult <- "no_change"
+                } else if (accelConditionLegacy == "intermediate_ok") {
+                    accelResult <- "change_observed"
+                    intermedResult <- "no_change"
+                } else if (accelConditionLegacy == "change_observed") {
+                    accelResult <- "change_observed"
+                    intermedResult <- "change_observed"
+                }
+            } else if (!is.null(accelConditionLegacy) && accelConditionLegacy == "none" && (is.null(accelResult) || accelResult == "not_tested")) {
+                accelResult <- "not_tested"
+            }
+
+            extrapCap <- t_dur
+            branchTitle <- ""
+            guidelineRef <- "ICH Q1E Appendix A"
+            capFormula <- "Y"
+            storageDisplay <- .("Room Temperature (25°C / 60% RH or 30°C / 65% RH)")
+            accelDisplay <- .("No significant change at accelerated condition (6 mo)")
+            intermedDisplay <- .("Not performed / Not applicable")
+
+            if (storageCond == "room") {
+                storageDisplay <- .("Room Temperature (25°C / 60% RH or 30°C / 65% RH)")
+                if (accelResult == "no_change") {
+                    accelDisplay <- .("No significant change at accelerated condition (6 mo)")
+                    extrapCap <- min(2 * t_dur, t_dur + 12)
+                    capFormula <- "min(2Y, Y + 12 mo)"
+                    branchTitle <- .("Room Temp: No significant change at accelerated condition (ICH Q1E App. A.1)")
+                    guidelineRef <- "ICH Q1E Appendix A.1, Section 2.4.2.1"
+                } else if (accelResult == "change_observed") {
+                    accelDisplay <- .("Significant change observed within 6 months")
+                    if (intermedResult == "no_change") {
+                        intermedDisplay <- .("No significant change at intermediate condition")
+                        extrapCap <- min(1.5 * t_dur, t_dur + 6)
+                        capFormula <- "min(1.5Y, Y + 6 mo)"
+                        branchTitle <- .("Room Temp: Accelerated change, intermediate confirmed stable (ICH Q1E App. A.1)")
+                        guidelineRef <- "ICH Q1E Appendix A.1, Section 2.4.2.1"
+                    } else if (intermedResult == "change_observed") {
+                        intermedDisplay <- .("Significant change observed at intermediate condition")
+                        extrapCap <- t_dur
+                        capFormula <- "Y (no extrapolation)"
+                        branchTitle <- .("Room Temp: Significant change at accelerated and intermediate conditions")
+                        guidelineRef <- "ICH Q1E Section 2.4.2.1"
+                    } else {
+                        intermedDisplay <- .("Not performed / Study missing")
+                        extrapCap <- t_dur
+                        capFormula <- "Y (no extrapolation without intermediate data)"
+                        branchTitle <- .("Room Temp: Accelerated change, intermediate study missing (ICH Q1E Section 2.4.2.1)")
+                        guidelineRef <- "ICH Q1E Section 2.4.2.1"
+                    }
+                } else {
+                    accelDisplay <- .("Accelerated study not conducted / Unknown")
+                    extrapCap <- t_dur
+                    capFormula <- "Y (no extrapolation without accelerated data)"
+                    branchTitle <- .("Room Temp: Accelerated testing not evaluated (ICH Q1E Section 2.4.1)")
+                    guidelineRef <- "ICH Q1E Section 2.4.1"
+                }
+            } else if (storageCond == "refrigerated") {
+                storageDisplay <- .("Refrigerated (5°C ± 3°C)")
+                if (accelResult == "no_change") {
+                    accelDisplay <- .("No significant change at 25°C / 60% RH (6 mo)")
+                    extrapCap <- min(2 * t_dur, t_dur + 12)
+                    capFormula <- "min(2Y, Y + 12 mo)"
+                    branchTitle <- .("Refrigerated: No significant change at 25°C / 60% RH (ICH Q1E App. A.2)")
+                    guidelineRef <- "ICH Q1E Appendix A.2, Section 2.4.2.2"
+                } else if (accelResult == "change_observed") {
+                    accelDisplay <- .("Significant change between 3 and 6 months at 25°C")
+                    if (supportingData) {
+                        extrapCap <- min(1.5 * t_dur, t_dur + 6)
+                        capFormula <- "min(1.5Y, Y + 6 mo)"
+                        branchTitle <- .("Refrigerated: Change between 3-6 mo, supporting data available (ICH Q1E App. A.2)")
+                        guidelineRef <- "ICH Q1E Appendix A.2, Section 2.4.2.2"
+                    } else {
+                        extrapCap <- t_dur
+                        capFormula <- "Y (no extrapolation without supporting data)"
+                        branchTitle <- .("Refrigerated: Change between 3-6 mo, no supporting data")
+                        guidelineRef <- "ICH Q1E Section 2.4.2.2"
+                    }
+                } else if (accelResult == "change_refrig_early") {
+                    accelDisplay <- .("Significant change within first 3 months at 25°C")
+                    extrapCap <- t_dur
+                    capFormula <- "Y (no extrapolation permitted)"
+                    branchTitle <- .("Refrigerated: Significant change within first 3 months at 25°C (ICH Q1E App. A.2)")
+                    guidelineRef <- "ICH Q1E Appendix A.2, Section 2.4.2.2"
+                } else {
+                    accelDisplay <- .("Accelerated study not conducted / Unknown")
+                    extrapCap <- t_dur
+                    capFormula <- "Y (no extrapolation)"
+                    branchTitle <- .("Refrigerated: Accelerated data unavailable")
+                    guidelineRef <- "ICH Q1E Section 2.4.2.2"
+                }
+            } else {
+                storageDisplay <- .("Frozen (-20°C ± 5°C)")
+                accelDisplay <- .("Elevated temperature testing (ICH Q1E Section 2.4.3)")
+                if (supportingData) {
+                    extrapCap <- min(1.5 * t_dur, t_dur + 6)
+                    capFormula <- "min(1.5Y, Y + 6 mo)"
+                    branchTitle <- .("Frozen: Conservative extrapolation with supporting data (ICH Q1E Section 2.4.3)")
+                    guidelineRef <- "ICH Q1E Section 2.4.3"
+                } else {
+                    extrapCap <- t_dur
+                    capFormula <- "Y (no extrapolation beyond long-term data)"
+                    branchTitle <- .("Frozen: Limited to long-term data duration (ICH Q1E Section 2.4.3)")
+                    guidelineRef <- "ICH Q1E Section 2.4.3"
+                }
+            }
+
+            # Proposed shelf life verdict
+            proposedVerdict <- ""
+            proposedSupported <- FALSE
+            if (proposedShelfLife > 0) {
+                if (is.na(overallStatShelf)) {
+                    proposedVerdict <- .("Undetermined (statistical evaluation not completed)")
+                } else if (is.infinite(overallStatShelf) || overallStatShelf >= proposedShelfLife) {
+                    if (proposedShelfLife <= extrapCap) {
+                        proposedSupported <- TRUE
+                        proposedVerdict <- jmvcore::format(
+                            .("Fully Supported: Conforms to {prop} months within regulatory ceiling ({cap} months)"),
+                            prop = private$.formatNum(proposedShelfLife, 1),
+                            cap = private$.formatNum(extrapCap, 1)
+                        )
+                    } else {
+                        proposedVerdict <- jmvcore::format(
+                            .("Not Supported: Proposed shelf life ({prop} months) exceeds regulatory ceiling ({cap} months)"),
+                            prop = private$.formatNum(proposedShelfLife, 1),
+                            cap = private$.formatNum(extrapCap, 1)
+                        )
+                    }
+                } else {
+                    proposedVerdict <- jmvcore::format(
+                        .("Not Supported: Limiting statistical estimate ({stat} months) is less than proposed ({prop} months)"),
+                        stat = private$.formatNum(overallStatShelf, 1),
+                        prop = private$.formatNum(proposedShelfLife, 1)
+                    )
+                }
+            }
+
+            # Return complete decision tree structure
+            return(list(
+                t_dur = t_dur,
+                storageCond = storageCond,
+                storageCondDisplay = storageDisplay,
+                accelResult = accelResult,
+                accelDisplay = accelDisplay,
+                intermedResult = intermedResult,
+                intermedDisplay = intermedDisplay,
+                supportingData = supportingData,
+                littleChange = littleChange,
+                proposedShelfLife = proposedShelfLife,
+                extrapCap = extrapCap,
+                capFormula = capFormula,
+                branchTitle = branchTitle,
+                guidelineRef = guidelineRef,
+                proposedVerdict = proposedVerdict,
+                proposedSupported = proposedSupported,
+                statShelf = overallStatShelf,
+                ichShelf = if (is.na(overallStatShelf)) NA_real_ else if (is.infinite(overallStatShelf)) extrapCap else min(overallStatShelf, extrapCap)
+            ))
+        },
+
+        .populateRegTable = function(shelfRes, attrName = NULL, t_dur = NULL) {
+            table <- self$results$regTable
+            table$deleteRows()
+
+            dt <- shelfRes$decisionTree
+            if (is.null(dt)) return()
+
+            rows_data <- list(
+                list(
+                    param = .("Intended Storage Condition"),
+                    source = .("User Protocol Input"),
+                    value = dt$storageCondDisplay,
+                    guideline = "ICH Q1A (R2) / ICH Q1E Section 2.4.2"
+                ),
+                list(
+                    param = .("Long-term Study Duration (Y)"),
+                    source = .("Study Data Coverage"),
+                    value = paste0(private$.formatNum(dt$t_dur, 1), " ", .("months")),
+                    guideline = .("Baseline observation duration Y")
+                ),
+                list(
+                    param = .("Accelerated Testing Outcome"),
+                    source = .("User Protocol Input"),
+                    value = dt$accelDisplay,
+                    guideline = "ICH Q1E Appendix A, Section 2.4.2.1"
+                ),
+                list(
+                    param = .("Intermediate Testing Outcome"),
+                    source = .("User Protocol Input"),
+                    value = dt$intermedDisplay,
+                    guideline = "ICH Q1E Section 2.4.2.1"
+                ),
+                list(
+                    param = .("Relevant Supporting Data"),
+                    source = .("User Declaration"),
+                    value = if (isTRUE(dt$supportingData)) .("Available (pilot batches / packaging)") else .("Not available / unverified"),
+                    guideline = "ICH Q1E Section 2.4.1"
+                ),
+                list(
+                    param = .("Long-term Data Variability"),
+                    source = .("User Assessment"),
+                    value = if (isTRUE(dt$littleChange)) .("Little or no change / low variability") else .("Change and variability observed over time"),
+                    guideline = "ICH Q1E Appendix A Decision Tree"
+                ),
+                list(
+                    param = .("Selected Decision Tree Branch"),
+                    source = .("ICH Q1E Logic Engine"),
+                    value = dt$branchTitle,
+                    guideline = dt$guidelineRef
+                ),
+                list(
+                    param = .("Extrapolation Ceiling"),
+                    source = .("Regulatory Ceiling"),
+                    value = paste0(private$.formatNum(dt$extrapCap, 1), " ", .("months"), " (", dt$capFormula, ")"),
+                    guideline = .("Maximum conditional extension limit")
+                ),
+                list(
+                    param = .("Governing Statistical Shelf Life"),
+                    source = .("ANCOVA Regression Fit"),
+                    value = if (is.na(dt$statShelf)) .("Undetermined") else if (is.infinite(dt$statShelf)) paste0("> 240 ", .("months"), " (", .("no degradation"), ")") else paste0(private$.formatNum(dt$statShelf, 1), " ", .("months")),
+                    guideline = "ICH Q1E Appendix B / 95% Confidence Bound"
+                ),
+                list(
+                    param = .("ICH Q1E Permitted Shelf Life"),
+                    source = .("Regulatory Verdict"),
+                    value = if (is.na(dt$ichShelf)) .("Undetermined") else paste0(private$.formatNum(dt$ichShelf, 1), " ", .("months")),
+                    guideline = .("min(Statistical Shelf Life, Extrapolation Ceiling)")
+                )
+            )
+
+            if (!is.null(dt$proposedShelfLife) && !is.na(dt$proposedShelfLife) && dt$proposedShelfLife > 0) {
+                rows_data[[length(rows_data) + 1]] <- list(
+                    param = .("Proposed / Target Shelf Life"),
+                    source = .("User Target Specification"),
+                    value = paste0(private$.formatNum(dt$proposedShelfLife, 1), " ", .("months"), " – ", dt$proposedVerdict),
+                    guideline = "ICH Q1E Section B.2.1 / Section B.3.1"
+                )
+            }
+
+            for (idx in seq_along(rows_data)) {
+                r <- rows_data[[idx]]
+                table$addRow(rowKey = paste0("reg_row_", idx), values = r)
+            }
+        },
+
+        .computeShelfLife = function(
+            dat, batchLevels, selectedModelCode, fit_full, fit_cs, fit_cl,
+            mse_full, df_full, specType, lsl_trans, usl_trans, confLevel, trans
+        ) {
+            t_max_obs <- max(dat$Time, na.rm = TRUE)
+
+            batchStats <- list()
+            for (b in batchLevels) {
+                sub_d <- dat[dat$Batch == b, , drop = FALSE]
+                n_i <- nrow(sub_d)
+                t_bar_i <- mean(sub_d$Time)
+                S_tt_i <- sum((sub_d$Time - t_bar_i)^2)
+                coef_i <- if (n_i >= 2 && S_tt_i > 0) {
+                    fit_b <- stats::lm(Y_trans ~ Time, data = sub_d)
+                    stats::coef(fit_b)
+                } else {
+                    c(`(Intercept)` = mean(sub_d$Y_trans), Time = NA_real_)
+                }
+                batchStats[[b]] <- list(n = n_i, t_bar = t_bar_i, S_tt = S_tt_i, coef = coef_i)
+            }
+
+            calcBound = function(batch_i, t_eval, modelCode, boundType) {
+                b_res <- private$.calcBound(
+                    batch_i = batch_i,
+                    t_eval = t_eval,
+                    modelCode = modelCode,
+                    dat = dat,
+                    batchLevels = batchLevels,
+                    fit_cs = fit_cs,
+                    fit_cl = fit_cl,
+                    mse_full = mse_full,
+                    df_full = df_full,
+                    specType = specType,
+                    confLevel = confLevel,
+                    batchStats = batchStats
+                )
                 if (boundType == "lower") {
-                    return(y_hat - t_crit * se_pred)
+                    return(b_res$lower)
                 } else if (boundType == "upper") {
-                    return(y_hat + t_crit * se_pred)
+                    return(b_res$upper)
                 } else {
                     return(list(
-                        lower = y_hat - t_crit * se_pred,
-                        upper = y_hat + t_crit * se_pred
+                        fit = b_res$fit,
+                        se.fit = b_res$se.fit,
+                        lower = b_res$lower,
+                        upper = b_res$upper
                     ))
                 }
             }
@@ -736,17 +1664,10 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             # Calculate for each batch
             batchRows <- list()
             for (b in batchLevels) {
-                sub_dat <- dat[dat$Batch == b, , drop = FALSE]
                 if (selectedModelCode == 1) {
-                    if (length(unique(sub_dat$Time)) >= 2) {
-                        fit_b <- stats::lm(Y_trans ~ Time, data = sub_dat)
-                        cf <- stats::coef(fit_b)
-                        int_val <- if (trans == "log") exp(cf[1]) else cf[1]
-                        slp_val <- cf[2]
-                    } else {
-                        int_val <- if (trans == "log") exp(mean(sub_dat$Y_trans)) else mean(sub_dat$Y_trans)
-                        slp_val <- NA_real_
-                    }
+                    b_stat <- batchStats[[b]]
+                    int_val <- if (trans == "log") exp(b_stat$coef[1]) else b_stat$coef[1]
+                    slp_val <- b_stat$coef[2]
                 } else if (selectedModelCode == 2) {
                     cf_cs <- stats::coef(fit_cs)
                     batch_term <- paste0("Batch", b)
@@ -769,37 +1690,40 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 )
             }
 
-            # Extrapolation rule (ICH Q1E Appendix A)
+            # Long-term data duration Y
             studyDur <- self$options$studyDuration
             t_dur <- if (!is.null(studyDur) && studyDur > 0) studyDur else t_max_obs
-            accel <- self$options$accelCondition
-
-            if (accel == "no_change") {
-                extrapCap <- min(2 * t_dur, t_dur + 12)
-            } else if (accel == "intermediate_ok") {
-                extrapCap <- min(1.5 * t_dur, t_dur + 6)
-            } else {
-                extrapCap <- t_dur
-            }
 
             # Identify limiting batch and overall shelf life
             all_stat_shelves <- sapply(batchRows, function(x) x$statShelf)
             na_batches <- names(batchRows)[is.na(all_stat_shelves)]
 
-            if (length(na_batches) > 0) {
+            if (length(na_batches) > 0 || length(all_stat_shelves) == 0) {
                 overall_stat_shelf <- NA_real_
-                overall_ich_shelf  <- NA_real_
                 limiting_batch_name <- NA_character_
-            } else if (length(all_stat_shelves) == 0) {
-                overall_stat_shelf <- NA_real_
-                overall_ich_shelf  <- NA_real_
+            } else if (selectedModelCode == 3) {
+                overall_stat_shelf <- min(all_stat_shelves)
                 limiting_batch_name <- NA_character_
             } else {
                 overall_stat_shelf <- min(all_stat_shelves)
                 min_batch_idx <- which(all_stat_shelves == overall_stat_shelf)
                 limiting_batch_name <- names(batchRows)[min_batch_idx[1]]
-                overall_ich_shelf  <- if (is.infinite(overall_stat_shelf)) extrapCap else min(overall_stat_shelf, extrapCap)
             }
+
+            # Evaluate full ICH Q1E Appendix A Decision Tree
+            dtRes <- private$.evaluateDecisionTree(
+                t_dur = t_dur,
+                storageCond = self$options$storageCond,
+                accelResult = self$options$accelResult,
+                intermedResult = self$options$intermedResult,
+                supportingData = self$options$supportingData,
+                littleChange = self$options$littleChange,
+                proposedShelfLife = self$options$proposedShelfLife,
+                accelConditionLegacy = self$options$accelCondition,
+                overallStatShelf = overall_stat_shelf
+            )
+            extrapCap <- dtRes$extrapCap
+            overall_ich_shelf <- dtRes$ichShelf
 
             return(list(
                 batchRows = batchRows,
@@ -810,11 +1734,12 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 naBatches = na_batches,
                 extrapCap = extrapCap,
                 extrapActive = isTRUE(!is.na(overall_stat_shelf) && overall_stat_shelf > extrapCap),
-                t_dur = t_dur
+                t_dur = t_dur,
+                decisionTree = dtRes
             ))
         },
 
-        .populateShelfTable = function(shelfRes, adoptedModelName, dat, selectedModelCode = NULL) {
+        .populateShelfTable = function(shelfRes, adoptedModelName, dat, selectedModelCode = NULL, trans = "none") {
             table <- self$results$shelfTable
             table$deleteRows()
             bRows <- shelfRes$batchRows
@@ -834,7 +1759,7 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     table$setNote(
                         paste0("na_batch_", b),
                         jmvcore::format(
-                            .("Shelf life for batch '{batch}' cannot be computed (insufficient time points or degrees of freedom)."),
+                            .("Shelf life for batch '{batch}' could not be evaluated."),
                             batch = b
                         )
                     )
@@ -852,6 +1777,22 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     }
                 }
 
+                propShelfVal <- self$options$proposedShelfLife
+                b_prop_status <- ""
+                if (!is.null(propShelfVal) && !is.na(propShelfVal) && propShelfVal > 0) {
+                    if (is.na(s_stat)) {
+                        b_prop_status <- .("Undetermined")
+                    } else if (is.infinite(s_stat) || s_stat >= propShelfVal) {
+                        if (propShelfVal <= extrapCap) {
+                            b_prop_status <- paste0(.("Supported"), " (>= ", private$.formatNum(propShelfVal, 1), " ", .("mo"), ")")
+                        } else {
+                            b_prop_status <- paste0(.("Exceeds ceiling"), " (", private$.formatNum(extrapCap, 1), " ", .("mo"), ")")
+                        }
+                    } else {
+                        b_prop_status <- paste0(.("Not supported"), " (", private$.formatNum(s_stat, 1), " < ", private$.formatNum(propShelfVal, 1), " ", .("mo"), ")")
+                    }
+                }
+
                 table$addRow(rowKey = b, values = list(
                     batch = as.character(b),
                     model = adoptedModelName,
@@ -859,6 +1800,7 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     slope = item$slope,
                     statShelf = stat_display,
                     ichShelf = ich_display,
+                    proposedStatus = b_prop_status,
                     limiting = lim_text
                 ))
             }
@@ -887,6 +1829,22 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 }
             }
 
+            propShelfVal <- self$options$proposedShelfLife
+            ov_prop_status <- ""
+            if (!is.null(propShelfVal) && !is.na(propShelfVal) && propShelfVal > 0) {
+                if (is.na(ov_stat)) {
+                    ov_prop_status <- .("Undetermined")
+                } else if (is.infinite(ov_stat) || ov_stat >= propShelfVal) {
+                    if (propShelfVal <= extrapCap) {
+                        ov_prop_status <- paste0("<b>", .("Supported"), "</b> (", private$.formatNum(propShelfVal, 1), " ", .("mo"), ")")
+                    } else {
+                        ov_prop_status <- paste0("<b>", .("Exceeds ceiling"), "</b> (", private$.formatNum(extrapCap, 1), " ", .("mo"), ")")
+                    }
+                } else {
+                    ov_prop_status <- paste0("<b>", .("Not supported"), "</b> (", private$.formatNum(ov_stat, 1), " < ", private$.formatNum(propShelfVal, 1), " ", .("mo"), ")")
+                }
+            }
+
             table$addRow(rowKey = "overall", values = list(
                 batch = paste0("<b>", .("OVERALL / PROPOSED"), "</b>"),
                 model = adoptedModelName,
@@ -894,10 +1852,21 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 slope = NA_real_,
                 statShelf = stat_disp,
                 ichShelf = ich_disp,
+                proposedStatus = ov_prop_status,
                 limiting = lim_reason
             ))
 
             # Dynamic notes for shelfTable
+            propShelfVal <- self$options$proposedShelfLife
+            if (!is.null(propShelfVal) && !is.na(propShelfVal) && propShelfVal > 0 && !is.null(shelfRes$decisionTree)) {
+                table$setNote(
+                    "proposed_eval_note",
+                    paste0(paste0("<b>", .("Proposed Shelf Life Assessment"), ":</b> "), shelfRes$decisionTree$proposedVerdict)
+                )
+            } else {
+                table$setNote("proposed_eval_note", NULL)
+            }
+
             if (!is.na(ov_stat) && is.finite(ov_stat) && ov_stat > extrapCap) {
                 table$setNote("extrap_active", jmvcore::format(.("<b>Extrapolation Cap Active</b>: Statistical intersection ({stat} months) exceeds the allowable ICH Q1E extrapolation limit ({cap} months). Permitted shelf life is capped at {cap} months."), stat = private$.formatNum(ov_stat, 1), cap = private$.formatNum(extrapCap, 1)))
             } else if (!is.na(ov_stat) && is.infinite(ov_stat)) {
@@ -915,8 +1884,7 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             }
 
             # Log scale note if applicable
-            trans_opt <- self$options$trans
-            if (!is.null(trans_opt) && trans_opt == "log") {
+            if (!is.null(trans) && trans == "log") {
                 table$setNote("log_scale_note", .("Log transformation: Intercepts are back-transformed (original units); slopes represent relative change per month on log scale."))
             } else {
                 table$setNote("log_scale_note", NULL)
@@ -947,58 +1915,50 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             lim_stat <- if (!is.na(b_lim)) shelfResults$batchRows[[b_lim]]$statShelf else NA_real_
             k        <- length(batchLevels)
 
-            t_max_plot <- max(t_dur * 1.25, if (!is.na(ov_ich) && !is.infinite(ov_ich)) ov_ich * 1.25 else 36, 12)
-            t_grid <- seq(0, t_max_plot, length.out = 150)
+            # Determine maximum batch statistical shelf life so plot curves reach intersections
+            all_batch_shelves <- vapply(shelfResults$batchRows, function(r) {
+                if (!is.null(r$statShelf) && is.finite(r$statShelf) && !is.na(r$statShelf)) r$statShelf else NA_real_
+            }, numeric(1))
+            valid_shelves <- all_batch_shelves[!is.na(all_batch_shelves)]
+            max_stat_shelf <- if (length(valid_shelves) > 0) max(valid_shelves) else t_dur
+
+            t_max_plot <- max(
+                t_dur * 1.25,
+                max_stat_shelf * 1.15,
+                if (!is.na(ov_ich) && !is.infinite(ov_ich)) ov_ich * 1.25 else 36,
+                36
+            )
+            t_grid <- seq(0, t_max_plot, length.out = 200)
             alpha  <- 1 - confLevel
             is_two_sided <- (specType == "both")
 
             # Precalculate predictions and bounds for stabPlot and facetPlot
             pred_list <- list()
             for (b in batchLevels) {
-                sub_d <- dat[dat$Batch == b, , drop = FALSE]
-                n_i   <- nrow(sub_d)
-                t_bar_i <- mean(sub_d$Time)
-                S_tt_i  <- sum((sub_d$Time - t_bar_i)^2)
-
-                if (selectedModelCode == 1) {
-                    if (S_tt_i > 0) {
-                        fit_b <- stats::lm(Y_trans ~ Time, data = sub_d)
-                        cf_b  <- stats::coef(fit_b)
-                        y_mean <- cf_b[1] + cf_b[2] * t_grid
-                    } else {
-                        y_mean <- rep(mean(sub_d$Y_trans), length(t_grid))
-                    }
-                    if (!is.na(mse_full) && mse_full > 0 && df_full > 0 && S_tt_i > 0) {
-                        se_mean <- sqrt(mse_full * (1 / n_i + (t_grid - t_bar_i)^2 / S_tt_i))
-                    } else {
-                        se_mean <- rep(NA_real_, length(t_grid))
-                    }
-                    df_b_val <- df_full
-                } else if (selectedModelCode == 2) {
-                    new_df <- data.frame(Batch = factor(b, levels = batchLevels), Time = t_grid)
-                    pred_res <- stats::predict(fit_cs, newdata = new_df, se.fit = TRUE)
-                    y_mean <- pred_res$fit
-                    se_mean <- pred_res$se.fit
-                    df_b_val <- df_cs
-                } else {
-                    new_df <- data.frame(Time = t_grid)
-                    pred_res <- stats::predict(fit_cl, newdata = new_df, se.fit = TRUE)
-                    y_mean <- pred_res$fit
-                    se_mean <- pred_res$se.fit
-                    df_b_val <- df_cl
-                }
-
-                tcrit_plot <- if (is_two_sided) stats::qt(1 - alpha / 2, df = df_b_val) else stats::qt(1 - alpha, df = df_b_val)
+                b_res <- private$.calcBound(
+                    batch_i = b,
+                    t_eval = t_grid,
+                    modelCode = selectedModelCode,
+                    dat = dat,
+                    batchLevels = batchLevels,
+                    fit_cs = fit_cs,
+                    fit_cl = fit_cl,
+                    mse_full = mse_full,
+                    df_full = df_full,
+                    specType = specType,
+                    confLevel = confLevel
+                )
+                y_mean <- b_res$fit
 
                 if (specType == "lower") {
-                    b_lower <- y_mean - tcrit_plot * se_mean
+                    b_lower <- b_res$lower
                     b_upper <- y_mean
                 } else if (specType == "upper") {
                     b_lower <- y_mean
-                    b_upper <- y_mean + tcrit_plot * se_mean
+                    b_upper <- b_res$upper
                 } else {
-                    b_lower <- y_mean - tcrit_plot * se_mean
-                    b_upper <- y_mean + tcrit_plot * se_mean
+                    b_lower <- b_res$lower
+                    b_upper <- b_res$upper
                 }
 
                 if (trans == "log") {
@@ -1022,10 +1982,13 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             pred_df <- do.call(rbind, pred_list)
             obs_df  <- data.frame(Time = dat$Time, Y = dat$Y, Batch = dat$Batch)
 
+            propShelfVal <- self$options$proposedShelfLife
+
             # 1. stabPlotState
             stabPlotState <- list(
                 obs_df = obs_df,
                 pred_df = pred_df,
+                proposedShelfLife = propShelfVal,
                 specType = specType,
                 lsl = lsl_val,
                 usl = usl_val,
@@ -1065,6 +2028,7 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
             shelfPlotState <- list(
                 shelf_batch_df = shelf_batch_df,
+                proposedShelfLife = propShelfVal,
                 ov_stat = ov_stat,
                 ov_ich = ov_ich,
                 limitingBatch = b_lim,
@@ -1081,18 +2045,74 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             facetPlotState <- list(
                 obs_df = obs_df,
                 pred_df = pred_df,
+                shelf_batch_df = shelf_batch_df,
                 specType = specType,
                 lsl = lsl_val,
                 usl = usl_val,
+                confLevel = confLevel,
                 batchLevels = batchLevels,
                 depName = depName,
                 timeName = timeName,
-                batchName = batchName
+                batchName = batchName,
+                t_max_plot = t_max_plot
             )
             self$results$facetPlot$setState(facetPlotState)
 
+            # 3b. batchPlotsState (Minitab-style individual standalone plots per batch)
+            if (isTRUE(self$options$showBatchPlots)) {
+                batchPlotsGroup <- self$results$batchPlots
+
+                b_cols <- c("#1B4F72", "#922B21", "#1E8449", "#7D3C98", "#D35400", "#16A085", "#2C3E50", "#B7950B")
+                if (length(batchLevels) > length(b_cols)) {
+                    b_cols <- scales::hue_pal()(length(batchLevels))
+                }
+
+                for (idx in seq_along(batchLevels)) {
+                    b <- batchLevels[idx]
+                    if (! (b %in% batchPlotsGroup$itemKeys)) {
+                        batchPlotsGroup$addItem(key = b)
+                    }
+                    if (b %in% batchPlotsGroup$itemKeys) {
+                        b_col <- b_cols[((idx - 1) %% length(b_cols)) + 1]
+                        b_row <- shelfResults$batchRows[[b]]
+
+                        b_stat_shelf <- if (!is.null(b_row$statShelf)) b_row$statShelf else NA_real_
+                        b_ich_shelf  <- if (!is.null(b_row$ichShelf)) b_row$ichShelf else NA_real_
+                        b_intercept  <- if (!is.null(b_row$intercept)) b_row$intercept else NA_real_
+                        b_slope      <- if (!is.null(b_row$slope)) b_row$slope else NA_real_
+
+                        b_state <- list(
+                            batch = b,
+                            batchColor = b_col,
+                            obs_df = obs_df[obs_df$Batch == b, , drop = FALSE],
+                            pred_df = pred_df[pred_df$Batch == b, , drop = FALSE],
+                            specType = specType,
+                            lsl = lsl_val,
+                            usl = usl_val,
+                            statShelf = b_stat_shelf,
+                            ichShelf = b_ich_shelf,
+                            intercept = b_intercept,
+                            slope = b_slope,
+                            extrapCap = extrapCap,
+                            extrapActive = extrapActive,
+                            modelCode = selectedModelCode,
+                            timeName = timeName,
+                            depName = depName,
+                            confLevel = confLevel,
+                            t_max_plot = t_max_plot,
+                            proposedShelfLife = propShelfVal
+                        )
+
+                        b_item <- batchPlotsGroup$get(key = b)
+                        b_item$setTitle(paste0(.("Shelf Life Plot for Batch"), " ", b))
+                        b_item$setState(b_state)
+                    }
+                }
+            }
+
             # 4. ratePlotState
             batch_rate_list <- list()
+            alpha_rate <- 1 - confLevel
             for (b in batchLevels) {
                 sub_d <- dat[dat$Batch == b, , drop = FALSE]
                 if (length(unique(sub_d$Time)) >= 2) {
@@ -1102,7 +2122,7 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         b_slope <- sm_b["Time", "Estimate"]
                         b_se    <- sm_b["Time", "Std. Error"]
                         df_b    <- fit_b$df.residual
-                        tcrit_b <- if (df_b > 0) stats::qt(0.975, df = df_b) else 1.96
+                        tcrit_b <- if (df_b > 0) stats::qt(1 - alpha_rate / 2, df = df_b) else stats::qnorm(1 - alpha_rate / 2)
                         b_low   <- b_slope - tcrit_b * b_se
                         b_upp   <- b_slope + tcrit_b * b_se
                     } else {
@@ -1127,7 +2147,7 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 cs_slope <- sm_cs["Time", "Estimate"]
                 cs_se    <- sm_cs["Time", "Std. Error"]
                 df_cs_r  <- fit_cs$df.residual
-                tcrit_cs <- if (df_cs_r > 0) stats::qt(0.975, df = df_cs_r) else 1.96
+                tcrit_cs <- if (df_cs_r > 0) stats::qt(1 - alpha_rate / 2, df = df_cs_r) else stats::qnorm(1 - alpha_rate / 2)
                 cs_low   <- cs_slope - tcrit_cs * cs_se
                 cs_upp   <- cs_slope + tcrit_cs * cs_se
             } else if (k == 1 && "Time" %in% names(stats::coef(fit_cl))) {
@@ -1135,7 +2155,7 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 cs_slope <- sm_cl["Time", "Estimate"]
                 cs_se    <- sm_cl["Time", "Std. Error"]
                 df_cl_r  <- fit_cl$df.residual
-                tcrit_cs <- if (df_cl_r > 0) stats::qt(0.975, df = df_cl_r) else 1.96
+                tcrit_cs <- if (df_cl_r > 0) stats::qt(1 - alpha_rate / 2, df = df_cl_r) else stats::qnorm(1 - alpha_rate / 2)
                 cs_low   <- cs_slope - tcrit_cs * cs_se
                 cs_upp   <- cs_slope + tcrit_cs * cs_se
             } else {
@@ -1160,48 +2180,48 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             self$results$ratePlot$setState(ratePlotState)
 
             # 5. predPlotState (Prediction intervals and SRL)
-            b_target <- if (!is.na(b_lim)) b_lim else batchLevels[1]
+            b_target <- if (!is.na(b_lim) && nzchar(b_lim)) b_lim else batchLevels[1]
             t_star   <- if (!is.na(ov_ich) && !is.infinite(ov_ich) && ov_ich > 0) ov_ich else t_dur
 
-            if (selectedModelCode == 1) {
+            res_grid <- private$.calcBound(
+                batch_i = b_target,
+                t_eval = t_grid,
+                modelCode = selectedModelCode,
+                dat = dat,
+                batchLevels = batchLevels,
+                fit_cs = fit_cs,
+                fit_cl = fit_cl,
+                mse_full = mse_full,
+                df_full = df_full,
+                specType = specType,
+                confLevel = confLevel
+            )
+            res_star <- private$.calcBound(
+                batch_i = b_target,
+                t_eval = t_star,
+                modelCode = selectedModelCode,
+                dat = dat,
+                batchLevels = batchLevels,
+                fit_cs = fit_cs,
+                fit_cl = fit_cl,
+                mse_full = mse_full,
+                df_full = df_full,
+                specType = specType,
+                confLevel = confLevel
+            )
+
+            pred_lim <- list(fit = res_grid$fit, se.fit = res_grid$se.fit)
+            pred_star <- list(fit = res_star$fit, se.fit = res_star$se.fit)
+            slope_lim <- if (selectedModelCode == 1) {
                 sub_lim <- dat[dat$Batch == b_target, , drop = FALSE]
-                fit_lim <- stats::lm(Y_trans ~ Time, data = sub_lim)
-                slope_lim <- stats::coef(fit_lim)["Time"]
-                n_lim <- nrow(sub_lim)
-                t_bar_lim <- mean(sub_lim$Time)
-                S_tt_lim <- sum((sub_lim$Time - t_bar_lim)^2)
-
-                y_fit_grid <- stats::predict(fit_lim, newdata = data.frame(Time = t_grid))
-                se_fit_grid <- if (!is.na(mse_full) && mse_full > 0 && S_tt_lim > 0) {
-                    sqrt(mse_full * (1 / n_lim + (t_grid - t_bar_lim)^2 / S_tt_lim))
-                } else {
-                    rep(NA_real_, length(t_grid))
-                }
-                pred_lim <- list(fit = y_fit_grid, se.fit = se_fit_grid)
-
-                y_star_fit <- stats::predict(fit_lim, newdata = data.frame(Time = t_star))
-                se_star_fit <- if (!is.na(mse_full) && mse_full > 0 && S_tt_lim > 0) {
-                    sqrt(mse_full * (1 / n_lim + (t_star - t_bar_lim)^2 / S_tt_lim))
-                } else {
-                    NA_real_
-                }
-                pred_star <- list(fit = y_star_fit, se.fit = se_star_fit)
-                mse_pi  <- mse_full
-                df_pi   <- df_full
+                if (nrow(sub_lim) >= 2) stats::coef(stats::lm(Y_trans ~ Time, data = sub_lim))["Time"] else NA_real_
             } else if (selectedModelCode == 2) {
-                new_grid <- data.frame(Batch = factor(b_target, levels = batchLevels), Time = t_grid)
-                pred_lim <- stats::predict(fit_cs, newdata = new_grid, se.fit = TRUE)
-                slope_lim <- stats::coef(fit_cs)["Time"]
-                pred_star <- stats::predict(fit_cs, newdata = data.frame(Batch = factor(b_target, levels = batchLevels), Time = t_star), se.fit = TRUE)
-                mse_pi  <- mse_cs
-                df_pi   <- df_cs
+                stats::coef(fit_cs)["Time"]
             } else {
-                pred_lim <- stats::predict(fit_cl, newdata = data.frame(Time = t_grid), se.fit = TRUE)
-                slope_lim <- stats::coef(fit_cl)["Time"]
-                pred_star <- stats::predict(fit_cl, newdata = data.frame(Time = t_star), se.fit = TRUE)
-                mse_pi  <- mse_cl
-                df_pi   <- df_cl
+                stats::coef(fit_cl)["Time"]
             }
+            mse_pi  <- if (selectedModelCode == 1) mse_full else if (selectedModelCode == 2) mse_cs else mse_cl
+            df_pi   <- res_grid$df
 
             tcrit_pi <- if (is_two_sided) {
                 if (df_pi > 0) stats::qt(1 - (1 - confLevel) / 2, df = df_pi) else 1.96
@@ -1260,7 +2280,8 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 usl = usl_val,
                 ov_ich = ov_ich,
                 t_star = t_star,
-                b_lim = b_target,
+                b_lim = b_lim,
+                b_target = b_target,
                 selectedModelCode = selectedModelCode,
                 depName = depName,
                 timeName = timeName,
@@ -1319,6 +2340,191 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     upper = ci_upp
                 ))
             }
+        },
+
+        .computeMultifactorShelfLife = function(
+            dat, selectedModelCode, fit_full, fit_cs, fit_cl, mse_full, df_full,
+            specType, lsl_trans, usl_trans, confLevel, trans, adoptedModelName,
+            studyDuration, accelCondition
+        ) {
+            t_max_data <- max(dat$Time)
+            t_dur <- if (!is.null(studyDuration) && !is.na(studyDuration) && studyDuration > 0) studyDuration else t_max_data
+
+            dt <- private$.evaluateDecisionTree(
+                t_dur = t_dur,
+                storageCond = self$options$storageCond,
+                accelResult = self$options$accelResult,
+                intermedResult = self$options$intermedResult,
+                supportingData = self$options$supportingData,
+                littleChange = self$options$littleChange,
+                proposedShelfLife = self$options$proposedShelfLife,
+                accelConditionLegacy = accelCondition
+            )
+            extrapCap <- dt$extrapCap
+
+            combo_levels <- levels(dat$Combo)
+            combo_results <- list()
+            t_seq <- seq(0, 120, by = 0.1)
+
+            for (cmb in combo_levels) {
+                sub_d <- dat[dat$Combo == cmb, ]
+                sub_batches <- unique(as.character(sub_d$Batch))
+                batch_shelves <- numeric(length(sub_batches))
+                names(batch_shelves) <- sub_batches
+
+                if (selectedModelCode == 1) {
+                    fit_b_cmb <- stats::lm(Y_trans ~ Batch * Time, data = sub_d)
+                    for (b in sub_batches) {
+                        nd <- data.frame(Batch = factor(b, levels = levels(factor(sub_d$Batch))), Time = t_seq)
+                        preds <- stats::predict(fit_b_cmb, newdata = nd, interval = "confidence", level = 2 * confLevel - 1)
+                        lb <- if (specType %in% c("lower", "both")) preds[, "lwr"] else NULL
+                        ub <- if (specType %in% c("upper", "both")) preds[, "upr"] else NULL
+                        sh_val <- Inf
+                        if (!is.null(lb)) {
+                            idx_l <- which(lb < lsl_trans)
+                            if (length(idx_l) > 0) sh_val <- min(sh_val, t_seq[idx_l[1]])
+                        }
+                        if (!is.null(ub)) {
+                            idx_u <- which(ub > usl_trans)
+                            if (length(idx_u) > 0) sh_val <- min(sh_val, t_seq[idx_u[1]])
+                        }
+                        batch_shelves[b] <- if (is.infinite(sh_val)) max(t_seq) else sh_val
+                    }
+                } else if (selectedModelCode == 2) {
+                    for (b in sub_batches) {
+                        c_name <- paste(b, cmb, sep = " @ ")
+                        nd <- data.frame(Cohort = factor(c_name, levels = levels(dat$Cohort)), Time = t_seq)
+                        preds <- stats::predict(fit_cs, newdata = nd, interval = "confidence", level = 2 * confLevel - 1)
+                        lb <- if (specType %in% c("lower", "both")) preds[, "lwr"] else NULL
+                        ub <- if (specType %in% c("upper", "both")) preds[, "upr"] else NULL
+                        sh_val <- Inf
+                        if (!is.null(lb)) {
+                            idx_l <- which(lb < lsl_trans)
+                            if (length(idx_l) > 0) sh_val <- min(sh_val, t_seq[idx_l[1]])
+                        }
+                        if (!is.null(ub)) {
+                            idx_u <- which(ub > usl_trans)
+                            if (length(idx_u) > 0) sh_val <- min(sh_val, t_seq[idx_u[1]])
+                        }
+                        batch_shelves[b] <- if (is.infinite(sh_val)) max(t_seq) else sh_val
+                    }
+                } else {
+                    nd <- data.frame(Time = t_seq)
+                    preds <- stats::predict(fit_cl, newdata = nd, interval = "confidence", level = 2 * confLevel - 1)
+                    lb <- if (specType %in% c("lower", "both")) preds[, "lwr"] else NULL
+                    ub <- if (specType %in% c("upper", "both")) preds[, "upr"] else NULL
+                    sh_val <- Inf
+                    if (!is.null(lb)) {
+                        idx_l <- which(lb < lsl_trans)
+                        if (length(idx_l) > 0) sh_val <- min(sh_val, t_seq[idx_l[1]])
+                    }
+                    if (!is.null(ub)) {
+                        idx_u <- which(ub > usl_trans)
+                        if (length(idx_u) > 0) sh_val <- min(sh_val, t_seq[idx_u[1]])
+                    }
+                    sh_res <- if (is.infinite(sh_val)) max(t_seq) else sh_val
+                    for (b in sub_batches) batch_shelves[b] <- sh_res
+                }
+
+                min_b <- names(which.min(batch_shelves))
+                stat_s <- min(batch_shelves)
+                ich_s <- min(stat_s, extrapCap)
+
+                combo_results[[cmb]] <- list(
+                    combo = cmb,
+                    nBatches = length(sub_batches),
+                    model = adoptedModelName,
+                    limitingBatch = min_b,
+                    statShelf = stat_s,
+                    ichShelf = ich_s
+                )
+            }
+
+            min_combo_idx <- which.min(sapply(combo_results, function(x) x$ichShelf))
+            overallStatShelf <- min(sapply(combo_results, function(x) x$statShelf))
+            overallIchShelf  <- min(sapply(combo_results, function(x) x$ichShelf))
+            limitingCombo    <- combo_results[[min_combo_idx]]$combo
+            limitingBatch    <- combo_results[[min_combo_idx]]$limitingBatch
+
+            # Build synthetic batchShelves for shelfTable
+            combo_shelves <- sapply(combo_results, function(x) x$statShelf)
+            combo_ich_shelves <- sapply(combo_results, function(x) x$ichShelf)
+
+            dt$statShelf <- overallStatShelf
+            dt$ichShelf  <- overallIchShelf
+
+            list(
+                batchShelves = combo_shelves,
+                batchIchShelves = combo_ich_shelves,
+                overallStatShelf = overallStatShelf,
+                overallIchShelf = overallIchShelf,
+                limitingBatch = paste0(limitingCombo, " (", limitingBatch, ")"),
+                limitingCombo = limitingCombo,
+                comboResults = combo_results,
+                t_dur = t_dur,
+                extrapCap = extrapCap,
+                capFormula = dt$capFormula,
+                branchTitle = dt$branchTitle,
+                guidelineRef = dt$guidelineRef,
+                extrapReason = dt$extrapReason,
+                extrapActive = (overallStatShelf > extrapCap),
+                naBatches = character(0),
+                decisionTree = dt
+            )
+        },
+
+        .populateComboShelfTable = function(comboResults, overallIchShelf, limitingCombo, limitingBatch, proposedShelfLife = 0) {
+            table <- self$results$comboShelfTable
+            table$deleteRows()
+            if (is.null(comboResults) || length(comboResults) == 0) return()
+
+            for (idx in seq_along(comboResults)) {
+                cr <- comboResults[[idx]]
+                isLim <- (cr$combo == limitingCombo)
+                limText <- if (isLim) .("Limiting combination") else .("Conforming")
+                propStatus <- ""
+                if (proposedShelfLife > 0) {
+                    if (cr$ichShelf >= proposedShelfLife) {
+                        propStatus <- .("Supported")
+                    } else {
+                        propStatus <- jmvcore::format(.("Exceeds by {diff} mo"), diff = private$.formatNum(proposedShelfLife - cr$ichShelf, 1))
+                    }
+                }
+                table$addRow(rowKey = paste0("cmb_", idx), values = list(
+                    combo = cr$combo,
+                    nBatches = cr$nBatches,
+                    model = cr$model,
+                    limitingBatch = cr$limitingBatch,
+                    statShelf = cr$statShelf,
+                    ichShelf = cr$ichShelf,
+                    proposedStatus = propStatus,
+                    limiting = limText
+                ))
+            }
+
+            ovPropStatus <- ""
+            if (proposedShelfLife > 0) {
+                if (overallIchShelf >= proposedShelfLife) {
+                    ovPropStatus <- .("Supported")
+                } else {
+                    ovPropStatus <- jmvcore::format(.("Exceeds by {diff} mo"), diff = private$.formatNum(proposedShelfLife - overallIchShelf, 1))
+                }
+            }
+            table$addRow(rowKey = "overall_combo", values = list(
+                combo = paste0("<b>", .("OVERALL PRODUCT"), "</b>"),
+                nBatches = sum(sapply(comboResults, function(x) x$nBatches)),
+                model = comboResults[[1]]$model,
+                limitingBatch = limitingBatch,
+                statShelf = min(sapply(comboResults, function(x) x$statShelf)),
+                ichShelf = overallIchShelf,
+                proposedStatus = ovPropStatus,
+                limiting = paste0("<b>", .("Governing Minimum"), "</b>")
+            ))
+
+            table$setNote(
+                "multifactor_note",
+                .("Combination shelf life represents the earliest intersection of one-sided 95% confidence bounds across all batches within each factor combination (ICH Q1E Section B.3.2.2.1).")
+            )
         },
 
         .populateDiagTable = function(fit, dat) {
@@ -1448,6 +2654,49 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     .("Undefined (zero residual variance)")
                 }
             ))
+
+            # Model Diagnostic Warnings
+            if (!is.na(sw_p) && sw_p < 0.01) {
+                private$.addNotice(
+                    name = "normality_violation_warn",
+                    type = jmvcore::NoticeType$WARNING,
+                    content = paste0(
+                        "<b>", .("Model diagnostic warning"), ":</b> ",
+                        jmvcore::format(
+                            .("Residual normality assumption is violated (Shapiro-Wilk p = {p} < 0.01). Confidence intervals and shelf-life estimates based on standard normal error assumptions may be inaccurate. Consider response transformation or examining for outliers."),
+                            p = private$.formatNum(sw_p, 4)
+                        )
+                    )
+                )
+            }
+
+            if (!is.na(cor_p) && cor_p < 0.01) {
+                private$.addNotice(
+                    name = "heteroscedasticity_warn",
+                    type = jmvcore::NoticeType$WARNING,
+                    content = paste0(
+                        "<b>", .("Model diagnostic warning"), ":</b> ",
+                        jmvcore::format(
+                            .("Residual heteroscedasticity detected (variance significantly changes with time, Spearman |e| vs Time p = {p} < 0.01). Standard ANCOVA assumes constant residual variance across time."),
+                            p = private$.formatNum(cor_p, 4)
+                        )
+                    )
+                )
+            }
+
+            if (!is.na(dw_stat) && (dw_stat < 0.8 || dw_stat > 3.2)) {
+                private$.addNotice(
+                    name = "autocorrelation_warn",
+                    type = jmvcore::NoticeType$INFO,
+                    content = paste0(
+                        "<b>", .("Model diagnostic note"), ":</b> ",
+                        jmvcore::format(
+                            .("Substantial residual autocorrelation detected (Durbin-Watson d = {dw}). Autocorrelated errors can cause standard confidence intervals to be overly narrow."),
+                            dw = private$.formatNum(dw_stat, 2)
+                        )
+                    )
+                )
+            }
         },
 
         .stabPlot = function(image, ggtheme = NULL, theme = NULL, ...) {
@@ -1460,67 +2709,104 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             lsl <- state$lsl
             usl <- state$usl
             ov_ich <- state$ov_ich
+            ov_stat <- state$ov_stat
             modelCode <- state$modelCode
             timeName <- state$timeName
             depName <- state$depName
             batchName <- state$batchName
+            confLevel <- if (!is.null(state$confLevel)) state$confLevel else 0.95
+            pct_conf <- round(confLevel * 100)
 
             p <- ggplot2::ggplot(obs_df, ggplot2::aes(x = Time, y = Y, color = Batch)) +
                 ggplot2::geom_point(size = 2.5, alpha = 0.85) +
-                ggplot2::geom_line(data = pred_df, ggplot2::aes(x = Time, y = Fit, color = Batch), linewidth = 1.0) +
-                ggplot2::labs(
-                    title = paste0(.("Stability Profile & Shelf Life Estimation"), " (ICH Q1E)"),
-                    subtitle = paste0(
-                        .("Adopted:"), " ",
-                        if (modelCode == 1) .("Separate slopes & intercepts") else if (modelCode == 2) .("Common slope & separate intercepts") else .("Common slope & intercept (Pooled)"),
-                        if (!is.na(ov_ich)) paste0("  |  ", .("Permitted Shelf Life:"), " ", private$.formatNum(ov_ich, 1), " ", .("months")) else ""
-                    ),
-                    x = timeName,
-                    y = depName,
-                    color = batchName,
-                    fill = batchName
-                )
+                ggplot2::geom_line(data = pred_df, ggplot2::aes(x = Time, y = Fit, color = Batch), linewidth = 1.0)
 
-            # Confidence bands
+            # Confidence ribbon (subtle) and clear dashed lines
             if (specType == "lower") {
-                p <- p + ggplot2::geom_ribbon(
-                    data = pred_df, ggplot2::aes(x = Time, ymin = Lower, ymax = Fit, fill = Batch),
-                    alpha = 0.15, linetype = "dashed", linewidth = 0.4, inherit.aes = FALSE
-                )
+                p <- p +
+                    ggplot2::geom_ribbon(
+                        data = pred_df, ggplot2::aes(x = Time, ymin = Lower, ymax = Fit, fill = Batch),
+                        alpha = 0.08, inherit.aes = FALSE
+                    ) +
+                    ggplot2::geom_line(
+                        data = pred_df, ggplot2::aes(x = Time, y = Lower, color = Batch),
+                        linetype = "dashed", linewidth = 0.75, inherit.aes = FALSE
+                    )
             } else if (specType == "upper") {
-                p <- p + ggplot2::geom_ribbon(
-                    data = pred_df, ggplot2::aes(x = Time, ymin = Fit, ymax = Upper, fill = Batch),
-                    alpha = 0.15, linetype = "dashed", linewidth = 0.4, inherit.aes = FALSE
-                )
+                p <- p +
+                    ggplot2::geom_ribbon(
+                        data = pred_df, ggplot2::aes(x = Time, ymin = Fit, ymax = Upper, fill = Batch),
+                        alpha = 0.08, inherit.aes = FALSE
+                    ) +
+                    ggplot2::geom_line(
+                        data = pred_df, ggplot2::aes(x = Time, y = Upper, color = Batch),
+                        linetype = "dashed", linewidth = 0.75, inherit.aes = FALSE
+                    )
             } else {
-                p <- p + ggplot2::geom_ribbon(
-                    data = pred_df, ggplot2::aes(x = Time, ymin = Lower, ymax = Upper, fill = Batch),
-                    alpha = 0.15, linetype = "dashed", linewidth = 0.4, inherit.aes = FALSE
-                )
+                p <- p +
+                    ggplot2::geom_ribbon(
+                        data = pred_df, ggplot2::aes(x = Time, ymin = Lower, ymax = Upper, fill = Batch),
+                        alpha = 0.08, inherit.aes = FALSE
+                    ) +
+                    ggplot2::geom_line(
+                        data = pred_df, ggplot2::aes(x = Time, y = Lower, color = Batch),
+                        linetype = "dashed", linewidth = 0.75, inherit.aes = FALSE
+                    ) +
+                    ggplot2::geom_line(
+                        data = pred_df, ggplot2::aes(x = Time, y = Upper, color = Batch),
+                        linetype = "dashed", linewidth = 0.75, inherit.aes = FALSE
+                    )
             }
 
-            # Specification limits
+            # Specification horizontal lines with right margin labels
+            x_max_plot <- max(pred_df$Time, na.rm = TRUE)
             if (specType %in% c("lower", "both") && !is.null(lsl)) {
-                p <- p + ggplot2::geom_hline(
-                    yintercept = lsl, linetype = "solid", color = "#C0392B", linewidth = 0.9
-                ) + ggplot2::annotate(
-                    "text", x = 0, y = lsl, label = paste0("LSL = ", lsl),
-                    hjust = -0.05, vjust = -0.5, size = 3.3, color = "#C0392B", fontface = "bold"
-                )
+                p <- p +
+                    ggplot2::geom_hline(yintercept = lsl, linetype = "dashed", color = "#7F8C8D", linewidth = 0.8) +
+                    ggplot2::annotate(
+                        "text", x = x_max_plot, y = lsl, label = paste0(" LS = ", lsl),
+                        hjust = 0, vjust = -0.4, size = 3.5, color = "#2C3E50", fontface = "bold"
+                    )
             }
             if (specType %in% c("upper", "both") && !is.null(usl)) {
-                p <- p + ggplot2::geom_hline(
-                    yintercept = usl, linetype = "solid", color = "#C0392B", linewidth = 0.9
-                ) + ggplot2::annotate(
-                    "text", x = 0, y = usl, label = paste0("USL = ", usl),
-                    hjust = -0.05, vjust = 1.3, size = 3.3, color = "#C0392B", fontface = "bold"
-                )
+                p <- p +
+                    ggplot2::geom_hline(yintercept = usl, linetype = "dashed", color = "#7F8C8D", linewidth = 0.8) +
+                    ggplot2::annotate(
+                        "text", x = x_max_plot, y = usl, label = paste0(" US = ", usl),
+                        hjust = 0, vjust = 1.3, size = 3.5, color = "#2C3E50", fontface = "bold"
+                    )
             }
 
-            # Extrapolation cap vertical line
-            if (isTRUE(state$extrapActive) && !is.na(state$extrapCap) && !is.infinite(state$extrapCap)) {
+            # Reference vertical lines: Permitted Shelf Life and Extrapolation Limit
+            has_shelf <- !is.na(ov_ich) && !is.infinite(ov_ich) && ov_ich > 0
+            is_extrap_active <- isTRUE(state$extrapActive) && !is.na(state$extrapCap) && !is.infinite(state$extrapCap)
+
+            if (has_shelf && is_extrap_active) {
+                # When extrapolation cap governs, draw a single distinctive purple line
+                # with non-overlapping labels: Extrapolation Limit on the left, Shelf Life on the right
                 p <- p + ggplot2::geom_vline(
-                    xintercept = state$extrapCap, linetype = "dotdash", color = "#7D3C98", linewidth = 0.8
+                    xintercept = ov_ich, linetype = "dotdash", color = "#7D3C98", linewidth = 0.85
+                ) + ggplot2::annotate(
+                    "label", x = ov_ich, y = Inf,
+                    label = paste0(.("Extrapolation Limit:"), " ", private$.formatNum(state$extrapCap, 1), " ", .("mo")),
+                    vjust = 1.3, hjust = 1.06, fill = "white", color = "#7D3C98", size = 3.2,
+                    label.padding = ggplot2::unit(0.18, "lines"), label.r = ggplot2::unit(0.15, "lines")
+                ) + ggplot2::annotate(
+                    "text", x = ov_ich, y = Inf,
+                    label = paste0(.("Shelf Life"), " = ", private$.formatNum(ov_ich, 4)),
+                    vjust = 1.4, hjust = -0.06, size = 3.5, color = "#2C3E50", fontface = "bold"
+                )
+            } else if (has_shelf) {
+                p <- p + ggplot2::geom_vline(
+                    xintercept = ov_ich, linetype = "dashed", color = "#7F8C8D", linewidth = 0.8
+                ) + ggplot2::annotate(
+                    "text", x = ov_ich, y = Inf,
+                    label = paste0(.("Shelf Life"), " = ", private$.formatNum(ov_ich, 4)),
+                    vjust = 1.4, hjust = 0.5, size = 3.5, color = "#2C3E50"
+                )
+            } else if (is_extrap_active) {
+                p <- p + ggplot2::geom_vline(
+                    xintercept = state$extrapCap, linetype = "dotdash", color = "#7D3C98", linewidth = 0.85
                 ) + ggplot2::annotate(
                     "label", x = state$extrapCap, y = Inf,
                     label = paste0(.("Extrapolation Limit:"), " ", private$.formatNum(state$extrapCap, 1), " ", .("mo")),
@@ -1529,26 +2815,48 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 )
             }
 
-            # Shelf life vertical line
-            if (!is.na(ov_ich) && !is.infinite(ov_ich) && ov_ich > 0) {
+            # Proposed / target shelf life vertical line
+            propVal <- state$proposedShelfLife
+            if (!is.null(propVal) && !is.na(propVal) && propVal > 0) {
                 p <- p + ggplot2::geom_vline(
-                    xintercept = ov_ich, linetype = "longdash", color = "#27AE60", linewidth = 1.0
+                    xintercept = propVal, linetype = "dotted", color = "#1B4F72", linewidth = 0.95
                 ) + ggplot2::annotate(
-                    "label", x = ov_ich, y = -Inf,
-                    label = paste0(.("Shelf Life"), ": ", private$.formatNum(ov_ich, 1), " ", .("months")),
-                    vjust = -0.4, hjust = 1.05, fill = "white", color = "#27AE60", fontface = "bold", size = 3.6,
-                    label.padding = ggplot2::unit(0.2, "lines"), label.r = ggplot2::unit(0.15, "lines")
+                    "label", x = propVal, y = Inf,
+                    label = paste0(.("Target:"), " ", private$.formatNum(propVal, 1), " ", .("mo")),
+                    vjust = 2.7, hjust = -0.06, fill = "#EBF5FB", color = "#1B4F72", size = 3.2,
+                    label.padding = ggplot2::unit(0.18, "lines")
                 )
             }
 
-            if (!is.null(ggtheme)) p <- p + ggtheme else p <- p + ggplot2::theme_bw(base_size = 12)
+            # Spec description caption
+            spec_desc_items <- c()
+            if (specType %in% c("lower", "both")) spec_desc_items <- c(spec_desc_items, paste0("LS = ", .("Lower Specification")))
+            if (specType %in% c("upper", "both")) spec_desc_items <- c(spec_desc_items, paste0("US = ", .("Upper Specification")))
+            spec_caption <- paste(spec_desc_items, collapse = ", ")
+
+            p <- p + ggplot2::labs(
+                title = paste0(.("Stability Profile & Shelf Life Estimation"), " (ICH Q1E)"),
+                subtitle = paste0(
+                    .("Adopted:"), " ",
+                    if (modelCode == 1) .("Separate slopes & intercepts") else if (modelCode == 2) .("Common slope & separate intercepts") else .("Common slope & intercept (Pooled)"),
+                    if (!is.na(ov_ich)) paste0("  |  ", .("Permitted Shelf Life:"), " ", private$.formatNum(ov_ich, 1), " ", .("months")) else ""
+                ),
+                x = timeName,
+                y = depName,
+                color = batchName,
+                fill = batchName,
+                caption = spec_caption
+            ) +
+            ggplot2::coord_cartesian(clip = "off", xlim = c(0, x_max_plot * 1.08))
+
+            if (!is.null(ggtheme)) p <- p + ggtheme else p <- p + ggplot2::theme_bw(base_size = 11)
             p <- p + ggplot2::theme(
-                legend.position = "bottom",
-                legend.direction = "horizontal",
-                legend.box = "horizontal",
-                legend.justification = "center",
-                plot.title = ggplot2::element_text(face = "bold", color = "#1B365D", size = 13),
-                plot.subtitle = ggplot2::element_text(color = "#2C3E50", size = 10.5, margin = ggplot2::margin(b = 10))
+                legend.position = "right",
+                plot.title = ggplot2::element_text(face = "bold", color = "#1B365D", size = 13, hjust = 0.5),
+                plot.subtitle = ggplot2::element_text(color = "#2C3E50", size = 10, hjust = 0.5, margin = ggplot2::margin(b = 10)),
+                plot.caption = ggplot2::element_text(hjust = 0, size = 9.5, color = "#34495E", face = "italic", margin = ggplot2::margin(t = 8)),
+                panel.grid.minor = ggplot2::element_blank(),
+                panel.grid.major = ggplot2::element_line(color = "#E5E7E9", linetype = "solid")
             )
 
             print(p)
@@ -1639,6 +2947,17 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     vjust = 1.5, hjust = 1.05, color = "#7F8C8D", size = 3.2
                 )
 
+            # Proposed shelf life marker
+            propVal <- state$proposedShelfLife
+            if (!is.null(propVal) && !is.na(propVal) && propVal > 0) {
+                p <- p + ggplot2::geom_vline(xintercept = propVal, linetype = "dotted", color = "#1B4F72", linewidth = 0.95) +
+                    ggplot2::annotate(
+                        "text", x = propVal, y = Inf,
+                        label = paste0(.("Target"), ": ", private$.formatNum(propVal, 1), " ", .("mo")),
+                        vjust = 3.2, hjust = -0.05, color = "#1B4F72", size = 3.2, fontface = "bold"
+                    )
+            }
+
             # Reference line 2: Extrapolation Cap (when extrapCap > t_dur and finite)
             if (!is.na(extrapCap) && !is.infinite(extrapCap) && extrapCap > t_dur) {
                 p <- p + ggplot2::geom_vline(xintercept = extrapCap, linetype = "dashed", color = "#2980B9", linewidth = 0.9) +
@@ -1714,39 +3033,79 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             usl      <- state$usl
             depName  <- state$depName
             timeName <- state$timeName
+            shelf_df <- state$shelf_batch_df
+            confLevel <- if (!is.null(state$confLevel)) state$confLevel else 0.95
 
             p <- ggplot2::ggplot(obs_df, ggplot2::aes(x = Time, y = Y)) +
                 ggplot2::geom_point(color = "#2C3E50", size = 2.2, alpha = 0.8) +
                 ggplot2::geom_line(data = pred_df, ggplot2::aes(x = Time, y = Fit), color = "#2980B9", linewidth = 0.95)
 
+            # Subtle ribbon + clear dashed lines for confidence bounds
             if (specType == "lower") {
-                p <- p + ggplot2::geom_ribbon(
-                    data = pred_df, ggplot2::aes(x = Time, ymin = Lower, ymax = Fit),
-                    fill = "#2980B9", alpha = 0.18, linetype = "dashed", linewidth = 0.35, inherit.aes = FALSE
-                )
+                p <- p +
+                    ggplot2::geom_ribbon(
+                        data = pred_df, ggplot2::aes(x = Time, ymin = Lower, ymax = Fit),
+                        fill = "#2980B9", alpha = 0.10, inherit.aes = FALSE
+                    ) +
+                    ggplot2::geom_line(
+                        data = pred_df, ggplot2::aes(x = Time, y = Lower),
+                        color = "#2980B9", linetype = "dashed", linewidth = 0.75, inherit.aes = FALSE
+                    )
             } else if (specType == "upper") {
-                p <- p + ggplot2::geom_ribbon(
-                    data = pred_df, ggplot2::aes(x = Time, ymin = Fit, ymax = Upper),
-                    fill = "#2980B9", alpha = 0.18, linetype = "dashed", linewidth = 0.35, inherit.aes = FALSE
-                )
+                p <- p +
+                    ggplot2::geom_ribbon(
+                        data = pred_df, ggplot2::aes(x = Time, ymin = Fit, ymax = Upper),
+                        fill = "#2980B9", alpha = 0.10, inherit.aes = FALSE
+                    ) +
+                    ggplot2::geom_line(
+                        data = pred_df, ggplot2::aes(x = Time, y = Upper),
+                        color = "#2980B9", linetype = "dashed", linewidth = 0.75, inherit.aes = FALSE
+                    )
             } else {
-                p <- p + ggplot2::geom_ribbon(
-                    data = pred_df, ggplot2::aes(x = Time, ymin = Lower, ymax = Upper),
-                    fill = "#2980B9", alpha = 0.18, linetype = "dashed", linewidth = 0.35, inherit.aes = FALSE
-                )
+                p <- p +
+                    ggplot2::geom_ribbon(
+                        data = pred_df, ggplot2::aes(x = Time, ymin = Lower, ymax = Upper),
+                        fill = "#2980B9", alpha = 0.10, inherit.aes = FALSE
+                    ) +
+                    ggplot2::geom_line(
+                        data = pred_df, ggplot2::aes(x = Time, y = Lower),
+                        color = "#2980B9", linetype = "dashed", linewidth = 0.75, inherit.aes = FALSE
+                    ) +
+                    ggplot2::geom_line(
+                        data = pred_df, ggplot2::aes(x = Time, y = Upper),
+                        color = "#2980B9", linetype = "dashed", linewidth = 0.75, inherit.aes = FALSE
+                    )
             }
 
+            # Specification lines
             if (specType %in% c("lower", "both") && !is.null(lsl)) {
-                p <- p + ggplot2::geom_hline(yintercept = lsl, linetype = "solid", color = "#C0392B", linewidth = 0.75)
+                p <- p + ggplot2::geom_hline(yintercept = lsl, linetype = "dashed", color = "#7F8C8D", linewidth = 0.75)
             }
             if (specType %in% c("upper", "both") && !is.null(usl)) {
-                p <- p + ggplot2::geom_hline(yintercept = usl, linetype = "solid", color = "#C0392B", linewidth = 0.75)
+                p <- p + ggplot2::geom_hline(yintercept = usl, linetype = "dashed", color = "#7F8C8D", linewidth = 0.75)
+            }
+
+            # Individual batch shelf life vertical lines in each facet
+            if (!is.null(shelf_df) && nrow(shelf_df) > 0) {
+                valid_sl <- shelf_df[!is.na(shelf_df$StatShelf) & is.finite(shelf_df$StatShelf) & shelf_df$StatShelf > 0, , drop = FALSE]
+                if (nrow(valid_sl) > 0) {
+                    p <- p +
+                        ggplot2::geom_vline(
+                            data = valid_sl, ggplot2::aes(xintercept = StatShelf),
+                            linetype = "dashed", color = "#7F8C8D", linewidth = 0.75, inherit.aes = FALSE
+                        ) +
+                        ggplot2::geom_text(
+                            data = valid_sl,
+                            ggplot2::aes(x = StatShelf, y = Inf, label = paste0("SL = ", private$.formatNum(StatShelf, 1))),
+                            vjust = 1.4, hjust = 0.5, size = 3.2, color = "#2C3E50", inherit.aes = FALSE
+                        )
+                }
             }
 
             p <- p + ggplot2::facet_wrap(~ Batch, scales = "fixed") +
                 ggplot2::labs(
                     title = paste0(.("Individual Batch Stability Trajectories"), " (ICH Q1E)"),
-                    subtitle = .("Observed data, regression fits, and 95% confidence bands per batch"),
+                    subtitle = jmvcore::format(.("Observed data, regression fits, and {pct}% confidence bands per batch"), pct = round(confLevel * 100)),
                     x = timeName,
                     y = depName
                 )
@@ -1756,7 +3115,187 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 plot.title = ggplot2::element_text(face = "bold", color = "#1B365D", size = 12.5),
                 plot.subtitle = ggplot2::element_text(color = "#2C3E50", size = 10, margin = ggplot2::margin(b = 8)),
                 strip.background = ggplot2::element_rect(fill = "#EAECEE", color = "#BDC3C7"),
-                strip.text = ggplot2::element_text(face = "bold", size = 10)
+                strip.text = ggplot2::element_text(face = "bold", size = 10),
+                panel.grid.minor = ggplot2::element_blank(),
+                panel.grid.major = ggplot2::element_line(color = "#E5E7E9", linetype = "solid")
+            )
+
+            print(p)
+            TRUE
+        },
+
+        .batchPlot = function(image, ggtheme = NULL, theme = NULL, ...) {
+            state <- image$state
+            if (is.null(state)) return(FALSE)
+
+            batch        <- state$batch
+            batchColor   <- if (!is.null(state$batchColor)) state$batchColor else "#1E8449"
+            obs_df       <- state$obs_df
+            pred_df      <- state$pred_df
+            specType     <- state$specType
+            lsl          <- state$lsl
+            usl          <- state$usl
+            statShelf    <- state$statShelf
+            ichShelf     <- state$ichShelf
+            intercept    <- state$intercept
+            slope        <- state$slope
+            extrapCap    <- state$extrapCap
+            extrapActive <- isTRUE(state$extrapActive)
+            modelCode    <- state$modelCode
+            timeName     <- state$timeName
+            depName      <- state$depName
+            confLevel    <- if (!is.null(state$confLevel)) state$confLevel else 0.95
+            t_max_plot   <- if (!is.null(state$t_max_plot)) state$t_max_plot else max(pred_df$Time, na.rm = TRUE)
+
+            pct_conf <- round(confLevel * 100)
+
+            p <- ggplot2::ggplot() +
+                ggplot2::geom_point(
+                    data = obs_df,
+                    ggplot2::aes(x = Time, y = Y),
+                    color = batchColor, size = 2.8, alpha = 0.9
+                ) +
+                ggplot2::geom_line(
+                    data = pred_df,
+                    ggplot2::aes(x = Time, y = Fit, linetype = "fitted"),
+                    color = batchColor, linewidth = 1.05
+                )
+
+            bound_lbl <- if (specType == "lower") {
+                paste0(pct_conf, "% LB")
+            } else if (specType == "upper") {
+                paste0(pct_conf, "% UB")
+            } else {
+                paste0(pct_conf, "% CB")
+            }
+
+            if (specType == "lower") {
+                p <- p +
+                    ggplot2::geom_ribbon(
+                        data = pred_df, ggplot2::aes(x = Time, ymin = Lower, ymax = Fit),
+                        fill = batchColor, alpha = 0.08, inherit.aes = FALSE
+                    ) +
+                    ggplot2::geom_line(
+                        data = pred_df, ggplot2::aes(x = Time, y = Lower, linetype = "bound"),
+                        color = batchColor, linewidth = 0.85
+                    )
+            } else if (specType == "upper") {
+                p <- p +
+                    ggplot2::geom_ribbon(
+                        data = pred_df, ggplot2::aes(x = Time, ymin = Fit, ymax = Upper),
+                        fill = batchColor, alpha = 0.08, inherit.aes = FALSE
+                    ) +
+                    ggplot2::geom_line(
+                        data = pred_df, ggplot2::aes(x = Time, y = Upper, linetype = "bound"),
+                        color = batchColor, linewidth = 0.85
+                    )
+            } else {
+                p <- p +
+                    ggplot2::geom_ribbon(
+                        data = pred_df, ggplot2::aes(x = Time, ymin = Lower, ymax = Upper),
+                        fill = batchColor, alpha = 0.08, inherit.aes = FALSE
+                    ) +
+                    ggplot2::geom_line(
+                        data = pred_df, ggplot2::aes(x = Time, y = Lower, linetype = "bound"),
+                        color = batchColor, linewidth = 0.85
+                    ) +
+                    ggplot2::geom_line(
+                        data = pred_df, ggplot2::aes(x = Time, y = Upper, linetype = "bound"),
+                        color = batchColor, linewidth = 0.85
+                    )
+            }
+
+            lt_values <- c("fitted" = "solid", "bound" = "dashed")
+            lt_labels <- c("fitted" = .("Fitted Line"), "bound" = bound_lbl)
+            p <- p + ggplot2::scale_linetype_manual(
+                name = NULL,
+                values = lt_values,
+                labels = lt_labels,
+                guide = ggplot2::guide_legend(override.aes = list(color = batchColor, linewidth = c(1.0, 0.85)))
+            )
+
+            x_max_val <- t_max_plot
+            if (specType %in% c("lower", "both") && !is.null(lsl)) {
+                p <- p +
+                    ggplot2::geom_hline(yintercept = lsl, linetype = "dashed", color = "#7F8C8D", linewidth = 0.8) +
+                    ggplot2::annotate(
+                        "text", x = x_max_val, y = lsl, label = paste0(" LS = ", lsl),
+                        hjust = 0, vjust = -0.4, size = 3.5, color = "#2C3E50", fontface = "bold"
+                    )
+            }
+            if (specType %in% c("upper", "both") && !is.null(usl)) {
+                p <- p +
+                    ggplot2::geom_hline(yintercept = usl, linetype = "dashed", color = "#7F8C8D", linewidth = 0.8) +
+                    ggplot2::annotate(
+                        "text", x = x_max_val, y = usl, label = paste0(" US = ", usl),
+                        hjust = 0, vjust = 1.3, size = 3.5, color = "#2C3E50", fontface = "bold"
+                    )
+            }
+
+            has_shelf <- !is.null(statShelf) && !is.na(statShelf) && is.finite(statShelf) && statShelf > 0
+            if (has_shelf) {
+                p <- p +
+                    ggplot2::geom_vline(xintercept = statShelf, linetype = "dashed", color = "#7F8C8D", linewidth = 0.8) +
+                    ggplot2::annotate(
+                        "text", x = statShelf, y = Inf,
+                        label = paste0(.("Shelf Life"), " = ", private$.formatNum(statShelf, 4)),
+                        vjust = 1.5, hjust = 0.5, size = 3.5, color = "#2C3E50"
+                    )
+
+                if (extrapActive && !is.na(ichShelf) && is.finite(ichShelf) && ichShelf < statShelf) {
+                    p <- p +
+                        ggplot2::geom_vline(xintercept = ichShelf, linetype = "dotdash", color = "#7D3C98", linewidth = 0.85) +
+                        ggplot2::annotate(
+                            "text", x = ichShelf, y = -Inf,
+                            label = paste0(.("ICH Permitted"), ": ", private$.formatNum(ichShelf, 1), " ", .("mo")),
+                            vjust = -0.5, hjust = 1.05, size = 3.3, color = "#7D3C98", fontface = "bold"
+                        )
+                }
+            } else if (!is.null(statShelf) && is.infinite(statShelf)) {
+                p <- p + ggplot2::annotate(
+                    "label", x = x_max_val * 0.5, y = Inf,
+                    label = paste0(.("Shelf Life"), " > 240 ", .("months")),
+                    vjust = 1.8, size = 3.6, color = "#1E8449", fill = "#E8F8F5"
+                )
+            }
+
+            spec_desc_items <- c()
+            if (specType %in% c("lower", "both")) spec_desc_items <- c(spec_desc_items, paste0("LS = ", .("Lower Specification")))
+            if (specType %in% c("upper", "both")) spec_desc_items <- c(spec_desc_items, paste0("US = ", .("Upper Specification")))
+            spec_caption <- paste(spec_desc_items, collapse = ", ")
+
+            eq_str <- ""
+            if (!is.na(intercept) && !is.na(slope)) {
+                slope_sign <- if (slope >= 0) " + " else " - "
+                slope_val  <- abs(slope)
+                eq_str <- paste0(
+                    .("Equation for fitted line:"), " ", depName, " = ",
+                    private$.formatNum(intercept, 3), slope_sign,
+                    private$.formatNum(slope_val, 4), " ", timeName
+                )
+            }
+            full_caption <- paste(c(spec_caption, eq_str)[c(spec_caption, eq_str) != ""], collapse = "
+")
+
+            p <- p +
+                ggplot2::labs(
+                    title = paste0(.("Shelf Life Plot for Batch"), " ", batch),
+                    x = timeName,
+                    y = depName,
+                    caption = full_caption
+                ) +
+                ggplot2::coord_cartesian(clip = "off", xlim = c(0, x_max_val * 1.08))
+
+            if (!is.null(ggtheme)) p <- p + ggtheme else p <- p + ggplot2::theme_bw(base_size = 11)
+            p <- p + ggplot2::theme(
+                plot.title = ggplot2::element_text(face = "bold", size = 13, hjust = 0.5, color = "#1B365D", margin = ggplot2::margin(b = 10)),
+                plot.caption = ggplot2::element_text(hjust = 0, size = 9.5, color = "#34495E", face = "italic", margin = ggplot2::margin(t = 10)),
+                legend.position = c(0.90, 0.88),
+                legend.background = ggplot2::element_rect(fill = "white", color = NA),
+                legend.key = ggplot2::element_rect(fill = "white", color = NA),
+                legend.text = ggplot2::element_text(size = 9.5),
+                panel.grid.minor = ggplot2::element_blank(),
+                panel.grid.major = ggplot2::element_line(color = "#E5E7E9", linetype = "solid")
             )
 
             print(p)
@@ -1799,7 +3338,7 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
             p <- ggplot2::ggplot(plot_data, ggplot2::aes(x = Slope, y = Batch, color = Type)) +
                 ggplot2::geom_point(size = 3.5) +
-                ggplot2::geom_errorbarh(ggplot2::aes(xmin = Lower, xmax = Upper), height = 0.25, linewidth = 0.8) +
+                ggplot2::geom_errorbar(ggplot2::aes(xmin = Lower, xmax = Upper), orientation = "y", width = 0.25, linewidth = 0.8) +
                 ggplot2::geom_vline(xintercept = 0, linetype = "dashed", color = "#7F8C8D")
 
             if (k >= 2 && !is.na(cs_slope)) {
@@ -1855,6 +3394,7 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             ov_ich    <- state$ov_ich
             t_star    <- state$t_star
             b_lim     <- state$b_lim
+            b_target  <- state$b_target
             selectedModelCode <- state$selectedModelCode
             depName   <- state$depName
             timeName  <- state$timeName
@@ -1939,10 +3479,12 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
             batch_desc <- if (selectedModelCode == 3) {
                 .("Common line across batches")
-            } else if (!is.na(b_lim)) {
+            } else if (!is.null(b_lim) && !is.na(b_lim) && nzchar(b_lim)) {
                 paste0(.("Limiting Batch:"), " ", b_lim)
-            } else {
+            } else if (!is.null(b_target) && !is.na(b_target) && nzchar(b_target)) {
                 paste0(.("Evaluated Batch:"), " ", b_target)
+            } else {
+                ""
             }
 
             p <- p + ggplot2::labs(
@@ -2021,7 +3563,7 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             TRUE
         },
 
-        .populateMultiShelfTable = function(evaluatedAttrs, governingAttrName, minStatShelf, minIchShelf, governingBatch) {
+        .populateMultiShelfTable = function(evaluatedAttrs, governingAttrName, minStatShelf, minIchShelf, governingBatch, failedAttrs = list()) {
             table <- self$results$multiShelfTable
             table$deleteRows()
 
@@ -2029,19 +3571,21 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 res <- evaluatedAttrs[[attrName]]
                 aDef <- res$attrDef
                 specText <- if (aDef$specType == "lower") {
-                    paste0("LSL \u2265 ", private$.formatNum(aDef$lsl, 2))
+                    paste0("\u2265 ", private$.formatNum(aDef$lsl, 2), " (LSL)")
                 } else if (aDef$specType == "upper") {
-                    paste0("USL \u2264 ", private$.formatNum(aDef$usl, 2))
+                    paste0("\u2264 ", private$.formatNum(aDef$usl, 2), " (USL)")
                 } else {
                     paste0(private$.formatNum(aDef$lsl, 2), " \u2013 ", private$.formatNum(aDef$usl, 2))
                 }
 
-                stat_s <- res$shelfResults$overallStatShelf
-                ich_s  <- res$shelfResults$overallIchShelf
+                stat_s <- if (is.infinite(res$shelfResults$overallStatShelf)) NA_real_ else res$shelfResults$overallStatShelf
+                ich_s  <- if (is.infinite(res$shelfResults$overallIchShelf)) res$shelfResults$extrapCap else res$shelfResults$overallIchShelf
                 b_lim  <- res$shelfResults$limitingBatch
 
                 is_gov <- (attrName == governingAttrName)
-                statusText <- if (is_gov) {
+                statusText <- if (is.na(stat_s)) {
+                    .("Undetermined")
+                } else if (is_gov) {
                     paste0("\u2605 ", .("Worst-Case Driver (Governing)"))
                 } else {
                     .("Compliant")
@@ -2051,10 +3595,22 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     attr = aDef$name,
                     spec = specText,
                     model = res$adoptedModelName,
-                    limitingBatch = if (!is.na(b_lim)) paste0(.("Batch"), " ", b_lim) else "",
+                    limitingBatch = if (!is.null(b_lim) && !is.na(b_lim) && nzchar(b_lim)) paste0(.("Batch"), " ", b_lim) else "",
                     statShelf = stat_s,
                     ichShelf = ich_s,
                     status = statusText
+                ))
+            }
+
+            for (fAttr in failedAttrs) {
+                table$addRow(rowKey = paste0("_fail_", fAttr$name), values = list(
+                    attr = fAttr$name,
+                    spec = "",
+                    model = .("Excluded"),
+                    limitingBatch = "",
+                    statShelf = NA_real_,
+                    ichShelf = NA_real_,
+                    status = paste0("<b>", .("Validation Failed"), "</b>")
                 ))
             }
 
@@ -2062,9 +3618,9 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 attr = paste0("<b>", .("Overall Product Shelf Life"), "</b>"),
                 spec = .("All CQAs Met"),
                 model = .("Worst-Case Min"),
-                limitingBatch = if (!is.na(governingBatch)) paste0(.("Batch"), " ", governingBatch) else "",
-                statShelf = minStatShelf,
-                ichShelf = minIchShelf,
+                limitingBatch = if (!is.null(governingBatch) && !is.na(governingBatch) && nzchar(governingBatch)) paste0(.("Batch"), " ", governingBatch) else "",
+                statShelf = if (is.infinite(minStatShelf)) NA_real_ else minStatShelf,
+                ichShelf = if (is.infinite(minIchShelf)) NA_real_ else minIchShelf,
                 status = paste0("<b>", .("Governing Expiry Date"), "</b>")
             ))
         },
@@ -2075,45 +3631,84 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
             attrNames <- names(evaluatedAttrs)
             n_attrs <- length(attrNames)
+            allBatches <- unique(c(batchLevels, unlist(lapply(evaluatedAttrs, function(x) names(x$shelfResults$batchRows)))))
+            hasMissingBatch <- FALSE
 
-            for (b in batchLevels) {
-                bShelves <- numeric(n_attrs)
-                for (j in seq_len(n_attrs)) {
-                    aName <- attrNames[j]
-                    bShelves[j] <- evaluatedAttrs[[aName]]$shelfResults$batchRows[[b]]$statShelf
-                }
-                valid_b <- bShelves[!is.na(bShelves)]
-                worst_b <- if (length(valid_b) > 0) min(valid_b) else NA_real_
-                lim_idx <- if (!is.na(worst_b)) which(bShelves == worst_b)[1] else NA_integer_
-                lim_attr_name <- if (!is.na(lim_idx)) attrNames[lim_idx] else ""
+            slot_map <- c(dep = "attr1", dep2 = "attr2", dep3 = "attr3", dep4 = "attr4", dep5 = "attr5")
 
+            for (b in allBatches) {
                 vals <- list(
                     batch = paste0(.("Batch"), " ", b),
-                    attr1 = if (n_attrs >= 1) bShelves[1] else NA_real_,
-                    attr2 = if (n_attrs >= 2) bShelves[2] else NA_real_,
-                    attr3 = if (n_attrs >= 3) bShelves[3] else NA_real_,
-                    attr4 = if (n_attrs >= 4) bShelves[4] else NA_real_,
-                    attr5 = if (n_attrs >= 5) bShelves[5] else NA_real_,
-                    worstShelf = worst_b,
-                    limitingAttr = lim_attr_name
+                    attr1 = NA_real_,
+                    attr2 = NA_real_,
+                    attr3 = NA_real_,
+                    attr4 = NA_real_,
+                    attr5 = NA_real_,
+                    worstShelf = NA_real_,
+                    limitingAttr = ""
                 )
+                bShelves <- c()
+                bAttrNames <- c()
+
+                for (aName in attrNames) {
+                    res_a <- evaluatedAttrs[[aName]]
+                    colKey <- slot_map[[res_a$attrDef$id]]
+                    bRow <- res_a$shelfResults$batchRows[[b]]
+                    b_val <- if (!is.null(bRow) && !is.null(bRow$statShelf)) bRow$statShelf else NA_real_
+                    if (is.infinite(b_val)) b_val <- NA_real_
+                    if (!is.null(colKey)) vals[[colKey]] <- b_val
+                    if (is.na(b_val)) {
+                        hasMissingBatch <- TRUE
+                    } else {
+                        bShelves <- c(bShelves, b_val)
+                        bAttrNames <- c(bAttrNames, aName)
+                    }
+                }
+
+                worst_b <- if (length(bShelves) > 0) min(bShelves) else NA_real_
+                lim_attr_name <- if (!is.na(worst_b)) {
+                    idx <- which(bShelves == worst_b)[1]
+                    bAttrNames[idx]
+                } else {
+                    ""
+                }
+                vals$worstShelf <- worst_b
+                vals$limitingAttr <- lim_attr_name
+
                 table$addRow(rowKey = b, values = vals)
             }
 
-            globalAttrShelves <- sapply(evaluatedAttrs, function(x) x$shelfResults$overallStatShelf)
-            lim_global_idx <- which(globalAttrShelves == minStatShelf)[1]
-            lim_global_attr <- if (!is.na(lim_global_idx)) attrNames[lim_global_idx] else ""
+            if (hasMissingBatch) {
+                table$setNote("missing_batch_attr", .("Some batches were not tested or have incomplete data for certain attributes (shown blank)."))
+            }
 
-            table$addRow(rowKey = "_product_min_", values = list(
+            globalAttrShelves <- sapply(evaluatedAttrs, function(x) x$shelfResults$overallStatShelf)
+            validGlobal <- globalAttrShelves[!is.na(globalAttrShelves) & !is.infinite(globalAttrShelves)]
+            lim_global_attr <- if (length(validGlobal) > 0 && !is.na(minStatShelf)) {
+                idx <- which(globalAttrShelves == minStatShelf)[1]
+                if (!is.na(idx)) attrNames[idx] else ""
+            } else {
+                ""
+            }
+
+            vals_min <- list(
                 batch = paste0("<b>", .("Product Minimum"), "</b>"),
-                attr1 = if (n_attrs >= 1) globalAttrShelves[1] else NA_real_,
-                attr2 = if (n_attrs >= 2) globalAttrShelves[2] else NA_real_,
-                attr3 = if (n_attrs >= 3) globalAttrShelves[3] else NA_real_,
-                attr4 = if (n_attrs >= 4) globalAttrShelves[4] else NA_real_,
-                attr5 = if (n_attrs >= 5) globalAttrShelves[5] else NA_real_,
-                worstShelf = minStatShelf,
+                attr1 = NA_real_,
+                attr2 = NA_real_,
+                attr3 = NA_real_,
+                attr4 = NA_real_,
+                attr5 = NA_real_,
+                worstShelf = if (is.infinite(minStatShelf)) NA_real_ else minStatShelf,
                 limitingAttr = paste0("<b>", lim_global_attr, "</b>")
-            ))
+            )
+            for (aName in attrNames) {
+                res_a <- evaluatedAttrs[[aName]]
+                colKey <- slot_map[[res_a$attrDef$id]]
+                val <- res_a$shelfResults$overallStatShelf
+                if (is.infinite(val)) val <- NA_real_
+                if (!is.null(colKey)) vals_min[[colKey]] <- val
+            }
+            table$addRow(rowKey = "_product_min_", values = vals_min)
         },
 
         .multiShelfPlot = function(image, ggtheme = NULL, theme = NULL, ...) {
@@ -2283,7 +3878,7 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
         .runArrhenius = function(
             governingRes, data, timeName, batchName, tempVarName,
             arrhEa, arrhTempAcc, arrhRhAcc, arrhTempLong, arrhRhLong, arrhB, showArrhSens,
-            evalIsLong = FALSE
+            evalIsLong = FALSE, extrapCap = Inf
         ) {
             chosenFit <- governingRes$chosenFit
             cf <- stats::coef(chosenFit)
@@ -2307,16 +3902,30 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             } else {
                 k_eval <- raw_slp
             }
-            if (is.na(k_eval) || k_eval <= 0) {
-                k_eval <- abs(raw_slp)
-            }
-            if (is.na(k_eval) || k_eval <= 0) {
-                k_eval <- 0.001
+
+            is_k_valid <- (!is.na(k_eval) && k_eval > 0)
+            if (!is_k_valid) {
+                private$.addNotice(
+                    name = "arrh_k_invalid_notice",
+                    type = jmvcore::NoticeType$WARNING,
+                    content = paste0(
+                        "<b>", .("Model diagnostic warning"), ":</b> ",
+                        .("Arrhenius kinetics cannot be calculated because the estimated degradation rate is non-positive or undefined.")
+                    )
+                )
             }
 
             base_shelf <- governingRes$shelfResults$overallStatShelf
-            if (is.na(base_shelf) || is.infinite(base_shelf)) {
-                base_shelf <- 12.0
+            is_shelf_valid <- (!is.na(base_shelf) && is.finite(base_shelf) && base_shelf > 0)
+            if (!is_shelf_valid) {
+                private$.addNotice(
+                    name = "arrh_shelf_invalid_notice",
+                    type = jmvcore::NoticeType$WARNING,
+                    content = paste0(
+                        "<b>", .("Model diagnostic warning"), ":</b> ",
+                        .("Arrhenius projected shelf life cannot be calculated because the baseline shelf life is undetermined.")
+                    )
+                )
             }
 
             R_gas <- 8.314462618
@@ -2328,17 +3937,8 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 return(af_val)
             }
 
-            af_long_nominal <- calcAF(arrhTempLong, arrhRhLong)
-
-            # Determine k_acc and accelerated shelf-life baseline
-            if (evalIsLong) {
-                k_acc <- k_eval * af_long_nominal
-                shelf_acc <- base_shelf / af_long_nominal
-            } else {
-                k_acc <- k_eval
-                shelf_acc <- base_shelf
-            }
-
+            ea_use <- arrhEa
+            ea_source_fitted <- FALSE
             emp_pts <- NULL
 
             # Multi-temperature empirical regression if tempVar supplied
@@ -2350,74 +3950,122 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 sub_t$Temp <- as.numeric(sub_t$Temp)
 
                 u_temps <- sort(unique(sub_t$Temp))
-                if (length(u_temps) >= 2) {
-                    k_vals <- numeric(length(u_temps))
-                    inv_T_vals <- numeric(length(u_temps))
-                    for (i in seq_along(u_temps)) {
-                        d_ti <- sub_t[sub_t$Temp == u_temps[i], ]
-                        if (nrow(d_ti) >= 2 && length(unique(d_ti$Time)) >= 2) {
-                            f_ti <- stats::lm(Y ~ Time, data = d_ti)
-                            s_ti <- stats::coef(f_ti)["Time"]
-                            ki <- if (specType %in% c("lower", "both")) -s_ti else s_ti
-                            if (is.na(ki) || ki <= 0) ki <- abs(s_ti)
-                            k_vals[i] <- max(ki, 1e-6)
-                        } else {
-                            k_vals[i] <- max(k_acc, 1e-6)
-                        }
-                        inv_T_vals[i] <- 1 / (u_temps[i] + 273.15)
-                    }
+                valid_temps <- numeric()
+                k_vals <- numeric()
 
+                for (i in seq_along(u_temps)) {
+                    d_ti <- sub_t[sub_t$Temp == u_temps[i], ]
+                    if (nrow(d_ti) >= 2 && length(unique(d_ti$Time)) >= 2) {
+                        f_ti <- stats::lm(Y ~ Time, data = d_ti)
+                        s_ti <- stats::coef(f_ti)["Time"]
+                        ki <- if (specType %in% c("lower", "both")) -s_ti else s_ti
+                        if (!is.na(ki) && ki > 0) {
+                            valid_temps <- c(valid_temps, u_temps[i])
+                            k_vals <- c(k_vals, ki)
+                        }
+                    }
+                }
+
+                if (length(valid_temps) >= 2) {
+                    inv_T_vals <- 1 / (valid_temps + 273.15)
                     df_reg <- data.frame(ln_k = log(k_vals), inv_T = inv_T_vals)
                     fit_reg <- stats::lm(ln_k ~ inv_T, data = df_reg)
                     cf_reg <- stats::coef(fit_reg)
                     se_reg <- summary(fit_reg)$coefficients
+                    df_res <- stats::df.residual(fit_reg)
 
                     beta_1 <- cf_reg["inv_T"]
                     beta_0 <- cf_reg["(Intercept)"]
                     ea_fitted_kJ <- -beta_1 * R_gas / 1000
+
+                    se_ea <- if (nrow(se_reg) >= 2 && !is.nan(se_reg[2, 2])) se_reg[2, 2] * R_gas / 1000 else NA_real_
+                    t_ea  <- if (nrow(se_reg) >= 2 && !is.nan(se_reg[2, 3])) -se_reg[2, 3] else NA_real_
+                    p_ea  <- if (nrow(se_reg) >= 2 && !is.nan(se_reg[2, 4])) se_reg[2, 4] else NA_real_
+
+                    if (df_res >= 1 && !is.na(se_ea)) {
+                        t_crit <- stats::qt(0.975, df = df_res)
+                        ea_ci_lower <- ea_fitted_kJ - t_crit * se_ea
+                        ea_ci_upper <- ea_fitted_kJ + t_crit * se_ea
+                    } else {
+                        ea_ci_lower <- NA_real_
+                        ea_ci_upper <- NA_real_
+                    }
+
+                    se_b0 <- if (nrow(se_reg) >= 1 && !is.nan(se_reg[1, 2])) se_reg[1, 2] else NA_real_
+                    t_b0  <- if (nrow(se_reg) >= 1 && !is.nan(se_reg[1, 3])) se_reg[1, 3] else NA_real_
+                    p_b0  <- if (nrow(se_reg) >= 1 && !is.nan(se_reg[1, 4])) se_reg[1, 4] else NA_real_
+
+                    if (df_res >= 1 && !is.na(se_b0)) {
+                        t_crit <- stats::qt(0.975, df = df_res)
+                        b0_ci_lower <- beta_0 - t_crit * se_b0
+                        b0_ci_upper <- beta_0 + t_crit * se_b0
+                    } else {
+                        b0_ci_lower <- NA_real_
+                        b0_ci_upper <- NA_real_
+                    }
 
                     regTable <- self$results$arrhRegTable
                     regTable$deleteRows()
                     regTable$addRow(rowKey = "Ea", values = list(
                         param = .("Activation Energy (Ea, kJ/mol)"),
                         est = ea_fitted_kJ,
-                        se = if (nrow(se_reg) >= 2) se_reg[2, 2] * R_gas / 1000 else NA_real_,
-                        t = if (nrow(se_reg) >= 2) se_reg[2, 3] else NA_real_,
-                        p = if (nrow(se_reg) >= 2) se_reg[2, 4] else NA_real_,
-                        ci = if (nrow(se_reg) >= 2) paste0(
-                            private$.formatNum(ea_fitted_kJ - 1.96 * se_reg[2, 2] * R_gas / 1000, 1),
-                            " \u2013 ",
-                            private$.formatNum(ea_fitted_kJ + 1.96 * se_reg[2, 2] * R_gas / 1000, 1)
-                        ) else ""
+                        se = se_ea,
+                        t = t_ea,
+                        p = p_ea,
+                        ciLower = ea_ci_lower,
+                        ciUpper = ea_ci_upper
                     ))
                     regTable$addRow(rowKey = "lnA", values = list(
                         param = .("Pre-exponential factor (ln A)"),
                         est = beta_0,
-                        se = if (nrow(se_reg) >= 1) se_reg[1, 2] else NA_real_,
-                        t = if (nrow(se_reg) >= 1) se_reg[1, 3] else NA_real_,
-                        p = if (nrow(se_reg) >= 1) se_reg[1, 4] else NA_real_,
-                        ci = ""
+                        se = se_b0,
+                        t = t_b0,
+                        p = p_b0,
+                        ciLower = b0_ci_lower,
+                        ciUpper = b0_ci_upper
                     ))
                     r2_val <- summary(fit_reg)$r.squared
                     regTable$addRow(rowKey = "R2", values = list(
                         param = .("Coefficient of Determination (R²)"),
                         est = r2_val,
-                        se = NA_real_, t = NA_real_, p = NA_real_, ci = ""
+                        se = NA_real_, t = NA_real_, p = NA_real_, ciLower = NA_real_, ciUpper = NA_real_
                     ))
 
-                    if (ea_fitted_kJ > 10 && ea_fitted_kJ < 300) {
-                        arrhEa <- ea_fitted_kJ
+                    if (df_res == 0) {
+                        regTable$setNote("df0_note", .("Residual degrees of freedom is 0; statistical inference and confidence intervals cannot be evaluated."))
                     }
 
-                    if (arrhTempAcc %in% u_temps) {
-                        k_acc <- k_vals[which(u_temps == arrhTempAcc)]
+                    if (ea_fitted_kJ > 10 && ea_fitted_kJ < 300) {
+                        ea_use <- ea_fitted_kJ
+                        ea_source_fitted <- TRUE
                     }
+
                     emp_pts <- list(
-                        InvT = 1000 / (u_temps + 273.15),
+                        InvT = 1000 / (valid_temps + 273.15),
                         ln_k = log(k_vals),
-                        TempC = u_temps
+                        TempC = valid_temps
                     )
+                } else {
+                    regTable <- self$results$arrhRegTable
+                    regTable$deleteRows()
+                    regTable$setNote("insufficient_temps", .("At least 2 temperature groups with observed degradation are required to fit Arrhenius kinetics."))
                 }
+            }
+
+            af_long_nominal <- calcAF(arrhTempLong, arrhRhLong, ea_use = ea_use)
+
+            # Determine k_acc and accelerated shelf-life baseline
+            if (is_k_valid && is_shelf_valid) {
+                if (evalIsLong) {
+                    k_acc <- k_eval * af_long_nominal
+                    shelf_acc <- base_shelf / af_long_nominal
+                } else {
+                    k_acc <- k_eval
+                    shelf_acc <- base_shelf
+                }
+            } else {
+                k_acc <- NA_real_
+                shelf_acc <- NA_real_
             }
 
             zones <- list(
@@ -2431,11 +4079,32 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             arrhTable <- self$results$arrhTable
             arrhTable$deleteRows()
 
+            if (ea_source_fitted) {
+                arrhTable$setNote("ea_source", jmvcore::format(.("Projections use empirically fitted activation energy Ea = {ea} kJ/mol from multi-temperature regression."), ea = private$.formatNum(ea_use, 1)))
+            } else {
+                arrhTable$setNote("ea_source", jmvcore::format(.("Projections use user-specified activation energy Ea = {ea} kJ/mol."), ea = private$.formatNum(ea_use, 1)))
+            }
+
             for (idx in seq_along(zones)) {
                 zn <- zones[[idx]]
-                af_i <- calcAF(zn$temp, zn$rh, ea_use = arrhEa)
-                rate_i <- k_acc / af_i
-                pred_sl_i <- shelf_acc * af_i
+                if (is_k_valid && is_shelf_valid) {
+                    af_i <- calcAF(zn$temp, zn$rh, ea_use = ea_use)
+                    rate_i <- k_acc / af_i
+                    raw_pred_sl_i <- shelf_acc * af_i
+
+                    if (!is.na(extrapCap) && is.finite(extrapCap) && raw_pred_sl_i > extrapCap) {
+                        pred_sl_i <- extrapCap
+                        note_i <- paste0(zn$note, " \u2013 ", jmvcore::format(.("Capped by ICH Q1E extrapolation limit ({cap} months)"), cap = private$.formatNum(extrapCap, 1)))
+                    } else {
+                        pred_sl_i <- raw_pred_sl_i
+                        note_i <- zn$note
+                    }
+                } else {
+                    af_i <- NA_real_
+                    rate_i <- NA_real_
+                    pred_sl_i <- NA_real_
+                    note_i <- .("Undetermined")
+                }
 
                 arrhTable$addRow(rowKey = paste0("z_", idx), values = list(
                     zone = zn$name,
@@ -2444,7 +4113,7 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     af = af_i,
                     rate = rate_i,
                     predShelf = pred_sl_i,
-                    extrapNote = zn$note
+                    extrapNote = note_i
                 ))
             }
 
@@ -2458,8 +4127,13 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
                 for (idx in seq_along(ea_values)) {
                     ea_val <- ea_values[idx]
-                    af_25  <- exp((ea_val * 1000 / R_gas) * inv_diff_25 + arrhB * rh_diff_25)
-                    pred_25 <- shelf_acc * af_25
+                    if (is_shelf_valid) {
+                        af_25  <- exp((ea_val * 1000 / R_gas) * inv_diff_25 + arrhB * rh_diff_25)
+                        pred_25 <- shelf_acc * af_25
+                    } else {
+                        af_25 <- NA_real_
+                        pred_25 <- NA_real_
+                    }
 
                     risk_text <- if (ea_val <= 60) {
                         .("Highly Conservative (Low thermal sensitivity)")
@@ -2482,16 +4156,16 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 }
             }
 
-            y0_val <- if (!is.null(governingRes$dat) && !is.null(governingRes$dat$Y_orig)) {
-                mean(governingRes$dat$Y_orig[governingRes$dat$Time == min(governingRes$dat$Time)], na.rm = TRUE)
-            } else 100.0
+            y0_val <- if (!is.null(governingRes$dat) && !is.null(governingRes$dat$Y)) {
+                mean(governingRes$dat$Y[governingRes$dat$Time == min(governingRes$dat$Time)], na.rm = TRUE)
+            } else if (specType %in% c("lower", "both")) 100.0 else 0.0
 
             arrhState <- list(
                 k_acc = k_acc,
                 base_shelf = base_shelf,
                 shelf_acc = shelf_acc,
                 y0_val = y0_val,
-                arrhEa = arrhEa,
+                arrhEa = ea_use,
                 arrhTempAcc = arrhTempAcc,
                 arrhRhAcc = arrhRhAcc,
                 arrhTempLong = arrhTempLong,
@@ -2499,6 +4173,7 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 arrhB = arrhB,
                 governingAttrName = governingRes$attrDef$name,
                 specType = specType,
+                trans = governingRes$attrDef$trans,
                 lsl_val = governingRes$attrDef$lsl,
                 usl_val = governingRes$attrDef$usl,
                 emp_pts = emp_pts
@@ -2606,7 +4281,9 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             )
 
             is_lower <- specType %in% c("lower", "both")
-            y0 <- if (!is.null(state$y0_val) && !is.na(state$y0_val)) {
+            trans_type <- if (!is.null(state$trans)) state$trans else "none"
+
+            y0 <- if (!is.null(state$y0_val) && !is.na(state$y0_val) && is.finite(state$y0_val)) {
                 state$y0_val
             } else if (is_lower) {
                 if (!is.null(lsl_val) && !is.na(lsl_val)) lsl_val + k_acc * shelf_acc else 100
@@ -2614,7 +4291,7 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 if (!is.null(usl_val) && !is.na(usl_val)) max(0, usl_val - k_acc * shelf_acc) else 0
             }
 
-            max_time <- max(shelf_acc * 6, base_shelf * 1.5, 48)
+            max_time <- max(if (!is.na(shelf_acc) && is.finite(shelf_acc)) shelf_acc * 6 else 48, if (!is.na(base_shelf) && is.finite(base_shelf)) base_shelf * 1.5 else 48, 48)
             time_grid <- seq(0, max_time, length.out = 100)
 
             traj_list <- list()
@@ -2622,8 +4299,12 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 inv_diff <- (1 / (c_item$temp + 273.15)) - (1 / (T_acc + 273.15))
                 rh_diff  <- RH_acc - c_item$rh
                 af <- exp((Ea * 1000 / R_gas) * inv_diff + B_rh * rh_diff)
-                k_i <- k_acc / af
-                y_traj <- if (is_lower) y0 - k_i * time_grid else y0 + k_i * time_grid
+                k_i <- if (!is.na(k_acc)) k_acc / af else 0
+                if (trans_type == "log") {
+                    y_traj <- if (is_lower) y0 * exp(-k_i * time_grid) else y0 * exp(k_i * time_grid)
+                } else {
+                    y_traj <- if (is_lower) y0 - k_i * time_grid else y0 + k_i * time_grid
+                }
 
                 traj_list[[length(traj_list) + 1]] <- data.frame(
                     Time = time_grid,

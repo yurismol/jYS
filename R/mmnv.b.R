@@ -7,7 +7,9 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
         .init = function() {
             instructions <- self$results$instructions
-            instructions$setVisible(TRUE)
+            rmCells <- self$options$rmCells
+            isConfigured <- !is.null(rmCells) && length(rmCells) >= 2
+            instructions$setVisible(!isConfigured)
             instructions$setContent(paste0(
                 "<h3>", .("MANOVA & Repeated Measures: Methodological Guide"), "</h3>",
                 "<p><b>", .("Getting started:"), "</b> ",
@@ -111,12 +113,12 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             }
 
             k <- length(rmCells)
-            rmFactorName <- self$options$rmFactorName
-            if (is.null(rmFactorName) || rmFactorName == "") {
-                rmFactorName <- "Time"
+            rmFactorDisplay <- self$options$rmFactorName
+            if (is.null(rmFactorDisplay) || rmFactorDisplay == "") {
+                rmFactorDisplay <- "Time"
             }
             # Ensure syntactic R name for formula
-            rmFactorName <- make.names(rmFactorName)
+            rmFactorFormula <- make.names(rmFactorDisplay)
 
             between <- self$options$between
             covs <- self$options$covs
@@ -153,10 +155,10 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             # Construct formula
             rhs_terms <- c()
             if (!is.null(between) && length(between) > 0) {
-                rhs_terms <- c(rhs_terms, paste(between, collapse = " * "))
+                rhs_terms <- c(rhs_terms, paste(paste0("`", between, "`"), collapse = " * "))
             }
             if (!is.null(covs) && length(covs) > 0) {
-                rhs_terms <- c(rhs_terms, paste(covs, collapse = " + "))
+                rhs_terms <- c(rhs_terms, paste(paste0("`", covs, "`"), collapse = " + "))
             }
 
             rhs_formula <- if (length(rhs_terms) > 0) paste(rhs_terms, collapse = " + ") else "1"
@@ -166,8 +168,8 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             fit <- stats::lm(full_formula, data = dat_clean)
 
             # Within-subjects factor specification
-            idata <- data.frame(setNames(list(factor(1:k, labels = rmCells)), rmFactorName))
-            idesign <- stats::as.formula(paste0("~ `", rmFactorName, "`"))
+            idata <- data.frame(setNames(list(factor(1:k, labels = rmCells)), rmFactorFormula))
+            idesign <- stats::as.formula(paste0("~ `", rmFactorFormula, "`"))
 
             # Set contrast scheme
             contrastType <- self$options$contrastType
@@ -192,7 +194,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             } else {
                 c_mat <- stats::contr.poly(k)
             }
-            stats::contrasts(idata[[rmFactorName]]) <- c_mat
+            stats::contrasts(idata[[rmFactorFormula]]) <- c_mat
 
             # Call car::Anova
             av <- tryCatch(
@@ -202,32 +204,32 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 }
             )
 
-            av_sum <- summary(av, multivariate = TRUE)
+            av_sum <- suppressWarnings(summary(av, multivariate = TRUE))
 
             # Model residual matrix for assumption diagnostics
             res_matrix <- stats::residuals(fit)
 
             # 1. Fill Multivariate Table
-            private$.fillMultivariateTable(av_sum, rmFactorName = rmFactorName)
+            private$.fillMultivariateTable(av_sum, rmFactorDisplay = rmFactorDisplay, rmFactorFormula = rmFactorFormula)
 
             # 2. Fill Univariate Table
             if (self$options$showUnivariate) {
-                private$.fillUnivariateTable(av_sum)
+                private$.fillUnivariateTable(av_sum, rmFactorDisplay = rmFactorDisplay, rmFactorFormula = rmFactorFormula)
             }
 
             # 3. Fill Sphericity Table
             if (self$options$showSphericity) {
-                private$.fillSphericityTable(av_sum, k = k, fit = fit)
+                private$.fillSphericityTable(av_sum, k = k, fit = fit, rmFactorDisplay = rmFactorDisplay, rmFactorFormula = rmFactorFormula)
             }
 
             # 4. Fill Profile Analysis Table
             if (self$options$showProfileAnalysis) {
-                private$.fillProfileTable(av_sum, between = between, rmFactorName = rmFactorName)
+                private$.fillProfileTable(av_sum, between = between, rmFactorDisplay = rmFactorDisplay, rmFactorFormula = rmFactorFormula)
             }
 
             # 5. Fill Contrasts Table
             if (self$options$showContrastsTable) {
-                private$.fillContrastsTable(dat_clean, rmCells, rmFactorName, between, covs, contrastType)
+                private$.fillContrastsTable(dat_clean, rmCells, rmFactorDisplay = rmFactorDisplay, rmFactorFormula = rmFactorFormula, between = between, covs = covs, contrastType = contrastType)
             }
 
             # 6. Fill Assumptions Table
@@ -284,20 +286,9 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 summary = sum_df,
                 has_between = has_between,
                 betweenName = if (has_between) between[1] else "",
-                rmFactorName = rmFactorName,
+                rmFactorName = rmFactorDisplay,
                 rmCells = rmCells
             ))
-
-            if (!is.null(between) && length(between) > 1) {
-                notice <- jmvcore::Notice$new(self$options, name = "multiBetweenNotice",
-                    type = jmvcore::NoticeType$INFO,
-                    content = jmvcore::format(
-                        .("Multiple between-subjects factors specified. Descriptives, Box's M, profile analysis, and plots evaluate primary factor '{factor}' pooled across remaining factors."),
-                        factor = between[1]
-                    )
-                )
-                self$results$insert(1, notice)
-            }
 
             outlier_res <- private$.calcMahalanobis(res_matrix)
             if (!is.null(outlier_res)) {
@@ -309,7 +300,8 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
             self$results$hePlot$setState(list(
                 vars = rmCells[1:2],
-                between = between
+                between = between,
+                row_indices = rownames(dat_clean)
             ))
         },
 
@@ -353,7 +345,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             c(test, (tmp2 * test) / tmp1, tmp1, tmp2)
         },
 
-        .fillMultivariateTable = function(av_sum, rmFactorName = "Time") {
+        .fillMultivariateTable = function(av_sum, rmFactorDisplay = "Time", rmFactorFormula = "Time") {
             table <- self$results$multivariateTable
             table$deleteRows()
 
@@ -364,7 +356,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             test_configs <- list(
                 list(id = "Pillai", name = .("Pillai's Trace"), opt = self$options$testPillai, fn = private$.calcPillai),
                 list(id = "Wilks", name = .("Wilks' Lambda"), opt = self$options$testWilks, fn = private$.calcWilks),
-                list(id = "Hotelling-Lawley", name = .("Hotelling-Lawley Trace"), opt = self$options$testHotelling, fn = private$.calcHL),
+                list(id = "Hotelling-Lawley", name = .("Hotelling–Lawley Trace"), opt = self$options$testHotelling, fn = private$.calcHL),
                 list(id = "Roy", name = .("Roy's Largest Root"), opt = self$options$testRoy, fn = private$.calcRoy)
             )
 
@@ -372,11 +364,16 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             for (term in term_names) {
                 x <- m_tests[[term]]
                 if (is.null(x$SSPH) || is.null(x$SSPE)) next
+
+                clean_term <- gsub("`", "", term)
+                parts <- unlist(strsplit(clean_term, ":", fixed = TRUE))
+                parts[parts == rmFactorFormula] <- rmFactorDisplay
+                clean_term_display <- paste(parts, collapse = ":")
+
                 if (!is.null(x$singular) && x$singular) {
-                    clean_term <- gsub("`", "", term)
                     notice <- jmvcore::Notice$new(self$options, name = paste0("sing_", clean_term),
                         type = jmvcore::NoticeType$WARNING,
-                        content = jmvcore::format(.("Term '{term}' has a singular hypothesis or error matrix and was omitted from multivariate tests."), term = clean_term)
+                        content = jmvcore::format(.("Term '{term}' has a singular hypothesis or error matrix and was omitted from multivariate tests."), term = clean_term_display)
                     )
                     self$results$insert(1, notice)
                     next
@@ -388,8 +385,6 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     error = function(e) NULL
                 )
                 if (is.null(eigs)) next
-
-                clean_term <- gsub("`", "", term)
 
                 for (cfg in test_configs) {
                     if (!cfg$opt) next
@@ -413,7 +408,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     }
 
                     table$addRow(rowKey = paste(clean_term, cfg$id, sep = "_"), values = list(
-                        term = clean_term,
+                        term = clean_term_display,
                         test = cfg$name,
                         stat = stat_val,
                         f = f_val,
@@ -434,7 +429,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             }
         },
 
-        .fillUnivariateTable = function(av_sum) {
+        .fillUnivariateTable = function(av_sum, rmFactorDisplay = "Time", rmFactorFormula = "Time") {
             table <- self$results$univariateTable
             table$deleteRows()
 
@@ -444,8 +439,20 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             if (is.null(univ) || !is.matrix(univ)) return()
 
             univ_terms <- rownames(univ)
+
+            # Filter out purely between-subjects terms: keep only terms involving the within-subjects factor
+            is_within <- vapply(univ_terms, function(tm) {
+                components <- gsub("`", "", unlist(strsplit(tm, ":", fixed = TRUE)))
+                rmFactorFormula %in% components
+            }, logical(1))
+            univ_terms <- univ_terms[is_within]
+
             for (term in univ_terms) {
                 clean_term <- gsub("`", "", term)
+                parts <- unlist(strsplit(clean_term, ":", fixed = TRUE))
+                parts[parts == rmFactorFormula] <- rmFactorDisplay
+                clean_term_display <- paste(parts, collapse = ":")
+
                 ss_val <- as.numeric(univ[term, "Sum Sq"])
                 df_val <- as.numeric(univ[term, "num Df"])
                 error_ss <- as.numeric(univ[term, "Error SS"])
@@ -462,7 +469,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
                 # Row 1: Sphericity Assumed
                 table$addRow(rowKey = paste(clean_term, "sphericity", sep = "_"), values = list(
-                    term = clean_term,
+                    term = clean_term_display,
                     correction = .("Sphericity Assumed"),
                     ss = ss_val,
                     df1 = df_val,
@@ -482,8 +489,8 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
                     if (!is.na(gg_eps)) {
                         table$addRow(rowKey = paste(clean_term, "gg", sep = "_"), values = list(
-                            term = clean_term,
-                            correction = .("Greenhouse-Geisser"),
+                            term = clean_term_display,
+                            correction = .("Greenhouse–Geisser"),
                             ss = ss_val,
                             df1 = df_val * gg_eps,
                             df2 = den_df * gg_eps,
@@ -498,8 +505,8 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         # Huynh-Feldt can exceed 1.0; standard cap is 1.0
                         hf_eps_capped <- min(1.0, hf_eps)
                         table$addRow(rowKey = paste(clean_term, "hf", sep = "_"), values = list(
-                            term = clean_term,
-                            correction = .("Huynh-Feldt"),
+                            term = clean_term_display,
+                            correction = .("Huynh–Feldt"),
                             ss = ss_val,
                             df1 = df_val * hf_eps_capped,
                             df2 = den_df * hf_eps_capped,
@@ -513,7 +520,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             }
         },
 
-                .fillSphericityTable = function(av_sum, k, fit = NULL) {
+                .fillSphericityTable = function(av_sum, k, fit = NULL, rmFactorDisplay = "Time", rmFactorFormula = "Time") {
             table <- self$results$sphericityTable
             table$deleteRows()
 
@@ -527,6 +534,10 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             terms <- rownames(sph)
             for (term in terms) {
                 clean_term <- gsub("`", "", term)
+                parts <- unlist(strsplit(clean_term, ":", fixed = TRUE))
+                parts[parts == rmFactorFormula] <- rmFactorDisplay
+                clean_term_display <- paste(parts, collapse = ":")
+
                 w_val <- if ("Test statistic" %in% colnames(sph)) as.numeric(sph[term, "Test statistic"]) else as.numeric(sph[term, 1])
                 p_val <- if ("p-value" %in% colnames(sph)) as.numeric(sph[term, "p-value"]) else as.numeric(sph[term, 2])
 
@@ -547,7 +558,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 chisq_val <- if (!is.na(w_val) && w_val > 0 && d_factor > 0) -log(w_val) * d_factor else NA_real_
 
                 table$addRow(rowKey = clean_term, values = list(
-                    term = clean_term,
+                    term = clean_term_display,
                     mauchlyW = w_val,
                     chisq = chisq_val,
                     df = as.integer(df_sph),
@@ -562,12 +573,12 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 table$addFootnote(
                     rowNo = 1,
                     col = "p",
-                    note = .("A significant p-value (p < .05) indicates violation of sphericity, demonstrating why the MANOVA approach is required.")
+                    note = .("A significant p-value indicates departure from sphericity. When sphericity is violated, use epsilon corrections or multivariate tests.")
                 )
             }
         },
 
-                .fillProfileTable = function(av_sum, between, rmFactorName) {
+                .fillProfileTable = function(av_sum, between, rmFactorDisplay = "Time", rmFactorFormula = "Time") {
             table <- self$results$profileTable
             table$deleteRows()
 
@@ -591,65 +602,97 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
             # Hypothesis 1: Parallelism (Time x Between interaction)
             if (has_between) {
-                matched_term <- find_term(between[1], rmFactorName)
+                matched_term <- find_term(between[1], rmFactorFormula)
                 if (!is.null(matched_term)) {
                     x <- m_tests[[matched_term]]
-                    SSPE_qr <- qr(x$SSPE)
-                    eigs <- Re(eigen(qr.coef(SSPE_qr, x$SSPH), symmetric = FALSE)$values)
-                    wlk <- private$.calcWilks(eigs, x$df, x$df.residual)
-                    w_stat <- as.numeric(wlk[1])
-                    f_val  <- as.numeric(wlk[2])
-                    df1    <- as.integer(round(wlk[3]))
-                    df2    <- as.numeric(wlk[4])
-                    p_val  <- stats::pf(f_val, df1, df2, lower.tail = FALSE)
+                    clean_term <- gsub("`", "", matched_term)
+                    parts <- unlist(strsplit(clean_term, ":", fixed = TRUE))
+                    parts[parts == rmFactorFormula] <- rmFactorDisplay
+                    clean_term_display <- paste(parts, collapse = ":")
 
-                    conclusion <- if (p_val < 0.05) {
-                        .("Profiles are NOT parallel (groups change differently over time; interaction is significant).")
+                    if (!is.null(x$singular) && isTRUE(x$singular)) {
+                        table$setNote(paste0("sing_", clean_term), jmvcore::format(.("Term '{term}' has a singular hypothesis or error matrix; profile test omitted."), term = clean_term_display))
+                    } else if (is.null(x$SSPH) || is.null(x$SSPE)) {
+                        table$setNote(paste0("sing_", clean_term), jmvcore::format(.("Term '{term}' has insufficient residual degrees of freedom for multivariate profile test."), term = clean_term_display))
                     } else {
-                        .("Profiles are parallel (no significant difference in trajectory over time between groups).")
-                    }
+                        SSPE_qr <- qr(x$SSPE)
+                        eigs <- tryCatch(
+                            Re(eigen(qr.coef(SSPE_qr, x$SSPH), symmetric = FALSE)$values),
+                            error = function(e) NULL
+                        )
+                        if (is.null(eigs) || any(!is.finite(eigs))) {
+                            table$setNote(paste0("sing_", clean_term), jmvcore::format(.("Term '{term}' has insufficient residual degrees of freedom for multivariate profile test."), term = clean_term_display))
+                        } else {
+                            wlk <- private$.calcWilks(eigs, x$df, x$df.residual)
+                            w_stat <- as.numeric(wlk[1])
+                            f_val  <- as.numeric(wlk[2])
+                            df1    <- as.integer(round(wlk[3]))
+                            df2    <- as.numeric(wlk[4])
+                            p_val  <- stats::pf(f_val, df1, df2, lower.tail = FALSE)
 
-                    table$addRow(rowKey = "parallelism", values = list(
-                        hypothesis = jmvcore::format(.("1. Parallelism ({time} × {group} Interaction)"), time = rmFactorName, group = between[1]),
-                        test = .("Wilks' Lambda"),
-                        stat = w_stat,
-                        f = f_val,
-                        df1 = df1,
-                        df2 = df2,
-                        p = p_val,
-                        conclusion = conclusion
-                    ))
+                            conclusion <- if (p_val < 0.05) {
+                                .("Profiles deviate from parallelism (interaction is significant).")
+                            } else {
+                                .("Parallelism supported (no significant interaction).")
+                            }
+
+                            table$addRow(rowKey = "parallelism", values = list(
+                                hypothesis = jmvcore::format(.("1. Parallelism ({time} × {group} Interaction)"), time = rmFactorDisplay, group = between[1]),
+                                test = .("Wilks' Lambda"),
+                                stat = w_stat,
+                                f = f_val,
+                                df1 = df1,
+                                df2 = df2,
+                                p = p_val,
+                                conclusion = conclusion
+                            ))
+                        }
+                    }
                 }
 
                 # Hypothesis 2: Equal Levels / Coincidence (Between-groups main effect)
                 matched_b <- find_term(between[1])
                 if (!is.null(matched_b)) {
                     x <- m_tests[[matched_b]]
-                    SSPE_qr <- qr(x$SSPE)
-                    eigs <- Re(eigen(qr.coef(SSPE_qr, x$SSPH), symmetric = FALSE)$values)
-                    pil <- private$.calcPillai(eigs, x$df, x$df.residual)
-                    p_stat <- as.numeric(pil[1])
-                    f_val  <- as.numeric(pil[2])
-                    df1    <- as.integer(round(pil[3]))
-                    df2    <- as.numeric(pil[4])
-                    p_val  <- stats::pf(f_val, df1, df2, lower.tail = FALSE)
-
-                    conclusion <- if (p_val < 0.05) {
-                        .("Profiles do NOT coincide (significant overall elevation difference between groups).")
+                    clean_term_b <- gsub("`", "", matched_b)
+                    if (!is.null(x$singular) && isTRUE(x$singular)) {
+                        table$setNote(paste0("sing_", clean_term_b), jmvcore::format(.("Term '{term}' has a singular hypothesis or error matrix; profile test omitted."), term = clean_term_b))
+                    } else if (is.null(x$SSPH) || is.null(x$SSPE)) {
+                        table$setNote(paste0("sing_", clean_term_b), jmvcore::format(.("Term '{term}' has insufficient residual degrees of freedom for multivariate profile test."), term = clean_term_b))
                     } else {
-                        .("Profiles coincide (no significant overall elevation difference between groups).")
-                    }
+                        SSPE_qr <- qr(x$SSPE)
+                        eigs <- tryCatch(
+                            Re(eigen(qr.coef(SSPE_qr, x$SSPH), symmetric = FALSE)$values),
+                            error = function(e) NULL
+                        )
+                        if (is.null(eigs) || any(!is.finite(eigs))) {
+                            table$setNote(paste0("sing_", clean_term_b), jmvcore::format(.("Term '{term}' has insufficient residual degrees of freedom for multivariate profile test."), term = clean_term_b))
+                        } else {
+                            pil <- private$.calcPillai(eigs, x$df, x$df.residual)
+                            p_stat <- as.numeric(pil[1])
+                            f_val  <- as.numeric(pil[2])
+                            df1    <- as.integer(round(pil[3]))
+                            df2    <- as.numeric(pil[4])
+                            p_val  <- stats::pf(f_val, df1, df2, lower.tail = FALSE)
 
-                    table$addRow(rowKey = "coincidence", values = list(
-                        hypothesis = jmvcore::format(.("2. Equal Levels (Coincidence / {group} Main Effect)"), group = between[1]),
-                        test = .("Pillai / Univariate"),
-                        stat = p_stat,
-                        f = f_val,
-                        df1 = df1,
-                        df2 = df2,
-                        p = p_val,
-                        conclusion = conclusion
-                    ))
+                            conclusion <- if (p_val < 0.05) {
+                                .("Profiles differ in elevation (significant group main effect).")
+                            } else {
+                                .("Coincidence supported (no significant elevation difference).")
+                            }
+
+                            table$addRow(rowKey = "coincidence", values = list(
+                                hypothesis = jmvcore::format(.("2. Equal Levels (Coincidence / {group} Main Effect)"), group = between[1]),
+                                test = .("Pillai's Trace"),
+                                stat = p_stat,
+                                f = f_val,
+                                df1 = df1,
+                                df2 = df2,
+                                p = p_val,
+                                conclusion = conclusion
+                            ))
+                        }
+                    }
                 }
 
                 if (length(between) > 1) {
@@ -658,38 +701,52 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             }
 
             # Hypothesis 3: Flatness (Within-subjects time main effect)
-            matched_time <- find_term(rmFactorName)
+            matched_time <- find_term(rmFactorFormula)
             if (!is.null(matched_time)) {
                 x <- m_tests[[matched_time]]
-                SSPE_qr <- qr(x$SSPE)
-                eigs <- Re(eigen(qr.coef(SSPE_qr, x$SSPH), symmetric = FALSE)$values)
-                wlk <- private$.calcWilks(eigs, x$df, x$df.residual)
-                w_stat <- as.numeric(wlk[1])
-                f_val  <- as.numeric(wlk[2])
-                df1    <- as.integer(round(wlk[3]))
-                df2    <- as.numeric(wlk[4])
-                p_val  <- stats::pf(f_val, df1, df2, lower.tail = FALSE)
-
-                conclusion <- if (p_val < 0.05) {
-                    .("Profiles are NOT flat (significant change across repeated measures over time).")
+                clean_term_t <- gsub("`", "", matched_time)
+                if (!is.null(x$singular) && isTRUE(x$singular)) {
+                    table$setNote(paste0("sing_", clean_term_t), jmvcore::format(.("Term '{term}' has a singular hypothesis or error matrix; profile test omitted."), term = rmFactorDisplay))
+                } else if (is.null(x$SSPH) || is.null(x$SSPE)) {
+                    table$setNote(paste0("sing_", clean_term_t), jmvcore::format(.("Term '{term}' has insufficient residual degrees of freedom for multivariate profile test."), term = rmFactorDisplay))
                 } else {
-                    .("Profiles are flat (no significant change across repeated measures over time).")
-                }
+                    SSPE_qr <- qr(x$SSPE)
+                    eigs <- tryCatch(
+                        Re(eigen(qr.coef(SSPE_qr, x$SSPH), symmetric = FALSE)$values),
+                        error = function(e) NULL
+                    )
+                    if (is.null(eigs) || any(!is.finite(eigs))) {
+                        table$setNote(paste0("sing_", clean_term_t), jmvcore::format(.("Term '{term}' has insufficient residual degrees of freedom for multivariate profile test."), term = rmFactorDisplay))
+                    } else {
+                        wlk <- private$.calcWilks(eigs, x$df, x$df.residual)
+                        w_stat <- as.numeric(wlk[1])
+                        f_val  <- as.numeric(wlk[2])
+                        df1    <- as.integer(round(wlk[3]))
+                        df2    <- as.numeric(wlk[4])
+                        p_val  <- stats::pf(f_val, df1, df2, lower.tail = FALSE)
 
-                table$addRow(rowKey = "flatness", values = list(
-                    hypothesis = jmvcore::format(.("3. Flatness (Within-Subjects Change over {time})"), time = rmFactorName),
-                    test = .("Wilks' Lambda"),
-                    stat = w_stat,
-                    f = f_val,
-                    df1 = df1,
-                    df2 = df2,
-                    p = p_val,
-                    conclusion = conclusion
-                ))
+                        conclusion <- if (p_val < 0.05) {
+                            .("Profiles show change across repeated measures.")
+                        } else {
+                            .("Flatness supported (no significant change across repeated measures).")
+                        }
+
+                        table$addRow(rowKey = "flatness", values = list(
+                            hypothesis = jmvcore::format(.("3. Flatness (Within-Subjects Change over {time})"), time = rmFactorDisplay),
+                            test = .("Wilks' Lambda"),
+                            stat = w_stat,
+                            f = f_val,
+                            df1 = df1,
+                            df2 = df2,
+                            p = p_val,
+                            conclusion = conclusion
+                        ))
+                    }
+                }
             }
         },
 
-                .fillContrastsTable = function(dat_clean, rmCells, rmFactorName, between, covs, contrastType) {
+                .fillContrastsTable = function(dat_clean, rmCells, rmFactorDisplay = "Time", rmFactorFormula = "Time", between = NULL, covs = NULL, contrastType = "polynomial") {
             table <- self$results$contrastsTable
             table$deleteRows()
 
@@ -750,10 +807,10 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
             rhs_terms <- c()
             if (!is.null(between) && length(between) > 0) {
-                rhs_terms <- c(rhs_terms, paste(between, collapse = " * "))
+                rhs_terms <- c(rhs_terms, paste(paste0("`", between, "`"), collapse = " * "))
             }
             if (!is.null(covs) && length(covs) > 0) {
-                rhs_terms <- c(rhs_terms, paste(covs, collapse = " + "))
+                rhs_terms <- c(rhs_terms, paste(paste0("`", covs, "`"), collapse = " + "))
             }
             rhs <- if (length(rhs_terms) > 0) paste(rhs_terms, collapse = " + ") else "1"
 
@@ -778,7 +835,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     ms_res <- ss_res / df_res
                     f_val <- aov_c["(Intercept)", "F value"]
                     p_val <- aov_c["(Intercept)", "Pr(>F)"]
-                    eta_p <- if ((ss_intercept + ss_res) > 0) ss_intercept / (ss_intercept + ss_res) else NA_real_
+                    eta_p <- if (!is.na(ss_intercept) && !is.na(ss_res) && (ss_intercept + ss_res) > 0) ss_intercept / (ss_intercept + ss_res) else NA_real_
                 } else {
                     sm <- summary(c_fit)
                     t_val <- sm$coefficients["(Intercept)", "t value"]
@@ -790,11 +847,11 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     ss_intercept <- f_val * ms_res
                     ms_intercept <- ss_intercept
                     p_val <- stats::pf(f_val, 1, df_res, lower.tail = FALSE)
-                    eta_p <- if ((ss_intercept + ss_res) > 0) ss_intercept / (ss_intercept + ss_res) else NA_real_
+                    eta_p <- if (!is.na(ss_intercept) && !is.na(ss_res) && (ss_intercept + ss_res) > 0) ss_intercept / (ss_intercept + ss_res) else NA_real_
                 }
 
                 table$addRow(rowKey = paste0("contrast_", col_idx), values = list(
-                    contrast = paste0(rmFactorName, " (", c_label, ")"),
+                    contrast = paste0(rmFactorDisplay, " (", c_label, ")"),
                     ss = ss_intercept,
                     df = as.integer(df_intercept),
                     ms = ms_intercept,
@@ -803,7 +860,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     etaSqP = eta_p
                 ))
 
-                if (!is.null(between) && length(between) > 0 && !is.null(aov_c)) {
+                if (!is.null(aov_c)) {
                     b_terms <- setdiff(rownames(aov_c), c("(Intercept)", "Residuals"))
                     for (term_b in b_terms) {
                         ss_b <- aov_c[term_b, "Sum Sq"]
@@ -813,10 +870,11 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         p_b  <- aov_c[term_b, "Pr(>F)"]
                         eta_b <- if ((ss_b + ss_res) > 0) ss_b / (ss_b + ss_res) else NA_real_
 
-                        term_label <- gsub(":", " × ", term_b)
+                        term_label <- gsub("`", "", term_b)
+                        term_label <- gsub(":", " × ", term_label)
 
                         table$addRow(rowKey = paste0("contrast_", col_idx, "_", term_b), values = list(
-                            contrast = paste0(rmFactorName, " (", c_label, ") × ", term_label),
+                            contrast = paste0(rmFactorDisplay, " (", c_label, ") × ", term_label),
                             ss = ss_b,
                             df = as.integer(df_b),
                             ms = ms_b,
@@ -1124,7 +1182,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             list(d2 = d2, crit = crit_val, max_d2 = max_d2, n_outliers = n_outliers)
         },
 
-        .plotProfile = function(image, ...) {
+        .plotProfile = function(image, ggtheme = NULL, theme = NULL, ...) {
             state <- image$state
             if (is.null(state) || is.null(state$summary)) return(FALSE)
 
@@ -1138,20 +1196,25 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             sum_df$time <- factor(sum_df$time, levels = rmCells)
 
             p <- ggplot2::ggplot(sum_df, ggplot2::aes(x = time, y = mean, group = group, color = group)) +
-                ggplot2::geom_line(size = 1.1) +
+                ggplot2::geom_line(linewidth = 1.1) +
                 ggplot2::geom_point(size = 3) +
                 ggplot2::labs(
                     title = .("Repeated Measures Trajectory Profile"),
                     x = rmFactorName,
                     y = .("Mean Response"),
                     color = if (has_between) betweenName else ""
-                ) +
-                ggplot2::theme_minimal(base_size = 12) +
-                ggplot2::theme(
-                    panel.grid.minor = ggplot2::element_blank(),
-                    legend.position = "top",
-                    plot.title = ggplot2::element_text(face = "bold", hjust = 0.5)
                 )
+
+            if (!is.null(ggtheme)) {
+                p <- p + ggtheme
+            } else {
+                p <- p + ggplot2::theme_minimal(base_size = 12)
+            }
+            p <- p + ggplot2::theme(
+                panel.grid.minor = ggplot2::element_blank(),
+                legend.position = "top",
+                plot.title = ggplot2::element_text(face = "bold", hjust = 0.5)
+            )
 
             if (plotError == "ci") {
                 p <- p + ggplot2::geom_errorbar(ggplot2::aes(ymin = ci_lower, ymax = ci_upper), width = 0.15, alpha = 0.8)
@@ -1163,7 +1226,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             TRUE
         },
 
-        .plotHe = function(image, ...) {
+        .plotHe = function(image, ggtheme = NULL, theme = NULL, ...) {
             state <- image$state
             if (is.null(state) || is.null(state$vars)) return(FALSE)
 
@@ -1172,6 +1235,11 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             dat <- self$data
 
             if (is.null(dat) || is.null(vars) || length(vars) < 2) return(FALSE)
+
+            # Restrict to complete cases from the fitted model
+            if (!is.null(state$row_indices) && all(state$row_indices %in% rownames(dat))) {
+                dat <- dat[state$row_indices, , drop = FALSE]
+            }
 
             plot_cols <- vars
             has_between <- (!is.null(between) && length(between) > 0 && between[1] %in% names(dat))
@@ -1193,27 +1261,32 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
             p <- ggplot2::ggplot(df_plot, ggplot2::aes(x = V1, y = V2, color = Group)) +
                 ggplot2::geom_point(alpha = 0.6, size = 2) +
-                ggplot2::stat_ellipse(level = 0.68, linetype = "dashed", size = 0.9) +
-                ggplot2::stat_ellipse(level = 0.95, size = 1.1) +
+                ggplot2::stat_ellipse(level = 0.68, linetype = "dashed", linewidth = 0.9) +
+                ggplot2::stat_ellipse(level = 0.95, linewidth = 1.1) +
                 ggplot2::labs(
                     title = .("Group Scatter with Data Ellipses"),
                     subtitle = jmvcore::format(.("Data ellipses (68% dashed, 95% solid) for '{v1}' and '{v2}'"), v1 = vars[1], v2 = vars[2]),
                     x = vars[1],
                     y = vars[2],
                     color = if (has_between) between[1] else ""
-                ) +
-                ggplot2::theme_minimal(base_size = 12) +
-                ggplot2::theme(
-                    plot.title = ggplot2::element_text(face = "bold", hjust = 0.5),
-                    plot.subtitle = ggplot2::element_text(hjust = 0.5),
-                    legend.position = "top"
                 )
+
+            if (!is.null(ggtheme)) {
+                p <- p + ggtheme
+            } else {
+                p <- p + ggplot2::theme_minimal(base_size = 12)
+            }
+            p <- p + ggplot2::theme(
+                plot.title = ggplot2::element_text(face = "bold", hjust = 0.5),
+                plot.subtitle = ggplot2::element_text(hjust = 0.5),
+                legend.position = "top"
+            )
 
             print(p)
             TRUE
         },
 
-        .plotOutlier = function(image, ...) {
+        .plotOutlier = function(image, ggtheme = NULL, theme = NULL, ...) {
             state <- image$state
             if (is.null(state) || is.null(state$d2)) return(FALSE)
 
@@ -1228,20 +1301,25 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
             p <- ggplot2::ggplot(df_out, ggplot2::aes(x = Index, y = D2, color = Outlier)) +
                 ggplot2::geom_point(size = 2.5) +
-                ggplot2::geom_hline(yintercept = crit, linetype = "dashed", color = "#D9534F", size = 1) +
+                ggplot2::geom_hline(yintercept = crit, linetype = "dashed", color = "#D9534F", linewidth = 1) +
                 ggplot2::scale_color_manual(values = c("FALSE" = "#2C5E8A", "TRUE" = "#D9534F")) +
                 ggplot2::labs(
                     title = .("Mahalanobis Distance D² (Residual Outliers)"),
                     x = .("Observation Index"),
                     y = .("Mahalanobis Distance D²"),
                     subtitle = paste0(.("Critical threshold (p < .001)"), ": ", round(crit, 2))
-                ) +
-                ggplot2::theme_minimal(base_size = 12) +
-                ggplot2::theme(
-                    plot.title = ggplot2::element_text(face = "bold", hjust = 0.5),
-                    plot.subtitle = ggplot2::element_text(hjust = 0.5),
-                    legend.position = "none"
                 )
+
+            if (!is.null(ggtheme)) {
+                p <- p + ggtheme
+            } else {
+                p <- p + ggplot2::theme_minimal(base_size = 12)
+            }
+            p <- p + ggplot2::theme(
+                plot.title = ggplot2::element_text(face = "bold", hjust = 0.5),
+                plot.subtitle = ggplot2::element_text(hjust = 0.5),
+                legend.position = "none"
+            )
 
             print(p)
             TRUE

@@ -328,7 +328,6 @@ mPCAResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=500,
                 height=500,
                 renderFun=".loadingsHeatmap",
-                requiresData=TRUE,
                 clearWith=list(
                     "vars",
                     "group",
@@ -342,7 +341,6 @@ mPCAResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=600,
                 height=450,
                 renderFun=".screePlot",
-                requiresData=TRUE,
                 clearWith=list(
                     "vars",
                     "group",
@@ -356,7 +354,6 @@ mPCAResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=600,
                 height=500,
                 renderFun=".scorePlot",
-                requiresData=TRUE,
                 clearWith=list(
                     "vars",
                     "group",
@@ -372,7 +369,6 @@ mPCAResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=600,
                 height=600,
                 renderFun=".biplot",
-                requiresData=TRUE,
                 clearWith=list(
                     "vars",
                     "group",
@@ -403,7 +399,6 @@ mPCAResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=500,
                 height=500,
                 renderFun=".cos2Heatmap",
-                requiresData=TRUE,
                 clearWith=list(
                     "vars",
                     "group",

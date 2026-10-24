@@ -558,7 +558,6 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=500,
                 height=400,
                 renderFun=".treeplot",
-                requiresData=TRUE,
                 clearWith=list(
                     "vars",
                     "group",
@@ -577,7 +576,6 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=500,
                 height=500,
                 renderFun=".plot",
-                requiresData=TRUE,
                 clearWith=list(
                     "vars",
                     "group",
@@ -624,7 +622,6 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 template=jmvcore::Image$new(
                     options=options,
                     renderFun=".rplot",
-                    requiresData=TRUE,
                     clearWith=list(
                         "vars",
                         "group",
@@ -789,7 +786,6 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             width=500,
                             height=500,
                             renderFun=".glassoPlot",
-                            requiresData=TRUE,
                             clearWith=list(
                                 "netMethod",
                                 "glassoLayout",
@@ -815,7 +811,6 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             width=600,
                             height=450,
                             renderFun=".glassoCentralityPlot",
-                            requiresData=TRUE,
                             clearWith=list(
                                 "netMethod",
                                 "glassoType",
@@ -862,7 +857,6 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             width=600,
                             height=450,
                             renderFun=".glassoStabilityPlot",
-                            requiresData=TRUE,
                             clearWith=list(
                                 "netMethod",
                                 "glassoType",

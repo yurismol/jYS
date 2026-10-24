@@ -41,6 +41,16 @@ options:
         - factor
       required: true
 
+    - name: factors
+      title: Additional Factors
+      type: Variables
+      suggested:
+        - nominal
+        - ordinal
+      permitted:
+        - factor
+      default: []
+
     - name: specType
       title: Specification Limit Type
       type: List
@@ -69,6 +79,13 @@ options:
       min: 0.01
       max: 0.50
       default: 0.25
+
+    - name: alphaFactor
+      title: Significance Level for Factors (alpha, default 0.05)
+      type: Number
+      min: 0.001
+      max: 0.25
+      default: 0.05
 
     - name: confLevel
       title: Confidence Level for Shelf Life
@@ -301,6 +318,16 @@ options:
       type: Bool
       default: false
 
+    - name: arrhDataCondition
+      title: Storage condition of analysed data
+      type: List
+      options:
+        - title: Long-term storage condition (e.g. 25°C / 60% RH)
+          name: long_term
+        - title: Accelerated study condition (e.g. 40°C / 75% RH)
+          name: accelerated
+      default: long_term
+
     - name: tempVar
       title: Temperature (°C)
       type: Variable
@@ -363,7 +390,7 @@ options:
       default: true
 
     - name: accelCondition
-      title: Accelerated Testing Support (ICH Q1E App. A)
+      title: Accelerated Testing Support (Legacy ICH Q1E App. A)
       type: List
       options:
         - title: No significant change at accelerated condition (Extrapolation up to 2X, max X + 12 mo)
@@ -376,11 +403,70 @@ options:
           name:  none
       default: none
 
+    - name: storageCond
+      title: Intended Storage Condition
+      type: List
+      options:
+        - title: Room temperature storage (25°C / 60% RH or 30°C / 65% RH)
+          name:  room
+        - title: Refrigerated storage (5°C ± 3°C)
+          name:  refrigerated
+        - title: Frozen storage (-20°C ± 5°C)
+          name:  frozen
+      default: room
+
+    - name: accelResult
+      title: Accelerated Condition Testing Outcome
+      type: List
+      options:
+        - title: No significant change at accelerated condition (6 months)
+          name:  no_change
+        - title: Significant change observed at accelerated condition (within 6 months)
+          name:  change_observed
+        - title: Significant change within first 3 months (refrigerated only)
+          name:  change_refrig_early
+        - title: Accelerated study not conducted / Unknown
+          name:  not_tested
+      default: not_tested
+
+    - name: intermedResult
+      title: Intermediate Condition Testing Outcome (where applicable)
+      type: List
+      options:
+        - title: Not performed / Not applicable
+          name:  not_applicable
+        - title: No significant change at intermediate condition
+          name:  no_change
+        - title: Significant change observed at intermediate condition
+          name:  change_observed
+      default: not_applicable
+
+    - name: supportingData
+      title: Relevant supporting data available (pilot batches, packaging)
+      type: Bool
+      default: true
+
+    - name: littleChange
+      title: Long-term data show little or no change and little variability
+      type: Bool
+      default: false
+
     - name: studyDuration
       title: Long-term Study Duration (0 - auto)
       type: Number
       min: 0
       default: 0
+
+    - name: proposedShelfLife
+      title: Proposed / Target Shelf Life (months, 0 = auto)
+      type: Number
+      min: 0
+      default: 0
+
+    - name: showRegTable
+      title: ICH Q1E Regulatory Extrapolation & Decision Tree Summary
+      type: Bool
+      default: true
 
     - name: showPoolTable
       title: ANCOVA Poolability Testing Table
@@ -389,6 +475,11 @@ options:
 
     - name: showShelfTable
       title: Shelf Life Summary Table
+      type: Bool
+      default: true
+
+    - name: showComboShelfTable
+      title: Factor Combinations Shelf Life Summary Table
       type: Bool
       default: true
 
@@ -419,6 +510,11 @@ options:
 
     - name: showFacetPlot
       title: Individual Batch Trajectories (Faceted)
+      type: Bool
+      default: false
+
+    - name: showBatchPlots
+      title: Individual Batch Shelf Life Plots (Standalone)
       type: Bool
       default: false
 

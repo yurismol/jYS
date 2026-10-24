@@ -44,9 +44,11 @@ children:
           - type: LevelSelector
             name: femaleLevel
             enable: (gender)
-  - type: Label
-    label: Multiple Testing
+  - type: LayoutBox
+    margin: large
     children:
+      - type: ComboBox
+        name: alpha
       - type: ComboBox
         name: adjust
   - type: CollapseBox
@@ -64,9 +66,6 @@ children:
             name: groupAlleles
             enable: (groupTable && outcome)
           - type: CheckBox
-            name: polyDf1
-            enable: (groupTable && outcome)
-          - type: CheckBox
             name: groupTotal
             enable: (groupTable && outcome)
       - type: CheckBox
@@ -81,9 +80,6 @@ children:
       - type: CheckBox
         name: hwTests
         children:
-          - type: ComboBox
-            name: alpha
-            enable: (hwTests)
           - type: CheckBox
             name: hwPerm
             enable: (hwTests)
@@ -107,6 +103,17 @@ children:
       - type: CheckBox
         name: xLinked
         enable: (gender)
+  - type: LayoutBox
+    margin: large
+    children:
+      - type: CheckBox
+        name: polyDf1
+  - type: LayoutBox
+    margin: large
+    children:
+      - type: TextBox
+        name: nPerm
+        format: number
   - type: CollapseBox
     label: Phenotype Association Tests
     collapsed: true
@@ -128,12 +135,6 @@ children:
           - type: CheckBox
             name: manhattanPlot
             enable: (assocEnable)
-  - type: LayoutBox
-    margin: large
-    children:
-      - type: TextBox
-        name: nPerm
-        format: number
   - type: CollapseBox
     label: Population genetics metrics
     collapsed: true

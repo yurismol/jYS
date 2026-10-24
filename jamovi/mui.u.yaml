@@ -43,8 +43,6 @@ children:
             name: Dichotomization (no uncertainty)
             optionName: UImethod
             optionPart: noUI
-            events:
-              change: ./mui.events::onChange_met
             children:
               - type: CheckBox
                 name: youden
@@ -53,8 +51,6 @@ children:
             name: Two-graph ROC curves
             optionName: UImethod
             optionPart: TGR
-            events:
-              change: ./mui.events::onChange_met
             children:
               - type: CheckBox
                 name: isTGR
@@ -63,33 +59,23 @@ children:
                 name: minSe
                 format: number
                 enable: ({return ui['UImethod'].value()=="TGR";})
-                events:
-                  change: ./mui.events::onChange_met
               - type: TextBox
                 name: minSp
                 format: number
                 enable: ({return ui['UImethod'].value()=="TGR";})
-                events:
-                  change: ./mui.events::onChange_met
           - type: RadioButton
             name: Uncertain Interval
             optionName: UImethod
             optionPart: UI
-            events:
-              change: ./mui.events::onChange_met
             children:
               - type: TextBox
                 name: uiSe
                 format: number
                 enable: ({return ui['UImethod'].value()=="UI";})
-                events:
-                  change: ./mui.events::onChange_met
               - type: TextBox
                 name: uiSp
                 format: number
                 enable: ({return ui['UImethod'].value()=="UI";})
-                events:
-                  change: ./mui.events::onChange_met
       - type: Label
         label: Plots
         children:

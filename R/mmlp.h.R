@@ -397,7 +397,6 @@ mMLPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=500,
                 height=350,
                 renderFun=".importancePlot",
-                requiresData=TRUE,
                 clearWith=list(
                     "dep",
                     "covs",
@@ -416,7 +415,6 @@ mMLPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=600,
                 height=500,
                 renderFun=".topoPlot",
-                requiresData=TRUE,
                 clearWith=list(
                     "dep",
                     "covs",
@@ -435,7 +433,6 @@ mMLPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=500,
                 height=350,
                 renderFun=".curvePlot",
-                requiresData=TRUE,
                 clearWith=list(
                     "dep",
                     "covs",

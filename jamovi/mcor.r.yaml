@@ -107,7 +107,6 @@ items:
       width:  500
       height: 400
       renderFun: .treeplot
-      requiresData: true
       clearWith:
         - vars
         - group
@@ -126,7 +125,6 @@ items:
       width:  500
       height: 500
       renderFun: .plot
-      requiresData: true
       clearWith:
         - vars
         - group
@@ -173,24 +171,23 @@ items:
       template:
           type: Image
           renderFun: .rplot
-          requiresData: true
           clearWith:
-            - vars
-            - group
-            - selgroup
-            - hyp
-            - method
-            - adjust
-            - plots
-            - clustMat
-            - hclust
-            - numClust
-            - clustMet
-            - clustCol
-            - clustMan
-            - plotMetU
-            - signif
-            - clPos
+              - vars
+              - group
+              - selgroup
+              - hyp
+              - method
+              - adjust
+              - plots
+              - clustMat
+              - hclust
+              - numClust
+              - clustMet
+              - clustCol
+              - clustMan
+              - plotMetU
+              - signif
+              - clPos
 
     - name: glassoGroup
       title: Partial Correlation Network
@@ -309,7 +306,6 @@ items:
           width: 500
           height: 500
           renderFun: .glassoPlot
-          requiresData: true
           clearWith:
             - netMethod
             - glassoLayout
@@ -335,7 +331,6 @@ items:
           width: 600
           height: 450
           renderFun: .glassoCentralityPlot
-          requiresData: true
           clearWith:
             - netMethod
             - glassoType
@@ -379,7 +374,6 @@ items:
           width: 600
           height: 450
           renderFun: .glassoStabilityPlot
-          requiresData: true
           clearWith:
             - netMethod
             - glassoType

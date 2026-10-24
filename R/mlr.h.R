@@ -471,7 +471,6 @@ mLRResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 height=400,
                 renderFun=".forestPlot",
                 visible="(showForest)",
-                requiresData=TRUE,
                 clearWith=list(
                     "dep",
                     "covs",

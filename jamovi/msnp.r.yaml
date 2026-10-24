@@ -172,6 +172,7 @@ items:
             - ternaryShowMAF
             - mafThreshold
             - hweSplitOutcome
+            - alpha
             - outcome
             - xLinked
             - gender
@@ -303,6 +304,7 @@ items:
             - geneticModel
             - covs
             - adjust
+            - alpha
             - qcCallRate
             - qcMaf
             - qcHwe

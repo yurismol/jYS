@@ -132,17 +132,17 @@ options:
           name: "0"
         - title: Asymptotic chi-square
           name: "1"
-        - title: Exact joint (males & females)
+        - title: Chi-square with continuity correction
           name: "2"
-        - title: Asymptotic chi-square (females)
+        - title: Chi-square with continuity correction (D > 0)
           name: "3"
-        - title: Exact (females)
+        - title: Chi-square with continuity correction (D < 0)
           name: "4"
-        - title: Asymptotic likelihood ratio
+        - title: Chi-square with both continuity corrections
           name: "5"
-        - title: Exact joint permutation
+        - title: Chi-square with upper and lower continuity correction
           name: "6"
-        - title: Exact autosomal
+        - title: Two-sided exact test
           name: "7"
       default: "1"
 

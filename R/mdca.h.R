@@ -308,7 +308,6 @@ mDCAResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=650,
                 height=450,
                 renderFun=".dcaPlot",
-                requiresData=TRUE,
                 clearWith=list(
                     "dep",
                     "targetLevel",
@@ -328,7 +327,6 @@ mDCAResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=650,
                 height=420,
                 renderFun=".avoidedPlot",
-                requiresData=TRUE,
                 clearWith=list(
                     "dep",
                     "targetLevel",
@@ -388,7 +386,6 @@ mDCAResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=600,
                 height=450,
                 renderFun=".calPlot",
-                requiresData=TRUE,
                 clearWith=list(
                     "dep",
                     "targetLevel",

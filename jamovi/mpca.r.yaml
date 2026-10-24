@@ -48,7 +48,7 @@ items:
       width:  500
       height: 500
       renderFun: .loadingsHeatmap
-      requiresData: true
+
       clearWith:
           - vars
           - group
@@ -62,7 +62,7 @@ items:
       width:  600
       height: 450
       renderFun: .screePlot
-      requiresData: true
+
       clearWith:
           - vars
           - group
@@ -76,7 +76,7 @@ items:
       width:  600
       height: 500
       renderFun: .scorePlot
-      requiresData: true
+
       clearWith:
           - vars
           - group
@@ -92,7 +92,7 @@ items:
       width:  600
       height: 600
       renderFun: .biplot
-      requiresData: true
+
       clearWith:
           - vars
           - group
@@ -122,7 +122,7 @@ items:
       width:  500
       height: 500
       renderFun: .cos2Heatmap
-      requiresData: true
+
       clearWith:
           - vars
           - group

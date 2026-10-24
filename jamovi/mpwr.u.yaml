@@ -51,7 +51,7 @@ children:
             name: superior
       - name: margin
         type: TextBox
-        label: "Equivalence / Non-Inferiority / Superiority margin"
+        label: "Hypothesis margin (δ)"
         format: number
         enable: (alt:equivalent || alt:non-inferior || alt:superior)
 

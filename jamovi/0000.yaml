@@ -1,12 +1,12 @@
 ---
 title: jYS Extended Functions
 name: jYS
-version: 1.2.0
+version: 1.2.1
 jms: '1.0'
 authors:
   - Yuri Smolyakov
 maintainer: Yuri Smolyakov <smolyakov@rambler.ru>
-date: '2026-10-11'
+date: '2026-10-24'
 type: R
 description: >-
   Extensions of the functionality of popular data analysis methods: correlation
@@ -227,17 +227,16 @@ analyses:
       Evaluation of stability data and shelf life estimation according to the
       ICH Q1E guideline using ANCOVA poolability testing and
       specification-directed confidence bounds.
-  - title: MANOVA & Repeated Measures
+  - title: Repeated Measures & Profile Analysis
     name: mMNV
     ns: jYS
     category: analyses
     menuGroup: jYS
     menuSubgroup: Classical & Advanced ANOVA
-    menuTitle: MANOVA & Repeated Measures
+    menuTitle: Repeated Measures & Profile Analysis
     description: >-
-      Multivariate Analysis of Variance (MANOVA), Repeated Measures MANOVA
-      without sphericity assumption (O'Brien & Kaiser, 1985), and Profile
-      Analysis.
+      Repeated Measures MANOVA without sphericity assumption (O'Brien & Kaiser,
+      1985) and Profile Analysis.
 usesNative: true
 minApp: 2.3.0
 

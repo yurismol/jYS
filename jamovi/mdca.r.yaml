@@ -94,7 +94,7 @@ items:
       width:  650
       height: 450
       renderFun: .dcaPlot
-      requiresData: true
+
       clearWith:
           - dep
           - targetLevel
@@ -114,7 +114,7 @@ items:
       width:  650
       height: 420
       renderFun: .avoidedPlot
-      requiresData: true
+
       clearWith:
           - dep
           - targetLevel
@@ -168,7 +168,7 @@ items:
       width:  600
       height: 450
       renderFun: .calPlot
-      requiresData: true
+
       clearWith:
           - dep
           - targetLevel

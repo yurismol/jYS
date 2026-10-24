@@ -727,6 +727,7 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 "ternaryShowMAF",
                                 "mafThreshold",
                                 "hweSplitOutcome",
+                                "alpha",
                                 "outcome",
                                 "xLinked",
                                 "gender",
@@ -874,6 +875,7 @@ mSNPResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 "geneticModel",
                                 "covs",
                                 "adjust",
+                                "alpha",
                                 "qcCallRate",
                                 "qcMaf",
                                 "qcHwe")))}))$new(options=options))

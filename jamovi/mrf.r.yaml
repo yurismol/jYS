@@ -65,7 +65,7 @@ items:
       width:  550
       height: 400
       renderFun: .importancePlot
-      requiresData: true
+
       clearWith:
           - dep
           - covs
@@ -86,7 +86,7 @@ items:
       width:  550
       height: 350
       renderFun: .oobCurvePlot
-      requiresData: true
+
       clearWith:
           - dep
           - covs
@@ -335,7 +335,7 @@ items:
           width:  550
           height: 400
           renderFun: .pdpPlot
-          requiresData: true
+    
           clearWith:
               - dep
               - covs
