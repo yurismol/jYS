@@ -4315,11 +4315,12 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             }
             df_traj <- do.call(rbind, traj_list)
 
-            cond_colors <- stats::setNames(sapply(conds, function(c) c$color), sapply(conds, function(c) c$label))
+            cond_labels <- sapply(conds, function(c) c$label)
+            cond_colors <- stats::setNames(sapply(conds, function(c) c$color), cond_labels)
+            df_traj$Condition <- factor(df_traj$Condition, levels = cond_labels)
 
             p <- ggplot2::ggplot(df_traj, ggplot2::aes(x = Time, y = Concentration, color = Condition)) +
-                ggplot2::geom_line(linewidth = 1.1) +
-                ggplot2::scale_color_manual(values = cond_colors)
+                ggplot2::geom_line(linewidth = 1.1)
 
             if (is_lower && !is.null(lsl_val) && !is.na(lsl_val)) {
                 p <- p + ggplot2::geom_hline(yintercept = lsl_val, linetype = "dashed", color = "#C0392B", linewidth = 1)
@@ -4340,10 +4341,17 @@ mSTABClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             )
 
             if (!is.null(ggtheme)) p <- p + ggtheme else p <- p + ggplot2::theme_bw(base_size = 12)
+            p <- p + ggplot2::scale_color_manual(
+                name = "",
+                values = cond_colors,
+                guide = ggplot2::guide_legend(nrow = 2, byrow = TRUE)
+            )
+            p <- p + ggplot2::guides(color = ggplot2::guide_legend(nrow = 2, byrow = TRUE))
             p <- p + ggplot2::theme(
                 plot.title = ggplot2::element_text(face = "bold", color = "#1B365D", size = 13),
                 plot.subtitle = ggplot2::element_text(color = "#2C3E50", size = 10.5, margin = ggplot2::margin(b = 10)),
                 legend.position = "bottom",
+                legend.direction = "horizontal",
                 panel.grid.minor = ggplot2::element_blank()
             )
 
