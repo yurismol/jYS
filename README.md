@@ -76,7 +76,7 @@ Some usefull [Jamovi](https://www.jamovi.org/) procedures for researchers
   - stats (R Core Team)
   - ggplot2 (Hadley Wickham et al.)
 
-- MANOVA & Repeated Measures (mMNV)
+- Repeated Measures & Profile Analysis (mMNV)
   - car (John Fox, Sanford Weisberg)
   - stats (R Core Team)
   - ggplot2 (Hadley Wickham et al.)

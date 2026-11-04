@@ -15,7 +15,6 @@ mSNPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             signifMarkers = FALSE,
             groupTable = TRUE,
             groupAlleles = TRUE,
-            polyDf1 = FALSE,
             groupTotal = FALSE,
             hwTests = TRUE,
             alpha = "0.05",
@@ -120,10 +119,6 @@ mSNPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "groupAlleles",
                 groupAlleles,
                 default=TRUE)
-            private$..polyDf1 <- jmvcore::OptionBool$new(
-                "polyDf1",
-                polyDf1,
-                default=FALSE)
             private$..groupTotal <- jmvcore::OptionBool$new(
                 "groupTotal",
                 groupTotal,
@@ -354,7 +349,6 @@ mSNPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..signifMarkers)
             self$.addOption(private$..groupTable)
             self$.addOption(private$..groupAlleles)
-            self$.addOption(private$..polyDf1)
             self$.addOption(private$..groupTotal)
             self$.addOption(private$..hwTests)
             self$.addOption(private$..alpha)
@@ -405,7 +399,6 @@ mSNPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         signifMarkers = function() private$..signifMarkers$value,
         groupTable = function() private$..groupTable$value,
         groupAlleles = function() private$..groupAlleles$value,
-        polyDf1 = function() private$..polyDf1$value,
         groupTotal = function() private$..groupTotal$value,
         hwTests = function() private$..hwTests$value,
         alpha = function() private$..alpha$value,
@@ -455,7 +448,6 @@ mSNPOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..signifMarkers = NA,
         ..groupTable = NA,
         ..groupAlleles = NA,
-        ..polyDf1 = NA,
         ..groupTotal = NA,
         ..hwTests = NA,
         ..alpha = NA,
@@ -1207,7 +1199,6 @@ mSNPBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @param signifMarkers .
 #' @param groupTable .
 #' @param groupAlleles .
-#' @param polyDf1 .
 #' @param groupTotal .
 #' @param hwTests .
 #' @param alpha .
@@ -1280,7 +1271,6 @@ mSNP <- function(
     signifMarkers = FALSE,
     groupTable = TRUE,
     groupAlleles = TRUE,
-    polyDf1 = FALSE,
     groupTotal = FALSE,
     hwTests = TRUE,
     alpha = "0.05",
@@ -1351,7 +1341,6 @@ mSNP <- function(
         signifMarkers = signifMarkers,
         groupTable = groupTable,
         groupAlleles = groupAlleles,
-        polyDf1 = polyDf1,
         groupTotal = groupTotal,
         hwTests = hwTests,
         alpha = alpha,

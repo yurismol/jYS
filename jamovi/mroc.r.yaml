@@ -62,7 +62,6 @@ items:
       width:  500
       height: 500
       renderFun: .plot
-      requiresData: true
       clearWith:
           - vars
           - class
@@ -119,7 +118,6 @@ items:
           width:  500
           height: 500
           renderFun: .plot
-          requiresData: true
 
     - name: splots
       title: Split ROC by predictors
@@ -154,6 +152,5 @@ items:
           width:  500
           height: 500
           renderFun: .plot
-          requiresData: true
 
 ...

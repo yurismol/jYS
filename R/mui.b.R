@@ -30,7 +30,7 @@ mUIClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             mcitable$setNote('mciB', .('<b>LR-</b> - Negative Likelihood Ratio (P(-|D+))/(P(-|D-)). The ratio of the probability of a person with the condition receiving a negative classification to the probability of a person without the condition receiving a negative classification'))
             mcitable$setNote('mciC', .('<b>LR+</b> - Positive Likelihood Ratio (P(+|D+))/(P(+|D-)). The ratio of the probability of a person with the condition receiving a positive classification to the probability of a person without the condition receiving a positive classification'))
 
-            if (self$options$youden) {
+            if (self$options$UImethod == "noUI" && isTRUE(self$options$youden)) {
               uitable$getColumn('int')$setTitle(.("Threshold on Youden"))
             } else {
               uitable$getColumn('int')$setTitle(.("Intersection"))

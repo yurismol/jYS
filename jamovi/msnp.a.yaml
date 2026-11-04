@@ -79,11 +79,6 @@ options:
       type: Bool
       default: true
 
-    - name: polyDf1
-      title: Use reduced df for polymorphism (1 df per contrast)
-      type: Bool
-      default: false
-
     - name: groupTotal
       title: Calculate totals
       type: Bool

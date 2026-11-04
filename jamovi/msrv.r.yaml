@@ -8,7 +8,7 @@ items:
     title: Kaplan–Meier Survival Analysis
     type: Group
     visible: (showKm)
-    refs: [jys, survival, ggsurvfit, kaplan1958]
+    refs: [jys, survival, kaplan1958]
     items:
       - name: kmSummaryTable
         title: Kaplan–Meier Survival Summary

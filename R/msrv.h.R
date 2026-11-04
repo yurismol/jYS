@@ -441,7 +441,6 @@ mSRVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             refs=list(
                     "jys",
                     "survival",
-                    "ggsurvfit",
                     "kaplan1958"))
                         self$add(jmvcore::Table$new(
                             options=options,

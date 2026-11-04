@@ -11,16 +11,12 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             isConfigured <- !is.null(rmCells) && length(rmCells) >= 2
             instructions$setVisible(!isConfigured)
             instructions$setContent(paste0(
-                "<h3>", .("MANOVA & Repeated Measures: Methodological Guide"), "</h3>",
+                "<h3>", .("Repeated Measures & Profile Analysis: Methodological Guide"), "</h3>",
                 "<p><b>", .("Getting started:"), "</b> ",
                 .("Select at least 2 repeated measures variables (e.g., T1, T2, T3) into Repeated Measures Cells. Optionally specify a Within-Subjects Factor Name (e.g., Time), Between-Subjects Factors (e.g., Treatment Group), and Covariates."),
                 "</p>",
                 "<p>",
-                .("The Multivariate Analysis of Variance (MANOVA) approach to repeated measures designs"),
-                " (O'Brien & Kaiser, 1985) ",
-                .("treats repeated measurements as a multivariate vector of dependent variables. Unlike classical univariate RM-ANOVA, the MANOVA approach makes"),
-                " <b>", .("NO assumption of sphericity"), "</b> ",
-                .("(compound symmetry) on the error variance-covariance matrix."),
+                .("The Multivariate Analysis of Variance (MANOVA) approach to repeated measures designs (O'Brien & Kaiser, 1985) treats repeated measurements as a multivariate vector of dependent variables. Unlike classical univariate RM-ANOVA, the MANOVA approach makes <b>NO assumption of sphericity</b> (compound symmetry) on the error variance-covariance matrix."),
                 "</p>",
                 "<ul>",
                 "<li><b>", .("When to prefer MANOVA:"), "</b> ",
@@ -50,7 +46,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             uniTable <- self$results$univariateTable
             uniTable$setNote(
                 "uni_note",
-                .("Univariate ANOVA assumes sphericity. If Mauchly's test is significant (p < .05), report Greenhouse-Geisser (ε < .75) or Huynh-Feldt (ε ≥ .75) corrected p-values.")
+                .("Univariate ANOVA assumes sphericity. If Mauchly's test is significant (p < .05), report Greenhouse–Geisser (ε < .75) or Huynh–Feldt (ε ≥ .75) corrected p-values.")
             )
 
             # 3. sphericityTable note
@@ -200,7 +196,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             av <- tryCatch(
                 car::Anova(fit, idata = idata, idesign = idesign, type = "III"),
                 error = function(e) {
-                    jmvcore::reject(paste0(.("Error evaluating MANOVA model"), ": ", e$message))
+                    jmvcore::reject(jmvcore::format(.("Error evaluating MANOVA model: {error}"), error = e$message))
                 }
             )
 
@@ -630,11 +626,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                             df2    <- as.numeric(wlk[4])
                             p_val  <- stats::pf(f_val, df1, df2, lower.tail = FALSE)
 
-                            conclusion <- if (p_val < 0.05) {
-                                .("Profiles deviate from parallelism (interaction is significant).")
-                            } else {
-                                .("Parallelism supported (no significant interaction).")
-                            }
+                            conclusion <- .("Evaluates parallelism of profile segments across groups")
 
                             table$addRow(rowKey = "parallelism", values = list(
                                 hypothesis = jmvcore::format(.("1. Parallelism ({time} × {group} Interaction)"), time = rmFactorDisplay, group = between[1]),
@@ -675,11 +667,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                             df2    <- as.numeric(pil[4])
                             p_val  <- stats::pf(f_val, df1, df2, lower.tail = FALSE)
 
-                            conclusion <- if (p_val < 0.05) {
-                                .("Profiles differ in elevation (significant group main effect).")
-                            } else {
-                                .("Coincidence supported (no significant elevation difference).")
-                            }
+                            conclusion <- .("Evaluates equality of overall profile elevations across groups")
 
                             table$addRow(rowKey = "coincidence", values = list(
                                 hypothesis = jmvcore::format(.("2. Equal Levels (Coincidence / {group} Main Effect)"), group = between[1]),
@@ -725,11 +713,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         df2    <- as.numeric(wlk[4])
                         p_val  <- stats::pf(f_val, df1, df2, lower.tail = FALSE)
 
-                        conclusion <- if (p_val < 0.05) {
-                            .("Profiles show change across repeated measures.")
-                        } else {
-                            .("Flatness supported (no significant change across repeated measures).")
-                        }
+                        conclusion <- .("Evaluates constancy of profiles across repeated measurements")
 
                         table$addRow(rowKey = "flatness", values = list(
                             hypothesis = jmvcore::format(.("3. Flatness (Within-Subjects Change over {time})"), time = rmFactorDisplay),
@@ -758,7 +742,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             if (contrastType == "polynomial") {
                 c_mat <- stats::contr.poly(k)
                 c_names <- c(.("Linear"), .("Quadratic"), .("Cubic"), .("Quartic"), .("Quintic"))
-                c_labels <- sapply(1:(k - 1), function(d) if (d <= length(c_names)) c_names[d] else paste0(.("Degree"), " ", d))
+                c_labels <- sapply(1:(k - 1), function(d) if (d <= length(c_names)) c_names[d] else jmvcore::format(.("Degree {d}"), d = d))
                 table$setNote("contrast_type_note", .("<b>Orthogonal Polynomial Contrasts</b>: Decompose the within-subject factor into orthogonal trends: Linear (constant rate of change), Quadratic (curvature/plateau), and Cubic (inflection points)."))
             } else if (contrastType == "repeated") {
                 c_mat <- matrix(0, nrow = k, ncol = k - 1)
@@ -784,7 +768,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 for (j in 1:(k - 1)) {
                     c_mat[j, j] <- 1
                     c_mat[(j + 1):k, j] <- -1 / (k - j)
-                    c_labels[j] <- paste0(rmCells[j], " vs ", .("subsequent"))
+                    c_labels[j] <- jmvcore::format(.("{cell} vs subsequent"), cell = rmCells[j])
                 }
                 table$setNote("contrast_type_note", .("<b>Helmert Contrasts</b>: Compare each time point to the average of subsequent time points."))
             } else if (contrastType == "difference") {
@@ -793,12 +777,12 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 for (j in 1:(k - 1)) {
                     c_mat[1:j, j] <- -1 / j
                     c_mat[j + 1, j] <- 1
-                    c_labels[j] <- paste0(rmCells[j + 1], " vs ", .("preceding"))
+                    c_labels[j] <- jmvcore::format(.("{cell} vs preceding"), cell = rmCells[j + 1])
                 }
                 table$setNote("contrast_type_note", .("<b>Difference Contrasts</b>: Compare each time point to the average of preceding time points (reverse Helmert)."))
             } else {
                 c_mat <- stats::contr.poly(k)
-                c_labels <- paste0(.("Degree"), " ", 1:(k - 1))
+                c_labels <- sapply(1:(k - 1), function(d) jmvcore::format(.("Degree {d}"), d = d))
                 table$setNote("contrast_type_note", NULL)
             }
 
@@ -912,11 +896,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                             assessment = box_res$msg
                         ))
                     } else {
-                        assess <- if (box_res$p < 0.001) {
-                            .("Heterogeneous covariance matrices (p < .001). Rely primarily on Pillai's Trace.")
-                        } else {
-                            .("Homogeneity of covariance matrices supported (assumption met).")
-                        }
+                        assess <- .("Evaluates equality of covariance matrices across groups (sensitive to non-normality)")
                         table$addRow(rowKey = "box_m", values = list(
                             test = .("Box's M (Equality of Covariance Matrices)"),
                             stat = box_res$stat,
@@ -942,7 +922,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             mardia_res <- private$.calcMardia(E)
             if (!is.null(mardia_res)) {
                 # Skewness
-                assess_skew <- if (mardia_res$skew$p < 0.05) .("Multivariate skewness significant (departure from normality).") else .("Multivariate skewness normal.")
+                assess_skew <- .("Evaluates multivariate skewness of residuals (H₀: normal skewness)")
                 table$addRow(rowKey = "mardia_skew", values = list(
                     test = .("Mardia Multivariate Skewness (Residuals)"),
                     stat = mardia_res$skew$stat,
@@ -954,7 +934,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 ))
 
                 # Kurtosis
-                assess_kurt <- if (mardia_res$kurt$p < 0.05) .("Multivariate kurtosis significant (departure from normality).") else .("Multivariate kurtosis normal.")
+                assess_kurt <- .("Evaluates multivariate kurtosis of residuals (H₀: normal kurtosis)")
                 table$addRow(rowKey = "mardia_kurt", values = list(
                     test = .("Mardia Multivariate Kurtosis (Residuals)"),
                     stat = mardia_res$kurt$stat,
@@ -970,9 +950,9 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             outlier_res <- private$.calcMahalanobis(E)
             if (!is.null(outlier_res)) {
                 assess_out <- if (outlier_res$n_outliers > 0) {
-                    paste0(outlier_res$n_outliers, " ", .("residual observation(s) exceed critical Mahalanobis D² (p < .001)."))
+                    jmvcore::format(.("{n} residual observation(s) exceed critical Mahalanobis D² (α = .001)"), n = outlier_res$n_outliers)
                 } else {
-                    .("No multivariate residual outliers detected at critical threshold (p < .001).")
+                    .("No multivariate residual outliers detected at critical threshold (α = .001)")
                 }
                 table$addRow(rowKey = "mahalanobis", values = list(
                     test = .("Mahalanobis Distance D² (Residual Outliers)"),
@@ -995,7 +975,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             if (has_between) {
                 if (length(between) > 1) {
                     table$setNote("means_factor_note", jmvcore::format(
-                        .("Marginal means and descriptives are evaluated for primary factor '{factor}' pooled across remaining factors."),
+                        .("Descriptive statistics are evaluated for primary factor '{factor}' pooled across remaining factors."),
                         factor = between[1]
                     ))
                 } else {
@@ -1213,7 +1193,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             p <- p + ggplot2::theme(
                 panel.grid.minor = ggplot2::element_blank(),
                 legend.position = "top",
-                plot.title = ggplot2::element_text(face = "bold", hjust = 0.5)
+                plot.title = ggplot2::element_text(hjust = 0.5)
             )
 
             if (plotError == "ci") {
@@ -1277,7 +1257,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 p <- p + ggplot2::theme_minimal(base_size = 12)
             }
             p <- p + ggplot2::theme(
-                plot.title = ggplot2::element_text(face = "bold", hjust = 0.5),
+                plot.title = ggplot2::element_text(hjust = 0.5),
                 plot.subtitle = ggplot2::element_text(hjust = 0.5),
                 legend.position = "top"
             )
@@ -1307,7 +1287,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     title = .("Mahalanobis Distance D² (Residual Outliers)"),
                     x = .("Observation Index"),
                     y = .("Mahalanobis Distance D²"),
-                    subtitle = paste0(.("Critical threshold (p < .001)"), ": ", round(crit, 2))
+                    subtitle = jmvcore::format(.("Critical threshold (p < .001): {crit}"), crit = round(crit, 2))
                 )
 
             if (!is.null(ggtheme)) {
@@ -1316,7 +1296,7 @@ mMNVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 p <- p + ggplot2::theme_minimal(base_size = 12)
             }
             p <- p + ggplot2::theme(
-                plot.title = ggplot2::element_text(face = "bold", hjust = 0.5),
+                plot.title = ggplot2::element_text(hjust = 0.5),
                 plot.subtitle = ggplot2::element_text(hjust = 0.5),
                 legend.position = "none"
             )

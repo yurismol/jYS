@@ -788,15 +788,28 @@ mMLPClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         
                         add_roc_row <- function(row_name, y_true, y_prob) {
                             tryCatch({
-                                if (is.null(y_true) || is.null(y_prob)) return()
+                                if (is.null(y_true) || is.null(y_prob)) {
+                                    self$results$insert(1, jmvcore::Notice$new(self$options,
+                                        name = paste0("rocWarn_null_", gsub("[^a-zA-Z0-9]", "_", row_name)),
+                                        type = jmvcore::NoticeType$WARNING,
+                                        content = jmvcore::format(.("ROC evaluation for '{part}' skipped: predicted probabilities or true labels are missing."), part = row_name)
+                                    ))
+                                    return()
+                                }
                                 
                                 # Aggressively coerce to plain numeric vector
                                 y_true <- as.double(as.vector(drop(unlist(y_true))))
                                 y_prob <- as.double(as.vector(drop(unlist(y_prob))))
                                 
-                                if (length(y_true) != length(y_prob)) return()
                                 complete_idx <- !is.na(y_true) & !is.na(y_prob)
-                                if (sum(complete_idx) < 2) return()
+                                if (length(y_true) != length(y_prob) || sum(complete_idx) < 2) {
+                                    self$results$insert(1, jmvcore::Notice$new(self$options,
+                                        name = paste0("rocWarn_dim_", gsub("[^a-zA-Z0-9]", "_", row_name)),
+                                        type = jmvcore::NoticeType$WARNING,
+                                        content = jmvcore::format(.("ROC evaluation for '{part}' skipped: insufficient valid observations."), part = row_name)
+                                    ))
+                                    return()
+                                }
                                 y_t <- y_true[complete_idx]
                                 y_p <- y_prob[complete_idx]
                                 

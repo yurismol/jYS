@@ -61,3 +61,47 @@ test_that("mUI handles NaN in normality test without error or false asterisk sym
     # The second row (group A with constant values) should have NaN for norm
     expect_true(is.nan(int_df$norm[2]))
 })
+
+test_that("mUI column titling respects UImethod and youden", {
+    r_files <- list.files(c("R", "../../R", "../R"), pattern = "^mui\\.[hb]\\.R$", full.names = TRUE)
+    for (rf in sort(r_files)) source(rf)
+    mUI_fn <- mUI
+
+    set.seed(42)
+    ref_val <- sample(c("A", "B"), 60, replace = TRUE)
+    test_val <- rnorm(60) + ifelse(ref_val == "B", 2, 0)
+    df <- data.frame(ref = as.factor(ref_val), test = test_val)
+
+    # 1. UImethod = "noUI" with youden = TRUE -> title is "Threshold on Youden"
+    res_youden <- mUI_fn(
+        data = df,
+        test = "test",
+        ref = "ref",
+        refval = "B",
+        UImethod = "noUI",
+        youden = TRUE
+    )
+    expect_equal(res_youden$stat$uistat$getColumn("int")$title, "Threshold on Youden")
+
+    # 2. UImethod = "TGR" with youden = TRUE -> title must remain "Intersection"
+    res_tgr <- mUI_fn(
+        data = df,
+        test = "test",
+        ref = "ref",
+        refval = "B",
+        UImethod = "TGR",
+        youden = TRUE
+    )
+    expect_equal(res_tgr$stat$uistat$getColumn("int")$title, "Intersection")
+
+    # 3. UImethod = "noUI" with youden = FALSE -> title must be "Intersection"
+    res_noyouden <- mUI_fn(
+        data = df,
+        test = "test",
+        ref = "ref",
+        refval = "B",
+        UImethod = "noUI",
+        youden = FALSE
+    )
+    expect_equal(res_noyouden$stat$uistat$getColumn("int")$title, "Intersection")
+})

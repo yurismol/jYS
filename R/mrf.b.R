@@ -207,6 +207,12 @@ mRFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
                 if (cv_errors == 0) {
                     cv_acc <- mean(cv_preds == as.character(y)) * 100
+                } else {
+                    self$results$insert(1, jmvcore::Notice$new(self$options,
+                        name = "mrfCvErrorNotice",
+                        type = jmvcore::NoticeType$WARNING,
+                        content = jmvcore::format(.("Cross-validation encountered model fitting errors in {n} fold(s). Validation performance metrics could not be computed."), n = cv_errors)
+                    ))
                 }
             }
 
@@ -488,9 +494,7 @@ mRFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
             # Effective evaluation probabilities for downstream diagnostics (OOB if partition == "oob")
             eval_prob_mat <- if (partition == "oob") oob_prob_mat else train_prob_mat
-            if (any(is.na(eval_prob_mat))) {
-                eval_prob_mat[is.na(eval_prob_mat)] <- train_prob_mat[is.na(eval_prob_mat)]
-            }
+            has_unseen_oob <- (partition == "oob" && any(is.na(eval_prob_mat)))
             eval_pred_idx <- max.col(eval_prob_mat, ties.method = "first")
             eval_pred_labels <- y_levels[eval_pred_idx]
 
@@ -542,6 +546,11 @@ mRFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 } else {
                     misc_table$setNote("n_misc", NULL)
                 }
+                if (has_unseen_oob) {
+                    misc_table$setNote('oob_na_note', jmvcore::.("Cases that were never out-of-bag (OOB) across bootstrap trees are excluded from OOB evaluation."))
+                } else {
+                    misc_table$setNote('oob_na_note', NULL)
+                }
             }
 
             # 5b. Risk Stratification Table
@@ -562,12 +571,13 @@ mRFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 if (length(y_levels) == 2) {
                     pos_level <- y_levels[2]
                     pos_probs <- eval_prob_mat[, pos_level]
+                    valid_mask <- !is.na(pos_probs)
                     y_pos <- (y == pos_level)
-                    N_clean <- length(y)
+                    N_clean <- sum(valid_mask)
                     
-                    idx_low <- pos_probs < low
-                    idx_mod <- pos_probs >= low & pos_probs < high
-                    idx_high <- pos_probs >= high
+                    idx_low <- valid_mask & (pos_probs < low)
+                    idx_mod <- valid_mask & (pos_probs >= low & pos_probs < high)
+                    idx_high <- valid_mask & (pos_probs >= high)
                     
                     cats <- list(
                         list(
@@ -615,6 +625,11 @@ mRFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         events = tot_events,
                         event_rate = tot_rate
                     ))
+                    if (has_unseen_oob) {
+                        risk_table$setNote('oob_na_note', jmvcore::.("Cases that were never out-of-bag (OOB) across bootstrap trees are excluded from OOB evaluation."))
+                    } else {
+                        risk_table$setNote('oob_na_note', NULL)
+                    }
                 }
             }
 
@@ -849,7 +864,11 @@ mRFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
                 full_pred_idx <- eval_pred_idx
                 full_classes <- eval_pred_labels
-                full_prob_val <- apply(eval_prob_mat, 1, max)
+                full_prob_val <- if (partition == "oob") {
+                    apply(eval_prob_mat, 1, function(r) if (all(is.na(r))) NA_real_ else max(r, na.rm = TRUE))
+                } else {
+                    apply(eval_prob_mat, 1, max)
+                }
 
                 if (self$options$predClass && self$results$predClass$isNotFilled()) {
                     self$results$predClass$setRowNums(rownames(clean_data))
@@ -1056,12 +1075,25 @@ mRFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
             add_roc_row <- function(row_name, y_true, y_prob) {
                 tryCatch({
-                    if (is.null(y_true) || is.null(y_prob)) return()
+                    if (is.null(y_true) || is.null(y_prob)) {
+                        self$results$insert(1, jmvcore::Notice$new(self$options,
+                            name = paste0("rocWarn_null_", gsub("[^a-zA-Z0-9]", "_", row_name)),
+                            type = jmvcore::NoticeType$WARNING,
+                            content = jmvcore::format(.("ROC evaluation for '{part}' skipped: predicted probabilities or true labels are missing."), part = row_name)
+                        ))
+                        return()
+                    }
                     y_true <- as.double(as.vector(drop(unlist(y_true))))
                     y_prob <- as.double(as.vector(drop(unlist(y_prob))))
-                    if (length(y_true) != length(y_prob)) return()
                     complete_idx <- !is.na(y_true) & !is.na(y_prob)
-                    if (sum(complete_idx) < 2) return()
+                    if (length(y_true) != length(y_prob) || sum(complete_idx) < 2) {
+                        self$results$insert(1, jmvcore::Notice$new(self$options,
+                            name = paste0("rocWarn_dim_", gsub("[^a-zA-Z0-9]", "_", row_name)),
+                            type = jmvcore::NoticeType$WARNING,
+                            content = jmvcore::format(.("ROC evaluation for '{part}' skipped: insufficient valid observations."), part = row_name)
+                        ))
+                        return()
+                    }
                     y_t <- y_true[complete_idx]
                     y_p <- y_prob[complete_idx]
                     r <- try(pROC::roc(y_t, y_p, quiet = TRUE), silent = TRUE)
@@ -1076,7 +1108,14 @@ mRFClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     auc_val <- as.numeric(pROC::auc(r)) * mult
                     coords <- try(pROC::coords(r, x="best", best.method="youden",
                         ret=c("threshold", "specificity", "sensitivity")), silent=TRUE)
-                    if (inherits(coords, "try-error")) return()
+                    if (inherits(coords, "try-error")) {
+                        self$results$insert(1, jmvcore::Notice$new(self$options,
+                            name = paste0("rocCoordWarn_", gsub("[^a-zA-Z0-9]", "_", row_name)),
+                            type = jmvcore::NoticeType$WARNING,
+                            content = jmvcore::format(.("Optimal cutoff for '{part}' could not be computed: {err}"), part = row_name, err = as.character(coords))
+                        ))
+                        return()
+                    }
                     if (is.data.frame(coords)) {
                         cutoff <- as.numeric(coords[1, "threshold"])
                         sp <- as.numeric(coords[1, "specificity"]) * mult

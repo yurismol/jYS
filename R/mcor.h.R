@@ -617,6 +617,7 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "clustCol",
                     "clustMan",
                     "plotMetU",
+                    "plotOrder",
                     "signif",
                     "clPos"),
                 template=jmvcore::Image$new(
@@ -637,6 +638,7 @@ mCORResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         "clustCol",
                         "clustMan",
                         "plotMetU",
+                        "plotOrder",
                         "signif",
                         "clPos"))))
             self$add(R6::R6Class(

@@ -74,3 +74,50 @@ test_that("mPWR CRT visibility expression evaluates cleanly across designs", {
     expect_equal(res_os$powerTable$rowCount, 1)
 })
 
+test_that("mPWR equivalence, non-inferiority, and superiority margin validations work", {
+    if (!exists(".", envir = .GlobalEnv, mode = "function")) .GlobalEnv$. <- jmvcore::.
+    if (!exists("mPWR", mode = "function") || !exists("mPWRClass")) {
+        r_files <- list.files(c("R", "../../R", "../R"), pattern = "^mpwr\\.[hb]\\.R$", full.names = TRUE)
+        for (rf in sort(r_files)) source(rf, encoding = "UTF-8")
+    }
+    mPWR_fn <- if (exists("mPWR", mode = "function")) mPWR else jYS::mPWR
+
+    # 1. Margin <= 0 rejects with informative error
+    expect_error(
+        mPWR_fn(calc = "n", design = "independent", es = 0.1, power = 0.8, alt = "equivalent", margin = 0),
+        "strictly greater than 0"
+    )
+
+    # 2. Equivalence with calc = 'es' rejects with informative error
+    expect_error(
+        mPWR_fn(calc = "es", design = "independent", n = 50, power = 0.8, alt = "equivalent", margin = 0.2),
+        "not supported for equivalence"
+    )
+
+    # 3. Equivalence with es >= margin rejects with informative error
+    expect_error(
+        mPWR_fn(calc = "n", design = "independent", es = 0.5, power = 0.8, alt = "equivalent", margin = 0.2),
+        "strictly less than the hypothesis margin"
+    )
+
+    # 4. Valid equivalence calculates successfully
+    res_equiv <- mPWR_fn(calc = "n", design = "independent", es = 0.1, power = 0.8, alt = "equivalent", margin = 0.2)
+    expect_s3_class(res_equiv, "mPWRResults")
+    expect_equal(res_equiv$powerTable$rowCount, 1)
+
+    # 5. Valid non-inferiority calculates successfully
+    res_ni <- mPWR_fn(calc = "n", design = "independent", es = 0.2, power = 0.8, alt = "non-inferior", margin = 0.2)
+    expect_s3_class(res_ni, "mPWRResults")
+    expect_equal(res_ni$powerTable$rowCount, 1)
+
+    # 6. Equivalence on non-supported designs rejects with informative error
+    expect_error(
+        mPWR_fn(calc = "n", design = "survival", es = 0.7, power = 0.8, alt = "equivalent", margin = 0.5),
+        "only supported for t-test and Wilcoxon designs"
+    )
+    expect_error(
+        mPWR_fn(calc = "power", design = "linear", es = 0.15, n = 100, alt = "non-inferior", margin = 0.2),
+        "only supported for t-test and Wilcoxon designs"
+    )
+})
+

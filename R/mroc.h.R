@@ -312,7 +312,6 @@ mROCResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=500,
                 height=500,
                 renderFun=".plot",
-                requiresData=TRUE,
                 clearWith=list(
                     "vars",
                     "class",
@@ -368,8 +367,7 @@ mROCResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     title="$key",
                     width=500,
                     height=500,
-                    renderFun=".plot",
-                    requiresData=TRUE)))
+                    renderFun=".plot")))
             self$add(jmvcore::Array$new(
                 options=options,
                 name="splots",
@@ -403,8 +401,7 @@ mROCResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     title="$key",
                     width=500,
                     height=500,
-                    renderFun=".plot",
-                    requiresData=TRUE)))}))
+                    renderFun=".plot")))}))
 
 mROCBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "mROCBase",

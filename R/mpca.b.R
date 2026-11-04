@@ -204,7 +204,7 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                 group_vec <- as.factor(dat_clean[[classVar]])
                 # Permutation test of separation
                 obs_ratio <- 0
-                p_val <- 1.0
+                p_val <- NA_real_
                 if (length(levels(group_vec)) > 1 && nrow(scores_2d) > 5) {
                     overall_mean <- colMeans(scores_2d)
                     ss_total <- sum((scores_2d[,1] - overall_mean[1])^2 + (scores_2d[,2] - overall_mean[2])^2)
@@ -234,6 +234,13 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         })
                         p_val <- (sum(perm_ratios >= obs_ratio) + 1) / (length(perm_ratios) + 1)
                     }
+                } else {
+                    p_val <- NA_real_
+                    self$results$insert(1, jmvcore::Notice$new(self$options,
+                        name = "pcaPermutationWarn",
+                        type = jmvcore::NoticeType$WARNING,
+                        content = .("Permutation test for group separation was not conducted: at least 2 non-empty group levels and more than 5 observations are required.")
+                    ))
                 }
             }
             
@@ -408,15 +415,28 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                             
                             add_roc_row <- function(row_name, y_true, y_prob) {
                                 tryCatch({
-                                    if (is.null(y_true) || is.null(y_prob)) return()
+                                    if (is.null(y_true) || is.null(y_prob)) {
+                                        self$results$insert(1, jmvcore::Notice$new(self$options,
+                                            name = paste0("rocWarn_null_", gsub("[^a-zA-Z0-9]", "_", row_name)),
+                                            type = jmvcore::NoticeType$WARNING,
+                                            content = jmvcore::format(.("ROC evaluation for '{part}' skipped: predicted probabilities or true labels are missing."), part = row_name)
+                                        ))
+                                        return()
+                                    }
                                     
                                     # Aggressively coerce to plain numeric vector
                                     y_true <- as.double(as.vector(drop(unlist(y_true))))
                                     y_prob <- as.double(as.vector(drop(unlist(y_prob))))
                                     
-                                    if (length(y_true) != length(y_prob)) return()
                                     complete_idx <- !is.na(y_true) & !is.na(y_prob)
-                                    if (sum(complete_idx) < 2) return()
+                                    if (length(y_true) != length(y_prob) || sum(complete_idx) < 2) {
+                                        self$results$insert(1, jmvcore::Notice$new(self$options,
+                                            name = paste0("rocWarn_dim_", gsub("[^a-zA-Z0-9]", "_", row_name)),
+                                            type = jmvcore::NoticeType$WARNING,
+                                            content = jmvcore::format(.("ROC evaluation for '{part}' skipped: insufficient valid observations."), part = row_name)
+                                        ))
+                                        return()
+                                    }
                                     y_t <- y_true[complete_idx]
                                     y_p <- y_prob[complete_idx]
                                     
@@ -654,9 +674,11 @@ mPCAClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             p <- p +
                 ggplot2::labs(
                     title = .("Group Projection in PCA Space"),
-                    subtitle = if (!is.null(p_val)) {
+                    subtitle = if (!is.null(p_val) && !is.na(p_val)) {
                         p_text <- if (p_val < 0.001) "p < 0.001" else paste0("p = ", sprintf("%.3f", p_val))
                         jmvcore::format(.("Group: {group} (Permutation {p})"), group=groupName, p=p_text)
+                    } else if (!is.null(groupName) && groupName != "") {
+                        jmvcore::format(.("Group: {group}"), group=groupName)
                     } else "",
                     x = jmvcore::format(.("Principal Component {i} (PC{i}) – {pct}% of variance"), i=pcX, pct=sprintf("%.1f", (pca$sdev[pcX]^2/sum(pca$sdev^2))*100)),
                     y = jmvcore::format(.("Principal Component {i} (PC{i}) – {pct}% of variance"), i=pcY, pct=sprintf("%.1f", (pca$sdev[pcY]^2/sum(pca$sdev^2))*100)),

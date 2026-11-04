@@ -218,6 +218,7 @@ mOUTClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
         },
 
         .plot=function(image, ggtheme, theme, ...) {
+	    if (self$options$outlcheck != "IQR") return(FALSE)
 	    range <- as.double(self$options$fence)
             if (range==0) return(FALSE)
 	    #https://www.rdocumentation.org/packages/graphics/versions/3.6.2/topics/boxplot

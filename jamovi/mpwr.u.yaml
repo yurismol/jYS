@@ -53,7 +53,7 @@ children:
         type: TextBox
         label: "Hypothesis margin (δ)"
         format: number
-        enable: (alt:equivalent || alt:non-inferior || alt:superior)
+        enable: ((alt:equivalent || alt:non-inferior || alt:superior) && (design:independent || design:welch || design:independent_np || design:paired || design:paired_np || design:one_sample || design:one_sample_np))
 
   - type: CollapseBox
     label: Design Parameters

@@ -92,3 +92,98 @@ test_that("mLR works and supports refLevel, deterministic seed, and filtered row
     expect_true(analysis$results$predClass$isFilled())
     expect_true(analysis$results$predProb$isFilled())
 })
+
+test_that("mLR supports Firth's penalized likelihood", {
+    if (!exists(".", envir = .GlobalEnv, mode = "function")) .GlobalEnv$. <- jmvcore::.
+    if (!exists(".renderClassifierRocPlot", mode = "function")) {
+        r_roc <- list.files(c("R", "../../R", "../R"), pattern = "^classifier_roc\\.R$", full.names = TRUE)
+        if (length(r_roc) > 0) source(r_roc[1])
+    }
+    r_files <- list.files(c("R", "../../R", "../R"), pattern = "^mlr\\.[hb]\\.R$", full.names = TRUE)
+    for (rf in sort(r_files)) source(rf)
+    mLR_fn <- mLR
+
+    df_sep <- data.frame(
+        y = factor(c(rep("0", 15), rep("1", 15))),
+        x = c(seq(-15, -1), seq(1, 15))
+    )
+
+    if (requireNamespace("logistf", quietly = TRUE)) {
+        res <- mLR_fn(
+            data = df_sep,
+            dep = "y",
+            refLevel = "0",
+            covs = "x",
+            factors = NULL,
+            group = NULL,
+            selgroup = NULL,
+            firth = TRUE,
+            method = "manual",
+            partition = "kfold",
+            showForest = TRUE
+        )
+        expect_s3_class(res, "mLRResults")
+        coef_df <- res$coeffTable$asDF
+        expect_true(all(is.finite(coef_df$est)))
+        info_df <- res$infoTable$asDF
+        expect_true(any(grepl("Firth", info_df$value)))
+        expect_true("firth_note" %in% names(res$coeffTable$notes))
+        expect_match(res$coeffTable$notes[["firth_note"]]$note, "penalized maximum likelihood")
+        expect_match(res$coeffTable$notes[["firth_note"]]$note, "signed z-statistics")
+        valid_idx <- which(!is.na(coef_df$p) & coef_df$p > 0 & coef_df$p <= 1)
+        expect_true(length(valid_idx) > 0)
+        expected_z <- sign(coef_df$est[valid_idx]) * sqrt(stats::qchisq(coef_df$p[valid_idx], df = 1, lower.tail = FALSE))
+        expect_equal(coef_df$z[valid_idx], expected_z, tolerance = 1e-4)
+
+        # Stepwise with Firth includes firth_step_note
+        res_step <- mLR_fn(
+            data = infert,
+            dep = "case",
+            refLevel = "0",
+            covs = c("spontaneous", "induced"),
+            factors = NULL,
+            group = NULL,
+            selgroup = NULL,
+            firth = TRUE,
+            method = "forward",
+            partition = "kfold"
+        )
+        expect_true("firth_step_note" %in% names(res_step$coeffTable$notes))
+
+        # Multinomial outcome excludes Firth from infoTable
+        df_multi <- data.frame(
+            y = factor(c(rep("A", 10), rep("B", 10), rep("C", 10))),
+            x = rnorm(30)
+        )
+        res_multi <- mLR_fn(
+            data = df_multi,
+            dep = "y",
+            refLevel = "A",
+            covs = "x",
+            factors = NULL,
+            group = NULL,
+            selgroup = NULL,
+            firth = TRUE,
+            method = "manual",
+            partition = "kfold"
+        )
+        info_multi <- res_multi$infoTable$asDF
+        expect_false(any(grepl("Firth", info_multi$value)))
+    } else {
+        expect_error(
+            mLR_fn(
+                data = df_sep,
+                dep = "y",
+                refLevel = "0",
+                covs = "x",
+                factors = NULL,
+                group = NULL,
+                selgroup = NULL,
+                firth = TRUE,
+                method = "manual",
+                partition = "kfold"
+            ),
+            "logistf"
+        )
+    }
+})

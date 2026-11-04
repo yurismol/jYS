@@ -132,11 +132,18 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
      },
 
      .run = function() {
-        #options(OutDec=",")
         matrix <- self$results$matrix
         vars   <- self$options$vars
         nVars  <- length(vars)
         hyp    <- self$options$hyp
+
+        if (self$options$clustMan > "" && nVars > 2) {
+            vec_str <- trimws(strsplit(self$options$clustMan, ",")[[1]])
+            vec_man <- suppressWarnings(as.numeric(vec_str))
+            if (length(vec_man) == 0 || any(is.na(vec_man)) || any(vec_man <= 1) || any(vec_man >= nVars) || is.unsorted(vec_man, strictly = TRUE)) {
+                jmvcore::reject(.("Manual cluster boundaries must be strictly increasing integers between 2 and N - 1 (comma-separated)."), code='')
+            }
+        }
 
         corr   <- matrix(, nrow=nVars, ncol=nVars); corr[1, 1] <- 1
         colnames(corr) <- vars; rownames(corr) <- vars
@@ -255,19 +262,27 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             } else {
               image$setState(NULL)
             }
+            if (!self$options$hclust && self$options$plotOrder != "original") {
+                order <- corrplot::corrMatOrder(cor$r, order = self$options$plotOrder)
+                cor$r <- cor$r[order, order]
+                cor$p <- cor$p[order, order]
+                cor$order <- order
+            }
+
             image <- self$results$plot
             image$setState(cor)
 
-            if (nVars > 2 && (self$options$hclust || (self$options$clustMan > ""))) {
+            if (self$options$plots && self$options$clustMat && nVars > 2 && (self$options$hclust || (self$options$clustMan > ""))) {
                 posClust <- list()
                 if (self$options$hclust && !is.null(cor$hc)) {
                     hc <- cor$hc
                     ct <- cutree(hc, k=ifelse(self$options$numClust > nVars, nVars, self$options$numClust))
                     ct <- ct[hc$order]
                     ct <- c(ct[!duplicated(ct)], ct[length(ct)])
-                    posClust <- pmatch(names(ct), vars, nomatch=nVars)
+                    posClust <- pmatch(names(ct), rownames(cor$r), nomatch=nVars)
                 } else if (self$options$clustMan > "") {
-                    vec_man <- as.numeric(strsplit(self$options$clustMan, ",")[[1]])
+                    vec_str <- trimws(strsplit(self$options$clustMan, ",")[[1]])
+                    vec_man <- as.numeric(vec_str)
                     posClust <- c(1, vec_man, nVars)
                 }
                 if (length(posClust) > 0) {
@@ -712,8 +727,8 @@ mCORClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
           if (nVars < 2) return(FALSE)
           c <- image$state
 
-          if (!self$options$hclust && self$options$plotOrder!="original") {
-            order <- corrplot::corrMatOrder(c$r, order=self$options$plotOrder)
+          if (!self$options$hclust && self$options$plotOrder != "original" && is.null(c$order)) {
+            order <- corrplot::corrMatOrder(c$r, order = self$options$plotOrder)
             c$r   <- c$r[order, order]
             c$p   <- c$p[order, order]
           }

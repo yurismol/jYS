@@ -312,6 +312,12 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         
                         r_cv_roc <- try(pROC::multiclass.roc(cv_y, cv_prob, quiet = TRUE), silent = TRUE)
                         cv_auc <- if (inherits(r_cv_roc, "try-error")) NA else as.numeric(pROC::auc(r_cv_roc))
+                    } else {
+                        self$results$insert(1, jmvcore::Notice$new(self$options,
+                            name = "mlrCvErrorNotice",
+                            type = jmvcore::NoticeType$WARNING,
+                            content = jmvcore::format(.("Cross-validation encountered model fitting errors in {n} fold(s). Validation performance metrics could not be computed."), n = cv_errors)
+                        ))
                     }
                 } else {
                     cv_pred_probs <- numeric(nrow(X_all))
@@ -361,6 +367,12 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         
                         r_cv_roc <- try(pROC::roc(cv_y, cv_prob, quiet = TRUE), silent = TRUE)
                         cv_auc <- if (inherits(r_cv_roc, "try-error")) NA else as.numeric(pROC::auc(r_cv_roc))
+                    } else {
+                        self$results$insert(1, jmvcore::Notice$new(self$options,
+                            name = "mlrCvErrorNotice",
+                            type = jmvcore::NoticeType$WARNING,
+                            content = jmvcore::format(.("Cross-validation encountered model fitting errors in {n} fold(s). Validation performance metrics could not be computed."), n = cv_errors)
+                        ))
                     }
                 }
                 
@@ -426,6 +438,12 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         cv_auc <- mean(rep_aucs, na.rm = TRUE)
                         cv_prob <- subject_probs / cv_repeats
                         cv_y <- y_target
+                    } else {
+                        self$results$insert(1, jmvcore::Notice$new(self$options,
+                            name = "mlrCvErrorNotice",
+                            type = jmvcore::NoticeType$WARNING,
+                            content = jmvcore::format(.("Cross-validation encountered model fitting errors in {n} fold(s). Validation performance metrics could not be computed."), n = cv_errors)
+                        ))
                     }
                 } else {
                     rep_accs <- numeric(cv_repeats)
@@ -484,6 +502,12 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                         cv_auc <- mean(rep_aucs, na.rm = TRUE)
                         cv_prob <- subject_probs / cv_repeats
                         cv_y <- y_num
+                    } else {
+                        self$results$insert(1, jmvcore::Notice$new(self$options,
+                            name = "mlrCvErrorNotice",
+                            type = jmvcore::NoticeType$WARNING,
+                            content = jmvcore::format(.("Cross-validation encountered model fitting errors in {n} fold(s). Validation performance metrics could not be computed."), n = cv_errors)
+                        ))
                     }
                 }
             }
@@ -776,15 +800,28 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     
                     add_roc_row <- function(row_name, y_true, y_prob) {
                         tryCatch({
-                            if (is.null(y_true) || is.null(y_prob)) return()
+                            if (is.null(y_true) || is.null(y_prob)) {
+                                self$results$insert(1, jmvcore::Notice$new(self$options,
+                                    name = paste0("rocWarn_null_", gsub("[^a-zA-Z0-9]", "_", row_name)),
+                                    type = jmvcore::NoticeType$WARNING,
+                                    content = jmvcore::format(.("ROC evaluation for '{part}' skipped: predicted probabilities or true labels are missing."), part = row_name)
+                                ))
+                                return()
+                            }
                             
                             # Aggressively coerce to plain numeric vector
                             y_true <- as.double(as.vector(drop(unlist(y_true))))
                             y_prob <- as.double(as.vector(drop(unlist(y_prob))))
                             
-                            if (length(y_true) != length(y_prob)) return()
                             complete_idx <- !is.na(y_true) & !is.na(y_prob)
-                            if (sum(complete_idx) < 2) return()
+                            if (length(y_true) != length(y_prob) || sum(complete_idx) < 2) {
+                                self$results$insert(1, jmvcore::Notice$new(self$options,
+                                    name = paste0("rocWarn_dim_", gsub("[^a-zA-Z0-9]", "_", row_name)),
+                                    type = jmvcore::NoticeType$WARNING,
+                                    content = jmvcore::format(.("ROC evaluation for '{part}' skipped: insufficient valid observations."), part = row_name)
+                                ))
+                                return()
+                            }
                             y_t <- y_true[complete_idx]
                             y_p <- y_prob[complete_idx]
                             
@@ -860,21 +897,21 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                             # Training
                             y_bin <- ifelse(y_target == class_label, 1, 0)
                             prob_bin <- train_prob[, class_label]
-                            add_roc_row(paste0(class_label, " vs Rest - ", .("Train")), y_bin, prob_bin)
+                            add_roc_row(jmvcore::format(.("{class} vs Rest – {subset}"), class = class_label, subset = .("Train")), y_bin, prob_bin)
                             
                             # Validation / CV
                             if (partition == "holdout" && !is.null(val_prob) && !is.null(val_y)) {
                                 if ((is.matrix(val_prob) || is.data.frame(val_prob)) && class_label %in% colnames(val_prob)) {
                                     val_y_bin <- ifelse(val_y == class_label, 1, 0)
                                     val_prob_bin <- val_prob[, class_label]
-                                    add_roc_row(paste0(class_label, " vs Rest - ", .("Val")), val_y_bin, val_prob_bin)
+                                    add_roc_row(jmvcore::format(.("{class} vs Rest – {subset}"), class = class_label, subset = .("Val")), val_y_bin, val_prob_bin)
                                 }
                             } else if (partition %in% c("kfold", "repeated_kfold") && !is.null(cv_prob) && !is.null(cv_y)) {
                                 if ((is.matrix(cv_prob) || is.data.frame(cv_prob)) && class_label %in% colnames(cv_prob)) {
                                     cv_y_bin <- ifelse(cv_y == class_label, 1, 0)
                                     cv_prob_bin <- cv_prob[, class_label]
                                     lbl <- if (partition == "kfold") .("CV") else .("Repeated CV")
-                                    add_roc_row(paste0(class_label, " vs Rest - ", lbl), cv_y_bin, cv_prob_bin)
+                                    add_roc_row(jmvcore::format(.("{class} vs Rest – {subset}"), class = class_label, subset = lbl), cv_y_bin, cv_prob_bin)
                                 }
                             }
                         }
@@ -1192,8 +1229,15 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     term_name <- terms[i]
                     est <- as.numeric(fit$coefficients[i])
                     se <- as.numeric(se_vec[i])
-                    z <- if (!is.na(se) && se > 0) est / se else NA_real_
                     p <- as.numeric(fit$prob[i])
+                    z <- if (!is.na(p) && p > 0 && p <= 1) {
+                        chisq_val <- stats::qchisq(p, df = 1, lower.tail = FALSE)
+                        sign(est) * sqrt(chisq_val)
+                    } else if (!is.na(se) && se > 0) {
+                        est / se
+                    } else {
+                        NA_real_
+                    }
                     
                     odds_ratio <- exp(est)
                     ci_lower <- exp(as.numeric(fit$ci.lower[i]))
@@ -1285,7 +1329,7 @@ mLRClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             
             try(coeff_table$addFootnote(col = "level", note = ref_msg, rowNo = 1), silent = TRUE)
             if (isTRUE(self$options$firth) && !is_multinomial) {
-                firth_note <- .("<b>Firth's penalized likelihood</b> (Firth, 1993) reduces small-sample bias and addresses separation. Parameters are estimated by penalized maximum likelihood; confidence intervals and p-values are based on profile penalized likelihood ratio tests, while z is a Wald statistic.")
+                firth_note <- .("<b>Firth's penalized likelihood</b> (Firth, 1993) reduces small-sample bias and addresses separation. Parameters are estimated by penalized maximum likelihood; confidence intervals, p-values, and signed z-statistics (sign(coef) * sqrt(chisq)) are based on profile penalized likelihood ratio tests.")
                 try(coeff_table$setNote('firth_note', firth_note), silent = TRUE)
                 if (self$options$method %in% c("forward", "backward")) {
                     firth_step_note <- .("Stepwise feature selection is performed using standard maximum likelihood (AIC) before refitting the final model with Firth's penalized likelihood.")

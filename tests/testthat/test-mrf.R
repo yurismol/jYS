@@ -159,3 +159,42 @@ test_that("mRF default OOB partition produces an OOB row in the ROC table and di
     expect_equal(roc_item$state$partition, "oob")
 })
 
+
+test_that("mRF Step 6: OOB does not mix in-sample values when cases are never OOB", {
+    if (!exists(".", envir = .GlobalEnv, mode = "function")) .GlobalEnv$. <- jmvcore::.
+    if (!exists(".renderClassifierRocPlot", mode = "function")) {
+        r_roc <- list.files(c("R", "../../R", "../R"), pattern = "^classifier_roc\\.R$", full.names = TRUE)
+        if (length(r_roc) > 0) source(r_roc[1])
+    }
+    r_files <- list.files(c("R", "../../R", "../R"), pattern = "^mrf\\.[hb]\\.R$", full.names = TRUE)
+    for (rf in sort(r_files)) source(rf)
+    mRF_fn <- mRF
+
+    set.seed(42)
+    df_small <- data.frame(
+        y = factor(c(rep("0", 150), rep("1", 150))),
+        x1 = rnorm(300),
+        x2 = rnorm(300)
+    )
+
+    res <- mRF_fn(
+        data = df_small,
+        dep = "y",
+        covs = c("x1", "x2"),
+        factors = NULL,
+        partition = "oob",
+        ntree = 10,
+        show_misclassified = TRUE,
+        show_risk = TRUE,
+        seed = 42
+    )
+
+    expect_s3_class(res, "mRFResults")
+    # Verify oob_na_note is attached to riskTable and misclassifiedTable
+    risk_tbl <- res$riskTable
+    expect_true("oob_na_note" %in% names(risk_tbl$notes))
+    expect_match(risk_tbl$notes[["oob_na_note"]]$note, "never out-of-bag")
+    misc_tbl <- res$misclassifiedTable
+    expect_true("oob_na_note" %in% names(misc_tbl$notes))
+    expect_match(misc_tbl$notes[["oob_na_note"]]$note, "never out-of-bag")
+})

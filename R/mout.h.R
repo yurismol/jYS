@@ -196,7 +196,7 @@ mOUTResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 options=options,
                 name="plots",
                 title="Boxplots with outliers",
-                visible="(boxpl)",
+                visible="(boxpl && outlcheck:IQR)",
                 items="(vars)",
                 clearWith=list(
                     "vars",

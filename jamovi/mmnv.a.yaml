@@ -23,7 +23,7 @@ options:
       default: []
 
     - name: rmFactorName
-      title: Within-Subjects Factor Name
+      title: Within-subjects factor name
       type: String
       default: Time
 
@@ -67,7 +67,7 @@ options:
       default: true
 
     - name: contrastType
-      title: Contrast Type
+      title: Contrast type
       type: List
       options:
         - title: Polynomial (Linear, Quadratic, etc.)
@@ -118,7 +118,7 @@ options:
       default: true
 
     - name: plotError
-      title: Plot Error Bars
+      title: Plot error bars
       type: List
       options:
         - title: 95% Confidence Interval

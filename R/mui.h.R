@@ -380,7 +380,7 @@ mUIResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 options=options,
                 name="plotsTGR",
                 title="Two-graph ROC curves",
-                visible="(isTGR)",
+                visible="(isTGR && UImethod:TGR)",
                 items="(test)",
                 clearWith=list(
                     "ref",

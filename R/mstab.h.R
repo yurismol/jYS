@@ -1247,7 +1247,6 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 name="batchPlots",
                 title="Individual Batch Shelf Life Plots",
                 visible="(showBatchPlots)",
-                items="(levels(batch))",
                 clearWith=list(
                     "dep",
                     "time",
@@ -1288,7 +1287,7 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     width=640,
                     height=440,
                     renderFun=".batchPlot",
-                    requiresData=TRUE)))
+                    requiresData=FALSE)))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="ratePlot",
@@ -1594,6 +1593,22 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 name="arrhTable",
                 title="Arrhenius Accelerated Stability Recalculation Table",
                 visible="(showArrh)",
+                clearWith=list(
+                    "dep",
+                    "time",
+                    "batch",
+                    "tempVar",
+                    "arrhEa",
+                    "arrhTempAcc",
+                    "arrhRhAcc",
+                    "arrhTempLong",
+                    "arrhRhLong",
+                    "arrhB",
+                    "lsl",
+                    "usl",
+                    "specType",
+                    "trans",
+                    "studyDuration"),
                 columns=list(
                     list(
                         `name`="zone", 
@@ -1628,6 +1643,22 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 name="arrhSensTable",
                 title="Activation Energy (Ea) Sensitivity Analysis Table",
                 visible="(showArrh && showArrhSens)",
+                clearWith=list(
+                    "dep",
+                    "time",
+                    "batch",
+                    "tempVar",
+                    "arrhEa",
+                    "arrhTempAcc",
+                    "arrhRhAcc",
+                    "arrhTempLong",
+                    "arrhRhLong",
+                    "arrhB",
+                    "lsl",
+                    "usl",
+                    "specType",
+                    "trans",
+                    "studyDuration"),
                 columns=list(
                     list(
                         `name`="ea", 
@@ -1635,11 +1666,11 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `type`="number"),
                     list(
                         `name`="af", 
-                        `title`="Relative AF (vs 25\u00B0C)", 
+                        `title`="Relative AF", 
                         `type`="number"),
                     list(
                         `name`="predShelf", 
-                        `title`="Predicted Shelf Life at 25\u00B0C (months)", 
+                        `title`="Predicted Shelf Life (months)", 
                         `type`="number"),
                     list(
                         `name`="assessment", 
@@ -1650,6 +1681,16 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 name="arrhRegTable",
                 title="Arrhenius Multi-Temperature Regression Model",
                 visible="(showArrh && (length(tempVar) > 0 && tempVar != \"\"))",
+                clearWith=list(
+                    "dep",
+                    "time",
+                    "batch",
+                    "tempVar",
+                    "arrhEa",
+                    "lsl",
+                    "usl",
+                    "specType",
+                    "trans"),
                 columns=list(
                     list(
                         `name`="param", 
@@ -1690,7 +1731,22 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=680,
                 height=440,
                 renderFun=".arrhPlot",
-                requiresData=FALSE))
+                requiresData=FALSE,
+                clearWith=list(
+                    "dep",
+                    "time",
+                    "batch",
+                    "tempVar",
+                    "arrhEa",
+                    "arrhTempAcc",
+                    "arrhRhAcc",
+                    "arrhTempLong",
+                    "arrhRhLong",
+                    "arrhB",
+                    "lsl",
+                    "usl",
+                    "specType",
+                    "trans")))
             self$add(jmvcore::Image$new(
                 options=options,
                 name="arrhTrajPlot",
@@ -1699,7 +1755,22 @@ mSTABResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 width=700,
                 height=460,
                 renderFun=".arrhTrajPlot",
-                requiresData=FALSE))}))
+                requiresData=FALSE,
+                clearWith=list(
+                    "dep",
+                    "time",
+                    "batch",
+                    "tempVar",
+                    "arrhEa",
+                    "arrhTempAcc",
+                    "arrhRhAcc",
+                    "arrhTempLong",
+                    "arrhRhLong",
+                    "arrhB",
+                    "lsl",
+                    "usl",
+                    "specType",
+                    "trans")))}))
 
 mSTABBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "mSTABBase",

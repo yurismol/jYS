@@ -477,14 +477,22 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
                                   coef_val <- as.numeric(cox_fit$coefficients[i])
                                   se_val <- as.numeric(se_vec[i])
-                                  z_val <- if (!is.na(se_val) && se_val > 0) coef_val / se_val else NA_real_
+                                  p_val <- as.numeric(cox_fit$prob[i])
+                                  z_val <- if (!is.na(p_val) && p_val > 0 && p_val <= 1) {
+                                      chisq_val <- stats::qchisq(p_val, df = 1, lower.tail = FALSE)
+                                      sign(coef_val) * sqrt(chisq_val)
+                                  } else if (!is.na(se_val) && se_val > 0) {
+                                      coef_val / se_val
+                                  } else {
+                                      NA_real_
+                                  }
 
                                   coefTable$addRow(rowKey=raw_name, values=list(
                                       var     = clean_name,
                                       coef    = coef_val,
                                       se      = se_val,
                                       z       = z_val,
-                                      p       = as.numeric(cox_fit$prob[i]),
+                                      p       = p_val,
                                       hr      = as.numeric(exp(coef_val)),
                                       hrLower = as.numeric(cox_fit$ci.lower[i]),
                                       hrUpper = as.numeric(cox_fit$ci.upper[i])
@@ -500,7 +508,7 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                   )
                               }
 
-                              coefTable$setNote("firth_note", jmvcore::.("<b>Firth's penalized likelihood</b> (Firth, 1993) reduces small-sample bias and addresses monotone likelihood (separation) in Cox regression. Parameters are estimated by penalized maximum likelihood; hazard ratio confidence intervals and p-values are based on profile penalized likelihood ratio tests, while z is a Wald statistic."))
+                              coefTable$setNote("firth_note", jmvcore::.("<b>Firth's penalized likelihood</b> (Firth, 1993) reduces small-sample bias and addresses monotone likelihood (separation) in Cox regression. Parameters are estimated by penalized maximum likelihood; hazard ratio confidence intervals, p-values, and signed z-statistics (sign(coef) * sqrt(chisq)) are based on profile penalized likelihood ratio tests."))
                               if (has_cluster) {
                                   coefTable$setNote("cluster_note", jmvcore::.("Clustering is not supported with Firth's penalized Cox regression; cluster adjustment was omitted."))
                               } else {
@@ -859,6 +867,11 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                           tau <- min(tau, limit_time)
                                       }
                                       adjSummaryTable$setNote('tau_note', jmvcore::format(.("Restricted mean survival time evaluated up to \u03c4 = {tau}."), tau = round(tau, 2)))
+                                      if (has_tstart && !has_cluster) {
+                                          adjSummaryTable$setNote('weight_note', jmvcore::.("Subject ID was not specified; all interval rows are weighted as independent observations in standardization."))
+                                      } else {
+                                          adjSummaryTable$setNote('weight_note', NULL)
+                                      }
 
                                       bh <- try(survival::basehaz(adj_fit, centered = FALSE), silent = TRUE)
                                       if (!inherits(bh, "try-error") && nrow(bh) > 0) {
@@ -870,7 +883,13 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
                                           adj_curves <- list()
                                           coef_fit <- stats::coef(adj_fit)
-                                          df_cf_base <- if (has_cluster) dat_adj[!duplicated(dat_adj$..cluster), , drop = FALSE] else dat_adj
+                                          df_cf_base <- if (has_cluster) {
+                                              ord <- if (has_tstart) order(dat_adj$..cluster, dat_adj$..tstart) else seq_len(nrow(dat_adj))
+                                              dat_sorted <- dat_adj[ord, , drop = FALSE]
+                                              dat_sorted[!duplicated(dat_sorted$..cluster), , drop = FALSE]
+                                          } else {
+                                              dat_adj
+                                          }
 
                                           for (z in levels_z) {
                                               df_cf <- df_cf_base
@@ -973,7 +992,13 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                                                    h0_step_b <- stats::stepfun(bh_b$time, c(0, bh_b$hazard))
                                                    h0_eval_b <- h0_step_b(eval_times)
                                                    coef_b <- stats::coef(fit_b)
-                                                   df_b_base <- if (has_cluster) dat_b[!duplicated(dat_b$..cluster), , drop = FALSE] else dat_b
+                                                   df_b_base <- if (has_cluster) {
+                                                       ord_b <- if (has_tstart) order(dat_b$..cluster, dat_b$..tstart) else seq_len(nrow(dat_b))
+                                                       dat_b_sorted <- dat_b[ord_b, , drop = FALSE]
+                                                       dat_b_sorted[!duplicated(dat_b_sorted$..cluster), , drop = FALSE]
+                                                   } else {
+                                                       dat_b
+                                                   }
 
                                                    for (z in levels_z) {
                                                        df_b <- df_b_base
@@ -1251,12 +1276,6 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
               if (!is.na(limit_val) && limit_val > 0) {
                   p <- p + ggplot2::coord_cartesian(xlim = c(0, limit_val))
               }
-          }
-
-          pal <- self$options$palBrewer
-          if (!is.null(group_var) && !is.null(pal) && pal != "default" && pal != "none") {
-              p <- p + ggplot2::scale_color_brewer(palette = pal) +
-                       ggplot2::scale_fill_brewer(palette = pal)
           }
 
           p <- p + ggtheme + ggplot2::theme(legend.position = "bottom")
@@ -1855,6 +1874,8 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
                               if (has_cluster) {
                                   fgTable$setNote("cluster_note", jmvcore::format(.("Standard errors and confidence intervals are adjusted for clustering by {var} (Huber–White robust sandwich estimator)."), var = subject_id_var))
+                              } else if (has_tstart) {
+                                  fgTable$setNote("cluster_note", jmvcore::.("Standard errors and confidence intervals are computed using the Huber–White robust sandwich estimator per interval (Subject ID was not specified)."))
                               } else {
                                   fgTable$setNote("cluster_note", jmvcore::.("Standard errors and confidence intervals are computed using the Huber–White robust sandwich estimator grouped by subject."))
                               }
@@ -2245,8 +2266,8 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                           dummy_col <- paste0("..td_d_", var_idx, "_", k)
                           dat_sub[[dummy_col]] <- as.numeric(f_data == cur_lvl)
                           terms <- c(terms, dummy_col, paste0("tt(", dummy_col, ")"))
-                          clean_names_map[[dummy_col]] <- paste0(pv, " (", cur_lvl, " ", jmvcore::.("vs"), " ", ref_lvl, ")")
-                          clean_names_map[[paste0("tt(", dummy_col, ")")]] <- paste0(pv, " (", cur_lvl, " ", jmvcore::.("vs"), " ", ref_lvl, ")", fn_suffix)
+                          clean_names_map[[dummy_col]] <- jmvcore::format(jmvcore::.("{var} ({cur} vs {ref})"), var = pv, cur = cur_lvl, ref = ref_lvl)
+                          clean_names_map[[paste0("tt(", dummy_col, ")")]] <- paste0(jmvcore::format(jmvcore::.("{var} ({cur} vs {ref})"), var = pv, cur = cur_lvl, ref = ref_lvl), fn_suffix)
                       }
                   } else {
                       fact_col <- paste0("..td_f_", var_idx)
@@ -2254,7 +2275,7 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                       terms <- c(terms, fact_col)
                       for (k in 2:length(lvls)) {
                           cur_lvl <- lvls[k]
-                          clean_names_map[[paste0(fact_col, cur_lvl)]] <- paste0(pv, " (", cur_lvl, " ", jmvcore::.("vs"), " ", ref_lvl, ")")
+                          clean_names_map[[paste0(fact_col, cur_lvl)]] <- jmvcore::format(jmvcore::.("{var} ({cur} vs {ref})"), var = pv, cur = cur_lvl, ref = ref_lvl)
                       }
                   }
               } else {
@@ -2262,7 +2283,7 @@ mSRVClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                   dat_sub[[num_col]] <- as.numeric(col_data)
                   if (is_td) {
                       terms <- c(terms, num_col, paste0("tt(", num_col, ")"))
-                      clean_names_map[[num_col]] <- paste0(pv, " (", jmvcore::.("baseline"), ")")
+                      clean_names_map[[num_col]] <- jmvcore::format(jmvcore::.("{var} (baseline)"), var = pv)
                       clean_names_map[[paste0("tt(", num_col, ")")]] <- paste0(pv, fn_suffix)
                   } else {
                       terms <- c(terms, num_col)

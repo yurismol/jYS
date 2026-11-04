@@ -141,12 +141,18 @@ mROCClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
 
           # DeLong p-value
           pval_val <- ''
+          zero_var <- FALSE
           if (dL != "none") {
             if (dL == "w05") {
               null_auc <- ifelse(perc, 50, 0.5)
               variance <- pROC::var(roc, method="delong")
               if (variance <= 0) {
-                pval_val <- ifelse(roc$auc == null_auc, 1.0, 0.0001)
+                if (roc$auc == null_auc) {
+                  pval_val <- 1.0
+                } else {
+                  pval_val <- NaN
+                  zero_var <- TRUE
+                }
               } else {
                 z    <- (roc$auc - null_auc) / sqrt(variance)
                 pval_val <- 2 * stats::pnorm(-abs(z))
@@ -172,6 +178,9 @@ mROCClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
             direction = dir_str,
             pval      = pval_val
           ))
+          if (zero_var) {
+            rocTable$addFootnote(rowKey=label, 'pval', .("DeLong variance is zero; p-value cannot be calculated."))
+          }
       },
 
       .plot=function(image, ggtheme, theme, ...) {
@@ -255,22 +264,31 @@ mROCClass <- if (requireNamespace('jmvcore', quietly=TRUE)) R6::R6Class(
                     if (variance <= 0) {
                       if (roc$auc == null_auc) {
                         pval <- 1.0
+                        pv <- private$.formatElement(pval)
+                        pv <- gsub(" ", "0", pv)
+                        if (self$options$mAst)
+                          TR <- rbind(TR, paste(" ", private$.asterisk(pval)))
+                        else
+                          TR <- rbind(TR, paste0(", p=", pv))
+                        TC <- rbind(TC, "black")
                       } else {
-                        pval <- 0.0001
+                        pval <- NA
+                        TR <- rbind(TR, "")
+                        TC <- rbind(TC, "black")
                       }
                     } else {
                       z <- (roc$auc - null_auc) / sqrt(variance)
                       pval <- 2 * stats::pnorm(-abs(z))
+                      pv <- private$.formatElement(pval)
+                      pv <- gsub(" ", "0", pv)
+                      if (self$options$mAst)
+                        TR <- rbind(TR, paste(" ",private$.asterisk(pval)))
+                      else
+                        TR <- rbind(TR, paste(", p", ifelse(pval>0.001,"=",""),
+                              pv, sep=""))
+                      if (pval<0.05 && !self$options$BW) TC <- rbind(TC, "red")
+                      else TC <- rbind(TC, "black")
                     }
-                    pv <- private$.formatElement(pval)
-                    pv <- gsub(" ", "0", pv)
-                    if (self$options$mAst)
-                      TR <- rbind(TR, paste(" ",private$.asterisk(pval)))
-                    else
-                      TR <- rbind(TR, paste(", p", ifelse(pval>0.001,"=",""),
-                            pv, sep=""))
-                    if (pval<0.05 && !self$options$BW) TC <- rbind(TC, "red")
-                    else TC <- rbind(TC, "black")
                   } else if (add) {
                     rt <- pROC::roc.test(roc, oROC, paired=pair,
                             parallel=TRUE, method="d", alternative="two.sided")

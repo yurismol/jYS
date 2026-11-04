@@ -50,3 +50,28 @@ test_that("mPCA works", {
     expect_true(res_group$rocTable$rowCount >= 2)
 })
 
+test_that("mPCA handles single-level group gracefully without false p = 1.000", {
+    if (!exists(".", envir = .GlobalEnv, mode = "function")) .GlobalEnv$. <- jmvcore::.
+    r_files <- list.files(c("R", "../../R", "../R"), pattern = "^mpca\\.[hb]\\.R$", full.names = TRUE)
+    for (rf in sort(r_files)) source(rf)
+    mPCA_fn <- if (exists("mPCA", mode = "function")) mPCA else jYS::mPCA
+
+    set.seed(42)
+    df <- data.frame(
+        g = factor(rep("A", 20)),
+        x1 = rnorm(20),
+        x2 = rnorm(20),
+        x3 = rnorm(20)
+    )
+
+    res_single <- mPCA_fn(
+        data = df,
+        vars = c("x1", "x2", "x3"),
+        group = NULL,
+        selgroup = NULL,
+        classVar = "g",
+        npc = 2
+    )
+    expect_s3_class(res_single, "mPCAResults")
+    expect_true(is.na(res_single$scorePlot$state$p_val))
+})

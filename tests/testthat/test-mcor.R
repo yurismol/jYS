@@ -38,4 +38,42 @@ test_that("mCOR works", {
     expect_s3_class(res_glasso$glassoGroup$glassoTable, "Table")
     expect_s3_class(res_glasso$glassoGroup$glassoHubTable, "Table")
     expect_equal(res_glasso$glassoGroup$glassoTable$rowCount, 4)
+
+    # Test hierarchical clustering (hclust = TRUE)
+    res_hc <- mCOR_fn(
+        data = df,
+        vars = c("x1", "x2", "x3", "x4"),
+        group = NULL,
+        selgroup = NULL,
+        hclust = TRUE,
+        numClust = 2,
+        plots = TRUE,
+        clustMat = TRUE
+    )
+    expect_s3_class(res_hc, "mCORResults")
+    expect_s3_class(res_hc$matrix, "Table")
+
+    # Test manual cluster validation rejects invalid boundaries
+    expect_error(
+        mCOR_fn(data = df, vars = c("x1", "x2", "x3", "x4"), group = NULL, selgroup = NULL, clustMan = "3,2"),
+        "strictly increasing"
+    )
+    expect_error(
+        mCOR_fn(data = df, vars = c("x1", "x2", "x3", "x4"), group = NULL, selgroup = NULL, clustMan = "2,a"),
+        "strictly increasing"
+    )
+
+    # Test manual clusters with plotOrder reordering
+    res_ord <- mCOR_fn(
+        data = df,
+        vars = c("x1", "x2", "x3", "x4"),
+        group = NULL,
+        selgroup = NULL,
+        plotOrder = "AOE",
+        clustMan = "3",
+        plots = TRUE,
+        clustMat = TRUE
+    )
+    expect_s3_class(res_ord, "mCORResults")
+    expect_true(length(res_ord$rplots$itemKeys) >= 1)
 })

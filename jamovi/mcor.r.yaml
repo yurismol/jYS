@@ -166,6 +166,7 @@ items:
         - clustCol
         - clustMan
         - plotMetU
+        - plotOrder
         - signif
         - clPos
       template:
@@ -186,6 +187,7 @@ items:
               - clustCol
               - clustMan
               - plotMetU
+              - plotOrder
               - signif
               - clPos
 

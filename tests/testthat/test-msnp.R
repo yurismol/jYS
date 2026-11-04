@@ -1,6 +1,6 @@
 test_that("mSNP works and supports local source", {
     if (!exists(".", envir = .GlobalEnv, mode = "function")) .GlobalEnv$. <- jmvcore::.
-    r_files <- list.files(c("R", "../../R", "../R"), pattern = "^msnp\\.[hb]\\.R$", full.names = TRUE)
+    r_files <- list.files(c("R", "../../R", "../R", "jYS/R"), pattern = "^msnp\\.[hb]\\.R$", full.names = TRUE)
     for (rf in sort(r_files)) source(rf)
     mSNP_fn <- mSNP
 
@@ -53,7 +53,7 @@ test_that("mSNP works and supports local source", {
 
 test_that("mSNP correctly estimates risk allele OR > 1", {
     if (!exists(".", envir = .GlobalEnv, mode = "function")) .GlobalEnv$. <- jmvcore::.
-    r_files <- list.files(c("R", "../../R", "../R"), pattern = "^msnp\\.[hb]\\.R$", full.names = TRUE)
+    r_files <- list.files(c("R", "../../R", "../R", "jYS/R"), pattern = "^msnp\\.[hb]\\.R$", full.names = TRUE)
     for (rf in sort(r_files)) source(rf)
     mSNP_fn <- mSNP
 
@@ -96,7 +96,7 @@ test_that("mSNP correctly estimates risk allele OR > 1", {
 
 test_that("mSNP safely caps MDR order and sets footnote when order > marker count (Item 5)", {
     if (!exists(".", envir = .GlobalEnv, mode = "function")) .GlobalEnv$. <- jmvcore::.
-    r_files <- list.files(c("R", "../../R", "../R"), pattern = "^msnp\\.[hb]\\.R$", full.names = TRUE)
+    r_files <- list.files(c("R", "../../R", "../R", "jYS/R"), pattern = "^msnp\\.[hb]\\.R$", full.names = TRUE)
     for (rf in sort(r_files)) source(rf)
     mSNP_fn <- mSNP
 
@@ -131,7 +131,7 @@ test_that("mSNP safely caps MDR order and sets footnote when order > marker coun
 
 test_that("mSNP MDR properly assigns controls to test folds and evaluates testing balanced accuracy", {
     if (!exists(".", envir = .GlobalEnv, mode = "function")) .GlobalEnv$. <- jmvcore::.
-    r_files <- list.files(c("R", "../../R", "../R"), pattern = "^msnp\\.[hb]\\.R$", full.names = TRUE)
+    r_files <- list.files(c("R", "../../R", "../R", "jYS/R"), pattern = "^msnp\\.[hb]\\.R$", full.names = TRUE)
     for (rf in sort(r_files)) source(rf)
     mSNP_fn <- mSNP
 
@@ -161,4 +161,209 @@ test_that("mSNP MDR properly assigns controls to test folds and evaluates testin
     expect_equal(tbl$rowCount, 2)
     test_ba <- tbl$getCell(rowNo = 2, "test_ba")$value
     expect_true(!is.na(test_ba) && test_ba > 0.50)
+})
+
+test_that("mSNP Manhattan and Ternary plots respect alpha and tested markers", {
+    if (!exists(".", envir = .GlobalEnv, mode = "function")) .GlobalEnv$. <- jmvcore::.
+    r_files <- list.files(c("R", "../../R", "../R", "jYS/R"), pattern = "^msnp\\.[hb]\\.R$", full.names = TRUE)
+    for (rf in sort(r_files)) source(rf)
+    mSNP_fn <- mSNP
+
+    set.seed(42)
+    n <- 100
+    df <- data.frame(
+        rs1 = factor(sample(c("AA", "AG", "GG"), n, replace = TRUE)),
+        rs2 = factor(sample(c("AA", "AG", "GG"), n, replace = TRUE)),
+        outcome = factor(sample(c("0", "1"), n, replace = TRUE))
+    )
+
+    res <- mSNP_fn(
+        data = df,
+        vars = c("rs1", "rs2"),
+        group = NULL,
+        outcome = "outcome",
+        covs = NULL,
+        gender = NULL,
+        alpha = "0.01",
+        assocEnable = TRUE,
+        manhattanPlot = TRUE,
+        ternaryPlot = TRUE
+    )
+
+    # Manhattan state checks
+    manh_state <- res$assocGroup$manhattanPlot$state
+    expect_false(is.null(manh_state))
+    expect_equal(manh_state$alpha, 0.01)
+    expect_equal(manh_state$bonf_p, 0.01 / 16)
+
+    # Ternary state checks
+    tern_state <- res$hweGroup$ternaryPlot$state
+    expect_false(is.null(tern_state))
+    expect_equal(tern_state$alpha, 0.01)
+})
+
+test_that("mSNP X-linked allele frequencies correctly exclude male heterozygotes from denominator", {
+    if (!exists(".", envir = .GlobalEnv, mode = "function")) .GlobalEnv$. <- jmvcore::.
+    r_files <- list.files(c("R", "../../R", "../R", "jYS/R"), pattern = "^msnp\\.[hb]\\.R$", full.names = TRUE)
+    for (rf in sort(r_files)) source(rf)
+    mSNP_fn <- mSNP
+
+    # Construct dataset with known calls including invalid male AB
+    df_x <- data.frame(
+        rsX = factor(c(
+            rep("AA", 20), rep("AB", 20), rep("BB", 20),
+            rep("AA", 20), rep("BB", 20), rep("AB", 5)
+        )),
+        sex = factor(c(rep("F", 60), rep("M", 45)))
+    )
+
+    res_x <- mSNP_fn(
+        data = df_x,
+        vars = "rsX",
+        group = NULL,
+        outcome = NULL,
+        covs = NULL,
+        gender = "sex",
+        xLinked = TRUE,
+        popMetrics = TRUE,
+        freqTable = TRUE
+    )
+
+    pop_tbl <- res_x$popGroup$popTable
+    expect_equal(pop_tbl$rowCount, 1)
+    maf <- pop_tbl$getCell(rowNo = 1, "maf")$value
+    expect_equal(maf, 0.5, tolerance = 1e-4)
+})
+
+test_that("mSNP ternary plot respects exact test vs chi-square region and coloring", {
+    if (!exists(".", envir = .GlobalEnv, mode = "function")) .GlobalEnv$. <- jmvcore::.
+    r_files <- list.files(c("R", "../../R", "../R", "jYS/R"), pattern = "^msnp\\.[hb]\\.R$", full.names = TRUE)
+    for (rf in sort(r_files)) source(rf)
+    mSNP_fn <- mSNP
+
+    set.seed(42)
+    df_tern <- data.frame(
+        rs1 = factor(c(rep("AA", 30), rep("AB", 10), rep("BB", 30)))
+    )
+    res_exact <- mSNP_fn(
+        data = df_tern,
+        vars = "rs1",
+        group = NULL,
+        outcome = NULL,
+        covs = NULL,
+        gender = NULL,
+        hwTests = TRUE,
+        ternaryPlot = TRUE,
+        ternaryRegion = "7"
+    )
+    expect_equal(res_exact$hweGroup$ternaryPlot$state$region_type, 7)
+
+    res_chi <- mSNP_fn(
+        data = df_tern,
+        vars = "rs1",
+        group = NULL,
+        outcome = NULL,
+        covs = NULL,
+        gender = NULL,
+        hwTests = TRUE,
+        ternaryPlot = TRUE,
+        ternaryRegion = "1"
+    )
+    expect_equal(res_chi$hweGroup$ternaryPlot$state$region_type, 1)
+})
+
+test_that("mSNP polymorphism test df is 2*(G-1) and X-linked plots mask missing genotypes", {
+    if (!exists(".", envir = .GlobalEnv, mode = "function")) .GlobalEnv$. <- jmvcore::.
+    r_files <- list.files(c("R", "../../R", "../R", "jYS/R"), pattern = "^msnp\\.[hb]\\.R$", full.names = TRUE)
+    for (rf in sort(r_files)) source(rf)
+    mSNP_fn <- mSNP
+
+    # Data with outcome (2 groups) and gender
+    set.seed(42)
+    n <- 120
+    df_test <- data.frame(
+        rs1 = factor(sample(c("AA", "AG", "GG"), n, replace = TRUE, prob = c(0.3, 0.4, 0.3))),
+        status = factor(rep(c("Case", "Control"), each = n / 2)),
+        sex = factor(rep(c("Female", "Male"), n / 2))
+    )
+    # Introduce some NAs in rs1
+    df_test$rs1[c(1, 5, 10)] <- NA
+
+    res <- mSNP_fn(
+        data = df_test,
+        vars = "rs1",
+        group = NULL,
+        outcome = "status",
+        covs = NULL,
+        groupTable = TRUE,
+        xLinked = TRUE,
+        gender = "sex",
+        ternaryPlot = TRUE,
+        assocEnable = TRUE
+    )
+
+    # 1. Polymorphism test df: G=2 groups => df = 2*(2-1) = 2
+    grp_tbl <- res$hweGroup$groupAnalysisTable
+    poly_col <- grp_tbl$getColumn("poly_chi")
+    expect_true(grepl("df=2", poly_col$title, fixed = TRUE))
+
+    # 2. X-linked ternary plot state counts match non-missing female genotypes
+    tern_state <- res$hweGroup$ternaryPlot$state
+    expect_false(is.null(tern_state))
+    # Females in df_test with non-missing rs1:
+    females_df <- df_test[!is.na(df_test$rs1) & df_test$sex == "Female", ]
+    expected_female_n <- nrow(females_df)
+    # Total counts across groups in ternary state for rs1
+    total_ternary_n <- sum(tern_state$counts_mat)
+    expect_equal(total_ternary_n, expected_female_n)
+
+    # 3. Model note n5 does not state 'is highlighted'
+    assoc_notes <- res$assocGroup$assocTable$notes
+    expect_true("n5" %in% names(assoc_notes))
+    expect_false(grepl("is highlighted", assoc_notes[["n5"]]$note, ignore.case = TRUE))
+    expect_match(assoc_notes[["n5"]]$note, "Model comparison", fixed = TRUE)
+})
+
+test_that("mSNP Step 5: polymorphism df keeps test parameter after dropped groups and sex notice", {
+    if (!exists(".", envir = .GlobalEnv, mode = "function")) .GlobalEnv$. <- jmvcore::.
+    r_files <- list.files(c("R", "../../R", "../R"), pattern = "^msnp\\.[hb]\\.R$", full.names = TRUE)
+    for (rf in sort(r_files)) source(rf)
+    mSNP_fn <- mSNP
+
+    # Test polymorphism df when one group level has 0 cases
+    df_poly <- data.frame(
+        snp = c(rep("AA", 10), rep("AG", 5), rep("GG", 1), rep("AA", 2), rep("AG", 8), rep("GG", 15)),
+        outcome = factor(c(rep("G1", 16), rep("G2", 25)), levels = c("G1", "G2", "G3_Empty"))
+    )
+
+    res_poly <- mSNP_fn(
+        data = df_poly,
+        vars = "snp",
+        group = NULL,
+        outcome = "outcome",
+        covs = NULL,
+        gender = NULL,
+        groupTable = TRUE
+    )
+    poly_tbl <- res_poly$hweGroup$groupAnalysisTable
+    poly_df <- poly_tbl$asDF
+    # For 3 genotypes and 2 observed groups (G3 is empty), poly_p matches pchisq with df=2, not df=4
+    expect_equal(poly_df$poly_p[1], pchisq(poly_df$poly_chi[1], df = 2, lower.tail = FALSE))
+
+    # Test sex auto-detection notice
+    df_sex <- data.frame(
+        snp = rep(c("AA", "AG", "GG"), 10),
+        sex = rep(c("female", "male"), 15)
+    )
+    res_sex <- mSNP_fn(
+        data = df_sex,
+        vars = "snp",
+        group = NULL,
+        outcome = NULL,
+        covs = NULL,
+        gender = "sex",
+        hwTests = TRUE,
+        xLinked = TRUE
+    )
+    expect_true("sexLevelsAuto" %in% res_sex$itemNames)
 })

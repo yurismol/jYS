@@ -14,9 +14,8 @@ Description: Extensions of the functionality of popular data analysis methods:
   Analysis (PCA), Single Nucleotide Polymorphism (SNP) association and
   Decision Curve Analysis (DCA) with model calibration,
   Stability Analysis according to ICH Q1E guideline with ANCOVA
-  poolability testing and shelf life estimation, and Multivariate
-  Analysis of Variance (MANOVA, Repeated Measures MANOVA without
-  sphericity assumption, and Profile Analysis).
+  poolability testing and shelf life estimation, Repeated Measures
+  MANOVA without sphericity assumption, and Profile Analysis.
 License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true

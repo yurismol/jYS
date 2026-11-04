@@ -480,7 +480,6 @@ items:
       title: Individual Batch Shelf Life Plots
       type: Array
       visible: (showBatchPlots)
-      items: (levels(batch))
       clearWith:
           - dep
           - time
@@ -521,7 +520,7 @@ items:
           width:  640
           height: 440
           renderFun: .batchPlot
-          requiresData: true
+          requiresData: false
 
     - name: ratePlot
       title: Batch Degradation Rates & ANCOVA Slope Comparison
@@ -812,6 +811,22 @@ items:
       title: Arrhenius Accelerated Stability Recalculation Table
       type: Table
       visible: (showArrh)
+      clearWith:
+          - dep
+          - time
+          - batch
+          - tempVar
+          - arrhEa
+          - arrhTempAcc
+          - arrhRhAcc
+          - arrhTempLong
+          - arrhRhLong
+          - arrhB
+          - lsl
+          - usl
+          - specType
+          - trans
+          - studyDuration
       columns:
           - name: zone
             title: Storage Condition / Climatic Zone
@@ -839,15 +854,31 @@ items:
       title: Activation Energy (Ea) Sensitivity Analysis Table
       type: Table
       visible: (showArrh && showArrhSens)
+      clearWith:
+          - dep
+          - time
+          - batch
+          - tempVar
+          - arrhEa
+          - arrhTempAcc
+          - arrhRhAcc
+          - arrhTempLong
+          - arrhRhLong
+          - arrhB
+          - lsl
+          - usl
+          - specType
+          - trans
+          - studyDuration
       columns:
           - name: ea
             title: Assumed Ea (kJ/mol)
             type: number
           - name: af
-            title: Relative AF (vs 25°C)
+            title: Relative AF
             type: number
           - name: predShelf
-            title: Predicted Shelf Life at 25°C (months)
+            title: Predicted Shelf Life (months)
             type: number
           - name: assessment
             title: Risk Profile / Assessment
@@ -857,6 +888,16 @@ items:
       title: Arrhenius Multi-Temperature Regression Model
       type: Table
       visible: (showArrh && (length(tempVar) > 0 && tempVar != ""))
+      clearWith:
+          - dep
+          - time
+          - batch
+          - tempVar
+          - arrhEa
+          - lsl
+          - usl
+          - specType
+          - trans
       columns:
           - name: param
             title: Kinetic Parameter
@@ -891,6 +932,21 @@ items:
       height: 440
       renderFun: .arrhPlot
       requiresData: false
+      clearWith:
+          - dep
+          - time
+          - batch
+          - tempVar
+          - arrhEa
+          - arrhTempAcc
+          - arrhRhAcc
+          - arrhTempLong
+          - arrhRhLong
+          - arrhB
+          - lsl
+          - usl
+          - specType
+          - trans
 
     - name: arrhTrajPlot
       title: Projected Degradation Trajectories Across Temperatures Plot
@@ -900,4 +956,19 @@ items:
       height: 460
       renderFun: .arrhTrajPlot
       requiresData: false
+      clearWith:
+          - dep
+          - time
+          - batch
+          - tempVar
+          - arrhEa
+          - arrhTempAcc
+          - arrhRhAcc
+          - arrhTempLong
+          - arrhRhLong
+          - arrhB
+          - lsl
+          - usl
+          - specType
+          - trans
 ...

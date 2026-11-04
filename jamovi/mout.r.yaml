@@ -46,7 +46,7 @@ items:
     - name: plots
       title: Boxplots with outliers
       type: Array
-      visible: (boxpl)
+      visible: (boxpl && outlcheck:IQR)
       items: (vars)
       clearWith:
           - vars

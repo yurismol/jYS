@@ -103,17 +103,6 @@ children:
       - type: CheckBox
         name: xLinked
         enable: (gender)
-  - type: LayoutBox
-    margin: large
-    children:
-      - type: CheckBox
-        name: polyDf1
-  - type: LayoutBox
-    margin: large
-    children:
-      - type: TextBox
-        name: nPerm
-        format: number
   - type: CollapseBox
     label: Phenotype Association Tests
     collapsed: true
@@ -135,6 +124,12 @@ children:
           - type: CheckBox
             name: manhattanPlot
             enable: (assocEnable)
+  - type: LayoutBox
+    margin: large
+    children:
+      - type: TextBox
+        name: nPerm
+        format: number
   - type: CollapseBox
     label: Population genetics metrics
     collapsed: true

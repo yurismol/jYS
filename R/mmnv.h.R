@@ -215,7 +215,7 @@ mMNVResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             super$initialize(
                 options=options,
                 name="",
-                title="MANOVA & Repeated Measures",
+                title="Repeated Measures & Profile Analysis",
                 refs=list(
                     "jys",
                     "obrien1985",

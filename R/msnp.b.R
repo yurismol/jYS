@@ -29,6 +29,12 @@ mSNPClass <- R6::R6Class(
             if (length(female_idx_g) > 0) {
                 female_level <- gender_levels[female_idx_g[1]]
                 male_level <- gender_levels[-female_idx_g[1]][1]
+                if (!private$.sex_notice_posted) {
+                    private$.sex_notice_posted <- TRUE
+                    self$results$insert(1, jmvcore::Notice$new(self$options, name="sexLevelsAuto",
+                        type=jmvcore::NoticeType$INFO,
+                        content=jmvcore::format(.("Sex variable levels identified automatically: Female = '{female}', Male = '{male}'. Specify the female level in options if needed."), female = female_level, male = male_level)))
+                }
             } else {
                 female_level <- gender_levels[1]
                 male_level <- if (length(gender_levels) > 1) gender_levels[2] else NULL
@@ -1797,12 +1803,8 @@ mSNPClass <- R6::R6Class(
                 # Column totals for percentages
                 col_totals <- colSums(counts)
                 
-                # Overall 3xG test for polymorphism (df = (3 - 1) * (G - 1) = 2 * (G - 1))
+                # Overall 3xG test for polymorphism (degrees of freedom and p-value from chi-square test)
                 test_poly <- run_chisq_test(counts)
-                test_poly$df <- 2 * (length(groups) - 1)
-                if (!is.na(test_poly$chisq) && !is.na(test_poly$df) && test_poly$df > 0) {
-                    test_poly$p <- stats::pchisq(test_poly$chisq, df = test_poly$df, lower.tail = FALSE)
-                }
                 
                 # Allele counts matrix (2 x G)
                 # Row 1: major allele, Row 2: minor allele
@@ -2005,23 +2007,30 @@ mSNPClass <- R6::R6Class(
                     col_vec <- c(col_vec, palette[col_idx])
                     labels_vec <- c(labels_vec, paste0(marker_names[i], " (", group_names[i], ")"))
                 } else {
-                    row_key <- paste(marker_names[i], group_names[i], sep="_")
-                    row <- private$g_hwe_results[[row_key]]
-                    is_sig <- FALSE
-                    alpha_val <- as.numeric(self$options$alpha)
-                    if (!is.null(row)) {
-                        test_p <- if (region_type == 7) {
-                            row$exact_p
-                        } else if (region_type %in% c(1, 2, 3, 4, 5, 6)) {
-                            row$chi_p
-                        } else {
-                            if (!is.null(row$exact_p) && !is.na(row$exact_p)) row$exact_p else row$chi_p
+                    if (isTRUE(self$options$hwTests)) {
+                        row_key <- paste(marker_names[i], group_names[i], sep="_")
+                        row <- private$g_hwe_results[[row_key]]
+                        is_sig <- FALSE
+                        alpha_val <- as.numeric(self$options$alpha)
+                        if (!is.null(row)) {
+                            test_p <- if (region_type == 7) {
+                                row$exact_p
+                            } else if (region_type %in% c(2, 3, 4, 5, 6)) {
+                                counts_i <- counts_mat[i, ]
+                                tryCatch(HardyWeinberg::HWChisq(counts_i, cc = 0.5, verbose = FALSE)$pval, error = function(e) row$chi_p)
+                            } else if (region_type == 1) {
+                                row$chi_p
+                            } else {
+                                if (!is.null(row$exact_p) && !is.na(row$exact_p)) row$exact_p else row$chi_p
+                            }
+                            if (!is.null(test_p) && !is.na(test_p)) {
+                                is_sig <- (test_p < alpha_val)
+                            }
                         }
-                        if (!is.null(test_p) && !is.na(test_p)) {
-                            is_sig <- (test_p < alpha_val)
-                        }
+                        col_vec <- c(col_vec, if (is_sig) col_red else col_green)
+                    } else {
+                        col_vec <- c(col_vec, "#2B5C8F")
                     }
-                    col_vec <- c(col_vec, if (is_sig) col_red else col_green)
                     labels_vec <- c(labels_vec, marker_names[i])
                 }
             }
@@ -2039,6 +2048,7 @@ mSNPClass <- R6::R6Class(
                 labels_vec = labels_vec,
                 groups = groups,
                 has_multi_groups = has_multi_groups,
+                hwTests = isTRUE(self$options$hwTests),
                 region_type = region_type,
                 ternaryShowMAF = isTRUE(self$options$ternaryShowMAF),
                 maf_val = maf_val,
@@ -2227,9 +2237,10 @@ mSNPClass <- R6::R6Class(
                 }
             }
             
-            n_tested <- if (!is.null(plot_df_manh) && nrow(plot_df_manh) > 0) nrow(plot_df_manh) else max(1, length(self$options$vars))
+            n_tests_total <- sum(vapply(private$g_assoc_results, function(r) !is.null(r) && !is.na(r$p_val), logical(1)))
+            if (n_tests_total < 1) n_tests_total <- if (!is.null(plot_df_manh) && nrow(plot_df_manh) > 0) nrow(plot_df_manh) else max(1, length(self$options$vars))
             alpha_val <- as.numeric(self$options$alpha)
-            bonf_p <- alpha_val / max(1, n_tested)
+            bonf_p <- alpha_val / max(1, n_tests_total)
             self$results$assocGroup$manhattanPlot$setState(list(
                 plot_df = plot_df_manh,
                 bonf_p = bonf_p,
@@ -2398,15 +2409,21 @@ mSNPClass <- R6::R6Class(
             if (has_multi_groups) {
                 legend(0, -0.08, legend = groups, col = palette[1:length(groups)], pch = 19, 
                        cex = 1.1, horiz = TRUE, xjust = 0.5, bty = "n")
-            } else {
-                test_label <- if (!is.null(state$region_type) && state$region_type == 7) {
-                    .("exact test")
-                } else if (!is.null(state$region_type) && state$region_type %in% c(1, 2, 3, 4, 5, 6)) {
-                    .("chi-square test")
-                } else ""
-                legend_sub <- if (nzchar(test_label)) paste0(" (", test_label, ")") else ""
-                legend(0, -0.08, legend = c(paste0(.("HWE compliant"), legend_sub), paste0(.("HWE deviation"), legend_sub)), 
+            } else if (isTRUE(state$hwTests)) {
+                reg_t <- if (!is.null(state$region_type)) state$region_type else 1
+                leg_text <- if (reg_t == 7) {
+                    c(.("HWE compliant (exact test)"), .("HWE deviation (exact test)"))
+                } else if (reg_t %in% c(1, 2, 3, 4, 5, 6)) {
+                    c(.("HWE compliant (chi-square test)"), .("HWE deviation (chi-square test)"))
+                } else {
+                    c(.("HWE compliant"), .("HWE deviation"))
+                }
+                legend(0, -0.08, legend = leg_text, 
                        col = c(col_green, col_red), pch = 19, 
+                       cex = 1.1, horiz = TRUE, xjust = 0.5, bty = "n")
+            } else {
+                legend(0, -0.08, legend = .("Markers"), 
+                       col = "#2B5C8F", pch = 19, 
                        cex = 1.1, horiz = TRUE, xjust = 0.5, bty = "n")
             }
             
@@ -2675,15 +2692,24 @@ mSNPClass <- R6::R6Class(
             vars <- state$vars
             plot_df$Marker <- factor(plot_df$Marker, levels = vars)
             
+            nom_label <- .("Nominal (α)")
+            bonf_label <- .("Bonferroni")
+            threshold_df <- data.frame(
+                Threshold = factor(c(nom_label, bonf_label), levels = c(nom_label, bonf_label)),
+                y = c(-log10(alpha_val), -log10(bonf_p))
+            )
+            
             p <- ggplot2::ggplot(plot_df, ggplot2::aes(x = Marker, y = LogP)) +
                 ggplot2::geom_bar(stat = "identity", fill = "#2B5C8F", width = 0.5, color = "black", linewidth = 0.2) +
-                ggplot2::geom_hline(yintercept = -log10(alpha_val), linetype = "dashed", color = "blue", linewidth = 0.8) +
-                ggplot2::geom_hline(yintercept = -log10(bonf_p), linetype = "dashed", color = "red", linewidth = 0.8) +
+                ggplot2::geom_hline(data = threshold_df, ggplot2::aes(yintercept = y, color = Threshold, linetype = Threshold), linewidth = 0.8) +
+                ggplot2::scale_color_manual(name = .("Threshold"), values = stats::setNames(c("#1976D2", "#D32F2F"), c(nom_label, bonf_label))) +
+                ggplot2::scale_linetype_manual(name = .("Threshold"), values = stats::setNames(c("dashed", "dotted"), c(nom_label, bonf_label))) +
                 ggplot2::theme_minimal(base_size = 12) +
                 ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 11, face = "bold"),
                       axis.text.y = ggplot2::element_text(size = 11),
                       axis.title.x = ggplot2::element_text(size = 12, face = "bold"),
-                      axis.title.y = ggplot2::element_text(size = 12, face = "bold")) +
+                      axis.title.y = ggplot2::element_text(size = 12, face = "bold"),
+                      legend.position = "bottom") +
                 ggplot2::labs(x = .("Marker"), y = .("-log10(p-value)"))
             
             print(p)
