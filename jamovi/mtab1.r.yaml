@@ -1,0 +1,169 @@
+---
+name:  mTAB1
+title: Baseline Characteristics (Table 1)
+jrs:   '1.1'
+refs: [jys]
+
+items:
+    - name: instructions
+      title: Instructions
+      type: Html
+      visible: true
+
+    - name: tab1
+      title: Baseline Characteristics Table
+      type: Table
+      clearWith:
+          - vars
+          - group
+          - showTotal
+          - method
+          - normAlpha
+          - varEqual
+          - catTest
+          - statFormatCont
+          - statFormatCat
+          - pctType
+          - missing
+          - showPval
+          - flag
+          - showTestName
+          - showStat
+          - padjust
+          - showSmd
+          - decMark
+          - digits
+          - pDigits
+      columns:
+          - name: var
+            title: Characteristic
+            type: text
+            combineBelow: true
+          - name: level
+            title: Level / Summary
+            type: text
+          - name: total
+            title: Overall
+            type: text
+            visible: (showTotal)
+
+    - name: normAudit
+      title: Distribution & Normality Audit
+      type: Table
+      visible: (showNormAudit)
+      clearWith:
+          - vars
+          - group
+          - normAlpha
+          - varEqual
+          - digits
+      columns:
+          - name: var
+            title: Variable
+            type: text
+            combineBelow: true
+          - name: grp
+            title: Group
+            type: text
+            visible: (group)
+          - name: n
+            title: N
+            type: integer
+          - name: mean
+            title: Mean
+            type: number
+          - name: sd
+            title: SD
+            type: number
+          - name: median
+            title: Median
+            type: number
+          - name: iqr
+            title: IQR
+            type: number
+          - name: skew
+            title: Skewness
+            type: number
+          - name: kurt
+            title: Kurtosis
+            type: number
+          - name: sw_w
+            title: Shapiro–Wilk W
+            type: number
+          - name: sw_p
+            title: p (SW)
+            type: number
+            format: zto,pvalue
+          - name: decision
+            title: Distribution Assessment
+            type: text
+
+    - name: postHocNotice
+      title: Pairwise Post-Hoc Comparisons
+      type: Html
+      visible: false
+      clearWith:
+          - group
+          - showPostHoc
+
+    - name: postHoc
+      title: Pairwise Post-Hoc Comparisons
+      type: Table
+      visible: (showPostHoc)
+      clearWith:
+          - vars
+          - group
+          - method
+          - normAlpha
+          - postHocMethod
+          - flag
+          - decMark
+          - digits
+          - pDigits
+      columns:
+          - name: var
+            title: Variable
+            type: text
+            combineBelow: true
+          - name: comp
+            title: Comparison
+            type: text
+          - name: stat
+            title: Statistic
+            type: text
+          - name: p_raw
+            title: Raw p
+            type: number
+            format: zto,pvalue
+          - name: p_adj
+            title: Adjusted p
+            type: number
+            format: zto,pvalue
+          - name: test
+            title: Post-Hoc Test
+            type: text
+
+    - name: plots
+      title: Distribution Comparison Plots
+      type: Array
+      visible: (showPlot)
+      template:
+          type: Image
+          width: 550
+          height: 400
+          renderFun: .plot
+          requiresData: true
+          clearWith:
+              - vars
+              - group
+              - method
+              - postHocMethod
+              - showPostHoc
+              - plotType
+              - plotTypeCont
+              - plotTypeCat
+              - plotScope
+              - plotRemoveOutliers
+              - plotSignif
+              - plotVars
+...

@@ -15,7 +15,9 @@ Description: Extensions of the functionality of popular data analysis methods:
   Decision Curve Analysis (DCA) with model calibration,
   Stability Analysis according to ICH Q1E guideline with ANCOVA
   poolability testing and shelf life estimation, Repeated Measures
-  MANOVA without sphericity assumption, and Profile Analysis.
+  MANOVA without sphericity assumption, Profile Analysis, and
+  Baseline Characteristics (Table 1) with automated distribution
+  audit and statistical testing.
 License: GPL (>= 2)
 Encoding: UTF-8
 LazyData: true

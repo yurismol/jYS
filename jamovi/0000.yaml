@@ -18,8 +18,9 @@ description: >-
   competing risks, time-dependent effects), Principal Component Analysis (PCA),
   Single Nucleotide Polymorphism (SNP) association and Hardy-Weinberg
   equilibrium analysis, Decision Curve Analysis (DCA) with model calibration,
-  and Stability Analysis according to ICH Q1E guideline with ANCOVA poolability
-  testing and shelf life estimation.
+  Stability Analysis according to ICH Q1E guideline with ANCOVA poolability
+  testing and shelf life estimation, and Baseline Characteristics (Table 1) with
+  automated distribution audit and statistical testing.
 datasets:
   - name: Correlation clustering
     path: COR_BLOOD.omv
@@ -84,6 +85,9 @@ datasets:
   - name: Repeated Measures & Profile Analysis
     path: MNV_TRIAL.omv
     description: Repeated Measures MANOVA and Profile Analysis demonstration
+  - name: Baseline Characteristics (Table 1)
+    path: TAB1_CLINICAL.omv
+    description: Baseline Characteristics table (Table 1) demonstration
 analyses:
   - title: Correlation clustering
     name: mCOR
@@ -126,6 +130,17 @@ analyses:
     menuGroup: jYS
     menuSubgroup: Data Preprocessing
     menuTitle: Multivariate outliers identification and removal
+  - title: Baseline Characteristics (Table 1)
+    name: mTAB1
+    ns: jYS
+    category: analyses
+    menuGroup: jYS
+    menuSubgroup: Data Preprocessing
+    menuTitle: Baseline Characteristics (Table 1)
+    description: >-
+      Automated generation of publication-ready Baseline Characteristics table
+      (Table 1) with distribution audit, adaptive reporting, and statistical
+      testing.
   - title: Logistic Regression
     name: mLR
     ns: jYS

@@ -1,0 +1,106 @@
+title: Baseline Characteristics (Table 1)
+name: mTAB1
+jus: '3.0'
+stage: 0
+compilerMode: tame
+children:
+  - type: VariableSupplier
+    persistentItems: false
+    stretchFactor: 1
+    children:
+      - type: TargetLayoutBox
+        label: Variables to Summarize
+        children:
+          - type: VariablesListBox
+            name: vars
+            isTarget: true
+      - type: TargetLayoutBox
+        label: Grouping Variable
+        children:
+          - type: VariablesListBox
+            name: group
+            maxItemCount: 1
+            isTarget: true
+
+  - type: CollapseBox
+    label: Summary & Formatting Options
+    collapsed: false
+    stretchFactor: 1
+    children:
+      - type: CheckBox
+        name: showTotal
+      - type: ComboBox
+        name: method
+      - type: ComboBox
+        name: statFormatCont
+      - type: ComboBox
+        name: statFormatCat
+      - type: ComboBox
+        name: pctType
+      - type: ComboBox
+        name: missing
+
+  - type: CollapseBox
+    label: Statistical Tests & Adjustments
+    collapsed: false
+    stretchFactor: 1
+    children:
+      - type: CheckBox
+        name: showPval
+        children:
+          - type: CheckBox
+            name: flag
+            enable: (showPval)
+      - type: CheckBox
+        name: showTestName
+      - type: CheckBox
+        name: showStat
+      - type: CheckBox
+        name: showSmd
+      - type: ComboBox
+        name: padjust
+      - type: ComboBox
+        name: catTest
+      - type: ComboBox
+        name: varEqual
+      - type: TextBox
+        name: normAlpha
+        format: number
+
+  - type: CollapseBox
+    label: Advanced Tables & Post-Hoc
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: CheckBox
+        name: showNormAudit
+      - type: CheckBox
+        name: showPostHoc
+        enable: (group)
+      - type: ComboBox
+        name: postHocMethod
+        enable: (group && showPostHoc)
+
+  - type: CollapseBox
+    label: Visualization
+    collapsed: true
+    stretchFactor: 1
+    children:
+      - type: CheckBox
+        name: showPlot
+        children:
+          - type: ComboBox
+            name: plotTypeCont
+            enable: (showPlot)
+          - type: ComboBox
+            name: plotTypeCat
+            enable: (showPlot)
+          - type: ComboBox
+            name: plotScope
+            enable: (showPlot)
+          - type: CheckBox
+            name: plotRemoveOutliers
+            enable: (showPlot)
+          - type: CheckBox
+            name: plotSignif
+            enable: (showPlot && group)

@@ -346,6 +346,8 @@ options:
     - name: arrhTempAcc
       title: Accelerated Study Temperature (°C)
       type: Number
+      min: -273.0
+      max: 500.0
       default: 40.0
 
     - name: arrhRhAcc
@@ -358,6 +360,8 @@ options:
     - name: arrhTempLong
       title: Long-Term Storage Temperature (°C)
       type: Number
+      min: -273.0
+      max: 500.0
       default: 25.0
 
     - name: arrhRhLong

@@ -337,6 +337,8 @@ mSTABOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             private$..arrhTempAcc <- jmvcore::OptionNumber$new(
                 "arrhTempAcc",
                 arrhTempAcc,
+                min=-273,
+                max=500,
                 default=40)
             private$..arrhRhAcc <- jmvcore::OptionNumber$new(
                 "arrhRhAcc",
@@ -347,6 +349,8 @@ mSTABOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             private$..arrhTempLong <- jmvcore::OptionNumber$new(
                 "arrhTempLong",
                 arrhTempLong,
+                min=-273,
+                max=500,
                 default=25)
             private$..arrhRhLong <- jmvcore::OptionNumber$new(
                 "arrhRhLong",

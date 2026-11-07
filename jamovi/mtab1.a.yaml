@@ -1,0 +1,321 @@
+---
+name:  mTAB1
+title: Baseline Characteristics (Table 1)
+menuGroup: jYS
+menuSubgroup: Data Preprocessing
+menuTitle: Baseline Characteristics (Table 1)
+description:
+    main: Automated generation of publication-ready Baseline Characteristics table (Table 1) with distribution audit, adaptive reporting, and statistical testing.
+version: '1.0.0'
+jas: '1.2'
+
+options:
+    - name: data
+      type: Data
+
+    - name: vars
+      title: Variables
+      type: Variables
+      required: true
+      suggested:
+        - continuous
+        - nominal
+        - ordinal
+      permitted:
+        - numeric
+        - factor
+
+    - name: group
+      title: Grouping Variable
+      required: false
+      suggested:
+        - nominal
+        - ordinal
+      permitted:
+        - factor
+      type: Variable
+
+    - name: showTotal
+      title: Overall / Total column
+      type: Bool
+      default: true
+
+    - name: method
+      title: Descriptive statistics
+      type: List
+      options:
+        - title: Auto (Normality check)
+          name: auto
+        - title: Parametric (Mean ± SD)
+          name: param
+        - title: Non-parametric (Median [IQR])
+          name: nonparam
+      default: auto
+
+    - name: normAlpha
+      title: Normality significance level (α)
+      type: Number
+      min: 0.001
+      max: 0.20
+      default: 0.05
+
+    - name: varEqual
+      title: Parametric variance assumption
+      type: List
+      options:
+        - title: Welch test (unequal variances, recommended)
+          name: welch
+        - title: Levene's test (homogeneity test)
+          name: levene
+        - title: Assume equal variances (Student t / ANOVA)
+          name: equal
+      default: welch
+
+    - name: catTest
+      title: Categorical variables test
+      type: List
+      options:
+        - title: Auto (Fisher's exact if cell < 5, else Chi-square)
+          name: auto
+        - title: Chi-square test
+          name: chisq
+        - title: Fisher's exact test
+          name: fisher
+      default: auto
+
+    - name: statFormatCont
+      title: Continuous statistics format
+      type: List
+      options:
+        - title: Mean ± SD
+          name: mean_sd
+        - title: Median [Q1; Q3]
+          name: median_iqr
+        - title: Mean (95% CI)
+          name: mean_ci
+        - title: Both (Mean ± SD and Median [Q1; Q3])
+          name: both
+      default: mean_sd
+
+    - name: statFormatCat
+      title: Categorical statistics format
+      type: List
+      options:
+        - title: n (%)
+          name: n_pct
+        - title: '% (n)'
+          name: pct_n
+        - title: n
+          name: n
+        - title: '%'
+          name: pct
+      default: n_pct
+
+    - name: pctType
+      title: Percent calculation
+      type: List
+      options:
+        - title: Column percent (within group)
+          name: col
+        - title: Row percent (across groups)
+          name: row
+      default: col
+
+    - name: missing
+      title: Missing values (NA)
+      type: List
+      options:
+        - title: Show if missing values present
+          name: ifany
+        - title: Always show missing row
+          name: always
+        - title: Never show missing
+          name: never
+      default: ifany
+
+    - name: showPval
+      title: p-values
+      type: Bool
+      default: true
+
+    - name: flag
+      title: Flag statistically significant p-values
+      type: Bool
+      default: false
+
+    - name: showTestName
+      title: Statistical test name
+      type: Bool
+      default: true
+
+    - name: showStat
+      title: Test statistic
+      type: Bool
+      default: false
+
+    - name: padjust
+      title: Multiple testing correction
+      type: List
+      options:
+        - title: None
+          name: none
+        - title: Holm
+          name: holm
+        - title: Bonferroni
+          name: bonferroni
+        - title: Benjamini–Hochberg (FDR)
+          name: BH
+        - title: Benjamini–Yekutieli
+          name: BY
+      default: none
+
+    - name: showSmd
+      title: Standardized Mean Difference (SMD)
+      type: Bool
+      default: false
+
+    - name: decMark
+      title: Decimal mark
+      type: List
+      options:
+        - title: Auto (Follow jamovi settings)
+          name: auto
+        - title: Period / Dot (.)
+          name: dot
+        - title: Comma (,)
+          name: comma
+      default: auto
+      hidden: true
+
+    - name: digits
+      title: Decimal digits
+      type: Integer
+      min: -1
+      max: 5
+      default: -1
+      hidden: true
+
+    - name: pDigits
+      title: p-value decimal digits
+      type: Integer
+      min: -1
+      max: 5
+      default: -1
+      hidden: true
+
+    - name: showNormAudit
+      title: Distribution & normality audit table
+      type: Bool
+      default: false
+
+    - name: showPostHoc
+      title: Pairwise post-hoc comparisons table
+      type: Bool
+      default: false
+
+    - name: postHocMethod
+      title: Post-hoc pairwise method
+      type: List
+      options:
+        - title: Holm
+          name: holm
+        - title: Bonferroni
+          name: bonferroni
+        - title: Dwass–Steel–Critchlow–Fligner (DSCF) / Games–Howell
+          name: dscf
+        - title: Tukey HSD / Dunn
+          name: tukey_dunn
+        - title: Benjamini–Hochberg (FDR)
+          name: fdr
+      default: holm
+
+    - name: showPlot
+      title: Distribution comparison plot
+      type: Bool
+      default: false
+
+    - name: plotTypeCont
+      title: Continuous plot type
+      type: List
+      options:
+        - title: Boxplot (without jitter)
+          name: box_clean
+        - title: Boxplot with jitter
+          name: box
+        - title: Violin plot with boxplot
+          name: violin
+        - title: Mean with 95% CI
+          name: mean_ci
+        - title: Density plot
+          name: density
+      default: box_clean
+
+    - name: plotTypeCat
+      title: Categorical plot type
+      type: List
+      options:
+        - title: Bar chart (Counts)
+          name: bar
+        - title: Bar chart (100% Stacked percent)
+          name: bar_pct
+      default: bar
+
+    - name: plotType
+      title: Plot type (legacy)
+      type: List
+      options:
+        - title: Auto
+          name: auto
+        - title: Boxplot (without jitter)
+          name: box_clean
+        - title: Boxplot with jitter
+          name: box
+        - title: Violin plot with boxplot
+          name: violin
+        - title: Mean with 95% CI
+          name: mean_ci
+        - title: Density plot
+          name: density
+        - title: Bar chart (Counts)
+          name: bar
+        - title: Bar chart (100% Stacked percent)
+          name: bar_pct
+      default: auto
+      hidden: true
+
+    - name: plotScope
+      title: Variables to plot
+      type: List
+      options:
+        - title: All variables from Table 1
+          name: all
+        - title: Continuous variables only
+          name: cont
+        - title: Categorical variables only
+          name: cat
+      default: all
+
+    - name: plotRemoveOutliers
+      title: Remove outliers
+      type: Bool
+      default: false
+
+    - name: plotSignif
+      title: Significance annotations (brackets and p-values)
+      type: Bool
+      default: false
+
+    - name: plotVars
+      title: Variables to plot (programmatic R argument)
+      type: Variables
+      required: false
+      suggested:
+        - continuous
+        - nominal
+        - ordinal
+      permitted:
+        - numeric
+        - factor
+      default: []
+      hidden: true
+...

@@ -25,6 +25,13 @@ Some usefull [Jamovi](https://www.jamovi.org/) procedures for researchers
   - car (John Fox, Sanford Weisberg)
   - MASS (Brian Ripley et al.)
 
+- Baseline Characteristics (Table 1) (mTAB1)
+  - Automated distribution audit (Shapiro–Wilk test) for adaptive reporting (Mean ± SD vs Median [IQR])
+  - Adaptive inter-group hypothesis testing (Student's t / Welch's t, Mann–Whitney U / Kruskal–Wallis, Chi-square / Fisher's exact test)
+  - Standardized Mean Difference (SMD by Austin, 2009)
+  - Pairwise post-hoc comparisons (DSCF, Games–Howell, Tukey HSD, Dunn)
+  - Distribution comparison plots: ggplot2 (Hadley Wickham et al.)
+
 - Three-Way threshold determination in test results
   - UncertainInterval (Hans Landsheer)
 
